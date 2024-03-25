@@ -1,23 +1,31 @@
 package de.dafuqs.spectrum.data_loaders;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.predicate.entity.EntityFishingPredicate;
 import de.dafuqs.spectrum.helpers.NbtHelper;
-import de.dafuqs.spectrum.api.predicate.entity.*;
-import net.fabricmc.fabric.api.resource.*;
-import net.minecraft.entity.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.*;
-import net.minecraft.resource.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.profiler.*;
+import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.util.random.SimpleWeightedRandomList;
+import net.minecraft.world.entity.EntityType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-public class EntityFishingDataLoader extends JsonDataLoader implements IdentifiableResourceReloadListener {
+public class EntityFishingDataLoader extends SimpleJsonResourceReloadListener implements IdentifiableResourceReloadListener {
 	
 	public static final String ID = "entity_fishing";
 	public static final EntityFishingDataLoader INSTANCE = new EntityFishingDataLoader();
@@ -26,14 +34,14 @@ public class EntityFishingDataLoader extends JsonDataLoader implements Identifia
 	
 	public record EntityFishingEntity(
 			EntityType<?> entityType,
-			Optional<NbtCompound> nbt
+			Optional<CompoundTag> nbt
 	) {
 	}
 
 	public record EntityFishingEntry(
 			EntityFishingPredicate predicate,
 			float entityChance,
-			DataPool<EntityFishingEntity> weightedEntities
+			SimpleWeightedRandomList<EntityFishingEntity> weightedEntities
 	) {
 	}
 	
@@ -42,26 +50,26 @@ public class EntityFishingDataLoader extends JsonDataLoader implements Identifia
 	}
 	
 	@Override
-	protected void apply(Map<Identifier, JsonElement> prepared, ResourceManager manager, Profiler profiler) {
+	protected void apply(Map<ResourceLocation, JsonElement> prepared, ResourceManager manager, ProfilerFiller profiler) {
 		ENTITY_FISHING_ENTRIES.clear();
 		prepared.forEach((identifier, jsonElement) -> {
 			JsonObject jsonObject = jsonElement.getAsJsonObject();
 			
 			EntityFishingPredicate predicate = EntityFishingPredicate.fromJson(jsonObject.get("location").getAsJsonObject());
-			float chance = JsonHelper.getFloat(jsonObject, "chance");
-			JsonArray entityArray = JsonHelper.getArray(jsonObject, "entities");
+			float chance = GsonHelper.getAsFloat(jsonObject, "chance");
+			JsonArray entityArray = GsonHelper.getAsJsonArray(jsonObject, "entities");
 			
-			DataPool.Builder<EntityFishingEntity> entities = DataPool.builder();
+			SimpleWeightedRandomList.Builder<EntityFishingEntity> entities = SimpleWeightedRandomList.builder();
 			entityArray.forEach(entryElement -> {
 				JsonObject entryObject = entryElement.getAsJsonObject();
 				
-				EntityType<?> entityType = Registries.ENTITY_TYPE.get(new Identifier(JsonHelper.getString(entryObject, "id")));
+				EntityType<?> entityType = BuiltInRegistries.ENTITY_TYPE.get(new ResourceLocation(GsonHelper.getAsString(entryObject, "id")));
 				
-				Optional<NbtCompound> nbt = NbtHelper.getNbtCompound(entryObject.get("nbt"));
+				Optional<CompoundTag> nbt = NbtHelper.getNbtCompound(entryObject.get("nbt"));
 
 				int weight = 1;
-				if (JsonHelper.hasNumber(entryObject, "weight")) {
-					weight = JsonHelper.getInt(entryObject, "weight");
+				if (GsonHelper.isNumberValue(entryObject, "weight")) {
+					weight = GsonHelper.getAsInt(entryObject, "weight");
 				}
 				entities.add(new EntityFishingEntity(entityType, nbt), weight);
 			});
@@ -75,15 +83,15 @@ public class EntityFishingDataLoader extends JsonDataLoader implements Identifia
 	}
 	
 	@Override
-	public Identifier getFabricId() {
+	public ResourceLocation getFabricId() {
 		return SpectrumCommon.locate(ID);
 	}
 	
-	public static Optional<EntityFishingEntity> tryCatchEntity(ServerWorld world, BlockPos pos, int bigCatchLevel) {
+	public static Optional<EntityFishingEntity> tryCatchEntity(ServerLevel world, BlockPos pos, int bigCatchLevel) {
 		for (EntityFishingEntry entry : ENTITY_FISHING_ENTRIES) {
 			if (entry.predicate.test(world, pos)) {
 				if (world.random.nextFloat() < entry.entityChance * (1 + bigCatchLevel)) {
-					var x = entry.weightedEntities.getOrEmpty(world.random);
+					var x = entry.weightedEntities.getRandom(world.random);
 					if (x.isPresent()) {
 						return Optional.of(x.get().getData());
 					}

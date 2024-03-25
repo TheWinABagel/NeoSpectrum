@@ -1,39 +1,45 @@
 package de.dafuqs.spectrum.enchantments;
 
-import de.dafuqs.spectrum.*;
-import net.minecraft.block.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.world.World;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class DisarmingEnchantment extends SpectrumEnchantment {
 	
-	public DisarmingEnchantment(Rarity weight, Identifier unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
-		super(weight, EnchantmentTarget.WEAPON, slotTypes, unlockAdvancementIdentifier);
+	public DisarmingEnchantment(Rarity weight, ResourceLocation unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
+		super(weight, EnchantmentCategory.WEAPON, slotTypes, unlockAdvancementIdentifier);
 	}
 	
-	public static void disarmPlayer(PlayerEntity player) {
+	public static void disarmPlayer(Player player) {
 		int equipmentSlotCount = EquipmentSlot.values().length;
 		int randomSlot = (int) (Math.random() * equipmentSlotCount);
 		int slotsChecked = 0;
-		World world = player.getWorld();
+		Level world = player.level();
 		while (slotsChecked < equipmentSlotCount) {
 			EquipmentSlot slot = EquipmentSlot.values()[randomSlot];
-			ItemStack equippedStack = player.getEquippedStack(slot);
+			ItemStack equippedStack = player.getItemBySlot(slot);
 			if (!equippedStack.isEmpty()) {
 				ItemEntity itemEntity = new ItemEntity(world, player.getX(), player.getY(), player.getZ(), equippedStack);
-				itemEntity.setVelocity(world.random.nextTriangular(0.0, 0.11485000171139836), world.random.nextTriangular(0.2, 0.11485000171139836), world.random.nextTriangular(0.0, 0.11485000171139836));
-				itemEntity.setPickupDelay(120);
-				world.spawnEntity(itemEntity);
+				itemEntity.setDeltaMovement(world.random.triangle(0.0, 0.11485000171139836), world.random.triangle(0.2, 0.11485000171139836), world.random.triangle(0.0, 0.11485000171139836));
+				itemEntity.setPickUpDelay(120);
+				world.addFreshEntity(itemEntity);
 				
-				player.equipStack(slot, ItemStack.EMPTY);
-				world.playSound(null, player.getBlockPos(), SoundEvents.ITEM_BUNDLE_DROP_CONTENTS, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+				player.setItemSlot(slot, ItemStack.EMPTY);
+				world.playSound(null, player.blockPosition(), SoundEvents.BUNDLE_DROP_CONTENTS, SoundSource.NEUTRAL, 1.0F, 1.0F);
 				break;
 			}
 			
@@ -42,15 +48,15 @@ public class DisarmingEnchantment extends SpectrumEnchantment {
 		}
 	}
 	
-	public static void disarmEntity(LivingEntity livingEntity, DefaultedList<ItemStack> syncedArmorStacks) {
+	public static void disarmEntity(LivingEntity livingEntity, NonNullList<ItemStack> syncedArmorStacks) {
 		// since endermen save their carried block as blockState, not in hand
 		// we have to use custom logic for them
-		if (livingEntity instanceof EndermanEntity endermanEntity) {
+		if (livingEntity instanceof EnderMan endermanEntity) {
 			BlockState carriedBlockState = endermanEntity.getCarriedBlock();
 			if (carriedBlockState != null) {
 				Item item = carriedBlockState.getBlock().asItem();
 				if (item != null) {
-					endermanEntity.dropStack(item.getDefaultStack());
+					endermanEntity.spawnAtLocation(item.getDefaultInstance());
 					endermanEntity.setCarriedBlock(null);
 				}
 			}
@@ -61,24 +67,24 @@ public class DisarmingEnchantment extends SpectrumEnchantment {
 		int slotsChecked = 0;
 		while (slotsChecked < 6) {
 			if (randomSlot == 5) {
-				if (livingEntity.getMainHandStack() != null && !livingEntity.getMainHandStack().isEmpty()) {
-					livingEntity.dropStack(livingEntity.getMainHandStack());
-					livingEntity.setStackInHand(Hand.MAIN_HAND, ItemStack.EMPTY);
-					livingEntity.getWorld().playSound(null, livingEntity.getBlockPos(), SoundEvents.ITEM_BUNDLE_DROP_CONTENTS, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+				if (livingEntity.getMainHandItem() != null && !livingEntity.getMainHandItem().isEmpty()) {
+					livingEntity.spawnAtLocation(livingEntity.getMainHandItem());
+					livingEntity.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+					livingEntity.level().playSound(null, livingEntity.blockPosition(), SoundEvents.BUNDLE_DROP_CONTENTS, SoundSource.NEUTRAL, 1.0F, 1.0F);
 					break;
 				}
 			} else if (randomSlot == 4) {
-				if (livingEntity.getOffHandStack() != null && !livingEntity.getOffHandStack().isEmpty()) {
-					livingEntity.dropStack(livingEntity.getOffHandStack());
-					livingEntity.setStackInHand(Hand.OFF_HAND, ItemStack.EMPTY);
-					livingEntity.getWorld().playSound(null, livingEntity.getBlockPos(), SoundEvents.ITEM_BUNDLE_DROP_CONTENTS, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+				if (livingEntity.getOffhandItem() != null && !livingEntity.getOffhandItem().isEmpty()) {
+					livingEntity.spawnAtLocation(livingEntity.getOffhandItem());
+					livingEntity.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+					livingEntity.level().playSound(null, livingEntity.blockPosition(), SoundEvents.BUNDLE_DROP_CONTENTS, SoundSource.NEUTRAL, 1.0F, 1.0F);
 					break;
 				}
 			} else {
 				if (syncedArmorStacks != null && !syncedArmorStacks.get(randomSlot).isEmpty()) {
-					livingEntity.dropStack(syncedArmorStacks.get(randomSlot));
+					livingEntity.spawnAtLocation(syncedArmorStacks.get(randomSlot));
 					syncedArmorStacks.set(randomSlot, ItemStack.EMPTY);
-					livingEntity.getWorld().playSound(null, livingEntity.getBlockPos(), SoundEvents.ITEM_BUNDLE_DROP_CONTENTS, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+					livingEntity.level().playSound(null, livingEntity.blockPosition(), SoundEvents.BUNDLE_DROP_CONTENTS, SoundSource.NEUTRAL, 1.0F, 1.0F);
 					break;
 				}
 			}
@@ -89,13 +95,13 @@ public class DisarmingEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public int getMinPower(int level) {
+	public int getMinCost(int level) {
 		return 10;
 	}
 	
 	@Override
-	public int getMaxPower(int level) {
-		return super.getMinPower(level) + 30;
+	public int getMaxCost(int level) {
+		return super.getMinCost(level) + 30;
 	}
 	
 	@Override
@@ -104,8 +110,8 @@ public class DisarmingEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public boolean isAcceptableItem(ItemStack stack) {
-		return super.isAcceptableItem(stack) || stack.getItem() instanceof AxeItem;
+	public boolean canEnchant(ItemStack stack) {
+		return super.canEnchant(stack) || stack.getItem() instanceof AxeItem;
 	}
 	
 }

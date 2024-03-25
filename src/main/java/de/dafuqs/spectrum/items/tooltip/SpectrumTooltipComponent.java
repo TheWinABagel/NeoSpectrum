@@ -1,18 +1,19 @@
 package de.dafuqs.spectrum.items.tooltip;
 
-import de.dafuqs.spectrum.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.font.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.client.gui.screen.ingame.*;
-import net.minecraft.client.gui.tooltip.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
-public class SpectrumTooltipComponent implements TooltipComponent {
+public class SpectrumTooltipComponent implements ClientTooltipComponent {
 	
-	public static final Identifier TEXTURE = SpectrumCommon.locate("textures/gui/container/spectrum_tooltips.png");
+	public static final ResourceLocation TEXTURE = SpectrumCommon.locate("textures/gui/container/spectrum_tooltips.png");
 	
 	@Override
 	public int getHeight() {
@@ -20,11 +21,11 @@ public class SpectrumTooltipComponent implements TooltipComponent {
 	}
 	
 	@Override
-	public int getWidth(TextRenderer textRenderer) {
+	public int getWidth(Font textRenderer) {
 		return 0;
 	}
 	
-	public void drawOutline(DrawContext context, int x, int y, int columns, int rows) {
+	public void drawOutline(GuiGraphics context, int x, int y, int columns, int rows) {
 		this.draw(context, x, y, Sprite.BORDER_CORNER_TOP);
 		this.draw(context, x + columns * 18 + 1, y, Sprite.BORDER_CORNER_TOP);
 		
@@ -43,22 +44,22 @@ public class SpectrumTooltipComponent implements TooltipComponent {
 		this.draw(context, x + columns * 18 + 1, y + rows * 20, Sprite.BORDER_CORNER_BOTTOM);
 	}
 	
-	public void drawSlot(DrawContext context, int x, int y, int index, ItemStack itemStack, TextRenderer textRenderer) {
+	public void drawSlot(GuiGraphics context, int x, int y, int index, ItemStack itemStack, Font textRenderer) {
 		this.draw(context, x, y, Sprite.SLOT);
 		
-		context.drawItem(itemStack, x + 1, y + 1, index);
-		context.drawItemInSlot(textRenderer, itemStack, x + 1, y + 1);
+		context.renderItem(itemStack, x + 1, y + 1, index);
+		context.renderItemDecorations(textRenderer, itemStack, x + 1, y + 1);
 		if (index == 0) {
-			HandledScreen.drawSlotHighlight(context, x + 1, y + 1, 0);
+			AbstractContainerScreen.renderSlotHighlight(context, x + 1, y + 1, 0);
 		}
 	}
 	
-	public void drawDottedSlot(DrawContext context, int x, int y) {
+	public void drawDottedSlot(GuiGraphics context, int x, int y) {
 		this.draw(context, x, y, Sprite.DOTTED_SLOT);
 	}
 	
-	private void draw(DrawContext context, int x, int y, @NotNull Sprite sprite) {
-		context.drawTexture(TEXTURE, x, y, sprite.u, sprite.v, sprite.width, sprite.height, 128, 128);
+	private void draw(GuiGraphics context, int x, int y, @NotNull Sprite sprite) {
+		context.blit(TEXTURE, x, y, sprite.u, sprite.v, sprite.width, sprite.height, 128, 128);
 	}
 	
 	@Environment(EnvType.CLIENT)

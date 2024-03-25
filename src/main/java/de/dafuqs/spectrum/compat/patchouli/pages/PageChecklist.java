@@ -1,20 +1,23 @@
 package de.dafuqs.spectrum.compat.patchouli.pages;
 
-import com.google.gson.annotations.*;
-import de.dafuqs.revelationary.api.advancements.*;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import vazkii.patchouli.api.*;
-import vazkii.patchouli.client.book.*;
-import vazkii.patchouli.client.book.gui.*;
+import com.google.gson.annotations.SerializedName;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import vazkii.patchouli.api.IVariable;
+import vazkii.patchouli.client.book.BookPage;
+import vazkii.patchouli.client.book.gui.BookTextRenderer;
+import vazkii.patchouli.client.book.gui.GuiBook;
+import vazkii.patchouli.client.book.gui.GuiBookEntry;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PageChecklist extends BookPage {
 	
 	protected String title;
-	transient Text titleText;
+	transient Component titleText;
 	
 	protected IVariable text;
 	transient BookTextRenderer textRender;
@@ -36,7 +39,7 @@ public class PageChecklist extends BookPage {
 		
 		for (Map.Entry<String, String> entry : checklist.entrySet()) {
 			String value = entry.getValue();
-			if (AdvancementHelper.hasAdvancementClient(Identifier.tryParse(entry.getKey()))) {
+			if (AdvancementHelper.hasAdvancementClient(ResourceLocation.tryParse(entry.getKey()))) {
 				stringBuilder.append("$(li)");
 				stringBuilder.append("$(m)");
 				stringBuilder.append(value);
@@ -49,11 +52,11 @@ public class PageChecklist extends BookPage {
 			}
 		}
 		
-		textRender = new BookTextRenderer(parent, IVariable.wrap(stringBuilder.toString()).as(Text.class), 0, getTextHeight());
+		textRender = new BookTextRenderer(parent, IVariable.wrap(stringBuilder.toString()).as(Component.class), 0, getTextHeight());
 		
 		if (title == null) {
 			title = "";
-			titleText = Text.literal("");
+			titleText = Component.literal("");
 		} else {
 			titleText = i18nText(title);
 		}
@@ -64,14 +67,14 @@ public class PageChecklist extends BookPage {
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float pticks) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float pticks) {
 		super.render(drawContext, mouseX, mouseY, pticks);
 		
 		textRender.render(drawContext, mouseX, mouseY);
-		parent.drawCenteredStringNoShadow(drawContext, getTitle().asOrderedText(), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
+		parent.drawCenteredStringNoShadow(drawContext, getTitle().getVisualOrderText(), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
 	}
 	
-	protected Text getTitle() {
+	protected Component getTitle() {
 		return titleText;
 	}
 	

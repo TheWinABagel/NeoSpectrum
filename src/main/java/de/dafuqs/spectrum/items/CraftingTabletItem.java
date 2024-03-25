@@ -1,61 +1,67 @@
 package de.dafuqs.spectrum.items;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.items.tooltip.*;
-import de.dafuqs.spectrum.recipe.pedestal.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.client.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.entry.*;
-import net.minecraft.screen.*;
-import net.minecraft.server.network.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
+import de.dafuqs.spectrum.api.item.LoomPatternProvider;
+import de.dafuqs.spectrum.helpers.InventoryHelper;
+import de.dafuqs.spectrum.inventories.CraftingTabletScreenHandler;
+import de.dafuqs.spectrum.items.tooltip.CraftingTabletTooltipData;
+import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBannerPatterns;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.Holder;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BannerPattern;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public class CraftingTabletItem extends Item implements LoomPatternProvider {
 	
-	private static final Text TITLE = Text.translatable("item.spectrum.crafting_tablet");
+	private static final Component TITLE = Component.translatable("item.spectrum.crafting_tablet");
 	
-	public CraftingTabletItem(Settings settings) {
+	public CraftingTabletItem(Properties settings) {
 		super(settings);
 	}
 	
 	public static void setStoredRecipe(ItemStack craftingTabletItemStack, Recipe<?> recipe) {
-		NbtCompound nbtCompound = craftingTabletItemStack.getOrCreateNbt();
+		CompoundTag nbtCompound = craftingTabletItemStack.getOrCreateTag();
 		nbtCompound.putString("recipe", recipe.getId().toString());
-		craftingTabletItemStack.setNbt(nbtCompound);
+		craftingTabletItemStack.setTag(nbtCompound);
 	}
 	
 	public static void clearStoredRecipe(ItemStack craftingTabletItemStack) {
-		NbtCompound nbtCompound = craftingTabletItemStack.getOrCreateNbt();
+		CompoundTag nbtCompound = craftingTabletItemStack.getOrCreateTag();
 		if (nbtCompound.contains("recipe")) {
 			nbtCompound.remove("recipe");
-			craftingTabletItemStack.setNbt(nbtCompound);
+			craftingTabletItemStack.setTag(nbtCompound);
 		}
 	}
 	
-	public static Recipe<?> getStoredRecipe(World world, ItemStack itemStack) {
+	public static Recipe<?> getStoredRecipe(Level world, ItemStack itemStack) {
 		if (world != null) {
-			NbtCompound nbtCompound = itemStack.getNbt();
+			CompoundTag nbtCompound = itemStack.getTag();
 			
 			if (nbtCompound != null && nbtCompound.contains("recipe")) {
 				String recipeString = nbtCompound.getString("recipe");
-				Identifier recipeIdentifier = new Identifier(recipeString);
+				ResourceLocation recipeIdentifier = new ResourceLocation(recipeString);
 				
-				Optional<? extends Recipe<?>> optional = world.getRecipeManager().get(recipeIdentifier);
+				Optional<? extends Recipe<?>> optional = world.getRecipeManager().byKey(recipeIdentifier);
 				if (optional.isPresent()) {
 					return optional.get();
 				}
@@ -65,59 +71,59 @@ public class CraftingTabletItem extends Item implements LoomPatternProvider {
 	}
 	
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		ItemStack itemStack = user.getStackInHand(hand);
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		ItemStack itemStack = user.getItemInHand(hand);
 		
-		if (!world.isClient) {
+		if (!world.isClientSide) {
 			Recipe<?> storedRecipe = getStoredRecipe(world, itemStack);
-			if (storedRecipe == null || user.isSneaking()) {
-				user.openHandledScreen(createScreenHandlerFactory(world, (ServerPlayerEntity) user, itemStack));
+			if (storedRecipe == null || user.isShiftKeyDown()) {
+				user.openMenu(createScreenHandlerFactory(world, (ServerPlayer) user, itemStack));
 			} else {
 				if (storedRecipe instanceof PedestalRecipe) {
-					return TypedActionResult.pass(user.getStackInHand(hand));
+					return InteractionResultHolder.pass(user.getItemInHand(hand));
 				} else {
-					tryCraftRecipe((ServerPlayerEntity) user, storedRecipe);
+					tryCraftRecipe((ServerPlayer) user, storedRecipe);
 				}
 			}
-			return TypedActionResult.success(user.getStackInHand(hand));
+			return InteractionResultHolder.success(user.getItemInHand(hand));
 		} else {
-			return TypedActionResult.consume(user.getStackInHand(hand));
+			return InteractionResultHolder.consume(user.getItemInHand(hand));
 		}
 	}
 	
-	public NamedScreenHandlerFactory createScreenHandlerFactory(World world, ServerPlayerEntity serverPlayerEntity, ItemStack itemStack) {
-		return new SimpleNamedScreenHandlerFactory((syncId, inventory, player) -> new CraftingTabletScreenHandler(syncId, inventory, ScreenHandlerContext.create(world, serverPlayerEntity.getBlockPos()), itemStack), TITLE);
+	public MenuProvider createScreenHandlerFactory(Level world, ServerPlayer serverPlayerEntity, ItemStack itemStack) {
+		return new SimpleMenuProvider((syncId, inventory, player) -> new CraftingTabletScreenHandler(syncId, inventory, ContainerLevelAccess.create(world, serverPlayerEntity.blockPosition()), itemStack), TITLE);
 	}
 	
-	public static void tryCraftRecipe(ServerPlayerEntity serverPlayerEntity, Recipe<?> recipe) {
-		DefaultedList<Ingredient> ingredients = recipe.getIngredients();
+	public static void tryCraftRecipe(ServerPlayer serverPlayerEntity, Recipe<?> recipe) {
+		NonNullList<Ingredient> ingredients = recipe.getIngredients();
 		
-		Inventory playerInventory = serverPlayerEntity.getInventory();
+		Container playerInventory = serverPlayerEntity.getInventory();
 		if (InventoryHelper.hasInInventory(ingredients, playerInventory)) {
 			List<ItemStack> remainders = InventoryHelper.removeFromInventoryWithRemainders(ingredients, playerInventory);
 			
-			ItemStack craftingResult = recipe.getOutput(serverPlayerEntity.getWorld().getRegistryManager()).copy();
-			serverPlayerEntity.getInventory().offerOrDrop(craftingResult);
+			ItemStack craftingResult = recipe.getResultItem(serverPlayerEntity.level().registryAccess()).copy();
+			serverPlayerEntity.getInventory().placeItemBackInInventory(craftingResult);
 			
 			for (ItemStack remainder : remainders) {
-				serverPlayerEntity.getInventory().offerOrDrop(remainder);
+				serverPlayerEntity.getInventory().placeItemBackInInventory(remainder);
 			}
 		}
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
 		Recipe<?> recipe = getStoredRecipe(world, itemStack);
 		if (recipe == null) {
-			tooltip.add(Text.translatable("item.spectrum.crafting_tablet.tooltip.no_recipe").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.crafting_tablet.tooltip.no_recipe").withStyle(ChatFormatting.GRAY));
 		} else {
 			if (recipe instanceof PedestalRecipe) {
-				tooltip.add(Text.translatable("item.spectrum.crafting_tablet.tooltip.pedestal_recipe").formatted(Formatting.GRAY));
+				tooltip.add(Component.translatable("item.spectrum.crafting_tablet.tooltip.pedestal_recipe").withStyle(ChatFormatting.GRAY));
 			} else {
-				tooltip.add(Text.translatable("item.spectrum.crafting_tablet.tooltip.crafting_recipe").formatted(Formatting.GRAY));
+				tooltip.add(Component.translatable("item.spectrum.crafting_tablet.tooltip.crafting_recipe").withStyle(ChatFormatting.GRAY));
 			}
-			tooltip.add(Text.translatable("item.spectrum.crafting_tablet.tooltip.shift_to_view_gui").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.crafting_tablet.tooltip.shift_to_view_gui").withStyle(ChatFormatting.GRAY));
 		}
 		
 		addBannerPatternProviderTooltip(tooltip);
@@ -125,9 +131,9 @@ public class CraftingTabletItem extends Item implements LoomPatternProvider {
 	
 	@Environment(EnvType.CLIENT)
 	@Override
-    public Optional<TooltipData> getTooltipData(ItemStack stack) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		Recipe<?> storedRecipe = CraftingTabletItem.getStoredRecipe(client.world, stack);
+    public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
+		Minecraft client = Minecraft.getInstance();
+		Recipe<?> storedRecipe = CraftingTabletItem.getStoredRecipe(client.level, stack);
 		if (storedRecipe != null) {
 			return Optional.of(new CraftingTabletTooltipData(storedRecipe));
 		} else {
@@ -136,7 +142,7 @@ public class CraftingTabletItem extends Item implements LoomPatternProvider {
 	}
 	
 	@Override
-	public RegistryEntry<BannerPattern> getPattern() {
+	public Holder<BannerPattern> getPattern() {
 		return SpectrumBannerPatterns.CRAFTING_TABLET;
 	}
 	

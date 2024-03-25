@@ -1,23 +1,25 @@
 package de.dafuqs.spectrum.enchantments;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.items.tools.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.items.tools.SpectrumFishingRodItem;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 public class ExuberanceEnchantment extends SpectrumEnchantment {
 	
-	public ExuberanceEnchantment(Rarity weight, Identifier unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
-		super(weight, EnchantmentTarget.WEAPON, slotTypes, unlockAdvancementIdentifier);
+	public ExuberanceEnchantment(Rarity weight, ResourceLocation unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
+		super(weight, EnchantmentCategory.WEAPON, slotTypes, unlockAdvancementIdentifier);
 	}
 	
-	public static float getExuberanceMod(PlayerEntity breakingPlayer) {
-		if (breakingPlayer != null && EnchantmentHelper.getLevel(SpectrumEnchantments.EXUBERANCE, breakingPlayer.getMainHandStack()) > 0) {
-			int exuberanceLevel = EnchantmentHelper.getEquipmentLevel(SpectrumEnchantments.EXUBERANCE, breakingPlayer);
+	public static float getExuberanceMod(Player breakingPlayer) {
+		if (breakingPlayer != null && EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.EXUBERANCE, breakingPlayer.getMainHandItem()) > 0) {
+			int exuberanceLevel = EnchantmentHelper.getEnchantmentLevel(SpectrumEnchantments.EXUBERANCE, breakingPlayer);
 			return getExuberanceMod(exuberanceLevel);
 		} else {
 			return 1.0F;
@@ -29,13 +31,13 @@ public class ExuberanceEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public int getMinPower(int level) {
+	public int getMinCost(int level) {
 		return 10;
 	}
 	
 	@Override
-	public int getMaxPower(int level) {
-		return super.getMinPower(level) + 30;
+	public int getMaxCost(int level) {
+		return super.getMinCost(level) + 30;
 	}
 	
 	@Override
@@ -44,8 +46,8 @@ public class ExuberanceEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public boolean isAcceptableItem(ItemStack stack) {
-		return super.isAcceptableItem(stack) || stack.getItem() instanceof AxeItem || EnchantmentTarget.DIGGER.isAcceptableItem(stack.getItem()) || stack.getItem() instanceof SpectrumFishingRodItem;
+	public boolean canEnchant(ItemStack stack) {
+		return super.canEnchant(stack) || stack.getItem() instanceof AxeItem || EnchantmentCategory.DIGGER.canEnchant(stack.getItem()) || stack.getItem() instanceof SpectrumFishingRodItem;
 	}
 	
 }

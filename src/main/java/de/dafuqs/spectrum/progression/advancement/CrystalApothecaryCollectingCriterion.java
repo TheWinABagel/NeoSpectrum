@@ -1,54 +1,52 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.item.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.predicate.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
-public class CrystalApothecaryCollectingCriterion extends AbstractCriterion<CrystalApothecaryCollectingCriterion.Conditions> {
+public class CrystalApothecaryCollectingCriterion extends SimpleCriterionTrigger<CrystalApothecaryCollectingCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("collect_using_crystal_apothecary");
+	static final ResourceLocation ID = SpectrumCommon.locate("collect_using_crystal_apothecary");
 	
 	public static CrystalApothecaryCollectingCriterion.Conditions create(ItemPredicate item) {
-		return new CrystalApothecaryCollectingCriterion.Conditions(LootContextPredicate.EMPTY, item);
+		return new CrystalApothecaryCollectingCriterion.Conditions(ContextAwarePredicate.ANY, item);
 	}
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
 	@Override
-	public CrystalApothecaryCollectingCriterion.Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate extended, AdvancementEntityPredicateDeserializer advancementEntityPredicateDeserializer) {
+	public CrystalApothecaryCollectingCriterion.Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate extended, DeserializationContext advancementEntityPredicateDeserializer) {
 		ItemPredicate itemPredicate = ItemPredicate.fromJson(jsonObject.get("item"));
 		return new CrystalApothecaryCollectingCriterion.Conditions(extended, itemPredicate);
 	}
 	
-	public void trigger(ServerPlayerEntity player, ItemStack itemStack) {
+	public void trigger(ServerPlayer player, ItemStack itemStack) {
 		this.trigger(player, (conditions) -> conditions.matches(itemStack));
 	}
 	
-	public static class Conditions extends AbstractCriterionConditions {
+	public static class Conditions extends AbstractCriterionTriggerInstance {
 		private final ItemPredicate itemPredicate;
 		
-		public Conditions(LootContextPredicate player, ItemPredicate itemPredicate) {
+		public Conditions(ContextAwarePredicate player, ItemPredicate itemPredicate) {
 			super(ID, player);
 			this.itemPredicate = itemPredicate;
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
-			jsonObject.add("item", this.itemPredicate.toJson());
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
+			jsonObject.add("item", this.itemPredicate.serializeToJson());
 			return jsonObject;
 		}
 		
 		public boolean matches(ItemStack stack) {
-			return this.itemPredicate.test(stack);
+			return this.itemPredicate.matches(stack);
 		}
 	}
 	

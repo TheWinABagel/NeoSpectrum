@@ -1,21 +1,22 @@
 package de.dafuqs.spectrum.compat.patchouli.pages;
 
-import com.google.gson.annotations.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import net.minecraft.client.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.recipe.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import vazkii.patchouli.client.book.*;
-import vazkii.patchouli.client.book.gui.*;
+import com.google.gson.annotations.SerializedName;
+import de.dafuqs.spectrum.api.recipe.GatedRecipe;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import vazkii.patchouli.client.book.BookContentsBuilder;
+import vazkii.patchouli.client.book.BookEntry;
+import vazkii.patchouli.client.book.gui.GuiBook;
 
 public abstract class PageGatedRecipeDouble<T extends GatedRecipe> extends PageGatedRecipe<T> {
 	
 	@SerializedName("recipe2")
-	Identifier recipe2Id;
+	ResourceLocation recipe2Id;
 	
 	protected transient T recipe2;
 	
@@ -23,10 +24,10 @@ public abstract class PageGatedRecipeDouble<T extends GatedRecipe> extends PageG
 		super(recipeType);
 	}
 	
-	protected abstract void drawRecipe(DrawContext drawContext, World world, T recipe, int recipeX, int recipeY, int mouseX, int mouseY, boolean second);
+	protected abstract void drawRecipe(GuiGraphics drawContext, Level world, T recipe, int recipeX, int recipeY, int mouseX, int mouseY, boolean second);
 	
 	@Override
-	public void build(World world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
+	public void build(Level world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
 		if (recipe == null && recipe2 != null) {
 			recipe = recipe2;
 			recipe2 = null;
@@ -46,19 +47,19 @@ public abstract class PageGatedRecipeDouble<T extends GatedRecipe> extends PageG
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float tickDelta) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float tickDelta) {
 		super.render(drawContext, mouseX, mouseY, tickDelta);
 		
 		if (recipe != null) {
-			World world = MinecraftClient.getInstance().world;
+			Level world = Minecraft.getInstance().level;
 			if (world == null) {
 				return;
 			}
 			
 			int recipeX = getX();
 			int recipeY = getY();
-			Text title = getTitle();
-			parent.drawCenteredStringNoShadow(drawContext, title.asOrderedText(), GuiBook.PAGE_WIDTH / 2, recipeY - 10, book.headerColor);
+			Component title = getTitle();
+			parent.drawCenteredStringNoShadow(drawContext, title.getVisualOrderText(), GuiBook.PAGE_WIDTH / 2, recipeY - 10, book.headerColor);
 			
 			drawRecipe(drawContext, world, recipe, recipeX, recipeY, mouseX, mouseY, false);
 			if (recipe2 != null) {
@@ -69,11 +70,11 @@ public abstract class PageGatedRecipeDouble<T extends GatedRecipe> extends PageG
 	
 	@Override
 	public boolean isPageUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		if (!super.isPageUnlocked()) {
 			return false;
 		}
-		PlayerEntity player = client.player;
+		Player player = client.player;
 		return (recipe != null && recipe.canPlayerCraft(player)) || (recipe2 != null && recipe2.canPlayerCraft(player));
 	}
 	

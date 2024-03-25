@@ -1,11 +1,11 @@
 package de.dafuqs.spectrum.mixin.client.accessors;
 
-import net.minecraft.client.render.model.*;
-import net.minecraft.client.render.model.json.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.gen.*;
+import net.minecraft.client.renderer.block.model.ItemOverrides;
+import net.minecraft.client.resources.model.BakedModel;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(ModelOverrideList.BakedOverride.class)
+@Mixin(ItemOverrides.BakedOverride.class)
 public interface BakedOverrideAccessor {
 	
 	@Accessor()

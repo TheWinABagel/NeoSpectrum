@@ -1,17 +1,18 @@
 package de.dafuqs.spectrum.blocks.ender;
 
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
+import de.dafuqs.spectrum.api.block.PlayerOwned;
+import de.dafuqs.spectrum.api.block.PlayerOwnedWithName;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.PlayerEnderChestContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.UUID;
 
 public class EnderDropperBlockEntity extends BlockEntity implements PlayerOwnedWithName {
 	
@@ -22,26 +23,26 @@ public class EnderDropperBlockEntity extends BlockEntity implements PlayerOwnedW
 		super(SpectrumBlockEntities.ENDER_DROPPER, blockPos, blockState);
 	}
 	
-	protected Text getContainerName() {
+	protected Component getContainerName() {
 		if (hasOwner()) {
-			return Text.translatable("block.spectrum.ender_dropper.owner", this.ownerName);
+			return Component.translatable("block.spectrum.ender_dropper.owner", this.ownerName);
 		} else {
-			return Text.translatable("block.spectrum.ender_dropper");
+			return Component.translatable("block.spectrum.ender_dropper");
 		}
 	}
 	
 	public int chooseNonEmptySlot() {
 		if (this.hasOwner()) {
-			PlayerEntity playerEntity = getOwnerIfOnline();
+			Player playerEntity = getOwnerIfOnline();
 			if (playerEntity == null) {
 				return -1; // player not online => no drop
 			} else {
 				int i = -1;
 				int j = 1;
 				
-				EnderChestInventory enderInventory = playerEntity.getEnderChestInventory();
-				for (int k = 0; k < enderInventory.size(); ++k) {
-					if (!(enderInventory.getStack(k)).isEmpty() && world.random.nextInt(j++) == 0) {
+				PlayerEnderChestContainer enderInventory = playerEntity.getEnderChestInventory();
+				for (int k = 0; k < enderInventory.getContainerSize(); ++k) {
+					if (!(enderInventory.getItem(k)).isEmpty() && level.random.nextInt(j++) == 0) {
 						i = k;
 					}
 				}
@@ -54,19 +55,19 @@ public class EnderDropperBlockEntity extends BlockEntity implements PlayerOwnedW
 	}
 	
 	public ItemStack getStack(int slot) {
-		PlayerEntity playerEntity = getOwnerIfOnline();
+		Player playerEntity = getOwnerIfOnline();
 		if (playerEntity != null) {
-			EnderChestInventory enderInventory = playerEntity.getEnderChestInventory();
-			return enderInventory.getStack(slot);
+			PlayerEnderChestContainer enderInventory = playerEntity.getEnderChestInventory();
+			return enderInventory.getItem(slot);
 		}
 		return ItemStack.EMPTY;
 	}
 	
 	public void setStack(int slot, ItemStack itemStack) {
-		PlayerEntity playerEntity = getOwnerIfOnline();
+		Player playerEntity = getOwnerIfOnline();
 		if (playerEntity != null) {
-			EnderChestInventory enderInventory = playerEntity.getEnderChestInventory();
-			enderInventory.setStack(slot, itemStack);
+			PlayerEnderChestContainer enderInventory = playerEntity.getEnderChestInventory();
+			enderInventory.setItem(slot, itemStack);
 		}
 	}
 	
@@ -81,23 +82,23 @@ public class EnderDropperBlockEntity extends BlockEntity implements PlayerOwnedW
 	}
 	
 	@Override
-	public void setOwner(PlayerEntity playerEntity) {
-		this.ownerUUID = playerEntity.getUuid();
+	public void setOwner(Player playerEntity) {
+		this.ownerUUID = playerEntity.getUUID();
 		this.ownerName = playerEntity.getName().getString();
-		markDirty();
+		setChanged();
 	}
 	
 	@Override
-	public void readNbt(NbtCompound nbt) {
-		super.readNbt(nbt);
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
 		
 		this.ownerUUID = PlayerOwned.readOwnerUUID(nbt);
 		this.ownerName = PlayerOwned.readOwnerName(nbt);
 	}
 	
 	@Override
-	public void writeNbt(NbtCompound nbt) {
-		super.writeNbt(nbt);
+	public void saveAdditional(CompoundTag nbt) {
+		super.saveAdditional(nbt);
 		
 		PlayerOwned.writeOwnerUUID(nbt, this.ownerUUID);
 		PlayerOwned.writeOwnerName(nbt, this.ownerName);

@@ -1,27 +1,30 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import de.dafuqs.spectrum.particle.*;
-import net.minecraft.block.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class SparklestoneBlock extends Block {
 	
-	public SparklestoneBlock(AbstractBlock.Settings settings) {
+	public SparklestoneBlock(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
 		for (Direction direction : Direction.values()) {
 			if (direction != Direction.DOWN) {
-				BlockPos blockPos = pos.offset(direction);
+				BlockPos blockPos = pos.relative(direction);
 				BlockState blockState = world.getBlockState(blockPos);
-				if (!state.isOpaque() || !blockState.isSideSolidFullSquare(world, blockPos, direction.getOpposite())) {
-					double d = direction.getOffsetX() == 0 ? random.nextDouble() : 0.5D + (double) direction.getOffsetX() * 0.6D;
-					double e = direction.getOffsetY() == 0 ? random.nextDouble() : 0.5D + (double) direction.getOffsetY() * 0.6D;
-					double f = direction.getOffsetZ() == 0 ? random.nextDouble() : 0.5D + (double) direction.getOffsetZ() * 0.6D;
+				if (!state.canOcclude() || !blockState.isFaceSturdy(world, blockPos, direction.getOpposite())) {
+					double d = direction.getStepX() == 0 ? random.nextDouble() : 0.5D + (double) direction.getStepX() * 0.6D;
+					double e = direction.getStepY() == 0 ? random.nextDouble() : 0.5D + (double) direction.getStepY() * 0.6D;
+					double f = direction.getStepZ() == 0 ? random.nextDouble() : 0.5D + (double) direction.getStepZ() * 0.6D;
 					world.addParticle(SpectrumParticleTypes.SHIMMERSTONE_SPARKLE, (double) pos.getX() + d, (double) pos.getY() + e, (double) pos.getZ() + f, 0.0D, 0.05D, 0.0D);
 				}
 			}

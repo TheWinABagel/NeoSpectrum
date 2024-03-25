@@ -1,28 +1,31 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.GlassBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class RadiantGlassBlock extends GlassBlock {
 	
-	public RadiantGlassBlock(Settings settings) {
+	public RadiantGlassBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public boolean isSideInvisible(BlockState state, BlockState stateFrom, Direction direction) {
-		if (stateFrom.isOf(this) || stateFrom.isOf(SpectrumBlocks.RADIANT_SEMI_PERMEABLE_GLASS)) {
+	public boolean skipRendering(BlockState state, BlockState stateFrom, Direction direction) {
+		if (stateFrom.is(this) || stateFrom.is(SpectrumBlocks.RADIANT_SEMI_PERMEABLE_GLASS)) {
 			return true;
 		}
-		return super.isSideInvisible(state, stateFrom, direction);
+		return super.skipRendering(state, stateFrom, direction);
 	}
 	
 	@Override
-	public boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
+	public boolean propagatesSkylightDown(BlockState state, BlockGetter world, BlockPos pos) {
 		return true;
 	}
 	

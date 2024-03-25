@@ -1,19 +1,21 @@
 package de.dafuqs.spectrum.api.item;
 
-import de.dafuqs.spectrum.helpers.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.helpers.AoEHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 
 public interface AoEBreakingTool {
 	
-	default void onTryBreakBlock(ItemStack stack, BlockPos pos, PlayerEntity player) {
-		World world = player.getWorld();
-		BlockHitResult hitResult = (BlockHitResult) player.raycast(10, 1, false);
-		if (!world.isClient && hitResult.getType() == HitResult.Type.BLOCK) {
-			Direction side = hitResult.getSide();
+	default void onTryBreakBlock(ItemStack stack, BlockPos pos, Player player) {
+		Level world = player.level();
+		BlockHitResult hitResult = (BlockHitResult) player.pick(10, 1, false);
+		if (!world.isClientSide && hitResult.getType() == HitResult.Type.BLOCK) {
+			Direction side = hitResult.getDirection();
 			if (canUseAoE(player, stack)) {
 				AoEHelper.doAoEBlockBreaking(player, stack, pos, side, getAoERange(stack));
 			}
@@ -27,7 +29,7 @@ public interface AoEBreakingTool {
 	 * @param stack the stack blocks get broken with
 	 * @return true to do AoE mining, false to skip AoE mining
 	 */
-	boolean canUseAoE(PlayerEntity player, ItemStack stack);
+	boolean canUseAoE(Player player, ItemStack stack);
 	
 	/**
 	 * The range this tool breaks blocks via AoE

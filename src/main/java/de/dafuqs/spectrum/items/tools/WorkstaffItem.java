@@ -1,25 +1,37 @@
 package de.dafuqs.spectrum.items.tools;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.client.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.screen.*;
-import net.minecraft.server.network.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkCost;
+import de.dafuqs.spectrum.api.energy.InkPowered;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.api.item.AoEBreakingTool;
+import de.dafuqs.spectrum.api.item.Preenchanted;
+import de.dafuqs.spectrum.helpers.SpectrumEnchantmentHelper;
+import de.dafuqs.spectrum.helpers.Support;
+import de.dafuqs.spectrum.inventories.WorkstaffScreenHandler;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 public class WorkstaffItem extends MultiToolItem implements AoEBreakingTool, Preenchanted {
 	
@@ -43,8 +55,8 @@ public class WorkstaffItem extends MultiToolItem implements AoEBreakingTool, Pre
 			this.triggerText = triggerText;
 		}
 
-		public Text getTriggerText() {
-			return Text.translatable(triggerText);
+		public Component getTriggerText() {
+			return Component.translatable(triggerText);
 		}
 		
 	}
@@ -53,55 +65,55 @@ public class WorkstaffItem extends MultiToolItem implements AoEBreakingTool, Pre
 	public static final String RIGHT_CLICK_DISABLED_NBT_STRING = "RightClickDisabled";
 	public static final String PROJECTILES_DISABLED_NBT_STRING = "ProjectilesDisabled";
 
-    public WorkstaffItem(ToolMaterial material, int attackDamage, float attackSpeed, Settings settings) {
+    public WorkstaffItem(Tier material, int attackDamage, float attackSpeed, Properties settings) {
         super(material, attackDamage, attackSpeed, settings);
     }
 	
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		if (user.isSneaking()) {
-			if (user instanceof ServerPlayerEntity serverPlayerEntity) {
-				serverPlayerEntity.openHandledScreen(createScreenHandlerFactory(user.getStackInHand(hand)));
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		if (user.isShiftKeyDown()) {
+			if (user instanceof ServerPlayer serverPlayerEntity) {
+				serverPlayerEntity.openMenu(createScreenHandlerFactory(user.getItemInHand(hand)));
 			}
-			return TypedActionResult.consume(user.getStackInHand(hand));
+			return InteractionResultHolder.consume(user.getItemInHand(hand));
 		}
 		return super.use(world, user, hand);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		int range = getAoERange(stack);
 		if(range > 0) {
 			int displayedRange = 1 + range + range;
-			tooltip.add(Text.translatable("item.spectrum.workstaff.tooltip.mining_range", displayedRange, displayedRange).formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.workstaff.tooltip.mining_range", displayedRange, displayedRange).withStyle(ChatFormatting.GRAY));
 		}
 	}
 	
 	@Override
 	public boolean canTill(ItemStack stack) {
-		NbtCompound nbt = stack.getNbt();
+		CompoundTag nbt = stack.getTag();
 		return nbt == null || !nbt.getBoolean(RIGHT_CLICK_DISABLED_NBT_STRING);
 	}
 	
-	public NamedScreenHandlerFactory createScreenHandlerFactory(ItemStack itemStack) {
-		return new SimpleNamedScreenHandlerFactory((syncId, inventory, player) ->
+	public MenuProvider createScreenHandlerFactory(ItemStack itemStack) {
+		return new SimpleMenuProvider((syncId, inventory, player) ->
 				new WorkstaffScreenHandler(syncId, inventory, itemStack),
-				Text.translatable("item.spectrum.workstaff")
+				Component.translatable("item.spectrum.workstaff")
 		);
 	}
 	
 	@Override
 	public int getAoERange(ItemStack stack) {
-		NbtCompound nbt = stack.getNbt();
-		if (nbt == null || !nbt.contains(RANGE_NBT_STRING, NbtElement.NUMBER_TYPE)) {
+		CompoundTag nbt = stack.getTag();
+		if (nbt == null || !nbt.contains(RANGE_NBT_STRING, Tag.TAG_ANY_NUMERIC)) {
 			return 0;
 		}
 		return nbt.getInt(RANGE_NBT_STRING);
 	}
 	
 	@Override
-	public boolean canUseAoE(PlayerEntity player, ItemStack stack) {
+	public boolean canUseAoE(Player player, ItemStack stack) {
 		int range = getAoERange(stack);
 		if (range <= 0) {
 			return true;
@@ -111,26 +123,26 @@ public class WorkstaffItem extends MultiToolItem implements AoEBreakingTool, Pre
 		return InkPowered.tryDrainEnergy(player, BASE_COST_PER_AOE_MINING_RANGE_INCREMENT.getColor(), costForRange);
 	}
 	
-	public static void applyToggle(PlayerEntity player, ItemStack stack, GUIToggle toggle) {
-		NbtCompound nbt = stack.getOrCreateNbt();
+	public static void applyToggle(Player player, ItemStack stack, GUIToggle toggle) {
+		CompoundTag nbt = stack.getOrCreateTag();
 		switch (toggle) {
 			case SELECT_1x1 -> {
 				nbt.remove(RANGE_NBT_STRING);
-				player.sendMessage(toggle.getTriggerText(), true);
+				player.displayClientMessage(toggle.getTriggerText(), true);
 			}
 			case SELECT_3x3 -> {
 				nbt.putInt(RANGE_NBT_STRING, 1);
-				player.sendMessage(toggle.getTriggerText(), true);
+				player.displayClientMessage(toggle.getTriggerText(), true);
 			}
 			case SELECT_5x5 -> {
 				nbt.putInt(RANGE_NBT_STRING, 2);
-				player.sendMessage(toggle.getTriggerText(), true);
+				player.displayClientMessage(toggle.getTriggerText(), true);
 			}
 			// switching to another enchantment
 			// fortune handling is a bit special. Its level is preserved in NBT,
 			// to restore the original enchant level when switching back
 			case SELECT_FORTUNE -> {
-				enchantAndRemoveOthers(player, stack, toggle.getTriggerText(), Enchantments.FORTUNE);
+				enchantAndRemoveOthers(player, stack, toggle.getTriggerText(), Enchantments.BLOCK_FORTUNE);
 			}
 			case SELECT_SILK_TOUCH -> {
 				enchantAndRemoveOthers(player, stack, toggle.getTriggerText(), Enchantments.SILK_TOUCH);
@@ -140,65 +152,65 @@ public class WorkstaffItem extends MultiToolItem implements AoEBreakingTool, Pre
 			}
 			case ENABLE_RIGHT_CLICK_ACTIONS -> {
 				nbt.remove(RIGHT_CLICK_DISABLED_NBT_STRING);
-				player.sendMessage(toggle.getTriggerText(), true);
+				player.displayClientMessage(toggle.getTriggerText(), true);
 			}
 			case DISABLE_RIGHT_CLICK_ACTIONS -> {
 				nbt.putBoolean(RIGHT_CLICK_DISABLED_NBT_STRING, true);
-				player.sendMessage(toggle.getTriggerText(), true);
+				player.displayClientMessage(toggle.getTriggerText(), true);
 			}
 			case ENABLE_PROJECTILES -> {
 				nbt.remove(PROJECTILES_DISABLED_NBT_STRING);
-				player.sendMessage(toggle.getTriggerText(), true);
+				player.displayClientMessage(toggle.getTriggerText(), true);
 			}
 			case DISABLE_PROJECTILES -> {
 				nbt.putBoolean(PROJECTILES_DISABLED_NBT_STRING, true);
-				player.sendMessage(toggle.getTriggerText(), true);
+				player.displayClientMessage(toggle.getTriggerText(), true);
 			}
 		}
-		stack.setNbt(nbt);
+		stack.setTag(nbt);
 	}
 	
-	private static void enchantAndRemoveOthers(PlayerEntity player, ItemStack stack, Text message, Enchantment enchantment) {
-		int existingLevel = EnchantmentHelper.getLevel(enchantment, stack);
+	private static void enchantAndRemoveOthers(Player player, ItemStack stack, Component message, Enchantment enchantment) {
+		int existingLevel = EnchantmentHelper.getItemEnchantmentLevel(enchantment, stack);
 		if (existingLevel > 0) {
 			return;
 		}
 		
 		int level = 1;
 		
-		NbtCompound nbt = stack.getOrCreateNbt();
-		if (enchantment == Enchantments.FORTUNE) {
-			if (nbt.contains("FortuneLevel", NbtElement.NUMBER_TYPE)) {
+		CompoundTag nbt = stack.getOrCreateTag();
+		if (enchantment == Enchantments.BLOCK_FORTUNE) {
+			if (nbt.contains("FortuneLevel", Tag.TAG_ANY_NUMERIC)) {
 				level = nbt.getInt("FortuneLevel");
 				nbt.remove("FortuneLevel");
 			}
 		} else {
-			int fortuneLevel = EnchantmentHelper.getLevel(Enchantments.FORTUNE, stack);
+			int fortuneLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_FORTUNE, stack);
 			if (fortuneLevel > 0) {
 				nbt.putInt("FortuneLevel", fortuneLevel);
 			}
 		}
 		
-		if (SpectrumEnchantmentHelper.removeEnchantments(stack, Enchantments.SILK_TOUCH, SpectrumEnchantments.RESONANCE, Enchantments.FORTUNE).getRight() > 0) {
+		if (SpectrumEnchantmentHelper.removeEnchantments(stack, Enchantments.SILK_TOUCH, SpectrumEnchantments.RESONANCE, Enchantments.BLOCK_FORTUNE).getB() > 0) {
 			SpectrumEnchantmentHelper.addOrUpgradeEnchantment(stack, enchantment, level, true, true);
-			player.sendMessage(message, true);
-		} else if (player instanceof ServerPlayerEntity serverPlayerEntity) {
+			player.displayClientMessage(message, true);
+		} else if (player instanceof ServerPlayer serverPlayerEntity) {
 			triggerUnenchantedWorkstaffAdvancement(serverPlayerEntity);
 		}
 	}
 	
-	private static void triggerUnenchantedWorkstaffAdvancement(ServerPlayerEntity player) {
-		player.playSound(SpectrumSoundEvents.USE_FAIL, SoundCategory.PLAYERS, 0.75F, 1.0F);
+	private static void triggerUnenchantedWorkstaffAdvancement(ServerPlayer player) {
+		player.playNotifySound(SpectrumSoundEvents.USE_FAIL, SoundSource.PLAYERS, 0.75F, 1.0F);
 		Support.grantAdvancementCriterion(player, "lategame/trigger_unenchanted_workstaff", "code_triggered");
 	}
 	
 	@Override
 	public Map<Enchantment, Integer> getDefaultEnchantments() {
-		return Map.of(Enchantments.FORTUNE, 4);
+		return Map.of(Enchantments.BLOCK_FORTUNE, 4);
 	}
 
 	@Override
-	public ItemStack getDefaultStack() {
+	public ItemStack getDefaultInstance() {
 		return getDefaultEnchantedStack(this);
 	}
 

@@ -1,16 +1,19 @@
 package de.dafuqs.spectrum.features;
 
-import com.mojang.serialization.*;
-import net.minecraft.block.*;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import net.minecraft.world.gen.feature.*;
-import net.minecraft.world.gen.feature.util.*;
+import com.mojang.serialization.Codec;
+import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
 
 public class RandomBudsFeature extends Feature<RandomBudsFeaturesConfig> {
 
@@ -19,23 +22,23 @@ public class RandomBudsFeature extends Feature<RandomBudsFeaturesConfig> {
 	}
 	
 	@Override
-	public boolean generate(FeatureContext<RandomBudsFeaturesConfig> context) {
-		StructureWorldAccess structureWorldAccess = context.getWorld();
-		BlockPos blockPos = context.getOrigin();
-		Random random = context.getRandom();
-		RandomBudsFeaturesConfig randomBudsFeaturesConfig = context.getConfig();
+	public boolean place(FeaturePlaceContext<RandomBudsFeaturesConfig> context) {
+		WorldGenLevel structureWorldAccess = context.level();
+		BlockPos blockPos = context.origin();
+		RandomSource random = context.random();
+		RandomBudsFeaturesConfig randomBudsFeaturesConfig = context.config();
 		
 		int placedCount = 0;
-		BlockPos.Mutable mutable = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
 		int j = randomBudsFeaturesConfig.xzSpread + 1;
 		int k = randomBudsFeaturesConfig.ySpread + 1;
     
         for (int l = 0; l < randomBudsFeaturesConfig.tries; ++l) {
-            mutable.set(blockPos, random.nextInt(j) - random.nextInt(j), random.nextInt(k) - random.nextInt(k), random.nextInt(j) - random.nextInt(j));
+            mutable.setWithOffset(blockPos, random.nextInt(j) - random.nextInt(j), random.nextInt(k) - random.nextInt(k), random.nextInt(j) - random.nextInt(j));
             List<Direction> directions = shuffleDirections(randomBudsFeaturesConfig, random);
             BlockState state = structureWorldAccess.getBlockState(mutable);
             boolean waterlogged = false;
-            if (state.isOf(Blocks.WATER)) {
+            if (state.is(Blocks.WATER)) {
                 waterlogged = true;
             } else if (!state.isAir()) {
                 continue;
@@ -48,8 +51,8 @@ public class RandomBudsFeature extends Feature<RandomBudsFeaturesConfig> {
         return placedCount > 0;
     }
     
-    public static boolean generate(StructureWorldAccess world, BlockPos pos, RandomBudsFeaturesConfig config, Random random, List<Direction> directions, boolean waterlogged) {
-        BlockPos.Mutable mutablePos = pos.mutableCopy();
+    public static boolean generate(WorldGenLevel world, BlockPos pos, RandomBudsFeaturesConfig config, RandomSource random, List<Direction> directions, boolean waterlogged) {
+        BlockPos.MutableBlockPos mutablePos = pos.mutable();
         
         Iterator<Direction> directionIterator = directions.iterator();
         Direction direction;
@@ -59,20 +62,20 @@ public class RandomBudsFeature extends Feature<RandomBudsFeaturesConfig> {
                 return false;
             }
             direction = directionIterator.next();
-            blockState = world.getBlockState(mutablePos.set(pos, direction));
-        } while (!blockState.isIn(config.canPlaceOn));
+            blockState = world.getBlockState(mutablePos.setWithOffset(pos, direction));
+        } while (!blockState.is(config.canPlaceOn));
         
-        BlockState stateToPlace = config.blocks.get(random.nextInt(config.blocks.size())).getDefaultState().with(Properties.FACING, direction.getOpposite()).with(Properties.WATERLOGGED, waterlogged);
-        if (stateToPlace.canPlaceAt(world, pos)) {
-            world.setBlockState(pos, stateToPlace, 3);
-            world.getChunk(pos).markBlockForPostProcessing(pos);
+        BlockState stateToPlace = config.blocks.get(random.nextInt(config.blocks.size())).defaultBlockState().setValue(BlockStateProperties.FACING, direction.getOpposite()).setValue(BlockStateProperties.WATERLOGGED, waterlogged);
+        if (stateToPlace.canSurvive(world, pos)) {
+            world.setBlock(pos, stateToPlace, 3);
+            world.getChunk(pos).markPosForPostprocessing(pos);
             return true;
         }
         return false;
     }
 
-    public static List<Direction> shuffleDirections(RandomBudsFeaturesConfig config, Random random) {
-        return Util.copyShuffled(config.directions.stream(), random);
+    public static List<Direction> shuffleDirections(RandomBudsFeaturesConfig config, RandomSource random) {
+        return Util.toShuffledList(config.directions.stream(), random);
     }
 
 }

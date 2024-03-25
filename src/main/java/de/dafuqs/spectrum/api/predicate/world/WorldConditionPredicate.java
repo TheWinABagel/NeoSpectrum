@@ -1,12 +1,15 @@
 package de.dafuqs.spectrum.api.predicate.world;
 
-import com.google.gson.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.GsonHelper;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public interface WorldConditionPredicate {
 	
@@ -34,7 +37,7 @@ public interface WorldConditionPredicate {
 	
 	static WorldConditionPredicate fromJson(@Nullable JsonElement json) {
 		if (json instanceof JsonObject jsonObject) {
-			String string = JsonHelper.getString(jsonObject, "type", null);
+			String string = GsonHelper.getAsString(jsonObject, "type", null);
 			if (string == null) {
 				return ANY;
 			} else {
@@ -49,6 +52,6 @@ public interface WorldConditionPredicate {
 		return ANY;
 	}
 	
-	boolean test(ServerWorld world, BlockPos pos);
+	boolean test(ServerLevel world, BlockPos pos);
 	
 }

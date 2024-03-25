@@ -7,30 +7,30 @@ import de.dafuqs.spectrum.api.item.*;
 import de.dafuqs.spectrum.entity.entity.DragonTalonEntity;
 import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
 import de.dafuqs.spectrum.registries.SpectrumItems;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentTarget;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.attribute.EntityAttribute;
-import net.minecraft.entity.attribute.EntityAttributeModifier;
-import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.PersistentProjectileEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ToolMaterial;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -40,39 +40,39 @@ import java.util.UUID;
 public class DragonTalonItem extends MalachiteBidentItem implements MergeableItem, SlotReservingItem, ExtendedEnchantable, SplitDamageItem, TranstargetItem {
 
     protected static final UUID REACH_MODIFIER_ID = UUID.fromString("3b9a13c8-a9a7-4545-8c32-e60baf25823e");
-    private final Multimap<EntityAttribute, EntityAttributeModifier> attributeModifiers, phantomModifiers;
+    private final Multimap<Attribute, AttributeModifier> attributeModifiers, phantomModifiers;
 
 
-    public DragonTalonItem(ToolMaterial toolMaterial, double damage, double extraReach, Settings settings) {
+    public DragonTalonItem(Tier toolMaterial, double damage, double extraReach, Properties settings) {
         super(settings, 0);
-        ImmutableMultimap.Builder<EntityAttribute, EntityAttributeModifier> builder = ImmutableMultimap.builder();
-        builder.put(EntityAttributes.GENERIC_ATTACK_DAMAGE, new EntityAttributeModifier(ATTACK_DAMAGE_MODIFIER_ID, "Tool modifier", damage + toolMaterial.getAttackDamage(), EntityAttributeModifier.Operation.ADDITION));
-        builder.put(EntityAttributes.GENERIC_ATTACK_SPEED, new EntityAttributeModifier(ATTACK_SPEED_MODIFIER_ID, "Tool modifier", -0.8, EntityAttributeModifier.Operation.ADDITION));
-        builder.put(ReachEntityAttributes.ATTACK_RANGE, new EntityAttributeModifier(REACH_MODIFIER_ID, "Tool modifier", extraReach, EntityAttributeModifier.Operation.ADDITION));
+        ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+        builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Tool modifier", damage + toolMaterial.getAttackDamageBonus(), AttributeModifier.Operation.ADDITION));
+        builder.put(Attributes.ATTACK_SPEED, new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Tool modifier", -0.8, AttributeModifier.Operation.ADDITION));
+        builder.put(ReachEntityAttributes.ATTACK_RANGE, new AttributeModifier(REACH_MODIFIER_ID, "Tool modifier", extraReach, AttributeModifier.Operation.ADDITION));
         this.attributeModifiers = builder.build();
 
-        ImmutableMultimap.Builder<EntityAttribute, EntityAttributeModifier> phantom = ImmutableMultimap.builder();
+        ImmutableMultimap.Builder<Attribute, AttributeModifier> phantom = ImmutableMultimap.builder();
         this.phantomModifiers = phantom.build();
     }
 
     @Override
-    public Multimap<EntityAttribute, EntityAttributeModifier> getAttributeModifiers(EquipmentSlot slot) {
-        return slot == EquipmentSlot.MAINHAND ? this.attributeModifiers : super.getAttributeModifiers(slot);
+    public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
+        return slot == EquipmentSlot.MAINHAND ? this.attributeModifiers : super.getDefaultAttributeModifiers(slot);
     }
 
     @Override
-    public Multimap<EntityAttribute, EntityAttributeModifier> getAttributeModifiers(ItemStack stack, EquipmentSlot slot) {
-        var nbt = stack.getOrCreateNbt();
+    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(ItemStack stack, EquipmentSlot slot) {
+        var nbt = stack.getOrCreateTag();
         if (slot != EquipmentSlot.MAINHAND)
-            return super.getAttributeModifiers(slot);
+            return super.getDefaultAttributeModifiers(slot);
         return this.isReservingSlot(stack) || nbt.getBoolean("cooldown") ? phantomModifiers : attributeModifiers;
     }
 
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        tooltip.add(Text.translatable("item.spectrum.dragon_needle.tooltip").formatted(Formatting.GRAY));
-        tooltip.add(Text.translatable("item.spectrum.dragon_needle.tooltip2").formatted(Formatting.GRAY));
-        tooltip.add(Text.translatable("item.spectrum.dragon_needle.tooltip3").formatted(Formatting.GRAY));
+    public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+        tooltip.add(Component.translatable("item.spectrum.dragon_needle.tooltip").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.spectrum.dragon_needle.tooltip2").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.spectrum.dragon_needle.tooltip3").withStyle(ChatFormatting.GRAY));
     }
 
     @Override
@@ -81,65 +81,65 @@ public class DragonTalonItem extends MalachiteBidentItem implements MergeableIte
     }
 
     @Override
-    protected void throwBident(ItemStack stack, ServerWorld world, PlayerEntity playerEntity) {
+    protected void throwBident(ItemStack stack, ServerLevel world, Player playerEntity) {
         var needleEntity = new DragonTalonEntity(world);
         needleEntity.setStack(stack);
         needleEntity.setOwner(playerEntity);
-        needleEntity.updatePosition(playerEntity.getX(), playerEntity.getEyeY() - 0.1, playerEntity.getZ());
-        needleEntity.setVelocity(playerEntity, playerEntity.getPitch(), playerEntity.getYaw(), 0.0F, getThrowSpeed(), 1.0F);
-        needleEntity.velocityDirty = true;
-        needleEntity.velocityModified = true;
-        needleEntity.pickupType = PersistentProjectileEntity.PickupPermission.ALLOWED;
+        needleEntity.absMoveTo(playerEntity.getX(), playerEntity.getEyeY() - 0.1, playerEntity.getZ());
+        needleEntity.shootFromRotation(playerEntity, playerEntity.getXRot(), playerEntity.getYRot(), 0.0F, getThrowSpeed(), 1.0F);
+        needleEntity.hasImpulse = true;
+        needleEntity.hurtMarked = true;
+        needleEntity.pickup = AbstractArrow.Pickup.ALLOWED;
 
-        world.spawnEntity(needleEntity);
-        SoundEvent soundEvent = SoundEvents.ITEM_TRIDENT_THROW;
+        world.addFreshEntity(needleEntity);
+        SoundEvent soundEvent = SoundEvents.TRIDENT_THROW;
 
-        world.playSoundFromEntity(null, needleEntity, soundEvent, SoundCategory.PLAYERS, 1.0F, 1.0F);
-        var nbt = stack.getOrCreateNbt();
+        world.playSound(null, needleEntity, soundEvent, SoundSource.PLAYERS, 1.0F, 1.0F);
+        var nbt = stack.getOrCreateTag();
         markReserved(stack, true);
-        nbt.putUuid("lastNeedle", needleEntity.getUuid());
+        nbt.putUUID("lastNeedle", needleEntity.getUUID());
     }
 
     @Override
-    public ItemStack getResult(ServerPlayerEntity player, ItemStack firstHalf, ItemStack secondHalf) {
-        var durability = Math.max(firstHalf.getDamage(), secondHalf.getDamage());
+    public ItemStack getResult(ServerPlayer player, ItemStack firstHalf, ItemStack secondHalf) {
+        var durability = Math.max(firstHalf.getDamageValue(), secondHalf.getDamageValue());
         var result = new ItemStack(SpectrumItems.DRACONIC_TWINSWORD);
-        result.setNbt(firstHalf.getNbt());
+        result.setTag(firstHalf.getTag());
 
-        var nbt = result.getOrCreateNbt();
+        var nbt = result.getOrCreateTag();
         nbt.remove("pairSignature");
         nbt.remove("lastNeedle");
         nbt.remove("cooldown");
         nbt.remove(SlotReservingItem.NBT_STRING);
 
         if (isReservingSlot(firstHalf) || isReservingSlot(secondHalf)) {
-            durability  += player.getAbilities().creativeMode ? 0 : 500;
-            player.getItemCooldownManager().set(result.getItem(), 400);
+            durability  += player.getAbilities().instabuild ? 0 : 500;
+            player.getCooldowns().addCooldown(result.getItem(), 400);
         }
-        result.setDamage(durability);
+        result.setDamageValue(durability);
 
         return result;
     }
 
     @Override
-    public void onStoppedUsing(ItemStack stack, World world, LivingEntity user, int remainingUseTicks) {
-        var hand = user.getActiveHand();
-        if (hand == Hand.MAIN_HAND)
+    public void releaseUsing(ItemStack stack, Level world, LivingEntity user, int remainingUseTicks) {
+        var hand = user.getUsedItemHand();
+        if (hand == InteractionHand.MAIN_HAND)
             return;
 
         if (!isReservingSlot(stack)) {
-            super.onStoppedUsing(user.getStackInHand(Hand.OFF_HAND), world, user, remainingUseTicks);
+            super.releaseUsing(user.getItemInHand(InteractionHand.OFF_HAND), world, user, remainingUseTicks);
             return;
         }
 
-        var nbt = stack.getOrCreateNbt();
+        var nbt = stack.getOrCreateTag();
 
-        if (world.isClient() || !nbt.containsUuid("lastNeedle"))
+        if (world.isClientSide() || !nbt.hasUUID("lastNeedle"))
             return;
 
-        ServerWorld serverWorld = (ServerWorld) world;
+        ServerLevel serverWorld = (ServerLevel) world;
 
-        var entity = serverWorld.getEntity(nbt.getUuid("lastNeedle"));
+        var entity = serverWorld.getEntity(nbt.getUUID("lastNeedle"));
 
         if (entity instanceof DragonTalonEntity needle) {
             needle.recall();
@@ -147,40 +147,40 @@ public class DragonTalonItem extends MalachiteBidentItem implements MergeableIte
     }
 
     @Override
-    public boolean canMerge(ServerPlayerEntity player, ItemStack parent, ItemStack other) {
-        if (player.getItemCooldownManager().isCoolingDown(parent.getItem()))
+    public boolean canMerge(ServerPlayer player, ItemStack parent, ItemStack other) {
+        if (player.getCooldowns().isOnCooldown(parent.getItem()))
             return false;
         return (parent.getItem() == other.getItem() && verify(parent, other));
     }
 
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        if (hand == Hand.MAIN_HAND)
-            return TypedActionResult.fail(user.getStackInHand(hand));
+    public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+        if (hand == InteractionHand.MAIN_HAND)
+            return InteractionResultHolder.fail(user.getItemInHand(hand));
         return super.use(world, user, hand);
     }
 
     @Override
     public SoundEvent getMergeSound() {
-        return SoundEvents.ITEM_LODESTONE_COMPASS_LOCK;
+        return SoundEvents.LODESTONE_COMPASS_LOCK;
     }
 
     @Override
     public boolean isReservingSlot(ItemStack stack) {
-        return stack.getOrCreateNbt().getBoolean(SlotReservingItem.NBT_STRING);
+        return stack.getOrCreateTag().getBoolean(SlotReservingItem.NBT_STRING);
     }
 
     @Override
     public void markReserved(ItemStack stack, boolean reserved) {
-        stack.getOrCreateNbt().putBoolean(SlotReservingItem.NBT_STRING, reserved);
+        stack.getOrCreateTag().putBoolean(SlotReservingItem.NBT_STRING, reserved);
     }
 
-    public static ItemStack findThrownStack(PlayerEntity player, UUID id) {
+    public static ItemStack findThrownStack(Player player, UUID id) {
         var inventory = player.getInventory();
-        for (int i = 0; i < inventory.size(); i++) {
-            var stack = inventory.getStack(i);
-            var nbt = stack.getNbt();
-            if (nbt != null && nbt.containsUuid("lastNeedle") && nbt.getUuid("lastNeedle").equals(id)) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            var stack = inventory.getItem(i);
+            var nbt = stack.getTag();
+            if (nbt != null && nbt.hasUUID("lastNeedle") && nbt.getUUID("lastNeedle").equals(id)) {
                 return stack;
             }
         }
@@ -188,10 +188,10 @@ public class DragonTalonItem extends MalachiteBidentItem implements MergeableIte
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        if (entity instanceof PlayerEntity player) {
-            var nbt = stack.getOrCreateNbt();
-            if (player.getItemCooldownManager().isCoolingDown(stack.getItem())) {
+    public void inventoryTick(ItemStack stack, Level world, Entity entity, int slot, boolean selected) {
+        if (entity instanceof Player player) {
+            var nbt = stack.getOrCreateTag();
+            if (player.getCooldowns().isOnCooldown(stack.getItem())) {
                 if (!nbt.getBoolean("cooldown")) {
                     nbt.putBoolean("cooldown", true);
                 }
@@ -205,13 +205,13 @@ public class DragonTalonItem extends MalachiteBidentItem implements MergeableIte
     @Override
     public DamageComposition getDamageComposition(LivingEntity attacker, LivingEntity target, ItemStack stack, float damage) {
         var composition = new DamageComposition();
-        composition.add(SpectrumDamageTypes.evisceration(attacker.getWorld(), attacker), damage);
+        composition.add(SpectrumDamageTypes.evisceration(attacker.level(), attacker), damage);
         return composition;
     }
 
     @Override
     public boolean acceptsEnchantment(Enchantment enchantment) {
-        return enchantment == Enchantments.IMPALING || enchantment == Enchantments.INFINITY;
+        return enchantment == Enchantments.IMPALING || enchantment == Enchantments.INFINITY_ARROWS;
     }
 
     @Override
@@ -220,7 +220,7 @@ public class DragonTalonItem extends MalachiteBidentItem implements MergeableIte
     }
 
     @Override
-    public EnchantmentTarget getRealTarget() {
-        return EnchantmentTarget.WEAPON;
+    public EnchantmentCategory getRealTarget() {
+        return EnchantmentCategory.WEAPON;
     }
 }

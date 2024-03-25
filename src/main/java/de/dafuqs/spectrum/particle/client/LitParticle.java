@@ -1,41 +1,42 @@
 package de.dafuqs.spectrum.particle.client;
 
-import net.fabricmc.api.*;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.world.*;
-import net.minecraft.particle.*;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.core.particles.SimpleParticleType;
 
 @Environment(EnvType.CLIENT)
-public class LitParticle extends AbstractSlowingParticle {
+public class LitParticle extends RisingParticle {
 	
-	protected LitParticle(ClientWorld clientWorld, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
+	protected LitParticle(ClientLevel clientWorld, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
 		super(clientWorld, x, y, z, velocityX, velocityY, velocityZ);
-		this.scale *= this.random.nextFloat() * 0.6F + 0.6F;
+		this.quadSize *= this.random.nextFloat() * 0.6F + 0.6F;
 	}
 	
 	@Override
-	public int getBrightness(float tint) {
-		return LightmapTextureManager.MAX_LIGHT_COORDINATE;
+	public int getLightColor(float tint) {
+		return LightTexture.FULL_BRIGHT;
 	}
 	
 	@Override
-	public ParticleTextureSheet getType() {
-		return ParticleTextureSheet.PARTICLE_SHEET_LIT;
+	public ParticleRenderType getRenderType() {
+		return ParticleRenderType.PARTICLE_SHEET_LIT;
 	}
 	
-	public static class Factory implements ParticleFactory<DefaultParticleType> {
+	public static class Factory implements ParticleProvider<SimpleParticleType> {
 		
-		private final SpriteProvider spriteProvider;
+		private final SpriteSet spriteProvider;
 		
-		public Factory(SpriteProvider spriteProvider) {
+		public Factory(SpriteSet spriteProvider) {
 			this.spriteProvider = spriteProvider;
 		}
 		
 		@Override
-		public Particle createParticle(DefaultParticleType parameters, ClientWorld clientWorld, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
+		public Particle createParticle(SimpleParticleType parameters, ClientLevel clientWorld, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
 			LitParticle particle = new LitParticle(clientWorld, x, y, z, velocityX, velocityY, velocityZ);
-			particle.setSprite(this.spriteProvider);
+			particle.pickSprite(this.spriteProvider);
 			return particle;
 		}
 	}

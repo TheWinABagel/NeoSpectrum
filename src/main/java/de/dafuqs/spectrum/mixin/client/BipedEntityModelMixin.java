@@ -1,17 +1,21 @@
 package de.dafuqs.spectrum.mixin.client;
 
-import de.dafuqs.spectrum.registries.*;
-import dev.emi.trinkets.api.*;
-import net.minecraft.client.model.*;
-import net.minecraft.client.render.entity.model.*;
-import net.minecraft.entity.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import dev.emi.trinkets.api.TrinketComponent;
+import dev.emi.trinkets.api.TrinketsApi;
+import net.minecraft.client.model.HumanoidModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.world.entity.LivingEntity;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.*;
+import java.util.Optional;
 
-@Mixin(BipedEntityModel.class)
+@Mixin(HumanoidModel.class)
 public class BipedEntityModelMixin {
 
 	@Shadow
@@ -31,15 +35,15 @@ public class BipedEntityModelMixin {
 	public void poseArms(LivingEntity livingEntity, float f, float g, float h, float i, float j, CallbackInfo ci) {
 		Optional<TrinketComponent> trinketComponent = TrinketsApi.getTrinketComponent(livingEntity);
 		if (trinketComponent.isPresent() && trinketComponent.get().isEquipped(SpectrumItems.NEAT_RING)) {
-			this.rightLeg.pitch = 0;
-			this.rightLeg.yaw = 0;
-			this.leftLeg.pitch = 0;
-			this.leftLeg.yaw = 0;
+			this.rightLeg.xRot = 0;
+			this.rightLeg.yRot = 0;
+			this.leftLeg.xRot = 0;
+			this.leftLeg.yRot = 0;
 
-			this.rightArm.pitch = (float) Math.PI / 2;
-			this.rightArm.yaw = -1.5F;
-			this.leftArm.pitch = (float) Math.PI / 2;
-			this.leftArm.yaw = 1.5F;
+			this.rightArm.xRot = (float) Math.PI / 2;
+			this.rightArm.yRot = -1.5F;
+			this.leftArm.xRot = (float) Math.PI / 2;
+			this.leftArm.yRot = 1.5F;
 
 			ci.cancel();
 		}

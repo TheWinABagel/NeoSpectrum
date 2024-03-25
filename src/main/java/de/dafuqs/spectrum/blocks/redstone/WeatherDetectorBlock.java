@@ -1,38 +1,38 @@
 package de.dafuqs.spectrum.blocks.redstone;
 
-import net.minecraft.block.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.biome.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class WeatherDetectorBlock extends DetectorBlock {
 	
-	public WeatherDetectorBlock(Settings settings) {
+	public WeatherDetectorBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	protected void updateState(BlockState state, World world, BlockPos pos) {
+	protected void updateState(BlockState state, Level world, BlockPos pos) {
 		int power = 0;
 		
 		if (world.isThundering()) {
-			Biome.Precipitation precipitation = world.getBiome(pos).value().getPrecipitation(pos);
+			Biome.Precipitation precipitation = world.getBiome(pos).value().getPrecipitationAt(pos);
 			switch (precipitation) {
 				case RAIN -> power = 15;
 				case SNOW -> power = 8;
 				case NONE -> power = 0;
 			}
 		} else if (world.isRaining()) {
-			Biome.Precipitation precipitation = world.getBiome(pos).value().getPrecipitation(pos);
+			Biome.Precipitation precipitation = world.getBiome(pos).value().getPrecipitationAt(pos);
 			switch (precipitation) {
 				case RAIN, SNOW -> power = 8;
 				case NONE -> power = 0;
 			}
 		}
 		
-		power = state.get(INVERTED) ? 15 - power : power;
-		if (state.get(POWER) != power) {
-			world.setBlockState(pos, state.with(POWER, power), 3);
+		power = state.getValue(INVERTED) ? 15 - power : power;
+		if (state.getValue(POWER) != power) {
+			world.setBlock(pos, state.setValue(POWER, power), 3);
 		}
 	}
 	

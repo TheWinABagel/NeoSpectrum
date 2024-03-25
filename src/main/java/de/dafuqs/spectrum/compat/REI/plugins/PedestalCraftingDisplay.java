@@ -1,17 +1,22 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.recipe.pedestal.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.display.basic.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.minecraft.client.*;
-import net.minecraft.util.collection.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.api.item.GemstoneColor;
+import de.dafuqs.spectrum.compat.REI.GatedSpectrumDisplay;
+import de.dafuqs.spectrum.compat.REI.REIHelper;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.recipe.pedestal.BuiltinGemstoneColor;
+import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipe;
+import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipeTier;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.NonNullList;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 public class PedestalCraftingDisplay extends GatedSpectrumDisplay {
 	
@@ -28,7 +33,7 @@ public class PedestalCraftingDisplay extends GatedSpectrumDisplay {
 	 * @param recipe The recipe
 	 */
 	public PedestalCraftingDisplay(PedestalRecipe recipe) {
-		super(recipe, mapIngredients(recipe), Collections.singletonList(EntryIngredients.of(recipe.getOutput(BasicDisplay.registryAccess()))));
+		super(recipe, mapIngredients(recipe), Collections.singletonList(EntryIngredients.of(recipe.getResultItem(BasicDisplay.registryAccess()))));
 		this.pedestalRecipeTier = recipe.getTier();
 		this.width = recipe.getWidth();
 		this.height = recipe.getHeight();
@@ -42,7 +47,7 @@ public class PedestalCraftingDisplay extends GatedSpectrumDisplay {
 		List<IngredientStack> ingredients = recipe.getIngredientStacks();
 		int ingredientCount = ingredients.size();
 		
-		List<EntryIngredient> list = DefaultedList.ofSize(9 + powderSlotCount, EntryIngredient.empty());
+		List<EntryIngredient> list = NonNullList.withSize(9 + powderSlotCount, EntryIngredient.empty());
 		
 		for (int i = 0; i < ingredientCount; i++) {
 			list.set(recipe.getGridSlotId(i), REIHelper.ofIngredientStack(recipe.getIngredientStacks().get(i)));
@@ -64,7 +69,7 @@ public class PedestalCraftingDisplay extends GatedSpectrumDisplay {
 	
 	@Override
     public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return this.pedestalRecipeTier.hasUnlocked(client.player) && super.isUnlocked();
 	}
 	

@@ -1,46 +1,62 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.interaction.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.compat.claims.*;
-import de.dafuqs.spectrum.data_loaders.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.progression.*;
-import de.dafuqs.spectrum.registries.*;
-import de.dafuqs.spectrum.sound.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.client.*;
-import net.minecraft.client.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.entry.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import net.minecraft.world.biome.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkCost;
+import de.dafuqs.spectrum.api.energy.InkPowered;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.api.interaction.NaturesStaffTriggered;
+import de.dafuqs.spectrum.api.item.ExtendedEnchantable;
+import de.dafuqs.spectrum.compat.claims.GenericClaimModsCompat;
+import de.dafuqs.spectrum.data_loaders.NaturesStaffConversionDataLoader;
+import de.dafuqs.spectrum.helpers.InventoryHelper;
+import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
+import de.dafuqs.spectrum.registries.SpectrumBlockTags;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import de.dafuqs.spectrum.sound.NaturesStaffUseSoundInstance;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.tags.BiomeTags;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.*;
+import net.minecraft.world.item.context.DirectionalPlaceContext;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class NaturesStaffItem extends Item implements ExtendedEnchantable, InkPowered {
 
 	public static final ItemStack ITEM_COST = new ItemStack(SpectrumItems.VEGETAL, 1);
 	public static final InkCost INK_COST = new InkCost(InkColors.LIME, 20);
 	
-	public NaturesStaffItem(Settings settings) {
+	public NaturesStaffItem(Properties settings) {
 		super(settings);
 	}
 	
@@ -48,13 +64,13 @@ public class NaturesStaffItem extends Item implements ExtendedEnchantable, InkPo
 	 * Near identical copy of BonemealItem.useOnFertilizable
 	 * just with stack decrement removed
 	 */
-	public static boolean useOnFertilizable(@NotNull World world, BlockPos pos) {
+	public static boolean useOnFertilizable(@NotNull Level world, BlockPos pos) {
 		BlockState blockState = world.getBlockState(pos);
-		if (blockState.getBlock() instanceof Fertilizable fertilizable) {
-			if (fertilizable.isFertilizable(world, pos, blockState, world.isClient)) {
-				if (world instanceof ServerWorld) {
-					if (fertilizable.canGrow(world, world.random, pos, blockState)) {
-						fertilizable.grow((ServerWorld) world, world.random, pos, blockState);
+		if (blockState.getBlock() instanceof BonemealableBlock fertilizable) {
+			if (fertilizable.isValidBonemealTarget(world, pos, blockState, world.isClientSide)) {
+				if (world instanceof ServerLevel) {
+					if (fertilizable.isBonemealSuccess(world, world.random, pos, blockState)) {
+						fertilizable.performBonemeal((ServerLevel) world, world.random, pos, blockState);
 					}
 				}
 				return true;
@@ -67,53 +83,53 @@ public class NaturesStaffItem extends Item implements ExtendedEnchantable, InkPo
 	 * Near identical copy of BonemealItem.useOnGround
 	 * just with stack decrement removed
 	 */
-	public static boolean useOnGround(@NotNull World world, BlockPos blockPos, @Nullable Direction facing) {
-		if (world.getBlockState(blockPos).isOf(Blocks.WATER) && world.getFluidState(blockPos).getLevel() == 8) {
-			if (world instanceof ServerWorld) {
-				Random random = world.getRandom();
+	public static boolean useOnGround(@NotNull Level world, BlockPos blockPos, @Nullable Direction facing) {
+		if (world.getBlockState(blockPos).is(Blocks.WATER) && world.getFluidState(blockPos).getAmount() == 8) {
+			if (world instanceof ServerLevel) {
+				RandomSource random = world.getRandom();
 				
 				label78:
 				for (int i = 0; i < 128; ++i) {
 					BlockPos blockPos2 = blockPos;
-					BlockState grownState = Blocks.SEAGRASS.getDefaultState();
+					BlockState grownState = Blocks.SEAGRASS.defaultBlockState();
 					
 					for (int j = 0; j < i / 16; ++j) {
-						blockPos2 = blockPos2.add(random.nextInt(3) - 1, (random.nextInt(3) - 1) * random.nextInt(3) / 2, random.nextInt(3) - 1);
-						if (world.getBlockState(blockPos2).isFullCube(world, blockPos2)) {
+						blockPos2 = blockPos2.offset(random.nextInt(3) - 1, (random.nextInt(3) - 1) * random.nextInt(3) / 2, random.nextInt(3) - 1);
+						if (world.getBlockState(blockPos2).isCollisionShapeFullBlock(world, blockPos2)) {
 							continue label78;
 						}
 					}
 					
-					RegistryEntry<Biome> biomeKey = world.getBiome(blockPos2);
-					if (biomeKey.isIn(BiomeTags.PRODUCES_CORALS_FROM_BONEMEAL)) {
+					Holder<Biome> biomeKey = world.getBiome(blockPos2);
+					if (biomeKey.is(BiomeTags.PRODUCES_CORALS_FROM_BONEMEAL)) {
 						if (i == 0 && facing != null && facing.getAxis().isHorizontal()) {
-							grownState = Registries.BLOCK.getEntryList(BlockTags.WALL_CORALS)
-									.flatMap((blocks) -> blocks.getRandom(world.random))
-									.map((blockEntry) -> blockEntry.value().getDefaultState())
+							grownState = BuiltInRegistries.BLOCK.getTag(BlockTags.WALL_CORALS)
+									.flatMap((blocks) -> blocks.getRandomElement(world.random))
+									.map((blockEntry) -> blockEntry.value().defaultBlockState())
 									.orElse(grownState);
-							if (grownState.contains(DeadCoralWallFanBlock.FACING)) {
-								grownState = grownState.with(DeadCoralWallFanBlock.FACING, facing);
+							if (grownState.hasProperty(BaseCoralWallFanBlock.FACING)) {
+								grownState = grownState.setValue(BaseCoralWallFanBlock.FACING, facing);
 							}
 						} else if (random.nextInt(4) == 0) {
-							grownState = Registries.BLOCK.getEntryList(BlockTags.UNDERWATER_BONEMEALS)
-									.flatMap((blocks) -> blocks.getRandom(world.random))
-									.map((blockEntry) -> blockEntry.value().getDefaultState())
+							grownState = BuiltInRegistries.BLOCK.getTag(BlockTags.UNDERWATER_BONEMEALS)
+									.flatMap((blocks) -> blocks.getRandomElement(world.random))
+									.map((blockEntry) -> blockEntry.value().defaultBlockState())
 									.orElse(grownState);
 						}
 					}
 					
-					if (grownState.isIn(BlockTags.WALL_CORALS, (state) -> state.contains(DeadCoralWallFanBlock.FACING))) {
-						for (int k = 0; !grownState.canPlaceAt(world, blockPos2) && k < 4; ++k) {
-							grownState = grownState.with(DeadCoralWallFanBlock.FACING, Direction.Type.HORIZONTAL.random(random));
+					if (grownState.is(BlockTags.WALL_CORALS, (state) -> state.hasProperty(BaseCoralWallFanBlock.FACING))) {
+						for (int k = 0; !grownState.canSurvive(world, blockPos2) && k < 4; ++k) {
+							grownState = grownState.setValue(BaseCoralWallFanBlock.FACING, Direction.Plane.HORIZONTAL.getRandomDirection(random));
 						}
 					}
 					
-					if (grownState.canPlaceAt(world, blockPos2)) {
+					if (grownState.canSurvive(world, blockPos2)) {
 						BlockState currentState = world.getBlockState(blockPos2);
-						if (currentState.isOf(Blocks.WATER) && world.getFluidState(blockPos2).getLevel() == 8) {
-							world.setBlockState(blockPos2, grownState, 3);
-						} else if (currentState.isOf(Blocks.SEAGRASS) && random.nextInt(10) == 0) {
-							((Fertilizable) Blocks.SEAGRASS).grow((ServerWorld) world, random, blockPos2, currentState);
+						if (currentState.is(Blocks.WATER) && world.getFluidState(blockPos2).getAmount() == 8) {
+							world.setBlock(blockPos2, grownState, 3);
+						} else if (currentState.is(Blocks.SEAGRASS) && random.nextInt(10) == 0) {
+							((BonemealableBlock) Blocks.SEAGRASS).performBonemeal((ServerLevel) world, random, blockPos2, currentState);
 						}
 					}
 				}
@@ -127,234 +143,234 @@ public class NaturesStaffItem extends Item implements ExtendedEnchantable, InkPo
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
 		
-		int efficiencyLevel = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, itemStack);
+		int efficiencyLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_EFFICIENCY, itemStack);
 		if (efficiencyLevel == 0) {
 			if (InkPowered.canUseClient()) {
-				tooltip.add(Text.translatable("item.spectrum.natures_staff.tooltip_with_ink"));
+				tooltip.add(Component.translatable("item.spectrum.natures_staff.tooltip_with_ink"));
 			} else {
-				tooltip.add(Text.translatable("item.spectrum.natures_staff.tooltip"));
+				tooltip.add(Component.translatable("item.spectrum.natures_staff.tooltip"));
 			}
 		} else {
 			int chancePercent = (int) (getInkCostMod(itemStack) * 100);
 			if (InkPowered.canUseClient()) {
-				tooltip.add(Text.translatable("item.spectrum.natures_staff.tooltip_with_ink_and_chance", chancePercent));
+				tooltip.add(Component.translatable("item.spectrum.natures_staff.tooltip_with_ink_and_chance", chancePercent));
 			} else {
-				tooltip.add(Text.translatable("item.spectrum.natures_staff.tooltip_with_chance", chancePercent));
+				tooltip.add(Component.translatable("item.spectrum.natures_staff.tooltip_with_chance", chancePercent));
 			}
 		}
 		
-		tooltip.add(Text.translatable("item.spectrum.natures_staff.tooltip_lure"));
+		tooltip.add(Component.translatable("item.spectrum.natures_staff.tooltip_lure"));
 	}
 	
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
 		if (canUse(user)) {
-			if (world.isClient) {
+			if (world.isClientSide) {
 				startSoundInstance(user);
 			}
-			ItemUsage.consumeHeldItem(world, user, hand);
+			ItemUtils.startUsingInstantly(world, user, hand);
 		}
 		return super.use(world, user, hand);
 	}
 	
 	@Environment(EnvType.CLIENT)
-	public void startSoundInstance(PlayerEntity user) {
-		MinecraftClient.getInstance().getSoundManager().play(new NaturesStaffUseSoundInstance(user));
+	public void startSoundInstance(Player user) {
+		Minecraft.getInstance().getSoundManager().play(new NaturesStaffUseSoundInstance(user));
 	}
 	
 	@Override
-	public UseAction getUseAction(ItemStack stack) {
-		return UseAction.BOW;
+	public UseAnim getUseAnimation(ItemStack stack) {
+		return UseAnim.BOW;
 	}
 
 	@Override
-	public int getMaxUseTime(ItemStack stack) {
+	public int getUseDuration(ItemStack stack) {
 		return 20000;
 	}
 
 	@Override
-	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
+	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
 		// trigger the item's usage action every x ticks
 		if (remainingUseTicks % 10 != 0) {
 			return;
 		}
 
-		if (!(user instanceof PlayerEntity player)) {
-			user.stopUsingItem();
+		if (!(user instanceof Player player)) {
+			user.releaseUsingItem();
 			return;
 		}
 		if (!canUse(player)) {
-			user.stopUsingItem();
+			user.releaseUsingItem();
 		}
 		
-		if (world.isClient) {
+		if (world.isClientSide) {
 			// Simple equality check to make sure this method doesn't execute on other clients.
 			// Always true if the current player is the one wielding the staff under normal circumstances.
-			if(MinecraftClient.getInstance().player == player) usageTickClient();
+			if(Minecraft.getInstance().player == player) usageTickClient();
 		}
 	}
 	
 	@Environment(EnvType.CLIENT)
 	public void usageTickClient() {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client.crosshairTarget.getType() == HitResult.Type.BLOCK) {
-			client.interactionManager.interactBlock(
+		Minecraft client = Minecraft.getInstance();
+		if (client.hitResult.getType() == HitResult.Type.BLOCK) {
+			client.gameMode.useItemOn(
 					client.player,
-					client.player.getActiveHand(),
-					(BlockHitResult) client.crosshairTarget
+					client.player.getUsedItemHand(),
+					(BlockHitResult) client.hitResult
 			);
 		}
 	}
 	
 	public float getInkCostMod(ItemStack itemStack) {
-		return 3.0F / (3.0F + EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, itemStack));
+		return 3.0F / (3.0F + EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_EFFICIENCY, itemStack));
 	}
 	
 	@Override
-	public ActionResult useOnBlock(ItemUsageContext context) {
-		World world = context.getWorld();
+	public InteractionResult useOn(UseOnContext context) {
+		Level world = context.getLevel();
 		
-		PlayerEntity user = context.getPlayer();
-		if (world.isClient) {
+		Player user = context.getPlayer();
+		if (world.isClientSide) {
 			if (user == null) {
-				return ActionResult.FAIL;
+				return InteractionResult.FAIL;
 			}
 			if (canUse(user)) {
-				return ActionResult.PASS;
+				return InteractionResult.PASS;
 			} else {
 				playDenySound(world, user);
-				return ActionResult.FAIL;
+				return InteractionResult.FAIL;
 			}
 		}
 		
-		if (user == null || user.getItemUseTime() < 2) {
-			return ActionResult.PASS;
+		if (user == null || user.getTicksUsingItem() < 2) {
+			return InteractionResult.PASS;
 		}
 		
-		if (user instanceof ServerPlayerEntity player) {
-			ItemStack stack = context.getStack();
-			BlockPos blockPos = context.getBlockPos();
+		if (user instanceof ServerPlayer player) {
+			ItemStack stack = context.getItemInHand();
+			BlockPos blockPos = context.getClickedPos();
 			
 			if (!GenericClaimModsCompat.canInteract(world, blockPos, user)) {
 				playDenySound(world, context.getPlayer());
-				return ActionResult.FAIL;
+				return InteractionResult.FAIL;
 			}
 			
-			if (user.getItemUseTime() % 10 == 0) {
+			if (user.getTicksUsingItem() % 10 == 0) {
 				BlockState blockState = world.getBlockState(blockPos);
 				
 				if (blockState.getBlock() instanceof NaturesStaffTriggered naturesStaffTriggered && naturesStaffTriggered.canUseNaturesStaff(world, blockPos, blockState)) {
 					if (naturesStaffTriggered.onNaturesStaffUse(world, blockPos, blockState, player)) {
 						payForUse(player, stack);
-						world.syncWorldEvent(WorldEvents.PLANT_FERTILIZED, blockPos, 0);
+						world.levelEvent(LevelEvent.PARTICLES_PLANT_GROWTH, blockPos, 0);
 						SpectrumAdvancementCriteria.NATURES_STAFF_USE.trigger(player, blockState, world.getBlockState(blockPos));
 					}
-					return ActionResult.CONSUME;
+					return InteractionResult.CONSUME;
 				}
 				
 				// loaded as convertible? => convert
 				BlockState destinationState = NaturesStaffConversionDataLoader.getConvertedBlockState(blockState.getBlock());
 				if (destinationState != null) {
-					if (destinationState.getBlock() instanceof Waterloggable) {
+					if (destinationState.getBlock() instanceof SimpleWaterloggedBlock) {
 						if (touchesWater(world, blockPos)) {
-							destinationState = destinationState.with(CoralBlock.WATERLOGGED, true);
+							destinationState = destinationState.setValue(CoralPlantBlock.WATERLOGGED, true);
 						} else {
-							destinationState = destinationState.with(CoralBlock.WATERLOGGED, false);
+							destinationState = destinationState.setValue(CoralPlantBlock.WATERLOGGED, false);
 						}
 					}
-					world.setBlockState(blockPos, destinationState, 3);
+					world.setBlock(blockPos, destinationState, 3);
 					
 					payForUse(player, stack);
-					world.syncWorldEvent(WorldEvents.PLANT_FERTILIZED, blockPos, 0);
+					world.levelEvent(LevelEvent.PARTICLES_PLANT_GROWTH, blockPos, 0);
 					SpectrumAdvancementCriteria.NATURES_STAFF_USE.trigger(player, blockState, destinationState);
 					
-					return ActionResult.CONSUME;
+					return InteractionResult.CONSUME;
 					// fertilizable? => grow
 				} else if (useOnFertilizable(world, blockPos)) {
 					payForUse(player, stack);
-					world.syncWorldEvent(WorldEvents.PLANT_FERTILIZED, blockPos, 0);
-					return ActionResult.CONSUME;
+					world.levelEvent(LevelEvent.PARTICLES_PLANT_GROWTH, blockPos, 0);
+					return InteractionResult.CONSUME;
 					// blockstate marked as stackable? => stack on top!
-				} else if (blockState.isIn(SpectrumBlockTags.NATURES_STAFF_STACKABLE)) {
+				} else if (blockState.is(SpectrumBlockTags.NATURES_STAFF_STACKABLE)) {
 					int i = 0;
 					BlockState state;
 					do {
-						state = world.getBlockState(context.getBlockPos().up(i));
+						state = world.getBlockState(context.getClickedPos().above(i));
 						i++;
-					} while (state.isOf(blockState.getBlock()));
+					} while (state.is(blockState.getBlock()));
 					
-					BlockPos targetPos = context.getBlockPos().up(i - 1);
-					BlockState targetState = blockState.getBlock().getPlacementState(new AutomaticItemPlacementContext(world, blockPos, Direction.DOWN, null, Direction.UP));
-					if (targetState != null && world.getBlockState(targetPos).isAir() && !world.isOutOfHeightLimit(targetPos.getY()) && targetState.canPlaceAt(world, targetPos)) {
-						world.setBlockState(targetPos, targetState);
+					BlockPos targetPos = context.getClickedPos().above(i - 1);
+					BlockState targetState = blockState.getBlock().getStateForPlacement(new DirectionalPlaceContext(world, blockPos, Direction.DOWN, null, Direction.UP));
+					if (targetState != null && world.getBlockState(targetPos).isAir() && !world.isOutsideBuildHeight(targetPos.getY()) && targetState.canSurvive(world, targetPos)) {
+						world.setBlockAndUpdate(targetPos, targetState);
 						
-						world.syncWorldEvent(null, WorldEvents.BLOCK_BROKEN, targetPos, Block.getRawIdFromState(targetState));
-						world.playSound(null, targetPos, targetState.getSoundGroup().getPlaceSound(), SoundCategory.PLAYERS, 1.0F, 0.9F + world.getRandom().nextFloat() * 0.2F);
+						world.levelEvent(null, LevelEvent.PARTICLES_DESTROY_BLOCK, targetPos, Block.getId(targetState));
+						world.playSound(null, targetPos, targetState.getSoundType().getPlaceSound(), SoundSource.PLAYERS, 1.0F, 0.9F + world.getRandom().nextFloat() * 0.2F);
 						payForUse(player, stack);
-						world.syncWorldEvent(WorldEvents.PLANT_FERTILIZED, targetPos, 0);
-						return ActionResult.CONSUME;
+						world.levelEvent(LevelEvent.PARTICLES_PLANT_GROWTH, targetPos, 0);
+						return InteractionResult.CONSUME;
 					}
 					
 					// random tickable and whitelisted? => tick
 					// without whitelist we would be able to tick budding blocks, ...
-				} else if (blockState.hasRandomTicks() && blockState.isIn(SpectrumBlockTags.NATURES_STAFF_TICKABLE)) {
-					if (world instanceof ServerWorld) {
-						blockState.randomTick((ServerWorld) world, blockPos, world.random);
+				} else if (blockState.isRandomlyTicking() && blockState.is(SpectrumBlockTags.NATURES_STAFF_TICKABLE)) {
+					if (world instanceof ServerLevel) {
+						blockState.randomTick((ServerLevel) world, blockPos, world.random);
 					}
 					payForUse(player, stack);
-					world.syncWorldEvent(WorldEvents.PLANT_FERTILIZED, blockPos, 0);
-					return ActionResult.CONSUME;
+					world.levelEvent(LevelEvent.PARTICLES_PLANT_GROWTH, blockPos, 0);
+					return InteractionResult.CONSUME;
 				} else {
-					BlockPos blockPos2 = blockPos.offset(context.getSide());
-					boolean bl = blockState.isSideSolidFullSquare(world, blockPos, context.getSide());
-					if (bl && useOnGround(world, blockPos2, context.getSide())) {
+					BlockPos blockPos2 = blockPos.relative(context.getClickedFace());
+					boolean bl = blockState.isFaceSturdy(world, blockPos, context.getClickedFace());
+					if (bl && useOnGround(world, blockPos2, context.getClickedFace())) {
 						payForUse(player, stack);
-						world.syncWorldEvent(WorldEvents.PLANT_FERTILIZED, blockPos2, 0);
-						return ActionResult.CONSUME;
+						world.levelEvent(LevelEvent.PARTICLES_PLANT_GROWTH, blockPos2, 0);
+						return InteractionResult.CONSUME;
 					}
 				}
 			}
 		}
 		
-		return ActionResult.PASS;
+		return InteractionResult.PASS;
 	}
 	
-	private static boolean touchesWater(World world, BlockPos blockPos) {
-		return world.getFluidState(blockPos.north()).isIn(FluidTags.WATER)
-				|| world.getFluidState(blockPos.east()).isIn(FluidTags.WATER)
-				|| world.getFluidState(blockPos.south()).isIn(FluidTags.WATER)
-				|| world.getFluidState(blockPos.west()).isIn(FluidTags.WATER);
+	private static boolean touchesWater(Level world, BlockPos blockPos) {
+		return world.getFluidState(blockPos.north()).is(FluidTags.WATER)
+				|| world.getFluidState(blockPos.east()).is(FluidTags.WATER)
+				|| world.getFluidState(blockPos.south()).is(FluidTags.WATER)
+				|| world.getFluidState(blockPos.west()).is(FluidTags.WATER);
 	}
 	
-	private static void spawnParticles(ItemUsageContext context, World world, BlockPos blockPos) {
+	private static void spawnParticles(UseOnContext context, Level world, BlockPos blockPos) {
 		BlockState blockState = world.getBlockState(blockPos);
 		if (blockState.getBlock() instanceof NaturesStaffTriggered naturesStaffTriggered && naturesStaffTriggered.canUseNaturesStaff(world, blockPos, blockState)) {
-			BoneMealItem.createParticles(world, blockPos, 3);
-		} else if (blockState.isIn(SpectrumBlockTags.NATURES_STAFF_STACKABLE)) {
+			BoneMealItem.addGrowthParticles(world, blockPos, 3);
+		} else if (blockState.is(SpectrumBlockTags.NATURES_STAFF_STACKABLE)) {
 			int i = 0;
-			while (world.getBlockState(context.getBlockPos().up(i)).isOf(blockState.getBlock())) {
-				BoneMealItem.createParticles(world, context.getBlockPos().up(i), 3);
+			while (world.getBlockState(context.getClickedPos().above(i)).is(blockState.getBlock())) {
+				BoneMealItem.addGrowthParticles(world, context.getClickedPos().above(i), 3);
 				i++;
 			}
-			BoneMealItem.createParticles(world, context.getBlockPos().up(i + 1), 5);
-			for (int j = 1; world.getBlockState(context.getBlockPos().down(j)).isOf(blockState.getBlock()); j++) {
-				BoneMealItem.createParticles(world, context.getBlockPos().down(j), 3);
+			BoneMealItem.addGrowthParticles(world, context.getClickedPos().above(i + 1), 5);
+			for (int j = 1; world.getBlockState(context.getClickedPos().below(j)).is(blockState.getBlock()); j++) {
+				BoneMealItem.addGrowthParticles(world, context.getClickedPos().below(j), 3);
 			}
 		} else {
-			BoneMealItem.createParticles(world, blockPos, 15);
+			BoneMealItem.addGrowthParticles(world, blockPos, 15);
 		}
 	}
 	
-	private boolean payForUse(PlayerEntity player, ItemStack stack) {
+	private boolean payForUse(Player player, ItemStack stack) {
 		boolean paid = player.isCreative(); // free for creative players
 		if (!paid) { // try pay with ink
 			paid = InkPowered.tryDrainEnergy(player, INK_COST, getInkCostMod(stack));
 		}
 		if (!paid && player.getInventory().contains(ITEM_COST)) {  // try pay with item
-			int efficiencyLevel = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, stack);
+			int efficiencyLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_EFFICIENCY, stack);
 			if (efficiencyLevel == 0) {
 				paid = InventoryHelper.removeFromInventoryWithRemainders(player, ITEM_COST);
 			} else {
@@ -364,12 +380,12 @@ public class NaturesStaffItem extends Item implements ExtendedEnchantable, InkPo
 		return paid;
 	}
 	
-	private static boolean canUse(PlayerEntity player) {
+	private static boolean canUse(Player player) {
 		return player.isCreative() || InkPowered.hasAvailableInk(player, INK_COST) || player.getInventory().contains(ITEM_COST);
 	}
 	
-	private void playDenySound(@NotNull World world, @NotNull PlayerEntity playerEntity) {
-		world.playSound(null, playerEntity.getX(), playerEntity.getY(), playerEntity.getZ(), SpectrumSoundEvents.USE_FAIL, SoundCategory.PLAYERS, 1.0F, 0.8F + playerEntity.getRandom().nextFloat() * 0.4F);
+	private void playDenySound(@NotNull Level world, @NotNull Player playerEntity) {
+		world.playSound(null, playerEntity.getX(), playerEntity.getY(), playerEntity.getZ(), SpectrumSoundEvents.USE_FAIL, SoundSource.PLAYERS, 1.0F, 0.8F + playerEntity.getRandom().nextFloat() * 0.4F);
 	}
 	
 	@Override
@@ -384,11 +400,11 @@ public class NaturesStaffItem extends Item implements ExtendedEnchantable, InkPo
 	
 	@Override
 	public boolean acceptsEnchantment(Enchantment enchantment) {
-		return enchantment == Enchantments.EFFICIENCY;
+		return enchantment == Enchantments.BLOCK_EFFICIENCY;
 	}
 	
 	@Override
-	public int getEnchantability() {
+	public int getEnchantmentValue() {
 		return 10;
 	}
 	

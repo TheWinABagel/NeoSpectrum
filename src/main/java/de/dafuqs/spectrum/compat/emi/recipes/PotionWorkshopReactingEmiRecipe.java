@@ -1,15 +1,17 @@
 package de.dafuqs.spectrum.compat.emi.recipes;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.compat.emi.*;
-import dev.emi.emi.api.recipe.*;
-import dev.emi.emi.api.stack.*;
-import dev.emi.emi.api.widget.TextWidget.*;
-import dev.emi.emi.api.widget.*;
-import net.minecraft.client.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.api.recipe.DescriptiveGatedRecipe;
+import de.dafuqs.spectrum.compat.emi.SpectrumEmiRecipe;
+import de.dafuqs.spectrum.compat.emi.SpectrumEmiRecipeCategories;
+import dev.emi.emi.api.recipe.EmiInfoRecipe;
+import dev.emi.emi.api.recipe.EmiRecipeCategory;
+import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.widget.TextWidget.Alignment;
+import dev.emi.emi.api.widget.WidgetHolder;
+import net.minecraft.client.Minecraft;
 
-import java.util.*;
+import java.util.List;
 
 public class PotionWorkshopReactingEmiRecipe extends EmiInfoRecipe {
 	private final DescriptiveGatedRecipe recipe;
@@ -20,7 +22,7 @@ public class PotionWorkshopReactingEmiRecipe extends EmiInfoRecipe {
 	}
 	
 	public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return AdvancementHelper.hasAdvancement(client.player, recipe.getRequiredAdvancementIdentifier());
 	}
 	

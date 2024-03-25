@@ -1,52 +1,59 @@
 package de.dafuqs.spectrum.enchantments;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 
 public class TreasureHunterEnchantment extends SpectrumEnchantment {
 	
-	public TreasureHunterEnchantment(Rarity weight, Identifier unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
-		super(weight, EnchantmentTarget.WEAPON, slotTypes, unlockAdvancementIdentifier);
+	public TreasureHunterEnchantment(Rarity weight, ResourceLocation unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
+		super(weight, EnchantmentCategory.WEAPON, slotTypes, unlockAdvancementIdentifier);
 	}
 	
-	public static void doTreasureHunterForPlayer(ServerPlayerEntity thisEntity, DamageSource source) {
-		if (!thisEntity.isSpectator() && source.getAttacker() instanceof LivingEntity) {
-			int damageSourceTreasureHunt = EnchantmentHelper.getEquipmentLevel(SpectrumEnchantments.TREASURE_HUNTER, (LivingEntity) source.getAttacker());
+	public static void doTreasureHunterForPlayer(ServerPlayer thisEntity, DamageSource source) {
+		if (!thisEntity.isSpectator() && source.getEntity() instanceof LivingEntity) {
+			int damageSourceTreasureHunt = EnchantmentHelper.getEnchantmentLevel(SpectrumEnchantments.TREASURE_HUNTER, (LivingEntity) source.getEntity());
 			if (damageSourceTreasureHunt > 0) {
-				ServerWorld serverWorld = ((ServerWorld) thisEntity.getWorld());
+				ServerLevel serverWorld = ((ServerLevel) thisEntity.level());
 				boolean shouldDropHead = serverWorld.getRandom().nextFloat() < 0.2 * damageSourceTreasureHunt;
 				if (shouldDropHead) {
 					ItemStack headItemStack = new ItemStack(Items.PLAYER_HEAD);
 					
-					NbtCompound compoundTag = new NbtCompound();
+					CompoundTag compoundTag = new CompoundTag();
 					compoundTag.putString("SkullOwner", thisEntity.getName().getString());
 					
-					headItemStack.setNbt(compoundTag);
+					headItemStack.setTag(compoundTag);
 					
 					ItemEntity headEntity = new ItemEntity(serverWorld, thisEntity.getX(), thisEntity.getY(), thisEntity.getZ(), headItemStack);
-					serverWorld.spawnEntity(headEntity);
+					serverWorld.addFreshEntity(headEntity);
 				}
 			}
 		}
 	}
 	
 	@Override
-	public int getMinPower(int level) {
+	public int getMinCost(int level) {
 		return 15;
 	}
 	
 	@Override
-	public int getMaxPower(int level) {
-		return super.getMinPower(level) + 30;
+	public int getMaxCost(int level) {
+		return super.getMinCost(level) + 30;
 	}
 	
 	@Override
@@ -55,13 +62,13 @@ public class TreasureHunterEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public boolean canAccept(Enchantment other) {
-		return super.canAccept(other) && other != Enchantments.LOOTING;
+	public boolean checkCompatibility(Enchantment other) {
+		return super.checkCompatibility(other) && other != Enchantments.MOB_LOOTING;
 	}
 	
 	@Override
-	public boolean isAcceptableItem(ItemStack stack) {
-		return super.isAcceptableItem(stack) || stack.getItem() instanceof AxeItem || stack.isIn(ItemTags.AXES);
+	public boolean canEnchant(ItemStack stack) {
+		return super.canEnchant(stack) || stack.getItem() instanceof AxeItem || stack.is(ItemTags.AXES);
 	}
 	
 }

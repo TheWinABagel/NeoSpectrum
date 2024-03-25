@@ -1,28 +1,31 @@
 package de.dafuqs.spectrum.blocks.pastel_network.network;
 
-import de.dafuqs.spectrum.blocks.pastel_network.nodes.*;
+import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity;
+import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeType;
 import de.dafuqs.spectrum.helpers.ColorHelper;
-import de.dafuqs.spectrum.helpers.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import org.jgrapht.*;
-import org.jgrapht.graph.*;
+import de.dafuqs.spectrum.helpers.SchedulerMap;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
 
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class PastelNetwork {
     
     protected final Map<PastelNodeType, Set<PastelNodeBlockEntity>> nodes = new ConcurrentHashMap<>();
     protected @Nullable Graph<PastelNodeBlockEntity, DefaultEdge> graph;
-	protected final World world;
+	protected final Level world;
 	protected final UUID uuid;
 	protected final SchedulerMap<PastelTransmission> transmissions = new SchedulerMap<>();
 	
 	
-	public PastelNetwork(World world, @Nullable UUID uuid) {
+	public PastelNetwork(Level world, @Nullable UUID uuid) {
 		this.world = world;
 		this.uuid = uuid == null ? UUID.randomUUID() : uuid;
 		for (PastelNodeType type : PastelNodeType.values()) {
@@ -30,7 +33,7 @@ public class PastelNetwork {
 		}
 	}
 
-    public World getWorld() {
+    public Level getWorld() {
         return this.world;
     }
 
@@ -129,7 +132,7 @@ public class PastelNetwork {
     }
 
     public boolean canConnect(PastelNodeBlockEntity newNode) {
-        if (newNode.getWorld() != this.getWorld()) {
+        if (newNode.getLevel() != this.getWorld()) {
             return false;
         }
 

@@ -1,109 +1,122 @@
 package de.dafuqs.spectrum.blocks.energy;
 
 import de.dafuqs.spectrum.helpers.Support;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.state.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
-public class ColorPickerBlock extends HorizontalFacingBlock implements BlockEntityProvider {
+public class ColorPickerBlock extends HorizontalDirectionalBlock implements EntityBlock {
 	
-	protected static final VoxelShape SHAPE = Block.createCuboidShape(1.0D, 0.0D, 1.0D, 15.0D, 13.0D, 15.0D);
+	protected static final VoxelShape SHAPE = Block.box(1.0D, 0.0D, 1.0D, 15.0D, 13.0D, 15.0D);
 	
-	public ColorPickerBlock(Settings settings) {
+	public ColorPickerBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public BlockRenderType getRenderType(BlockState state) {
-		return BlockRenderType.MODEL;
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("block.spectrum.color_picker.tooltip").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("block.spectrum.color_picker.tooltip").withStyle(ChatFormatting.GRAY));
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return SHAPE;
 	}
 	
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new ColorPickerBlockEntity(pos, state);
 	}
 	
 	@Override
-	public boolean canPathfindThrough(BlockState state, BlockView world, BlockPos pos, NavigationType type) {
+	public boolean isPathfindable(BlockState state, BlockGetter world, BlockPos pos, PathComputationType type) {
 		return false;
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(FACING);
 	}
 	
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing().getOpposite());
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		return this.defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
 	}
 	
 	@Nullable
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		return world.isClient ? null : Support.checkType(type, SpectrumBlockEntities.COLOR_PICKER, ColorPickerBlockEntity::tick);
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		return world.isClientSide ? null : Support.checkType(type, SpectrumBlockEntities.COLOR_PICKER, ColorPickerBlockEntity::tick);
 	}
 	
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		if (world.isClient) {
-			return ActionResult.SUCCESS;
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		if (world.isClientSide) {
+			return InteractionResult.SUCCESS;
 		} else {
 			this.openScreen(world, pos, player);
-			return ActionResult.CONSUME;
+			return InteractionResult.CONSUME;
 		}
 	}
 	
-	protected void openScreen(World world, BlockPos pos, PlayerEntity player) {
+	protected void openScreen(Level world, BlockPos pos, Player player) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity instanceof ColorPickerBlockEntity colorPickerBlockEntity) {
 			colorPickerBlockEntity.setOwner(player);
-			player.openHandledScreen(colorPickerBlockEntity);
+			player.openMenu(colorPickerBlockEntity);
 		}
 	}
 	
 	@Override
-    public boolean hasComparatorOutput(BlockState state) {
+    public boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 	
 	@Override
-    public int getComparatorOutput(BlockState state, World world, BlockPos pos) {
+    public int getAnalogOutputSignal(BlockState state, Level world, BlockPos pos) {
 		if(world.getBlockEntity(pos) instanceof ColorPickerBlockEntity blockEntity) {
 			int i = 0;
 			float f = 0.0f;
 			for (int j = 0; j < blockEntity.inventory.size(); ++j) {
 				ItemStack itemStack = blockEntity.inventory.get(j);
 				if (itemStack.isEmpty()) continue;
-				f += (float)itemStack.getCount() / (float)itemStack.getMaxCount();
+				f += (float)itemStack.getCount() / (float)itemStack.getMaxStackSize();
 				++i;
 			}
-			return MathHelper.floor(f / (float) blockEntity.inventory.size() * 14.0f) + (i > 0 ? 1 : 0);
+			return Mth.floor(f / (float) blockEntity.inventory.size() * 14.0f) + (i > 0 ? 1 : 0);
 		}
 		
 		return 0;
@@ -111,15 +124,15 @@ public class ColorPickerBlock extends HorizontalFacingBlock implements BlockEnti
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
-		if (!state.isOf(newState.getBlock())) {
+	public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
+		if (!state.is(newState.getBlock())) {
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			if (blockEntity instanceof ColorPickerBlockEntity colorPickerBlockEntity) {
-				ItemScatterer.spawn(world, pos, colorPickerBlockEntity);
-				world.updateComparators(pos, this);
+				Containers.dropContents(world, pos, colorPickerBlockEntity);
+				world.updateNeighbourForOutputSignal(pos, this);
 			}
 			
-			super.onStateReplaced(state, world, pos, newState, moved);
+			super.onRemove(state, world, pos, newState, moved);
 		}
 	}
 	

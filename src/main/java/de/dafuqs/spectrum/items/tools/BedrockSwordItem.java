@@ -1,19 +1,22 @@
 package de.dafuqs.spectrum.items.tools;
 
-import de.dafuqs.spectrum.api.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.item.*;
+import de.dafuqs.spectrum.api.item.Preenchanted;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 
-import java.util.*;
+import java.util.Map;
 
 public class BedrockSwordItem extends SwordItem implements Preenchanted {
 	
-	public BedrockSwordItem(ToolMaterial material, int attackDamage, float attackSpeed, Settings settings) {
+	public BedrockSwordItem(Tier material, int attackDamage, float attackSpeed, Properties settings) {
 		super(material, attackDamage, attackSpeed, settings);
 	}
 	
 	@Override
-	public boolean isDamageable() {
+	public boolean canBeDepleted() {
 		return false;
 	}
 	
@@ -23,7 +26,7 @@ public class BedrockSwordItem extends SwordItem implements Preenchanted {
 	}
 	
 	@Override
-	public ItemStack getDefaultStack() {
+	public ItemStack getDefaultInstance() {
 		return getDefaultEnchantedStack(this);
 	}
 	

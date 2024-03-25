@@ -1,68 +1,77 @@
 package de.dafuqs.spectrum.blocks.jade_vines;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.BlockHitResult;
 
-public class NephriteBlossomLeavesBlock extends LeavesBlock implements Fertilizable {
+public class NephriteBlossomLeavesBlock extends LeavesBlock implements BonemealableBlock {
     
-    public static final IntProperty AGE = Properties.AGE_2;
-    public static final int MAX_AGE = Properties.AGE_2_MAX;
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_2;
+    public static final int MAX_AGE = BlockStateProperties.MAX_AGE_2;
     
-    public NephriteBlossomLeavesBlock(Settings settings) {
+    public NephriteBlossomLeavesBlock(Properties settings) {
         super(settings);
-        setDefaultState(getDefaultState().with(AGE, 0));
+        registerDefaultState(defaultBlockState().setValue(AGE, 0));
     }
     
     @Override
 	@SuppressWarnings("deprecation")
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        if (state.get(AGE) == MAX_AGE) {
-			ItemStack handStack = player.getStackInHand(hand);
-			int fortuneLevel = EnchantmentHelper.getLevel(Enchantments.FORTUNE, handStack) / 2;
+    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (state.getValue(AGE) == MAX_AGE) {
+			ItemStack handStack = player.getItemInHand(hand);
+			int fortuneLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_FORTUNE, handStack) / 2;
 			int count = 1 + world.getRandom().nextInt(fortuneLevel + 1);
-			player.getInventory().offerOrDrop(new ItemStack(SpectrumItems.GLASS_PEACH, count));
+			player.getInventory().placeItemBackInInventory(new ItemStack(SpectrumItems.GLASS_PEACH, count));
 	
-			world.setBlockState(pos, state.with(AGE, 0));
-			player.playSound(SoundEvents.BLOCK_SWEET_BERRY_BUSH_PICK_BERRIES, SoundCategory.BLOCKS, 1, 1 + player.getRandom().nextFloat() * 0.25F);
-			return ActionResult.success(world.isClient());
+			world.setBlockAndUpdate(pos, state.setValue(AGE, 0));
+			player.playNotifySound(SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1, 1 + player.getRandom().nextFloat() * 0.25F);
+			return InteractionResult.sidedSuccess(world.isClientSide());
 		}
 	
-		return super.onUse(state, world, pos, player, hand, hit);
+		return super.use(state, world, pos, player, hand, hit);
 	}
 	
 	@Override
-	public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
-		return SpectrumItems.NEPHRITE_BLOSSOM_BULB.getDefaultStack();
+	public ItemStack getCloneItemStack(BlockGetter world, BlockPos pos, BlockState state) {
+		return SpectrumItems.NEPHRITE_BLOSSOM_BULB.getDefaultInstance();
 	}
 	
 	@Override
-	public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-		int age = state.get(AGE);
+	public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
+		int age = state.getValue(AGE);
 		int leafSum = 0;
 		
-		if (state.get(PERSISTENT)) {
+		if (state.getValue(PERSISTENT)) {
 			super.randomTick(state, world, pos, random);
 			return;
 		}
     
-        for (BlockPos iPos : BlockPos.iterate(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+        for (BlockPos iPos : BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))) {
             var leafState = world.getBlockState(iPos);
-            if (leafState.isOf(this)) {
-                leafSum += (leafState.get(AGE).byteValue() + 1) * 3;
+            if (leafState.is(this)) {
+                leafSum += (leafState.getValue(AGE).byteValue() + 1) * 3;
             }
         }
 
@@ -74,50 +83,50 @@ public class NephriteBlossomLeavesBlock extends LeavesBlock implements Fertiliza
         }
 
         if (age == 2) {
-            BlockPos.Mutable dropPos = pos.mutableCopy();
-            while (world.getBlockState(dropPos).isOf(this) && pos.getY() - dropPos.getY() < 32) {
+            BlockPos.MutableBlockPos dropPos = pos.mutable();
+            while (world.getBlockState(dropPos).is(this) && pos.getY() - dropPos.getY() < 32) {
                 dropPos.move(0, -1, 0);
             }
             ItemStack drop = new ItemStack(SpectrumItems.GLASS_PEACH);
-            world.spawnEntity(new ItemEntity(world, dropPos.getX() + 0.5, dropPos.getY() + 0.15, dropPos.getZ() + 0.5, drop));
-            BlockState newState = state.with(AGE, 0);
-            world.setBlockState(pos, newState);
-            world.emitGameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Emitter.of(newState));
+            world.addFreshEntity(new ItemEntity(world, dropPos.getX() + 0.5, dropPos.getY() + 0.15, dropPos.getZ() + 0.5, drop));
+            BlockState newState = state.setValue(AGE, 0);
+            world.setBlockAndUpdate(pos, newState);
+            world.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(newState));
         }
         else {
-            world.setBlockState(pos, state.with(AGE, age + 1));
+            world.setBlockAndUpdate(pos, state.setValue(AGE, age + 1));
         }
 
         super.randomTick(state, world, pos, random);
     }
 
     @Override
-    public boolean hasRandomTicks(BlockState state) {
-        return state.get(AGE) != MAX_AGE;
+    public boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(AGE) != MAX_AGE;
     }
 
     @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-        super.appendProperties(builder);
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        super.createBlockStateDefinition(builder);
         builder.add(AGE);
     }
 
     @Override
-	public boolean isFertilizable(WorldView world, BlockPos pos, BlockState state, boolean isClient) {
-		return state.get(AGE) != 2;
+	public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
+		return state.getValue(AGE) != 2;
 	}
 
     @Override
-    public boolean canGrow(World world, Random random, BlockPos pos, BlockState state) {
+    public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
-        var age = state.get(AGE);
+    public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+        var age = state.getValue(AGE);
         if (age == MAX_AGE)
             return;
     
-        world.setBlockState(pos, state.with(AGE, age + 1));
+        world.setBlockAndUpdate(pos, state.setValue(AGE, age + 1));
     }
 }

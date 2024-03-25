@@ -1,14 +1,14 @@
 package de.dafuqs.spectrum.blocks.redstone;
 
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.math.*;
+import de.dafuqs.spectrum.api.block.PlayerOwned;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.UUID;
 
 
 public class PlayerDetectorBlockEntity extends BlockEntity implements PlayerOwned {
@@ -21,11 +21,11 @@ public class PlayerDetectorBlockEntity extends BlockEntity implements PlayerOwne
 	}
 	
 	@Override
-	public void writeNbt(NbtCompound tag) {
-		super.writeNbt(tag);
+	public void saveAdditional(CompoundTag tag) {
+		super.saveAdditional(tag);
 		
 		if (this.ownerUUID != null) {
-			tag.putUuid("UUID", this.ownerUUID);
+			tag.putUUID("UUID", this.ownerUUID);
 		}
 		if (this.ownerName != null) {
 			tag.putString("OwnerName", this.ownerName);
@@ -33,11 +33,11 @@ public class PlayerDetectorBlockEntity extends BlockEntity implements PlayerOwne
 	}
 	
 	@Override
-	public void readNbt(NbtCompound tag) {
-		super.readNbt(tag);
+	public void load(CompoundTag tag) {
+		super.load(tag);
 		
 		if (tag.contains("UUID")) {
-			this.ownerUUID = tag.getUuid("UUID");
+			this.ownerUUID = tag.getUUID("UUID");
 		} else {
 			this.ownerUUID = null;
 		}
@@ -58,10 +58,10 @@ public class PlayerDetectorBlockEntity extends BlockEntity implements PlayerOwne
 	}
 	
 	@Override
-	public void setOwner(PlayerEntity playerEntity) {
-		this.ownerUUID = playerEntity.getUuid();
+	public void setOwner(Player playerEntity) {
+		this.ownerUUID = playerEntity.getUUID();
 		this.ownerName = playerEntity.getName().getString();
-		markDirty();
+		setChanged();
 	}
 	
 }

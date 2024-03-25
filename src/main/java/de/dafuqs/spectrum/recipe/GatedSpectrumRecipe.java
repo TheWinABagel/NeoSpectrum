@@ -1,25 +1,26 @@
 package de.dafuqs.spectrum.recipe;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.api.recipe.GatedRecipe;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public abstract class GatedSpectrumRecipe implements GatedRecipe {
 	
-	public final Identifier id;
+	public final ResourceLocation id;
 	public final String group;
 	public final boolean secret;
-	public final Identifier requiredAdvancementIdentifier;
+	public final ResourceLocation requiredAdvancementIdentifier;
 	
-	protected GatedSpectrumRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier) {
+	protected GatedSpectrumRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier) {
 		this.id = id;
 		this.group = group;
 		this.secret = secret;
@@ -27,7 +28,7 @@ public abstract class GatedSpectrumRecipe implements GatedRecipe {
 	}
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return this.id;
 	}
 	
@@ -48,32 +49,32 @@ public abstract class GatedSpectrumRecipe implements GatedRecipe {
 	 */
 	@Nullable
 	@Override
-	public Identifier getRequiredAdvancementIdentifier() {
+	public ResourceLocation getRequiredAdvancementIdentifier() {
 		return this.requiredAdvancementIdentifier;
 	}
 	
 	@Override
-	public abstract Identifier getRecipeTypeUnlockIdentifier();
+	public abstract ResourceLocation getRecipeTypeUnlockIdentifier();
 	
 	@Override
-	public boolean canPlayerCraft(PlayerEntity playerEntity) {
+	public boolean canPlayerCraft(Player playerEntity) {
 		return AdvancementHelper.hasAdvancement(playerEntity, getRecipeTypeUnlockIdentifier()) && AdvancementHelper.hasAdvancement(playerEntity, this.requiredAdvancementIdentifier);
 	}
 	
 	public abstract String getRecipeTypeShortID();
 	
 	@Override
-	public Text getSingleUnlockToastString() {
-		return Text.translatable("spectrum.toast." + getRecipeTypeShortID() + "_recipe_unlocked.title");
+	public Component getSingleUnlockToastString() {
+		return Component.translatable("spectrum.toast." + getRecipeTypeShortID() + "_recipe_unlocked.title");
 	}
 	
 	@Override
-	public Text getMultipleUnlockToastString() {
-		return Text.translatable("spectrum.toast." + getRecipeTypeShortID() + "_recipes_unlocked.title");
+	public Component getMultipleUnlockToastString() {
+		return Component.translatable("spectrum.toast." + getRecipeTypeShortID() + "_recipes_unlocked.title");
 	}
 	
 	@Override
-	public boolean isIgnoredInRecipeBook() {
+	public boolean isSpecial() {
 		return true;
 	}
 	
@@ -91,19 +92,19 @@ public abstract class GatedSpectrumRecipe implements GatedRecipe {
 	}
 	
 	protected static ItemStack getDefaultStackWithCount(Item item, int count) {
-		ItemStack stack = item.getDefaultStack();
+		ItemStack stack = item.getDefaultInstance();
 		stack.setCount(count);
 		return stack;
 	}
 	
-	protected static boolean matchIngredientStacksExclusively(Inventory inv, List<IngredientStack> ingredientStacks) {
-		if (inv.size() < ingredientStacks.size()) {
+	protected static boolean matchIngredientStacksExclusively(Container inv, List<IngredientStack> ingredientStacks) {
+		if (inv.getContainerSize() < ingredientStacks.size()) {
 			return false;
 		}
 		
 		int inputStackCount = 0;
-		for (int i = 0; i < inv.size(); i++) {
-			if (!inv.getStack(i).isEmpty()) {
+		for (int i = 0; i < inv.getContainerSize(); i++) {
+			if (!inv.getItem(i).isEmpty()) {
 				inputStackCount++;
 			}
 		}
@@ -114,8 +115,8 @@ public abstract class GatedSpectrumRecipe implements GatedRecipe {
 		
 		for (IngredientStack ingredientStack : ingredientStacks) {
 			boolean found = false;
-			for (int i = 0; i < inv.size(); i++) {
-				if (ingredientStack.test(inv.getStack(i))) {
+			for (int i = 0; i < inv.getContainerSize(); i++) {
+				if (ingredientStack.test(inv.getItem(i))) {
 					found = true;
 					break;
 				}
@@ -127,10 +128,10 @@ public abstract class GatedSpectrumRecipe implements GatedRecipe {
 		return true;
 	}
 	
-	protected static boolean matchIngredientStacksExclusively(Inventory inv, List<IngredientStack> ingredients, int[] slots) {
+	protected static boolean matchIngredientStacksExclusively(Container inv, List<IngredientStack> ingredients, int[] slots) {
 		int inputStackCount = 0;
 		for (int slot : slots) {
-			if (!inv.getStack(slot).isEmpty()) {
+			if (!inv.getItem(slot).isEmpty()) {
 				inputStackCount++;
 			}
 		}
@@ -141,7 +142,7 @@ public abstract class GatedSpectrumRecipe implements GatedRecipe {
 		for (IngredientStack ingredient : ingredients) {
 			boolean found = false;
 			for (int slot : slots) {
-				if (ingredient.test(inv.getStack(slot))) {
+				if (ingredient.test(inv.getItem(slot))) {
 					found = true;
 					break;
 				}

@@ -1,56 +1,57 @@
 package de.dafuqs.spectrum.blocks.idols;
 
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class KnockbackIdolBlock extends IdolBlock {
 	
 	protected final float horizontalKnockback;
 	protected final float verticalKnockback;
 	
-	public KnockbackIdolBlock(Settings settings, ParticleEffect particleEffect, float horizontalKnockback, float verticalKnockback) {
+	public KnockbackIdolBlock(Properties settings, ParticleOptions particleEffect, float horizontalKnockback, float verticalKnockback) {
 		super(settings, particleEffect);
 		this.horizontalKnockback = horizontalKnockback;
 		this.verticalKnockback = verticalKnockback;
 	}
 	
 	@Override
-	public boolean trigger(ServerWorld world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
+	public boolean trigger(ServerLevel world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
 		if (entity != null) {
 			switch (side) {
 				case NORTH -> {
-					entity.addVelocity(0, verticalKnockback, -horizontalKnockback);
-					entity.velocityModified = true;
+					entity.push(0, verticalKnockback, -horizontalKnockback);
+					entity.hurtMarked = true;
 				}
 				case EAST -> {
-					entity.addVelocity(horizontalKnockback, verticalKnockback, 0);
-					entity.velocityModified = true;
+					entity.push(horizontalKnockback, verticalKnockback, 0);
+					entity.hurtMarked = true;
 				}
 				case SOUTH -> {
-					entity.addVelocity(0, verticalKnockback, horizontalKnockback);
-					entity.velocityModified = true;
+					entity.push(0, verticalKnockback, horizontalKnockback);
+					entity.hurtMarked = true;
 				}
 				case WEST -> {
-					entity.addVelocity(-horizontalKnockback, verticalKnockback, 0);
-					entity.velocityModified = true;
+					entity.push(-horizontalKnockback, verticalKnockback, 0);
+					entity.hurtMarked = true;
 				}
 				case UP -> {
-					entity.addVelocity(0, (horizontalKnockback / 4), 0);
-					entity.velocityModified = true;
+					entity.push(0, (horizontalKnockback / 4), 0);
+					entity.hurtMarked = true;
 				}
 				default -> {
-					entity.addVelocity(0, -(horizontalKnockback / 4), 0);
-					entity.velocityModified = true;
+					entity.push(0, -(horizontalKnockback / 4), 0);
+					entity.hurtMarked = true;
 				}
 			}
 			return true;
@@ -59,9 +60,9 @@ public class KnockbackIdolBlock extends IdolBlock {
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("block.spectrum.knockback_idol.tooltip"));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("block.spectrum.knockback_idol.tooltip"));
 	}
 	
 }

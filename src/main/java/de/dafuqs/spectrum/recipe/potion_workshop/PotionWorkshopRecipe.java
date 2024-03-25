@@ -1,23 +1,29 @@
 package de.dafuqs.spectrum.recipe.potion_workshop;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.blocks.potion_workshop.*;
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.registries.*;
-import de.dafuqs.matchbooks.recipe.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.blocks.potion_workshop.PotionWorkshopBlockEntity;
+import de.dafuqs.spectrum.recipe.GatedStackSpectrumRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public abstract class PotionWorkshopRecipe extends GatedStackSpectrumRecipe {
 	
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/blocks/potion_workshop");
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/blocks/potion_workshop");
 	public static final int[] INGREDIENT_SLOTS = new int[]{2, 3, 4};
 	
 	protected final int craftingTime;
@@ -27,7 +33,7 @@ public abstract class PotionWorkshopRecipe extends GatedStackSpectrumRecipe {
 	protected final IngredientStack ingredient2;
 	protected final IngredientStack ingredient3;
 	
-	public PotionWorkshopRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier,
+	public PotionWorkshopRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier,
 								int craftingTime, int color, IngredientStack ingredient1, IngredientStack ingredient2, IngredientStack ingredient3) {
 		super(id, group, secret, requiredAdvancementIdentifier);
 		
@@ -50,21 +56,21 @@ public abstract class PotionWorkshopRecipe extends GatedStackSpectrumRecipe {
 		return ingredients;
 	}
 	
-	protected void addIngredients(DefaultedList<Ingredient> ingredients) {
+	protected void addIngredients(NonNullList<Ingredient> ingredients) {
 		ingredients.add(this.ingredient1.getIngredient());
 		ingredients.add(this.ingredient2.getIngredient());
 		ingredients.add(this.ingredient3.getIngredient());
 	}
 	
-	protected void addIngredientStacks(DefaultedList<IngredientStack> ingredients) {
+	protected void addIngredientStacks(NonNullList<IngredientStack> ingredients) {
 		ingredients.add(this.ingredient1);
 		ingredients.add(this.ingredient2);
 		ingredients.add(this.ingredient3);
 	}
 	
 	@Override
-	public boolean matches(@NotNull Inventory inv, World world) {
-		if (inv.size() > 4 && inv.getStack(0).isOf(SpectrumItems.MERMAIDS_GEM) && isValidBaseIngredient(inv.getStack(1))) {
+	public boolean matches(@NotNull Container inv, Level world) {
+		if (inv.getContainerSize() > 4 && inv.getItem(0).is(SpectrumItems.MERMAIDS_GEM) && isValidBaseIngredient(inv.getItem(1))) {
 			
 			if (usesReagents()) {
 				if (!areStacksInReagentSlotsAllReagents(inv)) return false;
@@ -79,9 +85,9 @@ public abstract class PotionWorkshopRecipe extends GatedStackSpectrumRecipe {
 		}
 	}
 	
-	private boolean areStacksInReagentSlotsAllReagents(@NotNull Inventory inv) {
+	private boolean areStacksInReagentSlotsAllReagents(@NotNull Container inv) {
 		for (int i : PotionWorkshopBlockEntity.REAGENT_SLOTS) {
-			ItemStack itemStack = inv.getStack(i);
+			ItemStack itemStack = inv.getItem(i);
 			if (!itemStack.isEmpty() && !PotionWorkshopReactingRecipe.isReagent(itemStack.getItem())) {
 				return false;
 			}
@@ -89,9 +95,9 @@ public abstract class PotionWorkshopRecipe extends GatedStackSpectrumRecipe {
 		return true;
 	}
 	
-	private boolean areReagentSlotsEmpty(@NotNull Inventory inv) {
+	private boolean areReagentSlotsEmpty(@NotNull Container inv) {
 		for (int i : PotionWorkshopBlockEntity.REAGENT_SLOTS) {
-			if (!inv.getStack(i).isEmpty()) {
+			if (!inv.getItem(i).isEmpty()) {
 				return false;
 			}
 		}
@@ -101,13 +107,13 @@ public abstract class PotionWorkshopRecipe extends GatedStackSpectrumRecipe {
 	public abstract boolean isValidBaseIngredient(ItemStack itemStack);
 	
 	@Override
-	public boolean fits(int width, int height) {
+	public boolean canCraftInDimensions(int width, int height) {
 		return true;
 	}
 	
 	@Override
-	public ItemStack createIcon() {
-		return SpectrumBlocks.POTION_WORKSHOP.asItem().getDefaultStack();
+	public ItemStack getToastSymbol() {
+		return SpectrumBlocks.POTION_WORKSHOP.asItem().getDefaultInstance();
 	}
 	
 	public int getCraftingTime() {
@@ -133,7 +139,7 @@ public abstract class PotionWorkshopRecipe extends GatedStackSpectrumRecipe {
 	}
 	
 	@Override
-	public @Nullable Identifier getRecipeTypeUnlockIdentifier() {
+	public @Nullable ResourceLocation getRecipeTypeUnlockIdentifier() {
 		return UNLOCK_IDENTIFIER;
 	}
 	

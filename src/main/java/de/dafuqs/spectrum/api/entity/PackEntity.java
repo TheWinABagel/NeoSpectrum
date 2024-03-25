@@ -1,14 +1,16 @@
 package de.dafuqs.spectrum.api.entity;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.goal.*;
-import net.minecraft.entity.mob.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.goal.Goal;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.function.Predicate;
 
-public interface PackEntity<T extends MobEntity & PackEntity<T>> {
+public interface PackEntity<T extends Mob & PackEntity<T>> {
 	boolean hasOthersInGroup();
 	
 	@Nullable T getLeader();
@@ -46,7 +48,7 @@ public interface PackEntity<T extends MobEntity & PackEntity<T>> {
 		return this.hasOthersInGroup() && getGroupSize() < this.getMaxGroupSize();
 	}
 	
-	class FollowClanLeaderGoal<E extends MobEntity & PackEntity<E>> extends Goal {
+	class FollowClanLeaderGoal<E extends Mob & PackEntity<E>> extends Goal {
 		
 		private static final int MIN_SEARCH_DELAY = 200;
 		private final E entity;
@@ -59,11 +61,11 @@ public interface PackEntity<T extends MobEntity & PackEntity<T>> {
 		}
 		
 		protected int getSurroundingSearchDelay(E fish) {
-			return toGoalTicks(MIN_SEARCH_DELAY + fish.getRandom().nextInt(MIN_SEARCH_DELAY) % 20);
+			return reducedTickDelay(MIN_SEARCH_DELAY + fish.getRandom().nextInt(MIN_SEARCH_DELAY) % 20);
 		}
 		
 		@Override
-		public boolean canStart() {
+		public boolean canUse() {
 			if (this.entity.hasOthersInGroup()) {
 				return false;
 			} else if (this.entity.hasLeader()) {
@@ -80,7 +82,7 @@ public interface PackEntity<T extends MobEntity & PackEntity<T>> {
 		
 		@SuppressWarnings("unchecked")
 		private void createNewPack() {
-			List<E> possiblePackmates = this.entity.getWorld().getEntitiesByClass((Class<E>) this.entity.getClass(), this.entity.getBoundingBox().expand(8.0, 8.0, 8.0),
+			List<E> possiblePackmates = this.entity.level().getEntitiesOfClass((Class<E>) this.entity.getClass(), this.entity.getBoundingBox().inflate(8.0, 8.0, 8.0),
 					(Predicate<LivingEntity>) livingEntity -> livingEntity instanceof PackEntity<?> packEntity && (packEntity.canHaveMoreInGroup() || !packEntity.hasLeader())
 			);
 			
@@ -107,7 +109,7 @@ public interface PackEntity<T extends MobEntity & PackEntity<T>> {
 		}
 		
 		@Override
-		public boolean shouldContinue() {
+		public boolean canContinueToUse() {
 			return this.entity.hasLeader() && this.entity.isCloseEnoughToLeader();
 		}
 		
@@ -124,7 +126,7 @@ public interface PackEntity<T extends MobEntity & PackEntity<T>> {
 		@Override
 		public void tick() {
 			if (--this.moveDelay <= 0) {
-				this.moveDelay = this.getTickCount(10);
+				this.moveDelay = this.adjustedTickDelay(10);
 				this.entity.moveTowardLeader();
 			}
 		}

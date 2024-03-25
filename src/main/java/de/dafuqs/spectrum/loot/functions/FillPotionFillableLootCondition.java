@@ -1,45 +1,51 @@
 package de.dafuqs.spectrum.loot.functions;
 
 import com.google.gson.*;
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.loot.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.item.*;
-import net.minecraft.loot.condition.*;
-import net.minecraft.loot.context.*;
-import net.minecraft.loot.function.*;
-import net.minecraft.loot.provider.number.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.api.energy.InkCost;
+import de.dafuqs.spectrum.api.energy.InkPoweredStatusEffectInstance;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.item.InkPoweredPotionFillable;
+import de.dafuqs.spectrum.loot.SpectrumLootFunctionTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
-public class FillPotionFillableLootCondition extends ConditionalLootFunction {
+public class FillPotionFillableLootCondition extends LootItemConditionalFunction {
 	
-	record InkPoweredPotionTemplate(boolean ambient, boolean showParticles, LootNumberProvider duration,
-									List<StatusEffect> statusEffects, int color, LootNumberProvider amplifier,
-									List<InkColor> inkColors, LootNumberProvider inkCost, boolean unidentifiable) {
+	record InkPoweredPotionTemplate(boolean ambient, boolean showParticles, NumberProvider duration,
+									List<MobEffect> statusEffects, int color, NumberProvider amplifier,
+									List<InkColor> inkColors, NumberProvider inkCost, boolean unidentifiable) {
 		
 		public static InkPoweredPotionTemplate fromJson(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext) {
-			boolean ambient = JsonHelper.getBoolean(jsonObject, "ambient", false);
-			boolean showParticles = JsonHelper.getBoolean(jsonObject, "show_particles", false);
-			boolean unidentifiable = JsonHelper.getBoolean(jsonObject, "unidentifiable", false);
-			LootNumberProvider duration = JsonHelper.deserialize(jsonObject, "duration", jsonDeserializationContext, LootNumberProvider.class);
-			Set<StatusEffect> statusEffects = new HashSet<>();
+			boolean ambient = GsonHelper.getAsBoolean(jsonObject, "ambient", false);
+			boolean showParticles = GsonHelper.getAsBoolean(jsonObject, "show_particles", false);
+			boolean unidentifiable = GsonHelper.getAsBoolean(jsonObject, "unidentifiable", false);
+			NumberProvider duration = GsonHelper.getAsObject(jsonObject, "duration", jsonDeserializationContext, NumberProvider.class);
+			Set<MobEffect> statusEffects = new HashSet<>();
 			JsonElement statusEffectElement = jsonObject.get("status_effect");
 			if (statusEffectElement instanceof JsonArray jsonArray) {
 				for (JsonElement element : jsonArray) {
-					statusEffects.add(Registries.STATUS_EFFECT.get(Identifier.tryParse(element.getAsString())));
+					statusEffects.add(BuiltInRegistries.MOB_EFFECT.get(ResourceLocation.tryParse(element.getAsString())));
 				}
 			} else {
-				statusEffects.add(Registries.STATUS_EFFECT.get(Identifier.tryParse(statusEffectElement.getAsString())));
+				statusEffects.add(BuiltInRegistries.MOB_EFFECT.get(ResourceLocation.tryParse(statusEffectElement.getAsString())));
 			}
 			
-			int color = JsonHelper.getInt(jsonObject, "color", -1);
-			LootNumberProvider amplifier = JsonHelper.deserialize(jsonObject, "amplifier", jsonDeserializationContext, LootNumberProvider.class);
-			LootNumberProvider inkCost = JsonHelper.deserialize(jsonObject, "ink_cost", jsonDeserializationContext, LootNumberProvider.class);
+			int color = GsonHelper.getAsInt(jsonObject, "color", -1);
+			NumberProvider amplifier = GsonHelper.getAsObject(jsonObject, "amplifier", jsonDeserializationContext, NumberProvider.class);
+			NumberProvider inkCost = GsonHelper.getAsObject(jsonObject, "ink_cost", jsonDeserializationContext, NumberProvider.class);
 			
 			Set<InkColor> inkColors = new HashSet<>();
 			JsonElement colorElement = jsonObject.get("ink_color");
@@ -59,8 +65,8 @@ public class FillPotionFillableLootCondition extends ConditionalLootFunction {
 			jsonObject.addProperty("show_particles", this.showParticles);
 			jsonObject.add("duration", jsonSerializationContext.serialize(this.duration));
 			JsonArray statusEffectArray = new JsonArray();
-			for (StatusEffect statusEffect : this.statusEffects) {
-				statusEffectArray.add(Registries.STATUS_EFFECT.getId(statusEffect).toString());
+			for (MobEffect statusEffect : this.statusEffects) {
+				statusEffectArray.add(BuiltInRegistries.MOB_EFFECT.getKey(statusEffect).toString());
 			}
 			jsonObject.add("status_effect", statusEffectArray);
 			jsonObject.addProperty("color", this.color);
@@ -76,10 +82,10 @@ public class FillPotionFillableLootCondition extends ConditionalLootFunction {
 		}
 		
 		public InkPoweredStatusEffectInstance get(LootContext context) {
-			StatusEffect statusEffect = this.statusEffects.get(context.getRandom().nextInt(this.statusEffects.size()));
-			StatusEffectInstance statusEffectInstance = new StatusEffectInstance(statusEffect, this.duration.nextInt(context), this.amplifier.nextInt(context), ambient, showParticles, true);
+			MobEffect statusEffect = this.statusEffects.get(context.getRandom().nextInt(this.statusEffects.size()));
+			MobEffectInstance statusEffectInstance = new MobEffectInstance(statusEffect, this.duration.getInt(context), this.amplifier.getInt(context), ambient, showParticles, true);
 			InkColor inkColor = this.inkColors.get(context.getRandom().nextInt(this.inkColors.size()));
-			int cost = this.inkCost.nextInt(context);
+			int cost = this.inkCost.getInt(context);
 			return new InkPoweredStatusEffectInstance(statusEffectInstance, new InkCost(inkColor, cost), this.color, this.unidentifiable);
 		}
 		
@@ -87,18 +93,18 @@ public class FillPotionFillableLootCondition extends ConditionalLootFunction {
 	
 	final InkPoweredPotionTemplate template;
 	
-	FillPotionFillableLootCondition(LootCondition[] conditions, InkPoweredPotionTemplate template) {
+	FillPotionFillableLootCondition(LootItemCondition[] conditions, InkPoweredPotionTemplate template) {
 		super(conditions);
 		this.template = template;
 	}
 	
 	@Override
-	public LootFunctionType getType() {
+	public LootItemFunctionType getType() {
 		return SpectrumLootFunctionTypes.FILL_POTION_FILLABLE;
 	}
 	
 	@Override
-	public ItemStack process(ItemStack stack, LootContext context) {
+	public ItemStack run(ItemStack stack, LootContext context) {
 		if (this.template == null) {
 			return stack;
 		}
@@ -115,20 +121,20 @@ public class FillPotionFillableLootCondition extends ConditionalLootFunction {
 		return stack;
 	}
 	
-	public static ConditionalLootFunction.Builder<?> builder(InkPoweredPotionTemplate template) {
-		return builder((conditions) -> new FillPotionFillableLootCondition(conditions, template));
+	public static LootItemConditionalFunction.Builder<?> builder(InkPoweredPotionTemplate template) {
+		return simpleBuilder((conditions) -> new FillPotionFillableLootCondition(conditions, template));
 	}
 	
-	public static class Serializer extends ConditionalLootFunction.Serializer<FillPotionFillableLootCondition> {
+	public static class Serializer extends LootItemConditionalFunction.Serializer<FillPotionFillableLootCondition> {
 		
 		@Override
 		public void toJson(JsonObject jsonObject, FillPotionFillableLootCondition lootFunction, JsonSerializationContext jsonSerializationContext) {
-			super.toJson(jsonObject, lootFunction, jsonSerializationContext);
+			super.serialize(jsonObject, lootFunction, jsonSerializationContext);
 			lootFunction.template.toJson(jsonObject, jsonSerializationContext);
 		}
 		
 		@Override
-		public FillPotionFillableLootCondition fromJson(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext, LootCondition[] lootConditions) {
+		public FillPotionFillableLootCondition deserialize(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext, LootItemCondition[] lootConditions) {
 			return new FillPotionFillableLootCondition(lootConditions, InkPoweredPotionTemplate.fromJson(jsonObject, jsonDeserializationContext));
 		}
 	}

@@ -1,21 +1,26 @@
 package de.dafuqs.spectrum.items.trinkets;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.energy.storage.*;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.InkStorageItem;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.storage.FixedSingleInkStorage;
 import de.dafuqs.spectrum.api.render.ExtendedItemBars;
-import de.dafuqs.spectrum.helpers.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.helpers.ColorHelper;
+import de.dafuqs.spectrum.helpers.Support;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class InkDrainTrinketItem extends SpectrumTrinketItem implements InkStorageItem<FixedSingleInkStorage>, ExtendedItemBars {
 	
@@ -28,20 +33,20 @@ public class InkDrainTrinketItem extends SpectrumTrinketItem implements InkStora
 	public static final int MAX_INK = 3276800; // 1677721600;
 	public final InkColor inkColor;
 	
-	public InkDrainTrinketItem(Settings settings, Identifier unlockIdentifier, InkColor inkColor) {
+	public InkDrainTrinketItem(Properties settings, ResourceLocation unlockIdentifier, InkColor inkColor) {
 		super(settings, unlockIdentifier);
 		this.inkColor = inkColor;
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		
 		FixedSingleInkStorage inkStorage = getEnergyStorage(stack);
 		long storedInk = inkStorage.getEnergy(inkStorage.getStoredColor());
 		
 		if (storedInk >= MAX_INK) {
-			tooltip.add(Text.translatable("spectrum.tooltip.ink_drain.tooltip.maxed_out").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("spectrum.tooltip.ink_drain.tooltip.maxed_out").withStyle(ChatFormatting.GRAY));
 		} else {
 			long nextStepInk;
 			int pow = 0;
@@ -50,12 +55,12 @@ public class InkDrainTrinketItem extends SpectrumTrinketItem implements InkStora
 				pow++;
 			} while (storedInk >= nextStepInk);
 			
-			tooltip.add(Text.translatable("spectrum.tooltip.ink_drain.tooltip.ink_for_next_step." + inkStorage.getStoredColor().toString(), Support.getShortenedNumberString(nextStepInk - storedInk)).formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("spectrum.tooltip.ink_drain.tooltip.ink_for_next_step." + inkStorage.getStoredColor().toString(), Support.getShortenedNumberString(nextStepInk - storedInk)).withStyle(ChatFormatting.GRAY));
 		}
 	}
 	
 	@Override
-	public boolean hasGlint(ItemStack stack) {
+	public boolean isFoil(ItemStack stack) {
 		return isMaxedOut(stack);
 	}
 	
@@ -72,8 +77,8 @@ public class InkDrainTrinketItem extends SpectrumTrinketItem implements InkStora
 	
 	// Omitting this would crash outside the dev env o.O
 	@Override
-	public ItemStack getDefaultStack() {
-		return super.getDefaultStack();
+	public ItemStack getDefaultInstance() {
+		return super.getDefaultInstance();
 	}
 	
 	@Override
@@ -83,7 +88,7 @@ public class InkDrainTrinketItem extends SpectrumTrinketItem implements InkStora
 	
 	@Override
 	public FixedSingleInkStorage getEnergyStorage(ItemStack itemStack) {
-		NbtCompound compound = itemStack.getNbt();
+		CompoundTag compound = itemStack.getTag();
 		if (compound != null && compound.contains("EnergyStore")) {
 			return FixedSingleInkStorage.fromNbt(compound.getCompound("EnergyStore"));
 		}
@@ -93,7 +98,7 @@ public class InkDrainTrinketItem extends SpectrumTrinketItem implements InkStora
 	@Override
 	public void setEnergyStorage(ItemStack itemStack, InkStorage storage) {
 		if (storage instanceof FixedSingleInkStorage fixedSingleInkStorage) {
-			NbtCompound compound = itemStack.getOrCreateNbt();
+			CompoundTag compound = itemStack.getOrCreateTag();
 			compound.put("EnergyStore", fixedSingleInkStorage.toNbt());
 		}
 	}
@@ -109,14 +114,14 @@ public class InkDrainTrinketItem extends SpectrumTrinketItem implements InkStora
 	}
 
 	@Override
-	public boolean allowVanillaDurabilityBarRendering(@Nullable PlayerEntity player, ItemStack stack) {
+	public boolean allowVanillaDurabilityBarRendering(@Nullable Player player, ItemStack stack) {
 		return false;
 	}
 
 	@Override
-	public BarSignature getSignature(@Nullable PlayerEntity player, @NotNull ItemStack stack, int index) {
+	public BarSignature getSignature(@Nullable Player player, @NotNull ItemStack stack, int index) {
 		var inkTank = getEnergyStorage(stack);
-		var progress = (int) Math.round(MathHelper.clampedLerp(0, 13, Math.log(inkTank.getEnergy(inkColor) / 100.0f) / Math.log(8) / 5.0F));
+		var progress = (int) Math.round(Mth.clampedLerp(0, 13, Math.log(inkTank.getEnergy(inkColor) / 100.0f) / Math.log(8) / 5.0F));
 
 		if (progress == 0)
 			return PASS;

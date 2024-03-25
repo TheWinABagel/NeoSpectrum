@@ -1,30 +1,32 @@
 package de.dafuqs.spectrum.items.tools;
 
-import de.dafuqs.arrowhead.api.*;
-import de.dafuqs.spectrum.api.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.item.*;
+import de.dafuqs.arrowhead.api.ArrowheadBow;
+import de.dafuqs.spectrum.api.item.Preenchanted;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 
-import java.util.*;
+import java.util.Map;
 
 public class BedrockBowItem extends BowItem implements Preenchanted, ArrowheadBow {
 	
-	public BedrockBowItem(Settings settings) {
+	public BedrockBowItem(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public boolean isDamageable() {
+	public boolean canBeDepleted() {
 		return false;
 	}
 	
 	@Override
 	public Map<Enchantment, Integer> getDefaultEnchantments() {
-		return Map.of(Enchantments.POWER, 6);
+		return Map.of(Enchantments.POWER_ARROWS, 6);
 	}
 	
 	@Override
-	public ItemStack getDefaultStack() {
+	public ItemStack getDefaultInstance() {
 		return getDefaultEnchantedStack(this);
 	}
 	

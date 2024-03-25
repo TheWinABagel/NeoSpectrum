@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.enchantment.*;
+import net.minecraft.world.item.enchantment.Enchantment;
 
 /**
  * Items with that Interface will be able to be enchanted with the given enchants

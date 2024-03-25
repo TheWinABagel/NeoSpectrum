@@ -1,8 +1,10 @@
 package de.dafuqs.spectrum.api.energy.storage;
 
-import de.dafuqs.spectrum.api.energy.color.*;
-import net.minecraft.nbt.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class FixedSingleInkStorage extends SingleInkStorage {
 	
@@ -15,8 +17,8 @@ public class FixedSingleInkStorage extends SingleInkStorage {
 		super(maxEnergy, color, amount);
 	}
 	
-	public static @Nullable FixedSingleInkStorage fromNbt(@NotNull NbtCompound compound) {
-		if (compound.contains("MaxEnergyTotal", NbtElement.LONG_TYPE)) {
+	public static @Nullable FixedSingleInkStorage fromNbt(@NotNull CompoundTag compound) {
+		if (compound.contains("MaxEnergyTotal", Tag.TAG_LONG)) {
 			long maxEnergyTotal = compound.getLong("MaxEnergyTotal");
 			InkColor color = InkColor.of(compound.getString("Color"));
 			long amount = compound.getLong("Amount");

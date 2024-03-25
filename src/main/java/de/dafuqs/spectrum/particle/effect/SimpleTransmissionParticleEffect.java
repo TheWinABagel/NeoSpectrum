@@ -1,14 +1,16 @@
 package de.dafuqs.spectrum.particle.effect;
 
-import net.minecraft.network.*;
-import net.minecraft.particle.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.event.*;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.gameevent.PositionSource;
+import net.minecraft.world.level.gameevent.PositionSourceType;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.Locale;
+import java.util.Optional;
 
-public abstract class SimpleTransmissionParticleEffect implements ParticleEffect {
+public abstract class SimpleTransmissionParticleEffect implements ParticleOptions {
 	
 	protected final PositionSource destination;
 	protected final int arrivalInTicks;
@@ -19,21 +21,21 @@ public abstract class SimpleTransmissionParticleEffect implements ParticleEffect
 	}
 	
 	@Override
-	public void write(PacketByteBuf buf) {
-		PositionSourceType.write(this.destination, buf);
+	public void writeToNetwork(FriendlyByteBuf buf) {
+		PositionSourceType.toNetwork(this.destination, buf);
 		buf.writeVarInt(this.arrivalInTicks);
 	}
 	
 	@Override
-	public String asString() {
-		Optional<Vec3d> pos = this.destination.getPos(null);
+	public String writeToString() {
+		Optional<Vec3> pos = this.destination.getPosition(null);
 		if (pos.isPresent()) {
-			double d = pos.get().getX();
-			double e = pos.get().getY();
-			double f = pos.get().getZ();
-			return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %d", Registries.PARTICLE_TYPE.getId(this.getType()), d, e, f, this.arrivalInTicks);
+			double d = pos.get().x();
+			double e = pos.get().y();
+			double f = pos.get().z();
+			return String.format(Locale.ROOT, "%s %.2f %.2f %.2f %d", BuiltInRegistries.PARTICLE_TYPE.getKey(this.getType()), d, e, f, this.arrivalInTicks);
 		}
-		return String.format(Locale.ROOT, "%s <no destination> %d", Registries.PARTICLE_TYPE.getId(this.getType()), this.arrivalInTicks);
+		return String.format(Locale.ROOT, "%s <no destination> %d", BuiltInRegistries.PARTICLE_TYPE.getKey(this.getType()), this.arrivalInTicks);
 	}
 	
 	public PositionSource getDestination() {

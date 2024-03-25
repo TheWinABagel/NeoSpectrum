@@ -1,20 +1,23 @@
 package de.dafuqs.spectrum.helpers;
 
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.entity.entity.*;
-import de.dafuqs.spectrum.items.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.entity.passive.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
-import org.joml.*;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.entity.entity.EggLayingWoolyPigEntity;
+import de.dafuqs.spectrum.items.PigmentItem;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.animal.Sheep;
+import net.minecraft.world.entity.monster.Shulker;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
 
 import java.awt.*;
-import java.util.*;
+import java.util.Optional;
 
 public class ColorHelper {
 	
@@ -54,7 +57,7 @@ public class ColorHelper {
 		if (!itemStack.isEmpty()) {
 			Item item = itemStack.getItem();
 			if (item instanceof DyeItem dyeItem) {
-				return Optional.of(dyeItem.getColor());
+				return Optional.of(dyeItem.getDyeColor());
 			} else if (item instanceof PigmentItem pigmentItem) {
 				return Optional.of(pigmentItem.getColor());
 			}
@@ -62,22 +65,22 @@ public class ColorHelper {
 		return Optional.empty();
 	}
 	
-	public static boolean tryColorEntity(PlayerEntity user, Entity entity, DyeColor dyeColor) {
-		if (entity instanceof SheepEntity sheepEntity && sheepEntity.isAlive() && !sheepEntity.isSheared()) {
+	public static boolean tryColorEntity(Player user, Entity entity, DyeColor dyeColor) {
+		if (entity instanceof Sheep sheepEntity && sheepEntity.isAlive() && !sheepEntity.isSheared()) {
 			if (sheepEntity.getColor() != dyeColor) {
-				sheepEntity.getWorld().playSoundFromEntity(user, sheepEntity, SoundEvents.ITEM_DYE_USE, SoundCategory.PLAYERS, 1.0F, 1.0F);
+				sheepEntity.level().playSound(user, sheepEntity, SoundEvents.DYE_USE, SoundSource.PLAYERS, 1.0F, 1.0F);
 				sheepEntity.setColor(dyeColor);
 				return true;
 			}
 		} else if (entity instanceof EggLayingWoolyPigEntity woolyPig && woolyPig.isAlive()) {
 			if (woolyPig.getColor() != dyeColor) {
-				woolyPig.getWorld().playSoundFromEntity(user, woolyPig, SoundEvents.ITEM_DYE_USE, SoundCategory.PLAYERS, 1.0F, 1.0F);
+				woolyPig.level().playSound(user, woolyPig, SoundEvents.DYE_USE, SoundSource.PLAYERS, 1.0F, 1.0F);
 				woolyPig.setColor(dyeColor);
 				return true;
 			}
-		} else if (entity instanceof ShulkerEntity shulkerEntity && shulkerEntity.isAlive()) {
+		} else if (entity instanceof Shulker shulkerEntity && shulkerEntity.isAlive()) {
 			if (shulkerEntity.getColor() != dyeColor) {
-				shulkerEntity.getWorld().playSoundFromEntity(user, shulkerEntity, SoundEvents.ITEM_DYE_USE, SoundCategory.PLAYERS, 1.0F, 1.0F);
+				shulkerEntity.level().playSound(user, shulkerEntity, SoundEvents.DYE_USE, SoundSource.PLAYERS, 1.0F, 1.0F);
 				shulkerEntity.setVariant(Optional.of(dyeColor));
 				return true;
 			}

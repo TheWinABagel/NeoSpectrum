@@ -1,16 +1,19 @@
 package de.dafuqs.spectrum.loot;
 
-import de.dafuqs.spectrum.loot.conditions.*;
-import net.minecraft.loot.condition.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.loot.conditions.RandomChanceWithTreasureHunterLootCondition;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.loot.Serializer;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemConditionType;
 
 public class SpectrumLootConditionTypes {
 
-    public static LootConditionType RANDOM_CHANCE_WITH_TREASURE_HUNTER;
+    public static LootItemConditionType RANDOM_CHANCE_WITH_TREASURE_HUNTER;
 
-    private static LootConditionType register(String id, JsonSerializer<? extends LootCondition> serializer) {
-		return Registry.register(Registries.LOOT_CONDITION_TYPE, new Identifier(id), new LootConditionType(serializer));
+    private static LootItemConditionType register(String id, Serializer<? extends LootItemCondition> serializer) {
+		return Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, new ResourceLocation(id), new LootItemConditionType(serializer));
     }
 
     public static void register() {

@@ -1,48 +1,54 @@
 package de.dafuqs.spectrum.items.tools;
 
-import com.google.common.collect.*;
-import com.jamieswhiteshirt.reachentityattributes.*;
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.particle.effect.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.attribute.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.potion.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.energy.InkPowered;
+import de.dafuqs.spectrum.api.energy.InkPoweredStatusEffectInstance;
+import de.dafuqs.spectrum.api.item.InkPoweredPotionFillable;
+import de.dafuqs.spectrum.helpers.ColorHelper;
+import de.dafuqs.spectrum.particle.effect.DynamicParticleEffect;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.*;
+import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
-public class NightfallsBladeItem extends ToolItem implements Vanishable, InkPoweredPotionFillable {
+public class NightfallsBladeItem extends TieredItem implements Vanishable, InkPoweredPotionFillable {
 	
-	private static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/equipment/nightfalls_blade");
+	private static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/equipment/nightfalls_blade");
 	protected static final UUID REACH_MODIFIER_ID = UUID.fromString("8e2e05ef-a48a-4e2d-9633-388edcb21ea3");
 
-	private final Multimap<EntityAttribute, EntityAttributeModifier> attributeModifiers;
+	private final Multimap<Attribute, AttributeModifier> attributeModifiers;
 	
-	public NightfallsBladeItem(ToolMaterial material, int attackDamage, float attackSpeed, Settings settings) {
+	public NightfallsBladeItem(Tier material, int attackDamage, float attackSpeed, Properties settings) {
 		super(material, settings);
 
-		var damage = (float) attackDamage + material.getAttackDamage();
-		ImmutableMultimap.Builder<EntityAttribute, EntityAttributeModifier> builder = ImmutableMultimap.builder();
-		builder.put(EntityAttributes.GENERIC_ATTACK_DAMAGE, new EntityAttributeModifier(ATTACK_DAMAGE_MODIFIER_ID, "Weapon modifier", damage, EntityAttributeModifier.Operation.ADDITION));
-		builder.put(EntityAttributes.GENERIC_ATTACK_SPEED, new EntityAttributeModifier(ATTACK_SPEED_MODIFIER_ID, "Weapon modifier", attackSpeed, EntityAttributeModifier.Operation.ADDITION));
-		builder.put(ReachEntityAttributes.ATTACK_RANGE, new EntityAttributeModifier(REACH_MODIFIER_ID, "Weapon modifier", -1.5F, EntityAttributeModifier.Operation.ADDITION));
+		var damage = (float) attackDamage + material.getAttackDamageBonus();
+		ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+		builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", damage, AttributeModifier.Operation.ADDITION));
+		builder.put(Attributes.ATTACK_SPEED, new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", attackSpeed, AttributeModifier.Operation.ADDITION));
+		builder.put(ReachEntityAttributes.ATTACK_RANGE, new AttributeModifier(REACH_MODIFIER_ID, "Weapon modifier", -1.5F, AttributeModifier.Operation.ADDITION));
 		this.attributeModifiers = builder.build();
 	}
 
 	@Override
-	public Multimap<EntityAttribute, EntityAttributeModifier> getAttributeModifiers(EquipmentSlot slot) {
-		return slot == EquipmentSlot.MAINHAND ? attributeModifiers : super.getAttributeModifiers(slot);
+	public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
+		return slot == EquipmentSlot.MAINHAND ? attributeModifiers : super.getDefaultAttributeModifiers(slot);
 	}
 	
 	@Override
@@ -66,37 +72,37 @@ public class NightfallsBladeItem extends ToolItem implements Vanishable, InkPowe
 	}
 	
 	@Override
-	public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-		if(target.isAlive() && attacker instanceof PlayerEntity player) {
+	public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+		if(target.isAlive() && attacker instanceof Player player) {
 			if (AdvancementHelper.hasAdvancement(player, UNLOCK_IDENTIFIER)) {
 				List<InkPoweredStatusEffectInstance> effects = getEffects(stack);
 				for(InkPoweredStatusEffectInstance instance : effects) {
 					if(InkPowered.tryDrainEnergy(player, instance.getInkCost().getColor(), instance.getInkCost().getCost())) {
-						World world = attacker.getWorld();
-						if (world.isClient) {
-							world.addParticle(new DynamicParticleEffect(ParticleTypes.EFFECT, 0.1F, ColorHelper.colorIntToVec(instance.getStatusEffectInstance().getEffectType().getColor()), 0.5F, 120, true, true),
-									target.getParticleX(0.5D), target.getBodyY(0.5D), target.getParticleZ(0.5D),
+						Level world = attacker.level();
+						if (world.isClientSide) {
+							world.addParticle(new DynamicParticleEffect(ParticleTypes.EFFECT, 0.1F, ColorHelper.colorIntToVec(instance.getStatusEffectInstance().getEffect().getColor()), 0.5F, 120, true, true),
+									target.getRandomX(0.5D), target.getY(0.5D), target.getRandomZ(0.5D),
 									world.random.nextFloat() - 0.5, world.random.nextFloat() - 0.5, world.random.nextFloat() - 0.5
 							);
 						} else {
-							target.addStatusEffect(instance.getStatusEffectInstance(), attacker);
+							target.addEffect(instance.getStatusEffectInstance(), attacker);
 						}
 					}
 				}
 			}
 		}
-		return super.postHit(stack, target, attacker);
+		return super.hurtEnemy(stack, target, attacker);
 	}
 	
 	@Override
-	public boolean hasGlint(ItemStack stack) {
-		return super.hasGlint(stack) || !PotionUtil.getCustomPotionEffects(stack).isEmpty();
+	public boolean isFoil(ItemStack stack) {
+		return super.isFoil(stack) || !PotionUtils.getCustomEffects(stack).isEmpty();
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
-		appendPotionFillableTooltip(stack, tooltip, Text.translatable("item.spectrum.nightfalls_blade.when_struck"), true);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
+		appendPotionFillableTooltip(stack, tooltip, Component.translatable("item.spectrum.nightfalls_blade.when_struck"), true);
 	}
 
 }

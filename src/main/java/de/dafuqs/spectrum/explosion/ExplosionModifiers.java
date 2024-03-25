@@ -1,17 +1,19 @@
 package de.dafuqs.spectrum.explosion;
 
-import de.dafuqs.spectrum.*;
+import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.explosion.modifier.*;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.particle.*;
-import net.minecraft.registry.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import de.dafuqs.spectrum.registries.SpectrumRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.enchantment.Enchantments;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Optional;
 
 public class ExplosionModifiers {
 	
@@ -39,7 +41,7 @@ public class ExplosionModifiers {
 			if (owner == null) {
 				return Optional.empty();
 			}
-			return Optional.of(owner.getDamageSources().lightningBolt());
+			return Optional.of(owner.damageSources().lightningBolt());
 		}
 	});
 	public static final ExplosionModifier MAGIC = registerModifier(
@@ -50,7 +52,7 @@ public class ExplosionModifiers {
 			if (owner == null) {
 				return Optional.empty();
 			}
-			return Optional.of(owner.getDamageSources().magic());
+			return Optional.of(owner.damageSources().magic());
 		}
 	});
 	public static final ExplosionModifier INCANDESCENCE = registerModifier("incandescence", new DamageChangingModifier(DAMAGE_TYPE, ParticleTypes.ENCHANT, 0xff59ff) {
@@ -59,7 +61,7 @@ public class ExplosionModifiers {
 			if (owner == null) {
 				return Optional.empty();
 			}
-			return Optional.of(SpectrumDamageTypes.incandescence(owner.getWorld()));
+			return Optional.of(SpectrumDamageTypes.incandescence(owner.level()));
 		}
 	});
 	
@@ -76,7 +78,7 @@ public class ExplosionModifiers {
 	});
 	
 	// Block Breaking modifications
-	public static final ExplosionModifier FORTUNE = registerModifier("fortune", new EnchantmentAddingModifier(DESTRUCTION_MODIFICATION, Enchantments.FORTUNE, 3, ParticleTypes.ENCHANT, 0x5433a5));
+	public static final ExplosionModifier FORTUNE = registerModifier("fortune", new EnchantmentAddingModifier(DESTRUCTION_MODIFICATION, Enchantments.BLOCK_FORTUNE, 3, ParticleTypes.ENCHANT, 0x5433a5));
 	public static final ExplosionModifier SILK_TOUCH = registerModifier("silk_touch", new EnchantmentAddingModifier(DESTRUCTION_MODIFICATION, Enchantments.SILK_TOUCH, 1, ParticleTypes.ENCHANT, 0x5433a5));
 	public static final ExplosionModifier INVENTORY_INSERTION = registerModifier("inventory_insertion", new EnchantmentAddingModifier(DESTRUCTION_MODIFICATION, SpectrumEnchantments.INVENTORY_INSERTION, 1, ParticleTypes.ENCHANT, 0x5433a5));
 	

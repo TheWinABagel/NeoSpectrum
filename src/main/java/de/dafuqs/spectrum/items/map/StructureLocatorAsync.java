@@ -1,26 +1,26 @@
 package de.dafuqs.spectrum.items.map;
 
 import de.dafuqs.spectrum.SpectrumCommon;
-import net.minecraft.registry.Registry;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.DefaultUncaughtExceptionHandler;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.ServerTask;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.structure.StructureStart;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.logging.UncaughtExceptionLogger;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.world.StructurePresence;
-import net.minecraft.world.WorldAccess;
-import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkStatus;
-import net.minecraft.world.gen.StructureAccessor;
-import net.minecraft.world.gen.chunk.placement.ConcentricRingsStructurePlacement;
-import net.minecraft.world.gen.chunk.placement.StructurePlacement;
-import net.minecraft.world.gen.chunk.placement.StructurePlacementCalculator;
-import net.minecraft.world.gen.structure.Structure;
+import net.minecraft.server.TickTask;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
+import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureCheckResult;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement;
+import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -30,18 +30,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class StructureLocatorAsync {
 
     private final MinecraftServer server;
-    private final ServerWorld world;
+    private final ServerLevel world;
     private final StructureLocatorAsync.Acceptor acceptor;
-    private final Identifier targetId;
+    private final ResourceLocation targetId;
     private final int maxRadius;
     private ChunkPos center;
-    private RegistryEntry<Structure> registryEntry;
+    private Holder<Structure> registryEntry;
 
     @Nullable
     private LocatorThread thread;
     private int radius;
 
-    public StructureLocatorAsync(ServerWorld world, StructureLocatorAsync.Acceptor acceptor, Identifier targetId, ChunkPos center, int maxRadius) {
+    public StructureLocatorAsync(ServerLevel world, StructureLocatorAsync.Acceptor acceptor, ResourceLocation targetId, ChunkPos center, int maxRadius) {
         this.server = world.getServer();
         this.world = world;
         this.acceptor = acceptor;
@@ -105,7 +105,7 @@ public class StructureLocatorAsync {
 
         public LocatorThread() {
             super("Structure Locator #" + currentRunningThreads.getAndIncrement());
-            setUncaughtExceptionHandler(new UncaughtExceptionLogger(SpectrumCommon.LOGGER));
+            setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(SpectrumCommon.LOGGER));
             semaphore = new Semaphore(MAX_RUNNING_TASKS);
         }
 
@@ -135,25 +135,25 @@ public class StructureLocatorAsync {
             }
         }
 
-        private RegistryEntry<Structure> getRegistryEntry() {
-            Registry<Structure> registry = world.getRegistryManager().getOptional(RegistryKeys.STRUCTURE).orElse(null);
+        private Holder<Structure> getRegistryEntry() {
+            Registry<Structure> registry = world.registryAccess().registry(Registries.STRUCTURE).orElse(null);
             if (registry == null) return null;
 
             Structure structure = registry.get(targetId);
             if (structure == null) return null;
 
-            return registry.getEntry(structure);
+            return registry.wrapAsHolder(structure);
         }
 
         private void checkConcentricRingsStructures() {
-            StructurePlacementCalculator calculator = world.getChunkManager().getStructurePlacementCalculator();
+            ChunkGeneratorStructureState calculator = world.getChunkSource().getGeneratorState();
 
             double minDistance = Double.MAX_VALUE;
             StructureStart concentricStart = null;
 
-            for (StructurePlacement placement : calculator.getPlacements(registryEntry)) {
+            for (StructurePlacement placement : calculator.getPlacementsForStructure(registryEntry)) {
                 if (placement instanceof ConcentricRingsStructurePlacement concentricRingsStructurePlacement) {
-                    List<ChunkPos> positions = calculator.getPlacementPositions(concentricRingsStructurePlacement);
+                    List<ChunkPos> positions = calculator.getRingPositionsFor(concentricRingsStructurePlacement);
                     if (positions != null) {
                         for (ChunkPos pos : positions) {
                             double dx = (double) pos.x - (double) center.x;
@@ -181,7 +181,7 @@ public class StructureLocatorAsync {
                     continue;
                 }
 
-                server.send(new ServerTask(server.getTicks(), () -> {
+                server.tell(new TickTask(server.getTickCount(), () -> {
                     StructureStart target = locateStructureAtChunk(new ChunkPos(x, z));
                     if (target != null) {
                         acceptTarget(target);
@@ -196,14 +196,14 @@ public class StructureLocatorAsync {
 
         @Nullable
         private StructureStart locateStructureAtChunk(ChunkPos pos) {
-            StructureAccessor accessor = world.getStructureAccessor();
+            StructureManager accessor = world.structureManager();
             Structure structure = registryEntry.value();
 
-            StructurePresence presence = accessor.getStructurePresence(pos, structure, false);
-            if (presence == StructurePresence.START_NOT_PRESENT) return null;
+            StructureCheckResult presence = accessor.checkStructurePresence(pos, structure, false);
+            if (presence == StructureCheckResult.START_NOT_PRESENT) return null;
 
-            Chunk chunk = world.getChunk(pos.x, pos.z, ChunkStatus.STRUCTURE_STARTS);
-            return accessor.getStructureStart(ChunkSectionPos.from(chunk), structure, chunk);
+            ChunkAccess chunk = world.getChunk(pos.x, pos.z, ChunkStatus.STRUCTURE_STARTS);
+            return accessor.getStartForStructure(SectionPos.bottomOf(chunk), structure, chunk);
         }
 
         private void acceptTarget(StructureStart target) {
@@ -218,7 +218,7 @@ public class StructureLocatorAsync {
     }
 
     public interface Acceptor {
-        void accept(WorldAccess world, StructureStart target);
+        void accept(LevelAccessor world, StructureStart target);
     }
 
 }

@@ -1,20 +1,21 @@
 package de.dafuqs.spectrum.compat.REI;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import me.shedaniel.rei.api.common.display.basic.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.minecraft.client.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.api.recipe.GatedRecipe;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class GatedSpectrumDisplay extends BasicDisplay implements GatedRecipeDisplay {
 
-	private final Identifier requiredAdvancementIdentifier;
+	private final ResourceLocation requiredAdvancementIdentifier;
 	private final boolean secret;
 
 	// 1 input => 1 output
@@ -36,7 +37,7 @@ public abstract class GatedSpectrumDisplay extends BasicDisplay implements Gated
 
 	@Override
 	public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return AdvancementHelper.hasAdvancement(client.player, this.requiredAdvancementIdentifier);
 	}
 

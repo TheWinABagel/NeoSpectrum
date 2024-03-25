@@ -1,10 +1,10 @@
 package de.dafuqs.spectrum.blocks.mob_head;
 
-import de.dafuqs.spectrum.entity.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.*;
+import de.dafuqs.spectrum.entity.SpectrumEntityTypes;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.SkullBlock;
 
-public enum SpectrumSkullBlockType implements SkullBlock.SkullType {
+public enum SpectrumSkullBlockType implements SkullBlock.Type {
 	// Vanilla
 	AXOLOTL_BLUE(EntityType.AXOLOTL),
 	AXOLOTL_BROWN(EntityType.AXOLOTL),
@@ -123,7 +123,7 @@ public enum SpectrumSkullBlockType implements SkullBlock.SkullType {
 	ERASER(SpectrumEntityTypes.ERASER, true);
 	
 	public final EntityType<?> entityType;
-	public final SkullBlock.SkullType modelType;
+	public final SkullBlock.Type modelType;
 	
 	// Most mob heads render with the player head renderer using a different texture, but some use unique renderers already.
 	// Somewhen in the future hopefully all of them will get their own unique head block model
@@ -135,10 +135,10 @@ public enum SpectrumSkullBlockType implements SkullBlock.SkullType {
 	// in SpectrumSkullBlockEntityRenderer.getModels()
 	SpectrumSkullBlockType(EntityType<?> entityType, boolean useUniqueRenderer) {
 		this.entityType = entityType;
-		this.modelType = useUniqueRenderer ? this : SkullBlock.Type.PLAYER;
+		this.modelType = useUniqueRenderer ? this : SkullBlock.Types.PLAYER;
 	}
 	
-	public SkullBlock.SkullType getModelType() {
+	public SkullBlock.Type getModelType() {
 		return this.modelType;
 	}
 	

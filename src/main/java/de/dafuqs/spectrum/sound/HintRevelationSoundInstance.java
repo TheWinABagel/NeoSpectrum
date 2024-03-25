@@ -1,23 +1,27 @@
 package de.dafuqs.spectrum.sound;
 
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.sound.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.sound.*;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.resources.sounds.AbstractSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.TickableSoundInstance;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
 
 @Environment(EnvType.CLIENT)
 public class HintRevelationSoundInstance extends AbstractSoundInstance implements TickableSoundInstance {
 	
-	private final PlayerEntity player;
+	private final Player player;
 	private final int duration;
 	private boolean done;
 	private int playtime;
 	
-	public HintRevelationSoundInstance(PlayerEntity player, int duration) {
-		super(SpectrumSoundEvents.TEXT_REVEALED, SoundCategory.PLAYERS, SoundInstance.createRandom());
-		this.repeat = true;
-		this.repeatDelay = 0;
+	public HintRevelationSoundInstance(Player player, int duration) {
+		super(SpectrumSoundEvents.TEXT_REVEALED, SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
+		this.looping = true;
+		this.delay = 0;
 		this.volume = 1.0F;
 		this.player = player;
 		this.duration = duration;
@@ -29,12 +33,12 @@ public class HintRevelationSoundInstance extends AbstractSoundInstance implement
 	}
 	
 	@Override
-	public boolean isDone() {
+	public boolean isStopped() {
 		return this.done;
 	}
 	
 	@Override
-	public boolean shouldAlwaysPlay() {
+	public boolean canStartSilent() {
 		return true;
 	}
 	
@@ -48,13 +52,13 @@ public class HintRevelationSoundInstance extends AbstractSoundInstance implement
 			this.z = player.getZ();
 		}
 		
-		if (player == null || !player.getMainHandStack().isOf(SpectrumItems.GUIDEBOOK) || playtime > duration) {
+		if (player == null || !player.getMainHandItem().is(SpectrumItems.GUIDEBOOK) || playtime > duration) {
 			this.setDone();
 		}
 	}
 	
 	protected final void setDone() {
 		this.done = true;
-		this.repeat = false;
+		this.looping = false;
 	}
 }

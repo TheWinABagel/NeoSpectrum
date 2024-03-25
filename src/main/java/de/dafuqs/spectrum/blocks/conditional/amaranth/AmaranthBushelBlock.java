@@ -1,36 +1,40 @@
 package de.dafuqs.spectrum.blocks.conditional.amaranth;
 
-import de.dafuqs.revelationary.api.revelations.*;
-import de.dafuqs.spectrum.registries.client.*;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.revelationary.api.revelations.RevelationAware;
+import de.dafuqs.spectrum.registries.client.SpectrumColorProviders;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Hashtable;
+import java.util.Map;
 
-public class AmaranthBushelBlock extends PlantBlock implements RevelationAware {
+public class AmaranthBushelBlock extends BushBlock implements RevelationAware {
 	
-	public AmaranthBushelBlock(Settings settings) {
+	public AmaranthBushelBlock(Properties settings) {
 		super(settings);
 		RevelationAware.register(this);
 	}
 	
 	@Override
-	public Identifier getCloakAdvancementIdentifier() {
+	public ResourceLocation getCloakAdvancementIdentifier() {
 		return AmaranthCropBlock.ADVANCEMENT_IDENTIFIER;
 	}
 	
 	@Override
 	public Map<BlockState, BlockState> getBlockStateCloaks() {
 		Map<BlockState, BlockState> map = new Hashtable<>();
-		map.put(this.getDefaultState(), Blocks.FERN.getDefaultState());
+		map.put(this.defaultBlockState(), Blocks.FERN.defaultBlockState());
 		return map;
 	}
 	
 	@Override
-	public @Nullable Pair<Item, Item> getItemCloak() {
-		return new Pair<>(this.asItem(), Blocks.FERN.asItem());
+	public @Nullable Tuple<Item, Item> getItemCloak() {
+		return new Tuple<>(this.asItem(), Blocks.FERN.asItem());
 	}
 	
 	@Override

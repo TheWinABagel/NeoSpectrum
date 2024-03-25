@@ -1,35 +1,39 @@
 package de.dafuqs.spectrum.blocks.dd_deco;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.world.*;
-import net.minecraft.world.chunk.light.*;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SnowLayerBlock;
+import net.minecraft.world.level.block.SnowyDirtBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.lighting.LightEngine;
 
-public class BlackslagVegetationBlock extends SnowyBlock {
+public class BlackslagVegetationBlock extends SnowyDirtBlock {
 	
-	public BlackslagVegetationBlock(Settings settings) {
+	public BlackslagVegetationBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		if (!canSurvive(state, world, pos)) {
-			world.setBlockState(pos, SpectrumBlocks.BLACKSLAG.getDefaultState());
+			world.setBlockAndUpdate(pos, SpectrumBlocks.BLACKSLAG.defaultBlockState());
 		}
 	}
 	
-	private static boolean canSurvive(BlockState state, BlockView world, BlockPos pos) {
-		BlockPos blockPos = pos.up();
+	private static boolean canSurvive(BlockState state, BlockGetter world, BlockPos pos) {
+		BlockPos blockPos = pos.above();
 		BlockState blockState = world.getBlockState(blockPos);
-		if (blockState.isOf(Blocks.SNOW) && blockState.get(SnowBlock.LAYERS) == 1) {
+		if (blockState.is(Blocks.SNOW) && blockState.getValue(SnowLayerBlock.LAYERS) == 1) {
 			return true;
-		} else if (blockState.getFluidState().getLevel() == 8) {
+		} else if (blockState.getFluidState().getAmount() == 8) {
 			return false;
 		} else {
-			int light = ChunkLightProvider.getRealisticOpacity(world, state, pos, blockState, blockPos, Direction.UP, blockState.getOpacity(world, blockPos));
+			int light = LightEngine.getLightBlockInto(world, state, pos, blockState, blockPos, Direction.UP, blockState.getLightBlock(world, blockPos));
 			return light < world.getMaxLightLevel();
 		}
 	}

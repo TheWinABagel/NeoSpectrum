@@ -1,34 +1,35 @@
 package de.dafuqs.spectrum.commands;
 
-import com.mojang.brigadier.*;
-import com.mojang.brigadier.arguments.*;
-import de.dafuqs.spectrum.entity.spawners.*;
-import net.minecraft.command.argument.*;
-import net.minecraft.server.command.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+import de.dafuqs.spectrum.entity.spawners.ShootingStarSpawner;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.arguments.EntityArgument;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
-import java.util.*;
+import java.util.Collection;
 
 public class ShootingStarCommand {
 
-	public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-		dispatcher.register(CommandManager.literal("spectrum_spawn_shooting_star")
-			.requires((source) -> source.hasPermissionLevel(2))
-			.then(CommandManager.argument("targets", EntityArgumentType.players())
-				.executes((context) -> execute(context.getSource(), EntityArgumentType.getPlayers(context, "targets"), 1))
-			.then(CommandManager.argument("amount", IntegerArgumentType.integer(1))
-				.executes((context) -> execute(context.getSource(), EntityArgumentType.getPlayers(context, "targets"), IntegerArgumentType.getInteger(context, "amount"))))));
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+		dispatcher.register(Commands.literal("spectrum_spawn_shooting_star")
+			.requires((source) -> source.hasPermission(2))
+			.then(Commands.argument("targets", EntityArgument.players())
+				.executes((context) -> execute(context.getSource(), EntityArgument.getPlayers(context, "targets"), 1))
+			.then(Commands.argument("amount", IntegerArgumentType.integer(1))
+				.executes((context) -> execute(context.getSource(), EntityArgument.getPlayers(context, "targets"), IntegerArgumentType.getInteger(context, "amount"))))));
 	}
 
-	private static int execute(ServerCommandSource source, Collection<? extends ServerPlayerEntity> targets, int amount) {
-		for (ServerPlayerEntity entity : targets) {
+	private static int execute(CommandSourceStack source, Collection<? extends ServerPlayer> targets, int amount) {
+		for (ServerPlayer entity : targets) {
 			for (int i = 0; i < amount; i++) {
-				ShootingStarSpawner.spawnShootingStar((ServerWorld) entity.getWorld(), entity);
+				ShootingStarSpawner.spawnShootingStar((ServerLevel) entity.level(), entity);
 			}
 		}
-		source.sendFeedback(() -> Text.translatable("commands.spectrum.spawn_shooting_star.success", amount), false);
+		source.sendSuccess(() -> Component.translatable("commands.spectrum.spawn_shooting_star.success", amount), false);
 		return amount;
 	}
 

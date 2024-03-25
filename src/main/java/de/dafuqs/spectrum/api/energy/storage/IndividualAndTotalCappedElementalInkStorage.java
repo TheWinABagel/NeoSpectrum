@@ -1,8 +1,12 @@
 package de.dafuqs.spectrum.api.energy.storage;
 
-import de.dafuqs.spectrum.api.energy.color.*;
-import net.minecraft.nbt.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.color.ElementalColor;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class IndividualAndTotalCappedElementalInkStorage extends TotalCappedElementalInkStorage {
 	
@@ -18,8 +22,8 @@ public class IndividualAndTotalCappedElementalInkStorage extends TotalCappedElem
 		this.maxEnergyPerColor = maxEnergyPerColor;
 	}
 	
-	public static @Nullable IndividualAndTotalCappedElementalInkStorage fromNbt(@NotNull NbtCompound compound) {
-		if (compound.contains("MaxEnergyTotal", NbtElement.LONG_TYPE)) {
+	public static @Nullable IndividualAndTotalCappedElementalInkStorage fromNbt(@NotNull CompoundTag compound) {
+		if (compound.contains("MaxEnergyTotal", Tag.TAG_LONG)) {
 			long maxEnergyTotal = compound.getLong("MaxEnergyTotal");
 			long maxEnergyPerColor = compound.getLong("MaxEnergyPerColor");
 			long cyan = compound.getLong("Cyan");
@@ -59,8 +63,8 @@ public class IndividualAndTotalCappedElementalInkStorage extends TotalCappedElem
 	}
 	
 	@Override
-	public NbtCompound toNbt() {
-		NbtCompound compound = new NbtCompound();
+	public CompoundTag toNbt() {
+		CompoundTag compound = new CompoundTag();
 		compound.putLong("MaxEnergyTotal", this.maxEnergyTotal);
 		compound.putLong("MaxEnergyPerColor", this.maxEnergyPerColor);
 		compound.putLong("Cyan", this.storedEnergy.get(InkColors.CYAN));

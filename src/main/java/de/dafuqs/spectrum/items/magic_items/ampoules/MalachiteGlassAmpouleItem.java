@@ -1,30 +1,32 @@
 package de.dafuqs.spectrum.items.magic_items.ampoules;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.entity.entity.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkPowered;
+import de.dafuqs.spectrum.api.energy.InkPoweredStatusEffectInstance;
+import de.dafuqs.spectrum.api.item.InkPoweredPotionFillable;
+import de.dafuqs.spectrum.entity.entity.LightMineEntity;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MalachiteGlassAmpouleItem extends BaseGlassAmpouleItem implements InkPoweredPotionFillable {
     
-    public MalachiteGlassAmpouleItem(Settings settings) {
+    public MalachiteGlassAmpouleItem(Properties settings) {
         super(settings);
     }
     
     @Override
     public boolean trigger(ItemStack stack, LivingEntity attacker, @Nullable LivingEntity target) {
-        List<StatusEffectInstance> e = new ArrayList<>();
-        if (attacker instanceof PlayerEntity player) {
+        List<MobEffectInstance> e = new ArrayList<>();
+        if (attacker instanceof Player player) {
             List<InkPoweredStatusEffectInstance> effects = getEffects(stack);
             for (InkPoweredStatusEffectInstance effect : effects) {
                 if (InkPowered.tryDrainEnergy(player, effect.getInkCost())) {
@@ -32,7 +34,7 @@ public class MalachiteGlassAmpouleItem extends BaseGlassAmpouleItem implements I
                 }
             }
         }
-        LightMineEntity.summonBarrage(attacker.getWorld(), attacker, target, e);
+        LightMineEntity.summonBarrage(attacker.level(), attacker, target, e);
         return true;
     }
     
@@ -47,10 +49,10 @@ public class MalachiteGlassAmpouleItem extends BaseGlassAmpouleItem implements I
     }
     
     @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        super.appendTooltip(stack, world, tooltip, context);
-        tooltip.add(Text.translatable("item.spectrum.malachite_glass_ampoule.tooltip").formatted(Formatting.GRAY));
-        appendPotionFillableTooltip(stack, tooltip, Text.translatable("item.spectrum.malachite_glass_ampoule.tooltip"), false);
+    public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+        super.appendHoverText(stack, world, tooltip, context);
+        tooltip.add(Component.translatable("item.spectrum.malachite_glass_ampoule.tooltip").withStyle(ChatFormatting.GRAY));
+        appendPotionFillableTooltip(stack, tooltip, Component.translatable("item.spectrum.malachite_glass_ampoule.tooltip"), false);
     }
     
 }

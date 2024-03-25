@@ -1,27 +1,27 @@
 package de.dafuqs.spectrum.items.tooltip;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.text.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
 
-public class CraftingTabletTooltipData implements TooltipData {
+public class CraftingTabletTooltipData implements TooltipComponent {
 	
 	private final ItemStack itemStack;
-	private final Text description;
+	private final Component description;
 	
 	public CraftingTabletTooltipData(Recipe<?> recipe) {
-		MinecraftClient client = MinecraftClient.getInstance();
-		this.itemStack = recipe.getOutput(client.world.getRegistryManager());
-		this.description = Text.translatable("item.spectrum.crafting_tablet.tooltip.recipe", this.itemStack.getCount(), this.itemStack.getName().getString());
+		Minecraft client = Minecraft.getInstance();
+		this.itemStack = recipe.getResultItem(client.level.registryAccess());
+		this.description = Component.translatable("item.spectrum.crafting_tablet.tooltip.recipe", this.itemStack.getCount(), this.itemStack.getHoverName().getString());
 	}
 	
 	public ItemStack getItemStack() {
 		return this.itemStack;
 	}
 	
-	public Text getDescription() {
+	public Component getDescription() {
 		return this.description;
 	}
 	

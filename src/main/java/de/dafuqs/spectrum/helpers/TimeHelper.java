@@ -1,14 +1,14 @@
 package de.dafuqs.spectrum.helpers;
 
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
 public class TimeHelper {
 	
 	public static final long EPOCH_DAY_MILLIS = 86400000;
 	
-	public static TimeOfDay getTimeOfDay(@NotNull World world) {
-		return getTimeOfDay(world.getTimeOfDay());
+	public static TimeOfDay getTimeOfDay(@NotNull Level world) {
+		return getTimeOfDay(world.getDayTime());
 	}
 	
 	public static TimeOfDay getTimeOfDay(long timeOfDay) {
@@ -28,7 +28,7 @@ public class TimeHelper {
 		}
 	}
 	
-	public static boolean isBrightSunlight(World world) {
+	public static boolean isBrightSunlight(Level world) {
 		TimeOfDay timeOfDay = getTimeOfDay(world);
 		return timeOfDay.isDay() && !world.isRaining();
 	}

@@ -1,22 +1,26 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import com.google.common.collect.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.registries.*;
-import me.shedaniel.math.*;
-import me.shedaniel.rei.api.client.gui.*;
-import me.shedaniel.rei.api.client.gui.widgets.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.fabricmc.api.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import com.google.common.collect.Lists;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.inventories.PedestalScreen;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import me.shedaniel.math.Point;
+import me.shedaniel.math.Rectangle;
+import me.shedaniel.rei.api.client.gui.Renderer;
+import me.shedaniel.rei.api.client.gui.widgets.Slot;
+import me.shedaniel.rei.api.client.gui.widgets.Widget;
+import me.shedaniel.rei.api.client.gui.widgets.Widgets;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryStacks;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class PedestalCraftingCategory extends GatedDisplayCategory<PedestalCraftingDisplay> {
@@ -27,13 +31,13 @@ public class PedestalCraftingCategory extends GatedDisplayCategory<PedestalCraft
 	}
 	
 	@Override
-	public Identifier getIdentifier() {
+	public ResourceLocation getIdentifier() {
 		return SpectrumCommon.locate("pedestal_crafting");
 	}
 	
 	@Override
-	public Text getTitle() {
-		return Text.translatable("container.spectrum.rei.pedestal_crafting.title");
+	public Component getTitle() {
+		return Component.translatable("container.spectrum.rei.pedestal_crafting.title");
 	}
 	
 	@Override
@@ -43,7 +47,7 @@ public class PedestalCraftingCategory extends GatedDisplayCategory<PedestalCraft
 	
 	@Override
 	public void setupWidgets(Point startPoint, Rectangle bounds, List<Widget> widgets, @NotNull PedestalCraftingDisplay display) {
-		Identifier backgroundTexture = PedestalScreen.getBackgroundTextureForTier(display.getTier());
+		ResourceLocation backgroundTexture = PedestalScreen.getBackgroundTextureForTier(display.getTier());
 		widgets.add(Widgets.createArrow(new Point(startPoint.x + 60, startPoint.y + 1 + 18)).animationDurationTicks(display.craftingTime));
 		
 		int powderSlotCount = display.getTier().getPowderSlotCount();
@@ -78,11 +82,11 @@ public class PedestalCraftingCategory extends GatedDisplayCategory<PedestalCraft
 		
 		// description text
 		// special handling for "1 second". Looks nicer
-		Text text;
+		Component text;
 		if (display.craftingTime == 20) {
-			text = Text.translatable("container.spectrum.rei.pedestal_crafting.crafting_time_one_second_and_xp", 1, display.experience);
+			text = Component.translatable("container.spectrum.rei.pedestal_crafting.crafting_time_one_second_and_xp", 1, display.experience);
 		} else {
-			text = Text.translatable("container.spectrum.rei.pedestal_crafting.crafting_time_and_xp", (display.craftingTime / 20), display.experience);
+			text = Component.translatable("container.spectrum.rei.pedestal_crafting.crafting_time_and_xp", (display.craftingTime / 20), display.experience);
 		}
 		widgets.add(Widgets.createLabel(new Point(bounds.getCenterX(), startPoint.y + 82), text).centered().color(0x3f3f3f).noShadow());
 		

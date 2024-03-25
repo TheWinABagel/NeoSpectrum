@@ -1,37 +1,34 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.item.*;
-import net.minecraft.predicate.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.predicate.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
-public class PedestalRecipeCalculatedCriterion extends AbstractCriterion<PedestalCraftingCriterion.Conditions> {
+public class PedestalRecipeCalculatedCriterion extends SimpleCriterionTrigger<PedestalCraftingCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("pedestal_recipe_calculated");
+	static final ResourceLocation ID = SpectrumCommon.locate("pedestal_recipe_calculated");
 	
-	public static PedestalCraftingCriterion.Conditions create(ItemPredicate[] item, NumberRange.IntRange experienceRange, NumberRange.IntRange durationTicks) {
-		return new PedestalCraftingCriterion.Conditions(ID, LootContextPredicate.EMPTY, item, experienceRange, durationTicks);
+	public static PedestalCraftingCriterion.Conditions create(ItemPredicate[] item, MinMaxBounds.Ints experienceRange, MinMaxBounds.Ints durationTicks) {
+		return new PedestalCraftingCriterion.Conditions(ID, ContextAwarePredicate.ANY, item, experienceRange, durationTicks);
 	}
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
 	@Override
-	public PedestalCraftingCriterion.Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate extended, AdvancementEntityPredicateDeserializer advancementEntityPredicateDeserializer) {
-		ItemPredicate[] itemPredicates = ItemPredicate.deserializeAll(jsonObject.get("items"));
-		NumberRange.IntRange experienceRange = NumberRange.IntRange.fromJson(jsonObject.get("gained_experience"));
-		NumberRange.IntRange craftingDurationTicksRange = NumberRange.IntRange.fromJson(jsonObject.get("crafting_duration_ticks"));
+	public PedestalCraftingCriterion.Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate extended, DeserializationContext advancementEntityPredicateDeserializer) {
+		ItemPredicate[] itemPredicates = ItemPredicate.fromJsonArray(jsonObject.get("items"));
+		MinMaxBounds.Ints experienceRange = MinMaxBounds.Ints.fromJson(jsonObject.get("gained_experience"));
+		MinMaxBounds.Ints craftingDurationTicksRange = MinMaxBounds.Ints.fromJson(jsonObject.get("crafting_duration_ticks"));
 		return new PedestalCraftingCriterion.Conditions(ID, extended, itemPredicates, experienceRange, craftingDurationTicksRange);
 	}
 	
-	public void trigger(ServerPlayerEntity player, ItemStack itemStack, int experience, int durationTicks) {
+	public void trigger(ServerPlayer player, ItemStack itemStack, int experience, int durationTicks) {
 		this.trigger(player, (conditions) -> conditions.matches(itemStack, experience, durationTicks));
 	}
 	

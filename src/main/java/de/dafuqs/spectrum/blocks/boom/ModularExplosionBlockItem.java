@@ -1,15 +1,16 @@
 package de.dafuqs.spectrum.blocks.boom;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.explosion.*;
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.item.ModularExplosionProvider;
+import de.dafuqs.spectrum.explosion.ModularExplosionDefinition;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class ModularExplosionBlockItem extends BlockItem implements ModularExplosionProvider {
 	
@@ -17,7 +18,7 @@ public class ModularExplosionBlockItem extends BlockItem implements ModularExplo
 	private final double baseBlastRadius;
 	private final float baseDamage;
 	
-	public ModularExplosionBlockItem(Block block, double baseBlastRadius, float baseDamage, int maxModifierCount, Settings settings) {
+	public ModularExplosionBlockItem(Block block, double baseBlastRadius, float baseDamage, int maxModifierCount, Properties settings) {
 		super(block, settings);
 		this.maxModifierCount = maxModifierCount;
 		this.baseBlastRadius = baseBlastRadius;
@@ -25,8 +26,8 @@ public class ModularExplosionBlockItem extends BlockItem implements ModularExplo
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		ModularExplosionDefinition.getFromStack(stack).appendTooltip(tooltip, this);
 	}
 	

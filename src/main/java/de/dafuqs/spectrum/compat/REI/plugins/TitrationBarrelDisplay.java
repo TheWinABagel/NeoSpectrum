@@ -1,18 +1,23 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.recipe.titration_barrel.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.display.basic.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.minecraft.client.*;
-import net.minecraft.item.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.api.recipe.FluidIngredient;
+import de.dafuqs.spectrum.compat.REI.FluidIngredientREI;
+import de.dafuqs.spectrum.compat.REI.GatedSpectrumDisplay;
+import de.dafuqs.spectrum.compat.REI.REIHelper;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.recipe.titration_barrel.FermentationData;
+import de.dafuqs.spectrum.recipe.titration_barrel.ITitrationBarrelRecipe;
+import de.dafuqs.spectrum.recipe.titration_barrel.TitrationBarrelRecipe;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.Items;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
 
 public class TitrationBarrelDisplay extends GatedSpectrumDisplay {
 	
@@ -25,7 +30,7 @@ public class TitrationBarrelDisplay extends GatedSpectrumDisplay {
 		if (recipe.getTappingItem() == Items.AIR) {
 			this.tappingIngredient = EntryIngredient.empty();
 		} else {
-			this.tappingIngredient = EntryIngredients.of(recipe.getTappingItem().getDefaultStack());
+			this.tappingIngredient = EntryIngredients.of(recipe.getTappingItem().getDefaultInstance());
 		}
 		this.minFermentationTimeHours = recipe.getMinFermentationTimeHours();
 		this.fermentationData = recipe.getFermentationData();
@@ -35,7 +40,7 @@ public class TitrationBarrelDisplay extends GatedSpectrumDisplay {
 		if (recipe instanceof TitrationBarrelRecipe titrationBarrelRecipe && titrationBarrelRecipe.getFermentationData() != null) {
 			return EntryIngredients.ofItemStacks(titrationBarrelRecipe.getOutputVariations(TitrationBarrelRecipe.FERMENTATION_DURATION_DISPLAY_TIME_MULTIPLIERS));
 		} else {
-			return EntryIngredients.of(recipe.getOutput(BasicDisplay.registryAccess()));
+			return EntryIngredients.of(recipe.getResultItem(BasicDisplay.registryAccess()));
 		}
 	}
 	
@@ -54,7 +59,7 @@ public class TitrationBarrelDisplay extends GatedSpectrumDisplay {
 	
 	@Override
     public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return AdvancementHelper.hasAdvancement(client.player, TitrationBarrelRecipe.UNLOCK_ADVANCEMENT_IDENTIFIER) && super.isUnlocked();
 	}
 	

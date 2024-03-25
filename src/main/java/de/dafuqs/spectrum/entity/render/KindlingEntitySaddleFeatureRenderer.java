@@ -1,33 +1,38 @@
 package de.dafuqs.spectrum.entity.render;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.entity.entity.*;
-import de.dafuqs.spectrum.entity.models.*;
-import de.dafuqs.spectrum.registries.client.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.feature.*;
-import net.minecraft.client.render.entity.model.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.util.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.entity.entity.KindlingEntity;
+import de.dafuqs.spectrum.entity.models.KindlingEntityModel;
+import de.dafuqs.spectrum.registries.client.SpectrumModelLayers;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
 
 @Environment(EnvType.CLIENT)
-public class KindlingEntitySaddleFeatureRenderer extends FeatureRenderer<KindlingEntity, KindlingEntityModel> {
+public class KindlingEntitySaddleFeatureRenderer extends RenderLayer<KindlingEntity, KindlingEntityModel> {
 	
-	public static final Identifier TEXTURE = SpectrumCommon.locate("textures/entity/kindling/saddle.png");
+	public static final ResourceLocation TEXTURE = SpectrumCommon.locate("textures/entity/kindling/saddle.png");
 	
 	private final KindlingEntityModel model;
 	
-	public KindlingEntitySaddleFeatureRenderer(FeatureRendererContext<KindlingEntity, KindlingEntityModel> context, EntityModelLoader loader) {
+	public KindlingEntitySaddleFeatureRenderer(RenderLayerParent<KindlingEntity, KindlingEntityModel> context, EntityModelSet loader) {
 		super(context);
-		this.model = new KindlingEntityModel(loader.getModelPart(SpectrumModelLayers.KINDLING_SADDLE));
+		this.model = new KindlingEntityModel(loader.bakeLayer(SpectrumModelLayers.KINDLING_SADDLE));
 	}
 	
 	@Override
-	public void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, KindlingEntity entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
+	public void render(PoseStack matrices, MultiBufferSource vertexConsumers, int light, KindlingEntity entity, float limbAngle, float limbDistance, float tickDelta, float animationProgress, float headYaw, float headPitch) {
 		if (entity.isSaddled()) {
-			VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderLayer.getEntityCutoutNoCull(TEXTURE));
-			this.model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV, 1.0F, 1.0F, 1.0F, 1.0F);
+			VertexConsumer vertexConsumer = vertexConsumers.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+			this.model.renderToBuffer(matrices, vertexConsumer, light, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
 		}
 	}
 	

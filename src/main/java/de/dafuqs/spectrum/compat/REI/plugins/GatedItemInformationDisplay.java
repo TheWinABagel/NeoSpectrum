@@ -1,17 +1,17 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
+import de.dafuqs.spectrum.api.recipe.DescriptiveGatedRecipe;
+import de.dafuqs.spectrum.compat.REI.GatedSpectrumDisplay;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 
-import java.util.*;
+import java.util.Collections;
 
 public abstract class GatedItemInformationDisplay extends GatedSpectrumDisplay {
 	
 	protected final Item item;
-	protected final Text description;
+	protected final Component description;
 	
 	public GatedItemInformationDisplay(DescriptiveGatedRecipe recipe) {
 		super(recipe, Collections.singletonList(EntryIngredients.of(recipe.getItem())), Collections.emptyList());
@@ -23,7 +23,7 @@ public abstract class GatedItemInformationDisplay extends GatedSpectrumDisplay {
 		return this.item;
 	}
 	
-	public Text getDescription() {
+	public Component getDescription() {
 		return this.description;
 	}
 	

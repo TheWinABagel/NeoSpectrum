@@ -1,22 +1,22 @@
 package de.dafuqs.spectrum.blocks.mob_head;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.*;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
-public class SpectrumSkullBlockItem extends VerticallyAttachableBlockItem {
+public class SpectrumSkullBlockItem extends StandingAndWallBlockItem {
 	
 	protected final EntityType<?> entityType;
 	protected String artistCached;
 	
-	public SpectrumSkullBlockItem(Block standingBlock, Block wallBlock, Settings settings, EntityType<?> entityType) {
+	public SpectrumSkullBlockItem(Block standingBlock, Block wallBlock, Properties settings, EntityType<?> entityType) {
 		super(standingBlock, wallBlock, settings, Direction.DOWN);
 		this.entityType = entityType;
 	}
@@ -43,15 +43,15 @@ public class SpectrumSkullBlockItem extends VerticallyAttachableBlockItem {
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
 		
 		if (tooltipContext.isAdvanced()) {
 			if (artistCached == null) {
 				artistCached = getHeadArtist(SpectrumBlocks.getSkullType(this.getBlock()));
 			}
 			if (!artistCached.equals("")) {
-				tooltip.add(Text.translatable("item.spectrum.mob_head.tooltip.designer", artistCached));
+				tooltip.add(Component.translatable("item.spectrum.mob_head.tooltip.designer", artistCached));
 			}
 		}
 	}

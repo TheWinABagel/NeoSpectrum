@@ -1,16 +1,18 @@
 package de.dafuqs.spectrum.blocks.particle_spawner;
 
-import de.dafuqs.spectrum.particle.effect.*;
-import net.minecraft.nbt.*;
-import net.minecraft.network.*;
-import net.minecraft.particle.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import org.joml.*;
+import de.dafuqs.spectrum.particle.effect.DynamicParticleEffect;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
+import org.joml.Vector3fc;
+import org.joml.Vector3i;
 
 public class ParticleSpawnerConfiguration {
 	
@@ -116,8 +118,8 @@ public class ParticleSpawnerConfiguration {
 		return collisions;
 	}
 	
-	public void write(PacketByteBuf buf) {
-		buf.writeString(Registries.PARTICLE_TYPE.getId(particleType).toString());
+	public void write(FriendlyByteBuf buf) {
+		buf.writeUtf(BuiltInRegistries.PARTICLE_TYPE.getKey(particleType).toString());
 		buf.writeInt(cmyColor.x());
 		buf.writeInt(cmyColor.y());
 		buf.writeInt(cmyColor.z());
@@ -143,9 +145,9 @@ public class ParticleSpawnerConfiguration {
 		buf.writeBoolean(collisions);
 	}
 	
-	public static ParticleSpawnerConfiguration fromBuf(PacketByteBuf buf) {
-		Identifier particleIdentifier = new Identifier(buf.readString());
-		ParticleType<?> particleType = Registries.PARTICLE_TYPE.get(particleIdentifier);
+	public static ParticleSpawnerConfiguration fromBuf(FriendlyByteBuf buf) {
+		ResourceLocation particleIdentifier = new ResourceLocation(buf.readUtf());
+		ParticleType<?> particleType = BuiltInRegistries.PARTICLE_TYPE.get(particleIdentifier);
 		Vector3i cmyColor = new Vector3i(buf.readInt(), buf.readInt(), buf.readInt());
 		boolean glowing = buf.readBoolean();
 		float particlesPerSecond = buf.readFloat();
@@ -164,9 +166,9 @@ public class ParticleSpawnerConfiguration {
 				velocity, velocityVariance, scale, scaleVariance, lifetimeTicks, lifetimeVariance, gravity, collisions);
 	}
 	
-	public NbtCompound toNbt() {
-		NbtCompound nbt = new NbtCompound();
-		nbt.putString("particle_type_identifier", Registries.PARTICLE_TYPE.getId(particleType).toString());
+	public CompoundTag toNbt() {
+		CompoundTag nbt = new CompoundTag();
+		nbt.putString("particle_type_identifier", BuiltInRegistries.PARTICLE_TYPE.getKey(particleType).toString());
 		nbt.putFloat("particles_per_tick", particlesPerSecond);
 		nbt.putBoolean("glowing", glowing);
 		nbt.putFloat("source_pos_x", sourcePosition.x());
@@ -193,8 +195,8 @@ public class ParticleSpawnerConfiguration {
 		return nbt;
 	}
 	
-	public static ParticleSpawnerConfiguration fromNbt(NbtCompound tag) {
-		ParticleType<?> particleType = Registries.PARTICLE_TYPE.get(new Identifier(tag.getString("particle_type_identifier")));
+	public static ParticleSpawnerConfiguration fromNbt(CompoundTag tag) {
+		ParticleType<?> particleType = BuiltInRegistries.PARTICLE_TYPE.get(new ResourceLocation(tag.getString("particle_type_identifier")));
 		float particlesPerSecond = tag.getFloat("particles_per_tick");
 		boolean glowing = tag.getBoolean("glowing");
 		Vector3fc particleSourcePosition = new Vector3f(tag.getFloat("source_pos_x"), tag.getFloat("source_pos_y"), tag.getFloat("source_pos_z"));
@@ -213,7 +215,7 @@ public class ParticleSpawnerConfiguration {
 				velocity, velocityVariance, scale, scaleVariance, lifetimeTicks, lifetimeVariance, gravity, collisions);
 	}
 	
-	public void spawnParticles(World world, @NotNull BlockPos pos) {
+	public void spawnParticles(Level world, @NotNull BlockPos pos) {
 		float particlesToSpawn = particlesPerSecond / 20F;
 		while (particlesToSpawn >= 1 || world.random.nextFloat() < particlesToSpawn) {
 			spawnParticle(world, pos, world.random);
@@ -221,7 +223,7 @@ public class ParticleSpawnerConfiguration {
 		}
 	}
 	
-	private void spawnParticle(World world, @NotNull BlockPos pos, Random random) {
+	private void spawnParticle(Level world, @NotNull BlockPos pos, RandomSource random) {
 		float randomScale = scaleVariance == 0 ? scale : (float) (scale + scaleVariance - random.nextDouble() * scaleVariance * 2.0D);
 		int randomLifetime = lifetimeVariance == 0 ? lifetimeTicks : (int) (lifetimeTicks + lifetimeVariance - random.nextDouble() * lifetimeVariance * 2.0D);
 		

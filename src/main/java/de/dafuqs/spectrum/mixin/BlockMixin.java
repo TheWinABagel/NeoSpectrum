@@ -1,43 +1,53 @@
 package de.dafuqs.spectrum.mixin;
 
-import com.llamalad7.mixinextras.injector.*;
-import de.dafuqs.spectrum.data_loaders.*;
-import de.dafuqs.spectrum.enchantments.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.stat.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import de.dafuqs.spectrum.data_loaders.ResonanceDropsDataLoader;
+import de.dafuqs.spectrum.enchantments.ExuberanceEnchantment;
+import de.dafuqs.spectrum.enchantments.FoundryEnchantment;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 // the use of mixin extras @ModifyReturnValue ensues mods end up compatible when mods use it
 @Mixin(Block.class)
 public abstract class BlockMixin {
 	
 	@Unique
-	@Nullable PlayerEntity spectrum$breakingPlayer;
+	@Nullable Player spectrum$breakingPlayer;
 	
 	@ModifyReturnValue(method = "getDroppedStacks(Lnet/minecraft/block/BlockState;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/entity/BlockEntity;Lnet/minecraft/entity/Entity;Lnet/minecraft/item/ItemStack;)Ljava/util/List;", at = @At("RETURN"))
-	private static List<ItemStack> spectrum$getDroppedStacks(List<ItemStack> original, BlockState state, ServerWorld world, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack stack) {
+	private static List<ItemStack> spectrum$getDroppedStacks(List<ItemStack> original, BlockState state, ServerLevel world, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack stack) {
 		List<ItemStack> droppedStacks = original;
-		Map<Enchantment, Integer> enchantmentMap = EnchantmentHelper.get(stack);
+		Map<Enchantment, Integer> enchantmentMap = EnchantmentHelper.getEnchantments(stack);
 		
 		// Voiding curse: no drops
 		if (enchantmentMap.containsKey(SpectrumEnchantments.VOIDING)) {
-			world.spawnParticles(ParticleTypes.SMOKE, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 10, 0.5, 0.5, 0.5, 0.05);
+			world.sendParticles(ParticleTypes.SMOKE, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 10, 0.5, 0.5, 0.5, 0.05);
 			droppedStacks.clear();
 			return droppedStacks;
 		}
@@ -57,25 +67,25 @@ public abstract class BlockMixin {
 			if (enchantmentMap.containsKey(SpectrumEnchantments.INVENTORY_INSERTION) && SpectrumEnchantments.INVENTORY_INSERTION.canEntityUse(entity)) {
 				List<ItemStack> leftoverReturnStacks = new ArrayList<>();
 				
-				if (entity instanceof PlayerEntity playerEntity) {
+				if (entity instanceof Player playerEntity) {
 					boolean anyAdded = false;
 					for (ItemStack itemStack : droppedStacks) {
 						Item item = itemStack.getItem();
 						int count = itemStack.getCount();
 						
-						if (playerEntity.getInventory().insertStack(itemStack)) {
+						if (playerEntity.getInventory().add(itemStack)) {
 							anyAdded = true;
 							if (itemStack.isEmpty()) {
 								itemStack.setCount(count);
 							}
-							playerEntity.increaseStat(Stats.PICKED_UP.getOrCreateStat(item), count);
+							playerEntity.awardStat(Stats.ITEM_PICKED_UP.get(item), count);
 						} else {
 							leftoverReturnStacks.add(itemStack);
 						}
 					}
 					if(anyAdded) {
-						playerEntity.getWorld().playSound(null, playerEntity.getX(), playerEntity.getY(), playerEntity.getZ(),
-								SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.PLAYERS,
+						playerEntity.level().playSound(null, playerEntity.getX(), playerEntity.getY(), playerEntity.getZ(),
+								SoundEvents.ITEM_PICKUP, SoundSource.PLAYERS,
 								0.2F, ((playerEntity.getRandom().nextFloat() - playerEntity.getRandom().nextFloat()) * 0.7F + 1.0F) * 2.0F);
 					}
 				}
@@ -95,7 +105,7 @@ public abstract class BlockMixin {
 	}
 	
 	@Inject(method = "afterBreak", at = @At("HEAD"))
-	public void spectrum$afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack, CallbackInfo callbackInfo) {
+	public void spectrum$afterBreak(Level world, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack, CallbackInfo callbackInfo) {
 		spectrum$breakingPlayer = player;
 	}
 	

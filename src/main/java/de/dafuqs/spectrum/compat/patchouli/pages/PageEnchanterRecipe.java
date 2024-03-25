@@ -1,45 +1,46 @@
 package de.dafuqs.spectrum.compat.patchouli.pages;
 
-import com.mojang.blaze3d.systems.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.items.magic_items.*;
-import de.dafuqs.spectrum.recipe.enchanter.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import vazkii.patchouli.client.book.gui.*;
+import com.mojang.blaze3d.systems.RenderSystem;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.items.magic_items.KnowledgeGemItem;
+import de.dafuqs.spectrum.recipe.enchanter.EnchanterRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
+import vazkii.patchouli.client.book.gui.GuiBook;
 
 public class PageEnchanterRecipe extends PageGatedRecipeSingle<EnchanterRecipe> {
 	
-	private static final Identifier BACKGROUND_TEXTURE = SpectrumCommon.locate("textures/gui/patchouli/enchanter_crafting.png");
+	private static final ResourceLocation BACKGROUND_TEXTURE = SpectrumCommon.locate("textures/gui/patchouli/enchanter_crafting.png");
 	
 	public PageEnchanterRecipe() {
 		super(SpectrumRecipeTypes.ENCHANTER);
 	}
 	
 	@Override
-	protected ItemStack getRecipeOutput(World world, EnchanterRecipe recipe) {
+	protected ItemStack getRecipeOutput(Level world, EnchanterRecipe recipe) {
 		if (recipe == null) {
 			return ItemStack.EMPTY;
 		} else {
-			return recipe.getOutput(world.getRegistryManager());
+			return recipe.getResultItem(world.registryAccess());
 		}
 	}
 	
 	@Override
-	protected void drawRecipe(DrawContext drawContext, World world, @NotNull EnchanterRecipe recipe, int recipeX, int recipeY, int mouseX, int mouseY) {
+	protected void drawRecipe(GuiGraphics drawContext, Level world, @NotNull EnchanterRecipe recipe, int recipeX, int recipeY, int mouseX, int mouseY) {
 		RenderSystem.enableBlend();
-		drawContext.drawTexture(BACKGROUND_TEXTURE, recipeX, recipeY, 0, 0, 100, 80, 256, 256);
+		drawContext.blit(BACKGROUND_TEXTURE, recipeX, recipeY, 0, 0, 100, 80, 256, 256);
 		
-		parent.drawCenteredStringNoShadow(drawContext, getTitle().asOrderedText(), GuiBook.PAGE_WIDTH / 2, recipeY - 10, book.headerColor);
+		parent.drawCenteredStringNoShadow(drawContext, getTitle().getVisualOrderText(), GuiBook.PAGE_WIDTH / 2, recipeY - 10, book.headerColor);
 		
 		// the ingredients
-		DefaultedList<Ingredient> ingredients = recipe.getIngredients();
+		NonNullList<Ingredient> ingredients = recipe.getIngredients();
 		
 		int ingredientX = recipeX - 3;
 		
@@ -59,10 +60,10 @@ public class PageEnchanterRecipe extends PageGatedRecipeSingle<EnchanterRecipe> 
 		// Knowledge Gem and Enchanter
 		ItemStack knowledgeDropStackWithXP = KnowledgeGemItem.getKnowledgeDropStackWithXP(recipe.getRequiredExperience(), true);
 		parent.renderItemStack(drawContext, recipeX + 81, recipeY + 9, mouseX, mouseY, knowledgeDropStackWithXP);
-		parent.renderItemStack(drawContext, recipeX + 81, recipeY + 46, mouseX, mouseY, SpectrumBlocks.ENCHANTER.asItem().getDefaultStack());
+		parent.renderItemStack(drawContext, recipeX + 81, recipeY + 46, mouseX, mouseY, SpectrumBlocks.ENCHANTER.asItem().getDefaultInstance());
 		
 		// the output
-		parent.renderItemStack(drawContext, recipeX + 81, recipeY + 31, mouseX, mouseY, recipe.getOutput(world.getRegistryManager()));
+		parent.renderItemStack(drawContext, recipeX + 81, recipeY + 31, mouseX, mouseY, recipe.getResultItem(world.registryAccess()));
 	}
 	
 	@Override

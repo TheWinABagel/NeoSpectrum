@@ -1,8 +1,9 @@
 package de.dafuqs.spectrum.cca.azure_dike;
 
-import de.dafuqs.spectrum.*;
-import dev.onyxstudios.cca.api.v3.component.*;
-import net.minecraft.entity.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import dev.onyxstudios.cca.api.v3.component.ComponentKey;
+import dev.onyxstudios.cca.api.v3.component.ComponentRegistry;
+import net.minecraft.world.entity.LivingEntity;
 
 public class AzureDikeProvider {
 	

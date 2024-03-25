@@ -1,23 +1,27 @@
 package de.dafuqs.spectrum.registries.client;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.storage.*;
-import de.dafuqs.spectrum.blocks.conditional.colored_tree.*;
-import de.dafuqs.spectrum.blocks.memory.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.items.energy.*;
-import de.dafuqs.spectrum.progression.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.client.rendering.v1.*;
-import net.minecraft.block.*;
-import net.minecraft.client.color.block.*;
-import net.minecraft.client.color.item.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.energy.InkPoweredStatusEffectInstance;
+import de.dafuqs.spectrum.api.energy.storage.SingleInkStorage;
+import de.dafuqs.spectrum.blocks.conditional.colored_tree.ColoredLeavesBlock;
+import de.dafuqs.spectrum.blocks.memory.MemoryBlockEntity;
+import de.dafuqs.spectrum.blocks.memory.MemoryItem;
+import de.dafuqs.spectrum.helpers.ColorHelper;
+import de.dafuqs.spectrum.items.energy.InkFlaskItem;
+import de.dafuqs.spectrum.progression.ToggleableBlockColorProvider;
+import de.dafuqs.spectrum.progression.ToggleableItemColorProvider;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
+import net.minecraft.client.color.block.BlockColor;
+import net.minecraft.client.color.item.ItemColor;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
-import java.util.*;
+import java.util.List;
 
 public class SpectrumColorProviders {
 	
@@ -48,8 +52,8 @@ public class SpectrumColorProviders {
 	}
 	
 	private static void registerColoredLeaves() {
-		BlockColorProvider leavesBlockColorProvider = ColorProviderRegistry.BLOCK.get(Blocks.OAK_LEAVES);
-		ItemColorProvider leavesItemColorProvider = ColorProviderRegistry.ITEM.get(Blocks.OAK_LEAVES);
+		BlockColor leavesBlockColorProvider = ColorProviderRegistry.BLOCK.get(Blocks.OAK_LEAVES);
+		ItemColor leavesItemColorProvider = ColorProviderRegistry.ITEM.get(Blocks.OAK_LEAVES);
 		
 		if (leavesBlockColorProvider != null && leavesItemColorProvider != null) {
 			coloredLeavesBlockColorProvider = new ToggleableBlockColorProvider(leavesBlockColorProvider);
@@ -64,8 +68,8 @@ public class SpectrumColorProviders {
 	}
 	
 	private static void registerAmaranth() {
-		BlockColorProvider fernBlockColorProvider = ColorProviderRegistry.BLOCK.get(Blocks.FERN);
-		ItemColorProvider fernItemColorProvider = ColorProviderRegistry.ITEM.get(Blocks.FERN);
+		BlockColor fernBlockColorProvider = ColorProviderRegistry.BLOCK.get(Blocks.FERN);
+		ItemColor fernItemColorProvider = ColorProviderRegistry.ITEM.get(Blocks.FERN);
 		if (fernBlockColorProvider != null && fernItemColorProvider != null) {
 			amaranthBushelBlockColorProvider = new ToggleableBlockColorProvider(fernBlockColorProvider);
 			amaranthBushelItemColorProvider = new ToggleableItemColorProvider(fernItemColorProvider);
@@ -74,8 +78,8 @@ public class SpectrumColorProviders {
 			ColorProviderRegistry.BLOCK.register(amaranthBushelBlockColorProvider, SpectrumBlocks.POTTED_AMARANTH_BUSHEL);
 		}
 		
-		BlockColorProvider largeFernBlockColorProvider = ColorProviderRegistry.BLOCK.get(Blocks.LARGE_FERN);
-		ItemColorProvider largeFernItemColorProvider = ColorProviderRegistry.ITEM.get(Blocks.LARGE_FERN);
+		BlockColor largeFernBlockColorProvider = ColorProviderRegistry.BLOCK.get(Blocks.LARGE_FERN);
+		ItemColor largeFernItemColorProvider = ColorProviderRegistry.ITEM.get(Blocks.LARGE_FERN);
 		if (largeFernBlockColorProvider != null && largeFernItemColorProvider != null) {
 			amaranthCropBlockColorProvider = new ToggleableBlockColorProvider(largeFernBlockColorProvider);
 			amaranthCropItemColorProvider = new ToggleableItemColorProvider(largeFernItemColorProvider);
@@ -85,8 +89,8 @@ public class SpectrumColorProviders {
 	}
 	
 	private static void registerClovers(Block... clovers) {
-		BlockColorProvider grassBlockColorProvider = ColorProviderRegistry.BLOCK.get(Blocks.GRASS);
-		ItemColorProvider grassItemColorProvider = ColorProviderRegistry.ITEM.get(Blocks.GRASS.asItem());
+		BlockColor grassBlockColorProvider = ColorProviderRegistry.BLOCK.get(Blocks.GRASS);
+		ItemColor grassItemColorProvider = ColorProviderRegistry.ITEM.get(Blocks.GRASS.asItem());
 		
 		if (grassBlockColorProvider != null && grassItemColorProvider != null) {
 			ColorProviderRegistry.BLOCK.register(grassBlockColorProvider, clovers);
@@ -142,14 +146,14 @@ public class SpectrumColorProviders {
 			if (tintIndex == 2)
 				return 0xFFFFFF;
 
-			return MemoryItem.getEggColor(stack.getNbt(), tintIndex);
+			return MemoryItem.getEggColor(stack.getTag(), tintIndex);
 		}, memory.asItem());
 	}
 	
 	public static void registerBrewColors(Item brew) {
 		ColorProviderRegistry.ITEM.register((stack, tintIndex) -> {
 			if (tintIndex == 0) {
-				NbtCompound nbt = stack.getNbt();
+				CompoundTag nbt = stack.getTag();
 				return (nbt != null && nbt.contains("Color")) ? nbt.getInt("Color") : 0xf4c6cb;
 			}
 			return -1;

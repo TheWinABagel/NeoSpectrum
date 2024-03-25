@@ -1,13 +1,13 @@
 package de.dafuqs.spectrum.api.predicate.entity;
 
-import com.google.gson.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.api.predicate.block.BiomePredicate;
 import de.dafuqs.spectrum.api.predicate.block.LightPredicate;
-import de.dafuqs.spectrum.api.predicate.block.*;
 import de.dafuqs.spectrum.api.predicate.world.*;
-import net.minecraft.predicate.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
+import net.minecraft.advancements.critereon.FluidPredicate;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.GsonHelper;
 
 public class EntityFishingPredicate {
 	private final FluidPredicate fluidPredicate;
@@ -41,19 +41,19 @@ public class EntityFishingPredicate {
 	
 	public static EntityFishingPredicate fromJson(JsonObject jsonObject) {
 		return new EntityFishingPredicate(
-				FluidPredicate.fromJson(JsonHelper.getObject(jsonObject, "fluid", null)),
-				BiomePredicate.fromJson(JsonHelper.getObject(jsonObject, "biome", null)),
-				LightPredicate.fromJson(JsonHelper.getObject(jsonObject, "light", null)),
-				DimensionPredicate.fromJson(JsonHelper.getObject(jsonObject, "dimension", null)),
-				MoonPhasePredicate.fromJson(JsonHelper.getObject(jsonObject, "moon_phase", null)),
-				TimeOfDayPredicate.fromJson(JsonHelper.getObject(jsonObject, "time_of_day", null)),
-				WeatherPredicate.fromJson(JsonHelper.getObject(jsonObject, "weather", null)),
-				CommandPredicate.fromJson(JsonHelper.getObject(jsonObject, "command", null))
+				FluidPredicate.fromJson(GsonHelper.getAsJsonObject(jsonObject, "fluid", null)),
+				BiomePredicate.fromJson(GsonHelper.getAsJsonObject(jsonObject, "biome", null)),
+				LightPredicate.fromJson(GsonHelper.getAsJsonObject(jsonObject, "light", null)),
+				DimensionPredicate.fromJson(GsonHelper.getAsJsonObject(jsonObject, "dimension", null)),
+				MoonPhasePredicate.fromJson(GsonHelper.getAsJsonObject(jsonObject, "moon_phase", null)),
+				TimeOfDayPredicate.fromJson(GsonHelper.getAsJsonObject(jsonObject, "time_of_day", null)),
+				WeatherPredicate.fromJson(GsonHelper.getAsJsonObject(jsonObject, "weather", null)),
+				CommandPredicate.fromJson(GsonHelper.getAsJsonObject(jsonObject, "command", null))
 		);
 	}
 	
-	public boolean test(ServerWorld world, BlockPos pos) {
-		return (this.fluidPredicate.test(world, pos) &&
+	public boolean test(ServerLevel world, BlockPos pos) {
+		return (this.fluidPredicate.matches(world, pos) &&
 				this.biomePredicate.test(world, pos) &&
 				this.lightPredicate.test(world, pos) &&
 				this.dimensionPredicate.test(world, pos) &&

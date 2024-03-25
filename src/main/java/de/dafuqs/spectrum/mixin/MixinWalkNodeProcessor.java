@@ -1,29 +1,31 @@
 package de.dafuqs.spectrum.mixin;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import de.dafuqs.spectrum.registries.SpectrumBlockTags;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(LandPathNodeMaker.class)
+@Mixin(WalkNodeEvaluator.class)
 public class MixinWalkNodeProcessor {
 	
 	@Inject(method = "inflictsFireDamage(Lnet/minecraft/block/BlockState;)Z", at = @At("HEAD"), cancellable = true)
 	private static void spectrum$burningBlockPathfinding(BlockState state, CallbackInfoReturnable<Boolean> cir) {
-		if (state.isIn(SpectrumBlockTags.FIRE_LAND_NODE_MARKERS)) {
+		if (state.is(SpectrumBlockTags.FIRE_LAND_NODE_MARKERS)) {
 			cir.setReturnValue(true);
 		}
 	}
 	
 	@Inject(method = "getCommonNodeType(Lnet/minecraft/world/BlockView;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/entity/ai/pathing/PathNodeType;", at = @At("RETURN"), cancellable = true)
-	private static void spectrum$addBlockNodeTypes(BlockView world, BlockPos pos, CallbackInfoReturnable<PathNodeType> cir) {
+	private static void spectrum$addBlockNodeTypes(BlockGetter world, BlockPos pos, CallbackInfoReturnable<BlockPathTypes> cir) {
 		BlockState blockState = world.getBlockState(pos);
-		if (blockState.isIn(SpectrumBlockTags.DAMAGING_LAND_NODE_MARKERS)) {
-			cir.setReturnValue(PathNodeType.DAMAGE_OTHER);
+		if (blockState.is(SpectrumBlockTags.DAMAGING_LAND_NODE_MARKERS)) {
+			cir.setReturnValue(BlockPathTypes.DAMAGE_OTHER);
 		}
 	}
 	

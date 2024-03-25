@@ -1,24 +1,31 @@
 package de.dafuqs.spectrum.blocks.fluid;
 
-import de.dafuqs.spectrum.blocks.decay.*;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.fluid.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.sound.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.blocks.decay.BlackMateriaBlock;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumFluids;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
 
 public abstract class MidnightSolutionFluid extends SpectrumFluid {
 	
 	@Override
-	public Fluid getStill() {
+	public Fluid getSource() {
 		return SpectrumFluids.MIDNIGHT_SOLUTION;
 	}
 	
@@ -28,47 +35,47 @@ public abstract class MidnightSolutionFluid extends SpectrumFluid {
 	}
 	
 	@Override
-	public Item getBucketItem() {
+	public Item getBucket() {
 		return SpectrumItems.MIDNIGHT_SOLUTION_BUCKET;
 	}
 	
 	@Override
-	protected BlockState toBlockState(FluidState fluidState) {
-		return SpectrumBlocks.MIDNIGHT_SOLUTION.getDefaultState().with(Properties.LEVEL_15, getBlockStateLevel(fluidState));
+	protected BlockState createLegacyBlock(FluidState fluidState) {
+		return SpectrumBlocks.MIDNIGHT_SOLUTION.defaultBlockState().setValue(BlockStateProperties.LEVEL, getLegacyLevel(fluidState));
 	}
 	
 	@Override
-	public boolean matchesType(Fluid fluid) {
+	public boolean isSame(Fluid fluid) {
 		return fluid == SpectrumFluids.MIDNIGHT_SOLUTION || fluid == SpectrumFluids.FLOWING_MIDNIGHT_SOLUTION;
 	}
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void randomDisplayTick(World world, BlockPos pos, FluidState state, Random random) {
-		BlockPos topPos = pos.up();
+	public void animateTick(Level world, BlockPos pos, FluidState state, RandomSource random) {
+		BlockPos topPos = pos.above();
 		BlockState topState = world.getBlockState(topPos);
-		if (topState.isAir() && !topState.isOpaqueFullCube(world, topPos) && random.nextInt(2000) == 0) {
-			world.playSound(pos.getX(), pos.getY(), pos.getZ(), SpectrumSoundEvents.MIDNIGHT_SOLUTION_AMBIENT, SoundCategory.BLOCKS, 0.2F + random.nextFloat() * 0.2F, 0.9F + random.nextFloat() * 0.15F, false);
+		if (topState.isAir() && !topState.isSolidRender(world, topPos) && random.nextInt(2000) == 0) {
+			world.playLocalSound(pos.getX(), pos.getY(), pos.getZ(), SpectrumSoundEvents.MIDNIGHT_SOLUTION_AMBIENT, SoundSource.BLOCKS, 0.2F + random.nextFloat() * 0.2F, 0.9F + random.nextFloat() * 0.15F, false);
 		}
 	}
 	
 	@Override
-	protected int getFlowSpeed(WorldView worldView) {
+	protected int getSlopeFindDistance(LevelReader worldView) {
 		return 5;
 	}
 	
 	@Override
-	protected int getLevelDecreasePerBlock(WorldView worldView) {
+	protected int getDropOff(LevelReader worldView) {
 		return 1;
 	}
 	
 	@Override
-	public void onScheduledTick(World world, BlockPos pos, FluidState state) {
-		super.onScheduledTick(world, pos, state);
+	public void tick(Level world, BlockPos pos, FluidState state) {
+		super.tick(world, pos, state);
 		
-		if (state.getHeight() < 1.0) {
+		if (state.getOwnHeight() < 1.0) {
 			for (Direction direction : Direction.values()) {
-				if (MidnightSolutionFluidBlock.tryConvertNeighbor(world, pos, pos.offset(direction))) {
+				if (MidnightSolutionFluidBlock.tryConvertNeighbor(world, pos, pos.relative(direction))) {
 					break;
 				}
 			}
@@ -76,40 +83,40 @@ public abstract class MidnightSolutionFluid extends SpectrumFluid {
 		
 		boolean converted = BlackMateriaBlock.spreadBlackMateria(world, pos, world.random, MidnightSolutionFluidBlock.SPREAD_BLOCKSTATE);
 		if (converted) {
-			world.scheduleFluidTick(pos, state.getFluid(), 400 + world.random.nextInt(800));
+			world.scheduleTick(pos, state.getType(), 400 + world.random.nextInt(800));
 		}
 	}
 	
 	@Override
-	public int getTickRate(WorldView worldView) {
+	public int getTickDelay(LevelReader worldView) {
 		return 12;
 	}
 	
 	@Override
-	public ParticleEffect getParticle() {
+	public ParticleOptions getDripParticle() {
 		return SpectrumParticleTypes.DRIPPING_MIDNIGHT_SOLUTION;
 	}
 	
 	@Override
-	public ParticleEffect getSplashParticle() {
+	public ParticleOptions getSplashParticle() {
 		return SpectrumParticleTypes.MIDNIGHT_SOLUTION_SPLASH;
 	}
 	
 	public static class Flowing extends MidnightSolutionFluid {
 		
 		@Override
-		protected void appendProperties(StateManager.Builder<Fluid, FluidState> builder) {
-			super.appendProperties(builder);
+		protected void createFluidStateDefinition(StateDefinition.Builder<Fluid, FluidState> builder) {
+			super.createFluidStateDefinition(builder);
 			builder.add(LEVEL);
 		}
 		
 		@Override
-		public int getLevel(FluidState fluidState) {
-			return fluidState.get(LEVEL);
+		public int getAmount(FluidState fluidState) {
+			return fluidState.getValue(LEVEL);
 		}
 		
 		@Override
-		public boolean isStill(FluidState fluidState) {
+		public boolean isSource(FluidState fluidState) {
 			return false;
 		}
 		
@@ -118,12 +125,12 @@ public abstract class MidnightSolutionFluid extends SpectrumFluid {
 	public static class Still extends MidnightSolutionFluid {
 		
 		@Override
-		public int getLevel(FluidState fluidState) {
+		public int getAmount(FluidState fluidState) {
 			return 8;
 		}
 		
 		@Override
-		public boolean isStill(FluidState fluidState) {
+		public boolean isSource(FluidState fluidState) {
 			return true;
 		}
 		

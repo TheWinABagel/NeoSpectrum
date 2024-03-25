@@ -1,10 +1,10 @@
 package de.dafuqs.spectrum.compat.emi.recipes;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.blocks.enchanter.*;
-import de.dafuqs.spectrum.recipe.enchantment_upgrade.*;
-import dev.emi.emi.api.recipe.*;
-import net.minecraft.client.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.blocks.enchanter.EnchanterBlockEntity;
+import de.dafuqs.spectrum.recipe.enchantment_upgrade.EnchantmentUpgradeRecipe;
+import dev.emi.emi.api.recipe.EmiRecipeCategory;
+import net.minecraft.client.Minecraft;
 
 public class EnchantmentUpgradeEmiRecipeGated extends EnchanterEmiRecipeGated {
 	
@@ -17,7 +17,7 @@ public class EnchantmentUpgradeEmiRecipeGated extends EnchanterEmiRecipeGated {
 	
 	@Override
 	public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		if (!super.isUnlocked()) {
 			return false;
 		}

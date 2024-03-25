@@ -1,40 +1,42 @@
 package de.dafuqs.spectrum.sound;
 
-import de.dafuqs.spectrum.entity.entity.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.client.sound.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.sound.*;
+import de.dafuqs.spectrum.entity.entity.SpectrumBossEntity;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Player;
 
 @Environment(EnvType.CLIENT)
-public class MonstrositySoundInstance extends MovingSoundInstance {
+public class MonstrositySoundInstance extends AbstractTickableSoundInstance {
 	
 	private static int instances = 0;
 	private final SpectrumBossEntity bossEntity;
 	
 	private MonstrositySoundInstance(SpectrumBossEntity bossEntity) {
-		super(SpectrumSoundEvents.BOSS_THEME, SoundCategory.RECORDS, SoundInstance.createRandom());
+		super(SpectrumSoundEvents.BOSS_THEME, SoundSource.RECORDS, SoundInstance.createUnseededRandom());
 		this.bossEntity = bossEntity;
-		this.repeat = true;
+		this.looping = true;
 		instances++;
 	}
 	
 	public static void startSoundInstance(SpectrumBossEntity bossEntity) {
-		MinecraftClient.getInstance().getSoundManager().play(new MonstrositySoundInstance(bossEntity));
+		Minecraft.getInstance().getSoundManager().play(new MonstrositySoundInstance(bossEntity));
 	}
 	
 	@Override
 	public void tick() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		if (instances > 1 || (!bossEntity.isAlive() || bossEntity.isRemoved())) {
 			instances--;
-			this.setDone();
+			this.stop();
 			return;
 		}
 		
-		PlayerEntity player = client.player;
+		Player player = client.player;
 		if (player != null) {
 			this.x = player.getX();
 			this.y = player.getY();

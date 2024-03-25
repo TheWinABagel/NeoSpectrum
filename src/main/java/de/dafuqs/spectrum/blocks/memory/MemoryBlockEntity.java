@@ -1,27 +1,35 @@
 package de.dafuqs.spectrum.blocks.memory;
 
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.progression.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.block.PlayerOwned;
+import de.dafuqs.spectrum.helpers.EntityHelper;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import de.dafuqs.spectrum.registries.SpectrumBlockTags;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
 
 public class MemoryBlockEntity extends BlockEntity implements PlayerOwned {
 	
@@ -37,21 +45,21 @@ public class MemoryBlockEntity extends BlockEntity implements PlayerOwned {
 	}
 	
 	@Contract("_ -> new")
-	public static @NotNull Pair<Integer, Integer> getEggColorsForEntity(EntityType<?> entityType) {
-		SpawnEggItem spawnEggItem = SpawnEggItem.forEntity(entityType);
+	public static @NotNull Tuple<Integer, Integer> getEggColorsForEntity(EntityType<?> entityType) {
+		SpawnEggItem spawnEggItem = SpawnEggItem.byId(entityType);
 		if (spawnEggItem != null) {
-			return new Pair<>(spawnEggItem.getColor(0), spawnEggItem.getColor(1));
+			return new Tuple<>(spawnEggItem.getColor(0), spawnEggItem.getColor(1));
 		}
-		return new Pair<>(0x222222, 0xDDDDDD);
+		return new Tuple<>(0x222222, 0xDDDDDD);
 	}
 	
-	public static int getManifestAdvanceSteps(@NotNull World world, @NotNull BlockPos blockPos) {
-		BlockState belowBlockState = world.getBlockState(blockPos.down());
-		if (belowBlockState.isIn(SpectrumBlockTags.MEMORY_NEVER_MANIFESTERS)) {
+	public static int getManifestAdvanceSteps(@NotNull Level world, @NotNull BlockPos blockPos) {
+		BlockState belowBlockState = world.getBlockState(blockPos.below());
+		if (belowBlockState.is(SpectrumBlockTags.MEMORY_NEVER_MANIFESTERS)) {
 			return 0;
-		} else if (belowBlockState.isIn(SpectrumBlockTags.MEMORY_VERY_FAST_MANIFESTERS)) {
+		} else if (belowBlockState.is(SpectrumBlockTags.MEMORY_VERY_FAST_MANIFESTERS)) {
 			return 8;
-		} else if (belowBlockState.isIn(SpectrumBlockTags.MEMORY_FAST_MANIFESTERS)) {
+		} else if (belowBlockState.is(SpectrumBlockTags.MEMORY_FAST_MANIFESTERS)) {
 			return 3;
 		} else {
 			return 1;
@@ -59,42 +67,42 @@ public class MemoryBlockEntity extends BlockEntity implements PlayerOwned {
 	}
 	
 	public void setData(LivingEntity livingEntity, @NotNull ItemStack creatureSpawnItemStack) {
-		if (livingEntity instanceof PlayerEntity playerEntity) {
+		if (livingEntity instanceof Player playerEntity) {
 			setOwner(playerEntity);
 		}
 		if (creatureSpawnItemStack.getItem() instanceof MemoryItem) {
 			this.memoryItemStack = creatureSpawnItemStack.copy();
 			this.memoryItemStack.setCount(1);
 		}
-		if (!livingEntity.getWorld().isClient()) {
+		if (!livingEntity.level().isClientSide()) {
 			this.updateInClientWorld();
 		}
-		this.markDirty();
+		this.setChanged();
 	}
 	
 	@Override
-	public void readNbt(NbtCompound nbt) {
-		super.readNbt(nbt);
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
 		
 		this.ownerUUID = PlayerOwned.readOwnerUUID(nbt);
-		if (nbt.contains("MemoryItem", NbtElement.COMPOUND_TYPE)) {
-			this.memoryItemStack = ItemStack.fromNbt(nbt.getCompound("MemoryItem"));
+		if (nbt.contains("MemoryItem", Tag.TAG_COMPOUND)) {
+			this.memoryItemStack = ItemStack.of(nbt.getCompound("MemoryItem"));
 		}
 	}
 	
 	@Override
-	protected void writeNbt(NbtCompound nbt) {
-		super.writeNbt(nbt);
+	protected void saveAdditional(CompoundTag nbt) {
+		super.saveAdditional(nbt);
 		PlayerOwned.writeOwnerUUID(nbt, this.ownerUUID);
 		if (this.memoryItemStack != null) {
-			NbtCompound creatureSpawnCompound = new NbtCompound();
-			memoryItemStack.writeNbt(creatureSpawnCompound);
+			CompoundTag creatureSpawnCompound = new CompoundTag();
+			memoryItemStack.save(creatureSpawnCompound);
 			nbt.put("MemoryItem", creatureSpawnCompound);
 		}
 	}
 	
-	public void advanceManifesting(ServerWorld world, BlockPos blockPos) {
-		int ticksToManifest = MemoryItem.getTicksToManifest(this.memoryItemStack.getNbt());
+	public void advanceManifesting(ServerLevel world, BlockPos blockPos) {
+		int ticksToManifest = MemoryItem.getTicksToManifest(this.memoryItemStack.getTag());
 		if (ticksToManifest > 0) {
 			int additionalManifestAdvanceSteps = getManifestAdvanceSteps(world, blockPos);
 			if (additionalManifestAdvanceSteps > 0) {
@@ -102,28 +110,28 @@ public class MemoryBlockEntity extends BlockEntity implements PlayerOwned {
 				if (newTicksToManifest <= 0) {
 					this.manifest(world, blockPos);
 				} else {
-					Optional<EntityType<?>> entityTypeOptional = MemoryItem.getEntityType(this.memoryItemStack.getNbt());
+					Optional<EntityType<?>> entityTypeOptional = MemoryItem.getEntityType(this.memoryItemStack.getTag());
 					if (entityTypeOptional.isPresent()) {
 						MemoryItem.setTicksToManifest(this.memoryItemStack, newTicksToManifest);
 						SpectrumS2CPacketSender.playMemoryManifestingParticles(world, blockPos, entityTypeOptional.get(), 3);
-						world.playSound(null, this.pos, SpectrumSoundEvents.BLOCK_MEMORY_ADVANCE, SoundCategory.BLOCKS, 0.7F, 0.9F + world.random.nextFloat() * 0.2F);
-						this.markDirty();
+						world.playSound(null, this.worldPosition, SpectrumSoundEvents.BLOCK_MEMORY_ADVANCE, SoundSource.BLOCKS, 0.7F, 0.9F + world.random.nextFloat() * 0.2F);
+						this.setChanged();
 					}
 				}
 			}
 		}
 	}
 	
-	public void manifest(@NotNull ServerWorld world, BlockPos blockPos) {
+	public void manifest(@NotNull ServerLevel world, BlockPos blockPos) {
 		manifest(world, blockPos, this.memoryItemStack, this.ownerUUID);
 	}
 	
-	public static void manifest(@NotNull ServerWorld world, BlockPos blockPos, ItemStack memoryItemStack, @Nullable UUID ownerUUID) {
+	public static void manifest(@NotNull ServerLevel world, BlockPos blockPos, ItemStack memoryItemStack, @Nullable UUID ownerUUID) {
 		BlockState blockState = world.getBlockState(blockPos);
-		if (blockState.getBlock() instanceof Waterloggable && blockState.get(Properties.WATERLOGGED)) {
-			world.setBlockState(blockPos, Blocks.WATER.getDefaultState());
+		if (blockState.getBlock() instanceof SimpleWaterloggedBlock && blockState.getValue(BlockStateProperties.WATERLOGGED)) {
+			world.setBlockAndUpdate(blockPos, Blocks.WATER.defaultBlockState());
 		} else {
-			world.setBlockState(blockPos, Blocks.AIR.getDefaultState());
+			world.setBlockAndUpdate(blockPos, Blocks.AIR.defaultBlockState());
 		}
 		
 		Optional<Entity> hatchedEntityOptional = hatchEntity(world, blockPos, memoryItemStack);
@@ -133,17 +141,17 @@ public class MemoryBlockEntity extends BlockEntity implements PlayerOwned {
 			
 			SpectrumS2CPacketSender.playMemoryManifestingParticles(world, blockPos, hatchedEntity.getType(), 10);
 			
-			if (hatchedEntity instanceof MobEntity hatchedMobEntity) {
-				hatchedMobEntity.setPersistent();
+			if (hatchedEntity instanceof Mob hatchedMobEntity) {
+				hatchedMobEntity.setPersistenceRequired();
 				hatchedMobEntity.playAmbientSound();
-				hatchedMobEntity.playSpawnEffects();
+				hatchedMobEntity.spawnAnim();
 			}
 			if (ownerUUID != null) {
 				EntityHelper.addPlayerTrust(hatchedEntity, ownerUUID);
 			}
 			
-			PlayerEntity owner = PlayerOwned.getPlayerEntityIfOnline(ownerUUID);
-			if (owner instanceof ServerPlayerEntity serverPlayerEntity) {
+			Player owner = PlayerOwned.getPlayerEntityIfOnline(ownerUUID);
+			if (owner instanceof ServerPlayer serverPlayerEntity) {
 				SpectrumAdvancementCriteria.MEMORY_MANIFESTING.trigger(serverPlayerEntity, hatchedEntity);
 			}
 		}
@@ -155,8 +163,8 @@ public class MemoryBlockEntity extends BlockEntity implements PlayerOwned {
 				this.tint1 = 0x222222;
 				this.tint2 = 0xDDDDDD;
 			} else {
-				this.tint1 = MemoryItem.getEggColor(this.memoryItemStack.getNbt(), 0);
-				this.tint2 = MemoryItem.getEggColor(this.memoryItemStack.getNbt(), 1);
+				this.tint1 = MemoryItem.getEggColor(this.memoryItemStack.getTag(), 0);
+				this.tint2 = MemoryItem.getEggColor(this.memoryItemStack.getTag(), 1);
 			}
 		}
 		
@@ -168,19 +176,19 @@ public class MemoryBlockEntity extends BlockEntity implements PlayerOwned {
 	}
 	
 	public void updateInClientWorld() {
-		((ServerWorld) world).getChunkManager().markForUpdate(pos);
+		((ServerLevel) level).getChunkSource().blockChanged(worldPosition);
 	}
 	
 	// Called when the chunk is first loaded to initialize this be
 	@Override
-	public NbtCompound toInitialChunkDataNbt() {
-		NbtCompound nbtCompound = new NbtCompound();
-		this.writeNbt(nbtCompound);
+	public CompoundTag getUpdateTag() {
+		CompoundTag nbtCompound = new CompoundTag();
+		this.saveAdditional(nbtCompound);
 		return nbtCompound;
 	}
 	
-	protected static Optional<Entity> hatchEntity(ServerWorld world, BlockPos blockPos, ItemStack memoryItemStack) {
-		NbtCompound nbt = memoryItemStack.getNbt();
+	protected static Optional<Entity> hatchEntity(ServerLevel world, BlockPos blockPos, ItemStack memoryItemStack) {
+		CompoundTag nbt = memoryItemStack.getTag();
 		if (nbt == null) {
 			return Optional.empty();
 		}
@@ -188,14 +196,14 @@ public class MemoryBlockEntity extends BlockEntity implements PlayerOwned {
 		Optional<EntityType<?>> entityType = MemoryItem.getEntityType(nbt);
 		if (entityType.isPresent()) {
 			// alignPosition: center the mob in the center of the blockPos
-			Entity entity = entityType.get().spawnFromItemStack(world, memoryItemStack, null, blockPos, SpawnReason.SPAWN_EGG, true, false);
+			Entity entity = entityType.get().spawn(world, memoryItemStack, null, blockPos, MobSpawnType.SPAWN_EGG, true, false);
 			if (entity != null) {
-				if (entity instanceof MobEntity mobEntity) {
+				if (entity instanceof Mob mobEntity) {
 					if (!nbt.getBoolean("SpawnAsAdult")) {
 						mobEntity.setBaby(true);
 					}
-					if (memoryItemStack.hasCustomName()) {
-						mobEntity.setCustomName(memoryItemStack.getName());
+					if (memoryItemStack.hasCustomHoverName()) {
+						mobEntity.setCustomName(memoryItemStack.getHoverName());
 					}
 				}
 				return Optional.of(entity);
@@ -210,9 +218,9 @@ public class MemoryBlockEntity extends BlockEntity implements PlayerOwned {
 	}
 	
 	@Override
-	public void setOwner(@NotNull PlayerEntity playerEntity) {
-		this.ownerUUID = playerEntity.getUuid();
-		markDirty();
+	public void setOwner(@NotNull Player playerEntity) {
+		this.ownerUUID = playerEntity.getUUID();
+		setChanged();
 	}
 	
 	public ItemStack getMemoryItemStack() {

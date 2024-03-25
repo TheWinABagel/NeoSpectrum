@@ -1,9 +1,10 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.spectrum.*;
-import net.minecraft.registry.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 
 public class SpectrumSoundEvents {
 	
@@ -228,8 +229,8 @@ public class SpectrumSoundEvents {
 	public static final SoundEvent ENTITY_KINDLING_JUMP = register("entity.kindling.jump");
 	
 	private static SoundEvent register(String id) {
-		Identifier identifier = SpectrumCommon.locate(id);
-		return Registry.register(Registries.SOUND_EVENT, identifier, SoundEvent.of(identifier));
+		ResourceLocation identifier = SpectrumCommon.locate(id);
+		return Registry.register(BuiltInRegistries.SOUND_EVENT, identifier, SoundEvent.createVariableRangeEvent(identifier));
 	}
 	
 	public static void register() {

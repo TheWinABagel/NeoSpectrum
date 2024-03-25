@@ -1,9 +1,9 @@
 package de.dafuqs.spectrum.recipe.pedestal;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.api.item.GemstoneColor;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
 
 public enum BuiltinGemstoneColor implements GemstoneColor {
 	CYAN(DyeColor.CYAN),

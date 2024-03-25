@@ -1,15 +1,22 @@
 package de.dafuqs.spectrum.blocks.pastel_network.network;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.blocks.pastel_network.nodes.*;
-import de.dafuqs.spectrum.helpers.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity;
+import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeType;
+import de.dafuqs.spectrum.helpers.SchedulerMap;
+import de.dafuqs.spectrum.helpers.TickLooper;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 public class ServerPastelNetwork extends PastelNetwork {
 
@@ -19,7 +26,7 @@ public class ServerPastelNetwork extends PastelNetwork {
 	protected final SchedulerMap<PastelTransmission> transmissions = new SchedulerMap<>();
 	protected final PastelTransmissionLogic transmissionLogic;
 
-	public ServerPastelNetwork(World world, @Nullable UUID uuid) {
+	public ServerPastelNetwork(Level world, @Nullable UUID uuid) {
 		super(world, uuid);
 		this.transmissionLogic = new PastelTransmissionLogic(this);
 	}
@@ -70,15 +77,15 @@ public class ServerPastelNetwork extends PastelNetwork {
 		this.transmissions.put(transmission, travelTime);
 	}
 	
-	public NbtCompound toNbt() {
-		NbtCompound compound = new NbtCompound();
-		compound.putUuid("UUID", this.uuid);
-		compound.putString("World", this.getWorld().getRegistryKey().getValue().toString());
+	public CompoundTag toNbt() {
+		CompoundTag compound = new CompoundTag();
+		compound.putUUID("UUID", this.uuid);
+		compound.putString("World", this.getWorld().dimension().location().toString());
 		compound.put("Looper", this.transferLooper.toNbt());
 		
-		NbtList transmissionList = new NbtList();
+		ListTag transmissionList = new ListTag();
         for (Map.Entry<PastelTransmission, Integer> transmission : this.transmissions) {
-            NbtCompound transmissionCompound = new NbtCompound();
+            CompoundTag transmissionCompound = new CompoundTag();
             transmissionCompound.putInt("Delay", transmission.getValue());
             transmissionCompound.put("Transmission", transmission.getKey().toNbt());
             transmissionList.add(transmissionCompound);
@@ -88,17 +95,17 @@ public class ServerPastelNetwork extends PastelNetwork {
         return compound;
     }
 
-    public static ServerPastelNetwork fromNbt(NbtCompound compound) {
-		World world = SpectrumCommon.minecraftServer.getWorld(RegistryKey.of(RegistryKeys.WORLD, Identifier.tryParse(compound.getString("World"))));
-		UUID uuid = compound.getUuid("UUID");
+    public static ServerPastelNetwork fromNbt(CompoundTag compound) {
+		Level world = SpectrumCommon.minecraftServer.getLevel(ResourceKey.create(Registries.DIMENSION, ResourceLocation.tryParse(compound.getString("World"))));
+		UUID uuid = compound.getUUID("UUID");
 
 		ServerPastelNetwork network = new ServerPastelNetwork(world, uuid);
-		if (compound.contains("Looper", NbtElement.COMPOUND_TYPE)) {
+		if (compound.contains("Looper", Tag.TAG_COMPOUND)) {
 			network.transferLooper.readNbt(compound.getCompound("Looper"));
 		}
 
-		for (NbtElement e : compound.getList("Transmissions", NbtElement.COMPOUND_TYPE)) {
-			NbtCompound t = (NbtCompound) e;
+		for (Tag e : compound.getList("Transmissions", Tag.TAG_COMPOUND)) {
+			CompoundTag t = (CompoundTag) e;
 			int delay = t.getInt("Delay");
 			PastelTransmission transmission = PastelTransmission.fromNbt(t.getCompound("Transmission"));
 			network.addTransmission(transmission, delay);

@@ -1,19 +1,21 @@
 package de.dafuqs.spectrum.recipe.potion_workshop;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.blocks.potion_workshop.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.api.item.ExperienceStorageItem;
+import de.dafuqs.spectrum.blocks.potion_workshop.PotionWorkshopBlockEntity;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
 
 public class PotionWorkshopCraftingRecipe extends PotionWorkshopRecipe {
 	
@@ -22,7 +24,7 @@ public class PotionWorkshopCraftingRecipe extends PotionWorkshopRecipe {
 	protected final int requiredExperience;
 	protected final ItemStack output;
 	
-	public PotionWorkshopCraftingRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier,
+	public PotionWorkshopCraftingRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier,
 										IngredientStack baseIngredient, boolean consumeBaseIngredient, int requiredExperience, IngredientStack ingredient1, IngredientStack ingredient2, IngredientStack ingredient3, ItemStack output, int craftingTime, int color) {
 		
 		super(id, group, secret, requiredAdvancementIdentifier, craftingTime, color, ingredient1, ingredient2, ingredient3);
@@ -63,7 +65,7 @@ public class PotionWorkshopCraftingRecipe extends PotionWorkshopRecipe {
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inventory, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inventory, RegistryAccess drm) {
 		return null;
 	}
 	
@@ -74,15 +76,15 @@ public class PotionWorkshopCraftingRecipe extends PotionWorkshopRecipe {
 	
 	@Override
 	public List<IngredientStack> getIngredientStacks() {
-		DefaultedList<IngredientStack> defaultedList = DefaultedList.of();
-		defaultedList.add(IngredientStack.ofStacks(SpectrumItems.MERMAIDS_GEM.getDefaultStack()));
+		NonNullList<IngredientStack> defaultedList = NonNullList.create();
+		defaultedList.add(IngredientStack.ofStacks(SpectrumItems.MERMAIDS_GEM.getDefaultInstance()));
 		defaultedList.add(this.baseIngredient);
 		addIngredientStacks(defaultedList);
 		return defaultedList;
 	}
 	
 	@Override
-	public boolean matches(@NotNull Inventory inv, World world) {
+	public boolean matches(@NotNull Container inv, Level world) {
 		if (enoughExperienceSupplied(inv)) {
 			return super.matches(inv, world);
 		}
@@ -93,13 +95,13 @@ public class PotionWorkshopCraftingRecipe extends PotionWorkshopRecipe {
 	// of iterating over every item. The specification mentions that
 	// Only one is supported and just a single ExperienceStorageItem
 	// should be used per recipe, tough
-	private boolean enoughExperienceSupplied(Inventory inv) {
+	private boolean enoughExperienceSupplied(Container inv) {
 		if (this.requiredExperience > 0) {
 			for (int i : new int[]{PotionWorkshopBlockEntity.BASE_INPUT_SLOT_ID, PotionWorkshopBlockEntity.FIRST_INGREDIENT_SLOT,
 					PotionWorkshopBlockEntity.FIRST_INGREDIENT_SLOT + 1, PotionWorkshopBlockEntity.FIRST_INGREDIENT_SLOT + 2}) {
 				
-				if ((inv.getStack(i).getItem() instanceof ExperienceStorageItem)) {
-					return ExperienceStorageItem.getStoredExperience(inv.getStack(i)) >= requiredExperience;
+				if ((inv.getItem(i).getItem() instanceof ExperienceStorageItem)) {
+					return ExperienceStorageItem.getStoredExperience(inv.getItem(i)) >= requiredExperience;
 				}
 			}
 		}
@@ -107,7 +109,7 @@ public class PotionWorkshopCraftingRecipe extends PotionWorkshopRecipe {
 	}
 	
 	@Override
-	public ItemStack getOutput(DynamicRegistryManager registryManager) {
+	public ItemStack getResultItem(RegistryAccess registryManager) {
 		return output;
 	}
 	

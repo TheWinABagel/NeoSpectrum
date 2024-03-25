@@ -1,14 +1,21 @@
 package de.dafuqs.spectrum.items.tools;
 
-import com.google.common.collect.*;
-import com.jamieswhiteshirt.reachentityattributes.*;
-import de.dafuqs.spectrum.api.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.attribute.*;
-import net.minecraft.item.*;
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes;
+import de.dafuqs.spectrum.api.item.Preenchanted;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.SwordItem;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * A sword with additional reach
@@ -19,36 +26,36 @@ public class GreatswordItem extends SwordItem implements Preenchanted {
 
 	// shadowing SwordItem's properties in a way, since those are private final
 	private final float attackDamage;
-	private final Multimap<EntityAttribute, EntityAttributeModifier> attributeModifiers;
+	private final Multimap<Attribute, AttributeModifier> attributeModifiers;
 
-	public GreatswordItem(ToolMaterial material, int attackDamage, float attackSpeed, float extraReach, Settings settings) {
+	public GreatswordItem(Tier material, int attackDamage, float attackSpeed, float extraReach, Properties settings) {
 		super(material, attackDamage, attackSpeed, settings);
 
-		this.attackDamage = (float) attackDamage + material.getAttackDamage();
-		ImmutableMultimap.Builder<EntityAttribute, EntityAttributeModifier> builder = ImmutableMultimap.builder();
-		builder.put(EntityAttributes.GENERIC_ATTACK_DAMAGE, new EntityAttributeModifier(ATTACK_DAMAGE_MODIFIER_ID, "Weapon modifier", this.attackDamage, EntityAttributeModifier.Operation.ADDITION));
-		builder.put(EntityAttributes.GENERIC_ATTACK_SPEED, new EntityAttributeModifier(ATTACK_SPEED_MODIFIER_ID, "Weapon modifier", attackSpeed, EntityAttributeModifier.Operation.ADDITION));
-		builder.put(ReachEntityAttributes.ATTACK_RANGE, new EntityAttributeModifier(REACH_MODIFIER_ID, "Weapon modifier", extraReach, EntityAttributeModifier.Operation.ADDITION));
+		this.attackDamage = (float) attackDamage + material.getAttackDamageBonus();
+		ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+		builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Weapon modifier", this.attackDamage, AttributeModifier.Operation.ADDITION));
+		builder.put(Attributes.ATTACK_SPEED, new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Weapon modifier", attackSpeed, AttributeModifier.Operation.ADDITION));
+		builder.put(ReachEntityAttributes.ATTACK_RANGE, new AttributeModifier(REACH_MODIFIER_ID, "Weapon modifier", extraReach, AttributeModifier.Operation.ADDITION));
 		this.attributeModifiers = builder.build();
 	}
 
 	@Override
-	public float getAttackDamage() {
+	public float getDamage() {
 		return this.attackDamage;
 	}
 
 	@Override
-	public Multimap<EntityAttribute, EntityAttributeModifier> getAttributeModifiers(EquipmentSlot slot) {
-		return slot == EquipmentSlot.MAINHAND ? attributeModifiers : super.getAttributeModifiers(slot);
+	public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
+		return slot == EquipmentSlot.MAINHAND ? attributeModifiers : super.getDefaultAttributeModifiers(slot);
 	}
 
 	@Override
 	public Map<Enchantment, Integer> getDefaultEnchantments() {
-		return Map.of(Enchantments.SWEEPING, 4);
+		return Map.of(Enchantments.SWEEPING_EDGE, 4);
 	}
 
 	@Override
-	public ItemStack getDefaultStack() {
+	public ItemStack getDefaultInstance() {
 		return getDefaultEnchantedStack(this);
 	}
 

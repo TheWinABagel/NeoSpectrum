@@ -1,10 +1,10 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.spectrum.*;
-import net.minecraft.block.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
 
 public class SpectrumBlockTags {
 	
@@ -70,11 +70,11 @@ public class SpectrumBlockTags {
 	
 	
 	private static TagKey<Block> of(String id) {
-		return TagKey.of(RegistryKeys.BLOCK, SpectrumCommon.locate(id));
+		return TagKey.create(Registries.BLOCK, SpectrumCommon.locate(id));
 	}
 	
 	private static TagKey<Block> common(String id) {
-		return TagKey.of(RegistryKeys.BLOCK, new Identifier("c", id));
+		return TagKey.create(Registries.BLOCK, new ResourceLocation("c", id));
 	}
 
 }

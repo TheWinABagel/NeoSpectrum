@@ -1,20 +1,25 @@
 package de.dafuqs.spectrum.blocks.conditional.colored_tree;
 
-import com.google.common.collect.*;
-import de.dafuqs.revelationary.api.revelations.*;
-import de.dafuqs.spectrum.registries.client.*;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import com.google.common.collect.Maps;
+import de.dafuqs.revelationary.api.revelations.RevelationAware;
+import de.dafuqs.spectrum.registries.client.SpectrumColorProviders;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.Hashtable;
+import java.util.Map;
 
 public class ColoredLeavesBlock extends LeavesBlock implements RevelationAware, ColoredTree {
 	
 	private static final Map<DyeColor, ColoredLeavesBlock> LEAVES = Maps.newEnumMap(DyeColor.class);
 	protected final DyeColor color;
 	
-	public ColoredLeavesBlock(Settings settings, DyeColor color) {
+	public ColoredLeavesBlock(Properties settings, DyeColor color) {
 		super(settings);
 		this.color = color;
 		LEAVES.put(color, this);
@@ -22,7 +27,7 @@ public class ColoredLeavesBlock extends LeavesBlock implements RevelationAware, 
 	}
 	
 	@Override
-	public Identifier getCloakAdvancementIdentifier() {
+	public ResourceLocation getCloakAdvancementIdentifier() {
 		return ColoredTree.getTreeCloakAdvancementIdentifier(TreePart.LEAVES, this.color);
 	}
 	
@@ -30,15 +35,15 @@ public class ColoredLeavesBlock extends LeavesBlock implements RevelationAware, 
 	public Map<BlockState, BlockState> getBlockStateCloaks() {
 		Map<BlockState, BlockState> map = new Hashtable<>();
 		for (int distance = 1; distance < 8; distance++) {
-			map.put(this.getDefaultState().with(LeavesBlock.DISTANCE, distance).with(LeavesBlock.PERSISTENT, false), Blocks.OAK_LEAVES.getDefaultState().with(LeavesBlock.DISTANCE, distance).with(LeavesBlock.PERSISTENT, false));
-			map.put(this.getDefaultState().with(LeavesBlock.DISTANCE, distance).with(LeavesBlock.PERSISTENT, true), Blocks.OAK_LEAVES.getDefaultState().with(LeavesBlock.DISTANCE, distance).with(LeavesBlock.PERSISTENT, true));
+			map.put(this.defaultBlockState().setValue(LeavesBlock.DISTANCE, distance).setValue(LeavesBlock.PERSISTENT, false), Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.DISTANCE, distance).setValue(LeavesBlock.PERSISTENT, false));
+			map.put(this.defaultBlockState().setValue(LeavesBlock.DISTANCE, distance).setValue(LeavesBlock.PERSISTENT, true), Blocks.OAK_LEAVES.defaultBlockState().setValue(LeavesBlock.DISTANCE, distance).setValue(LeavesBlock.PERSISTENT, true));
 		}
 		return map;
 	}
 	
 	@Override
-	public Pair<Item, Item> getItemCloak() {
-		return new Pair<>(this.asItem(), Blocks.OAK_LEAVES.asItem());
+	public Tuple<Item, Item> getItemCloak() {
+		return new Tuple<>(this.asItem(), Blocks.OAK_LEAVES.asItem());
 	}
 	
 	@Override

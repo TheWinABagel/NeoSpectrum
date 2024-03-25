@@ -1,27 +1,28 @@
 package de.dafuqs.spectrum.features;
 
-import com.mojang.serialization.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.gen.feature.*;
-import net.minecraft.world.gen.feature.util.*;
+import com.mojang.serialization.Codec;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+import net.minecraft.world.level.levelgen.feature.OreFeature;
+import net.minecraft.world.level.levelgen.feature.configurations.OreConfiguration;
 
 public class AirCheckDiskFeature extends OreFeature {
 
-    public AirCheckDiskFeature(Codec<OreFeatureConfig> codec) {
+    public AirCheckDiskFeature(Codec<OreConfiguration> codec) {
         super(codec);
     }
 	
 	@Override
-	public boolean generate(FeatureContext<OreFeatureConfig> context) {
-		BlockPos blockPos = context.getOrigin();
-		StructureWorldAccess structureWorldAccess = context.getWorld();
+	public boolean place(FeaturePlaceContext<OreConfiguration> context) {
+		BlockPos blockPos = context.origin();
+		WorldGenLevel structureWorldAccess = context.level();
 		
 		if (structureWorldAccess.getBlockState(blockPos).isAir()) {
 			return false;
 		}
 		
-		return super.generate(context);
+		return super.place(context);
 	}
 
 }

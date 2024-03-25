@@ -1,11 +1,14 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import de.dafuqs.spectrum.api.item.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.item.GemstoneColor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.GlassBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 public class GemstoneGlassBlock extends GlassBlock {
 	
@@ -13,26 +16,26 @@ public class GemstoneGlassBlock extends GlassBlock {
 	final
 	GemstoneColor gemstoneColor;
 	
-	public GemstoneGlassBlock(Settings settings, @Nullable GemstoneColor gemstoneColor) {
+	public GemstoneGlassBlock(Properties settings, @Nullable GemstoneColor gemstoneColor) {
 		super(settings);
 		this.gemstoneColor = gemstoneColor;
 	}
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public boolean isSideInvisible(BlockState state, BlockState stateFrom, Direction direction) {
-		if (stateFrom.isOf(this)) {
+	public boolean skipRendering(BlockState state, BlockState stateFrom, Direction direction) {
+		if (stateFrom.is(this)) {
 			return true;
 		}
 		
 		if (state.getBlock() instanceof GemstoneGlassBlock sourceGemstoneGlassBlock && stateFrom.getBlock() instanceof GemstoneGlassBlock targetGemstoneGlassBlock) {
 			return sourceGemstoneGlassBlock.gemstoneColor == targetGemstoneGlassBlock.gemstoneColor;
 		}
-		return super.isSideInvisible(state, stateFrom, direction);
+		return super.skipRendering(state, stateFrom, direction);
 	}
 	
 	@Override
-	public boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
+	public boolean propagatesSkylightDown(BlockState state, BlockGetter world, BlockPos pos) {
 		return true;
 	}
 	

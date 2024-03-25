@@ -1,29 +1,35 @@
 package de.dafuqs.spectrum.blocks.dd_deco;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.registries.SpectrumBlockTags;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-public class BlackslagBlock extends PillarBlock implements Fertilizable {
+public class BlackslagBlock extends RotatedPillarBlock implements BonemealableBlock {
 	
-	public BlackslagBlock(Settings settings) {
+	public BlackslagBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public boolean isFertilizable(WorldView world, BlockPos pos, BlockState state, boolean isClient) {
-		if (!world.getBlockState(pos.up()).isTransparent(world, pos)) {
+	public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
+		if (!world.getBlockState(pos.above()).propagatesSkylightDown(world, pos)) {
 			return false;
 		}
 		
-		for (BlockPos currPos : BlockPos.iterate(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+		for (BlockPos currPos : BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))) {
 			BlockState currState = world.getBlockState(currPos);
-			if (currState.isIn(SpectrumBlockTags.SPREADS_TO_BLACKSLAG)) {
+			if (currState.is(SpectrumBlockTags.SPREADS_TO_BLACKSLAG)) {
 				return true;
 			}
 		}
@@ -32,18 +38,18 @@ public class BlackslagBlock extends PillarBlock implements Fertilizable {
 	}
 	
 	@Override
-	public boolean canGrow(World world, net.minecraft.util.math.random.Random random, BlockPos pos, BlockState state) {
+	public boolean isBonemealSuccess(Level world, net.minecraft.util.RandomSource random, BlockPos pos, BlockState state) {
 		return true;
 	}
 	
 	@Override
-	public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
+	public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
 		List<BlockState> nextStates = new ArrayList<>();
 		
 		// search for all valid neighboring blocks and choose a weighted random one
-		for (BlockPos blockPos : BlockPos.iterate(pos.add(-1, -1, -1), pos.add(1, 1, 1))) {
+		for (BlockPos blockPos : BlockPos.betweenClosed(pos.offset(-1, -1, -1), pos.offset(1, 1, 1))) {
 			BlockState blockState = world.getBlockState(blockPos);
-			if (blockState.isIn(SpectrumBlockTags.SPREADS_TO_BLACKSLAG)) {
+			if (blockState.is(SpectrumBlockTags.SPREADS_TO_BLACKSLAG)) {
 				nextStates.add(blockState);
 			}
 		}
@@ -53,6 +59,6 @@ public class BlackslagBlock extends PillarBlock implements Fertilizable {
 		}
 		
 		Collections.shuffle(nextStates);
-		world.setBlockState(pos, nextStates.get(0), Block.NOTIFY_ALL);
+		world.setBlock(pos, nextStates.get(0), Block.UPDATE_ALL);
 	}
 }

@@ -1,11 +1,11 @@
 package de.dafuqs.spectrum.mixin.accessors;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.goal.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.gen.*;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.goal.RangedAttackGoal;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(ProjectileAttackGoal.class)
+@Mixin(RangedAttackGoal.class)
 public interface ProjectileAttackGoalAccessor {
 
     @Accessor("target")

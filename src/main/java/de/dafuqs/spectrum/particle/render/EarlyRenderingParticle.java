@@ -1,10 +1,12 @@
 package de.dafuqs.spectrum.particle.render;
 
-import net.fabricmc.api.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.MultiBufferSource;
 
 @Environment(EnvType.CLIENT)
 public interface EarlyRenderingParticle {
-    void renderAsEntity(final MatrixStack matrices, final VertexConsumerProvider vertexConsumers, final Camera camera, final float tickDelta);
+    void renderAsEntity(final PoseStack matrices, final MultiBufferSource vertexConsumers, final Camera camera, final float tickDelta);
 }

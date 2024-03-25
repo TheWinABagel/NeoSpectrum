@@ -3,13 +3,13 @@ package de.dafuqs.spectrum.mixin;
 import de.dafuqs.spectrum.api.entity.NonLivingAttackable;
 import de.dafuqs.spectrum.api.item.MergeableItem;
 import de.dafuqs.spectrum.api.item.SplittableItem;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.Hand;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,25 +18,25 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ServerPlayNetworkHandler.class)
+@Mixin(ServerGamePacketListenerImpl.class)
 public class ServerPlayNetworkHandlerMixin {
 
 
-    @Shadow public ServerPlayerEntity player;
+    @Shadow public ServerPlayer player;
 
     @Inject(method = "onPlayerAction", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;getStackInHand(Lnet/minecraft/util/Hand;)Lnet/minecraft/item/ItemStack;", ordinal = 0), cancellable = true)
-    private void handleSwapInteractions(PlayerActionC2SPacket packet, CallbackInfo ci) {
+    private void handleSwapInteractions(ServerboundPlayerActionPacket packet, CallbackInfo ci) {
 
-        var mainStack = player.getStackInHand(Hand.MAIN_HAND);
-        var offStack = player.getStackInHand(Hand.OFF_HAND);
+        var mainStack = player.getItemInHand(InteractionHand.MAIN_HAND);
+        var offStack = player.getItemInHand(InteractionHand.OFF_HAND);
         var mainItem = mainStack.getItem();
         var offItem = offStack.getItem();
 
-        if (mainItem instanceof SplittableItem splittable && splittable.canSplit(player, Hand.MAIN_HAND, mainStack)) {
+        if (mainItem instanceof SplittableItem splittable && splittable.canSplit(player, InteractionHand.MAIN_HAND, mainStack)) {
            splitItem(mainStack, splittable);
             ci.cancel();
         }
-        else if (offItem instanceof SplittableItem splittable && splittable.canSplit(player, Hand.OFF_HAND, offStack)) {
+        else if (offItem instanceof SplittableItem splittable && splittable.canSplit(player, InteractionHand.OFF_HAND, offStack)) {
             splitItem(offStack, splittable);
             ci.cancel();
         }
@@ -51,7 +51,7 @@ public class ServerPlayNetworkHandlerMixin {
 
         @Final
         @Shadow(aliases = "field_28963")
-        private ServerPlayNetworkHandler this$0;
+        private ServerGamePacketListenerImpl this$0;
 
         @Final
         @Shadow(aliases = "field_28962")
@@ -69,18 +69,18 @@ public class ServerPlayNetworkHandlerMixin {
     @Unique
     private void splitItem(ItemStack stack, SplittableItem splittable) {
         var split = splittable.getResult(player, stack);
-        player.setStackInHand(Hand.MAIN_HAND, split);
-        player.setStackInHand(Hand.OFF_HAND, split.copy());
-        player.clearActiveItem();
-        player.playSound(splittable.getSplitSound(), SoundCategory.PLAYERS, 1, 0.8F + player.getRandom().nextFloat() * 0.4F);
+        player.setItemInHand(InteractionHand.MAIN_HAND, split);
+        player.setItemInHand(InteractionHand.OFF_HAND, split.copy());
+        player.stopUsingItem();
+        player.playNotifySound(splittable.getSplitSound(), SoundSource.PLAYERS, 1, 0.8F + player.getRandom().nextFloat() * 0.4F);
     }
 
     @Unique
     private void mergeItems(ItemStack firstHalf, ItemStack secondHalf, MergeableItem mergeable) {
-        player.setStackInHand(Hand.MAIN_HAND, ItemStack.EMPTY);
-        player.setStackInHand(Hand.OFF_HAND, ItemStack.EMPTY);
-        player.setStackInHand(Hand.MAIN_HAND, mergeable.getResult(player, firstHalf, secondHalf));
-        player.clearActiveItem();
-        player.playSound(mergeable.getMergeSound(), SoundCategory.PLAYERS, 1, 0.8F + player.getRandom().nextFloat() * 0.4F);
+        player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+        player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+        player.setItemInHand(InteractionHand.MAIN_HAND, mergeable.getResult(player, firstHalf, secondHalf));
+        player.stopUsingItem();
+        player.playNotifySound(mergeable.getMergeSound(), SoundSource.PLAYERS, 1, 0.8F + player.getRandom().nextFloat() * 0.4F);
     }
 }

@@ -1,32 +1,40 @@
 package de.dafuqs.spectrum.loot.functions;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSerializationContext;
+import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.helpers.TimeHelper;
-import de.dafuqs.spectrum.loot.*;
-import de.dafuqs.spectrum.mixin.accessors.*;
-import de.dafuqs.spectrum.recipe.titration_barrel.*;
-import net.minecraft.item.*;
-import net.minecraft.loot.condition.*;
-import net.minecraft.loot.context.*;
-import net.minecraft.loot.function.*;
-import net.minecraft.loot.provider.number.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.biome.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.loot.SpectrumLootFunctionTypes;
+import de.dafuqs.spectrum.mixin.accessors.BiomeAccessor;
+import de.dafuqs.spectrum.recipe.titration_barrel.FermentationData;
+import de.dafuqs.spectrum.recipe.titration_barrel.TitrationBarrelRecipe;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraft.world.level.storage.loot.providers.number.NumberProvider;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Optional;
 
-public class FermentRandomlyLootFunction extends ConditionalLootFunction {
+public class FermentRandomlyLootFunction extends LootItemConditionalFunction {
 	
-	final @Nullable Identifier fermentationRecipeIdentifier;
+	final @Nullable ResourceLocation fermentationRecipeIdentifier;
 	final @Nullable FermentationData fermentationData;
-	final LootNumberProvider daysFermented;
-	final LootNumberProvider thickness;
+	final NumberProvider daysFermented;
+	final NumberProvider thickness;
 	
-	public FermentRandomlyLootFunction(LootCondition[] conditions, @NotNull Identifier fermentationRecipeIdentifier, LootNumberProvider daysFermented, LootNumberProvider thickness) {
+	public FermentRandomlyLootFunction(LootItemCondition[] conditions, @NotNull ResourceLocation fermentationRecipeIdentifier, NumberProvider daysFermented, NumberProvider thickness) {
 		super(conditions);
 		this.fermentationRecipeIdentifier = fermentationRecipeIdentifier;
 		this.fermentationData = null;
@@ -34,7 +42,7 @@ public class FermentRandomlyLootFunction extends ConditionalLootFunction {
 		this.thickness = thickness;
 	}
 	
-	public FermentRandomlyLootFunction(LootCondition[] conditions, @NotNull FermentationData fermentationData, LootNumberProvider daysFermented, LootNumberProvider thickness) {
+	public FermentRandomlyLootFunction(LootItemCondition[] conditions, @NotNull FermentationData fermentationData, NumberProvider daysFermented, NumberProvider thickness) {
 		super(conditions);
 		this.fermentationRecipeIdentifier = null;
 		this.fermentationData = fermentationData;
@@ -43,15 +51,15 @@ public class FermentRandomlyLootFunction extends ConditionalLootFunction {
 	}
 	
 	@Override
-	public LootFunctionType getType() {
+	public LootItemFunctionType getType() {
 		return SpectrumLootFunctionTypes.FERMENT_RANDOMLY;
 	}
 	
 	@Override
-	public ItemStack process(ItemStack stack, LootContext context) {
+	public ItemStack run(ItemStack stack, LootContext context) {
 		FermentationData fermentationData = null;
 		if (this.fermentationRecipeIdentifier != null) {
-			Optional<? extends Recipe<?>> recipe = SpectrumCommon.minecraftServer.getRecipeManager().get(this.fermentationRecipeIdentifier);
+			Optional<? extends Recipe<?>> recipe = SpectrumCommon.minecraftServer.getRecipeManager().byKey(this.fermentationRecipeIdentifier);
 			if (recipe.isPresent() && recipe.get() instanceof TitrationBarrelRecipe titrationBarrelRecipe) {
 				fermentationData = titrationBarrelRecipe.getFermentationData();
 			} else {
@@ -62,23 +70,23 @@ public class FermentRandomlyLootFunction extends ConditionalLootFunction {
 			fermentationData = this.fermentationData;
 		}
 		if (fermentationData != null) {
-			BlockPos pos = BlockPos.ofFloored(context.get(LootContextParameters.ORIGIN));
-			Biome biome = context.getWorld().getBiome(pos).value();
+			BlockPos pos = BlockPos.containing(context.getParamOrNull(LootContextParams.ORIGIN));
+			Biome biome = context.getLevel().getBiome(pos).value();
 			float downfall = ((BiomeAccessor)(Object) biome).getWeather().downfall();
-			return TitrationBarrelRecipe.getFermentedStack(fermentationData, this.thickness.nextInt(context), TimeHelper.secondsFromMinecraftDays(this.daysFermented.nextInt(context)), downfall, stack);
+			return TitrationBarrelRecipe.getFermentedStack(fermentationData, this.thickness.getInt(context), TimeHelper.secondsFromMinecraftDays(this.daysFermented.getInt(context)), downfall, stack);
 		}
 		return stack;
 	}
 	
-	public static ConditionalLootFunction.Builder<?> builder(FermentationData fermentationData, LootNumberProvider daysFermented, LootNumberProvider thickness) {
-		return builder((conditions) -> new FermentRandomlyLootFunction(conditions, fermentationData, daysFermented, thickness));
+	public static LootItemConditionalFunction.Builder<?> builder(FermentationData fermentationData, NumberProvider daysFermented, NumberProvider thickness) {
+		return simpleBuilder((conditions) -> new FermentRandomlyLootFunction(conditions, fermentationData, daysFermented, thickness));
 	}
 	
-	public static ConditionalLootFunction.Builder<?> builder(Identifier fermentationRecipeIdentifier, LootNumberProvider daysFermented, LootNumberProvider thickness) {
-		return builder((conditions) -> new FermentRandomlyLootFunction(conditions, fermentationRecipeIdentifier, daysFermented, thickness));
+	public static LootItemConditionalFunction.Builder<?> builder(ResourceLocation fermentationRecipeIdentifier, NumberProvider daysFermented, NumberProvider thickness) {
+		return simpleBuilder((conditions) -> new FermentRandomlyLootFunction(conditions, fermentationRecipeIdentifier, daysFermented, thickness));
 	}
 	
-	public static class Serializer extends ConditionalLootFunction.Serializer<FermentRandomlyLootFunction> {
+	public static class Serializer extends LootItemConditionalFunction.Serializer<FermentRandomlyLootFunction> {
 		
 		private static final String FERMENTATION_RECIPE_ID_STRING = "fermentation_recipe_id";
 		private static final String FERMENTATION_DATA_STRING = "fermentation_data";
@@ -87,7 +95,7 @@ public class FermentRandomlyLootFunction extends ConditionalLootFunction {
 
 		@Override
 		public void toJson(JsonObject jsonObject, FermentRandomlyLootFunction lootFunction, JsonSerializationContext jsonSerializationContext) {
-			super.toJson(jsonObject, lootFunction, jsonSerializationContext);
+			super.serialize(jsonObject, lootFunction, jsonSerializationContext);
 			
 			if (lootFunction.fermentationRecipeIdentifier != null) {
 				jsonObject.addProperty(FERMENTATION_RECIPE_ID_STRING, lootFunction.fermentationRecipeIdentifier.toString());
@@ -99,12 +107,12 @@ public class FermentRandomlyLootFunction extends ConditionalLootFunction {
 		}
 		
 		@Override
-		public FermentRandomlyLootFunction fromJson(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext, LootCondition[] lootConditions) {
-			LootNumberProvider daysFermented = JsonHelper.deserialize(jsonObject, DAYS_FERMENTED_STRING, jsonDeserializationContext, LootNumberProvider.class);
-			LootNumberProvider thickness = JsonHelper.deserialize(jsonObject, THICKNESS_STRING, jsonDeserializationContext, LootNumberProvider.class);
+		public FermentRandomlyLootFunction deserialize(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext, LootItemCondition[] lootConditions) {
+			NumberProvider daysFermented = GsonHelper.getAsObject(jsonObject, DAYS_FERMENTED_STRING, jsonDeserializationContext, NumberProvider.class);
+			NumberProvider thickness = GsonHelper.getAsObject(jsonObject, THICKNESS_STRING, jsonDeserializationContext, NumberProvider.class);
 			
 			if (jsonObject.has(FERMENTATION_RECIPE_ID_STRING)) {
-				Identifier fermentationRecipeIdentifier = Identifier.tryParse(jsonObject.get(FERMENTATION_RECIPE_ID_STRING).getAsString());
+				ResourceLocation fermentationRecipeIdentifier = ResourceLocation.tryParse(jsonObject.get(FERMENTATION_RECIPE_ID_STRING).getAsString());
 				return new FermentRandomlyLootFunction(lootConditions, fermentationRecipeIdentifier, daysFermented, thickness);
 			} else if (jsonObject.has(FERMENTATION_DATA_STRING)) {
 				FermentationData fermentationData = FermentationData.fromJson(jsonObject.get(FERMENTATION_DATA_STRING).getAsJsonObject());

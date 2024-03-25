@@ -1,20 +1,23 @@
 package de.dafuqs.spectrum.blocks.dd_deco;
 
-import net.minecraft.block.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.MudBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class RottenGroundBlock extends MudBlock {
     
-    public static final VoxelShape SHAPE = Block.createCuboidShape(0, 0, 0, 16, 11, 16);
+    public static final VoxelShape SHAPE = Block.box(0, 0, 0, 16, 11, 16);
     
-    public RottenGroundBlock(Settings settings) {
+    public RottenGroundBlock(Properties settings) {
         super(settings);
     }
     
     @Override
-    public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
         return SHAPE;
     }
     

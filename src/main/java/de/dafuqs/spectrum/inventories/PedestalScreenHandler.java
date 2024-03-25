@@ -1,60 +1,63 @@
 package de.dafuqs.spectrum.inventories;
 
-import de.dafuqs.spectrum.blocks.pedestal.*;
-import de.dafuqs.spectrum.inventories.slots.*;
-import de.dafuqs.spectrum.recipe.pedestal.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.recipe.book.*;
-import net.minecraft.screen.*;
-import net.minecraft.screen.slot.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.blocks.pedestal.PedestalBlockEntity;
+import de.dafuqs.spectrum.inventories.slots.DisabledSlot;
+import de.dafuqs.spectrum.inventories.slots.PedestalPreviewSlot;
+import de.dafuqs.spectrum.inventories.slots.StackFilterSlot;
+import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipeTier;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.world.inventory.*;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.NotNull;
 
-public class PedestalScreenHandler extends AbstractRecipeScreenHandler<Inventory> {
+public class PedestalScreenHandler extends RecipeBookMenu<Container> {
 	
-	protected final World world;
-	private final Inventory inventory;
-	private final PropertyDelegate propertyDelegate;
-	private final RecipeBookCategory category;
+	protected final Level world;
+	private final Container inventory;
+	private final ContainerData propertyDelegate;
+	private final RecipeBookType category;
 	
 	private final BlockPos pedestalPos;
 	private final PedestalRecipeTier pedestalRecipeTier;
 	private final PedestalRecipeTier maxPedestalRecipeTier;
 	
-	public PedestalScreenHandler(int syncId, PlayerInventory playerInventory, @NotNull PacketByteBuf buf) {
-		this(SpectrumScreenHandlerTypes.PEDESTAL, ScreenHandlerContext.EMPTY, RecipeBookCategory.CRAFTING, syncId, playerInventory, buf.readInt(), buf.readInt(), buf.readBlockPos());
+	public PedestalScreenHandler(int syncId, Inventory playerInventory, @NotNull FriendlyByteBuf buf) {
+		this(SpectrumScreenHandlerTypes.PEDESTAL, ContainerLevelAccess.NULL, RecipeBookType.CRAFTING, syncId, playerInventory, buf.readInt(), buf.readInt(), buf.readBlockPos());
 	}
 	
-	protected PedestalScreenHandler(ScreenHandlerType<?> type, ScreenHandlerContext context, RecipeBookCategory recipeBookCategory, int i, PlayerInventory playerInventory, int variant, int maxRecipeTier, BlockPos pedestalPos) {
-		this(type, context, recipeBookCategory, i, playerInventory, (Inventory) playerInventory.player.getWorld().getBlockEntity(pedestalPos), new ArrayPropertyDelegate(2), variant, maxRecipeTier, pedestalPos);
+	protected PedestalScreenHandler(MenuType<?> type, ContainerLevelAccess context, RecipeBookType recipeBookCategory, int i, Inventory playerInventory, int variant, int maxRecipeTier, BlockPos pedestalPos) {
+		this(type, context, recipeBookCategory, i, playerInventory, (Container) playerInventory.player.level().getBlockEntity(pedestalPos), new SimpleContainerData(2), variant, maxRecipeTier, pedestalPos);
 	}
 	
-	public PedestalScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory, PropertyDelegate propertyDelegate, int variant, int maxRecipeTier, BlockPos pedestalPos) {
-		this(SpectrumScreenHandlerTypes.PEDESTAL, ScreenHandlerContext.EMPTY, RecipeBookCategory.CRAFTING, syncId, playerInventory, inventory, propertyDelegate, variant, maxRecipeTier, pedestalPos);
+	public PedestalScreenHandler(int syncId, Inventory playerInventory, Container inventory, ContainerData propertyDelegate, int variant, int maxRecipeTier, BlockPos pedestalPos) {
+		this(SpectrumScreenHandlerTypes.PEDESTAL, ContainerLevelAccess.NULL, RecipeBookType.CRAFTING, syncId, playerInventory, inventory, propertyDelegate, variant, maxRecipeTier, pedestalPos);
 	}
 	
-	protected PedestalScreenHandler(ScreenHandlerType<?> type, ScreenHandlerContext context, RecipeBookCategory recipeBookCategory, int i, @NotNull PlayerInventory playerInventory, Inventory inventory, PropertyDelegate propertyDelegate, int pedestalRecipeTier, int maxRecipeTier, BlockPos pedestalPos) {
+	protected PedestalScreenHandler(MenuType<?> type, ContainerLevelAccess context, RecipeBookType recipeBookCategory, int i, @NotNull Inventory playerInventory, Container inventory, ContainerData propertyDelegate, int pedestalRecipeTier, int maxRecipeTier, BlockPos pedestalPos) {
 		super(type, i);
 		this.inventory = inventory;
 		this.category = recipeBookCategory;
 		this.propertyDelegate = propertyDelegate;
-		this.world = playerInventory.player.getWorld();
+		this.world = playerInventory.player.level();
 		
 		this.pedestalPos = pedestalPos;
 		this.pedestalRecipeTier = PedestalRecipeTier.values()[pedestalRecipeTier];
 		this.maxPedestalRecipeTier = PedestalRecipeTier.values()[maxRecipeTier];
 		
-		checkSize(inventory, PedestalBlockEntity.INVENTORY_SIZE);
-		checkDataCount(propertyDelegate, 2);
-		inventory.onOpen(playerInventory.player);
+		checkContainerSize(inventory, PedestalBlockEntity.INVENTORY_SIZE);
+		checkContainerDataCount(propertyDelegate, 2);
+		inventory.startOpen(playerInventory.player);
 		
 		// crafting slots
 		int m;
@@ -109,51 +112,51 @@ public class PedestalScreenHandler extends AbstractRecipeScreenHandler<Inventory
 			this.addSlot(new Slot(playerInventory, l, 8 + l * 18, 170));
 		}
 		
-		this.addProperties(propertyDelegate);
+		this.addDataSlots(propertyDelegate);
 	}
 	
 	@Override
-	public void populateRecipeFinder(RecipeMatcher recipeMatcher) {
+	public void fillCraftSlotsStackedContents(StackedContents recipeMatcher) {
 		if (this.inventory != null) {
-			((RecipeInputProvider) this.inventory).provideRecipeInputs(recipeMatcher);
+			((StackedContentsCompatible) this.inventory).fillStackedContents(recipeMatcher);
 		}
 	}
 	
 	@Override
-	public void clearCraftingSlots() {
+	public void clearCraftingContent() {
 		for (int i = 0; i < 9; i++) {
-			this.getSlot(i).setStack(ItemStack.EMPTY);
+			this.getSlot(i).setByPlayer(ItemStack.EMPTY);
 		}
 	}
 	
 	@Override
-	public boolean matches(Recipe<? super Inventory> recipe) {
+	public boolean recipeMatches(Recipe<? super Container> recipe) {
 		return recipe.matches(this.inventory, this.world);
 	}
 	
 	@Override
-	public int getCraftingResultSlotIndex() {
+	public int getResultSlotIndex() {
 		return 16;
 	}
 	
 	@Override
-	public int getCraftingWidth() {
+	public int getGridWidth() {
 		return 3;
 	}
 	
 	@Override
-	public int getCraftingHeight() {
+	public int getGridHeight() {
 		return 3;
 	}
 	
 	@Override
-	public int getCraftingSlotCount() {
+	public int getSize() {
 		return 9;
 	}
 	
 	@Override
-	public boolean canUse(PlayerEntity player) {
-		return this.inventory.canPlayerUse(player);
+	public boolean stillValid(Player player) {
+		return this.inventory.stillValid(player);
 	}
 	
 	@Environment(EnvType.CLIENT)
@@ -169,12 +172,12 @@ public class PedestalScreenHandler extends AbstractRecipeScreenHandler<Inventory
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public RecipeBookCategory getCategory() {
+	public RecipeBookType getRecipeBookType() {
 		return this.category;
 	}
 	
 	@Override
-	public boolean canInsertIntoSlot(int index) {
+	public boolean shouldMoveToInventory(int index) {
 		return index != 1;
 	}
 	
@@ -185,7 +188,7 @@ public class PedestalScreenHandler extends AbstractRecipeScreenHandler<Inventory
 	// 15: preview slot
 	// 16: hidden output slot
 	@Override
-	public ItemStack quickMove(PlayerEntity player, int index) {
+	public ItemStack quickMoveStack(Player player, int index) {
 		ItemStack clickedStackCopy = ItemStack.EMPTY;
 		Slot slot = this.slots.get(index);
 		
@@ -194,57 +197,57 @@ public class PedestalScreenHandler extends AbstractRecipeScreenHandler<Inventory
 			pedestalBlockEntity.setInventoryChanged();
 		}
 		
-		if (slot.hasStack()) {
-			ItemStack clickedStack = slot.getStack();
+		if (slot.hasItem()) {
+			ItemStack clickedStack = slot.getItem();
 			clickedStackCopy = clickedStack.copy();
 			
 			if (index < 15) {
 				// pedestal => player inv
-				if (!this.insertItem(clickedStack, 16, 51, false)) {
+				if (!this.moveItemStackTo(clickedStack, 16, 51, false)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (clickedStackCopy.isOf(SpectrumItems.TOPAZ_POWDER)) {
-				if (!this.insertItem(clickedStack, 9, 10, false)) {
+			} else if (clickedStackCopy.is(SpectrumItems.TOPAZ_POWDER)) {
+				if (!this.moveItemStackTo(clickedStack, 9, 10, false)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (clickedStackCopy.isOf(SpectrumItems.AMETHYST_POWDER)) {
-				if (!this.insertItem(clickedStack, 10, 11, false)) {
+			} else if (clickedStackCopy.is(SpectrumItems.AMETHYST_POWDER)) {
+				if (!this.moveItemStackTo(clickedStack, 10, 11, false)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (clickedStackCopy.isOf(SpectrumItems.CITRINE_POWDER)) {
-				if (!this.insertItem(clickedStack, 11, 12, false)) {
+			} else if (clickedStackCopy.is(SpectrumItems.CITRINE_POWDER)) {
+				if (!this.moveItemStackTo(clickedStack, 11, 12, false)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (clickedStackCopy.isOf(SpectrumItems.ONYX_POWDER)) {
-				if (!this.insertItem(clickedStack, 12, 13, false)) {
+			} else if (clickedStackCopy.is(SpectrumItems.ONYX_POWDER)) {
+				if (!this.moveItemStackTo(clickedStack, 12, 13, false)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (clickedStackCopy.isOf(SpectrumItems.MOONSTONE_POWDER)) {
-				if (!this.insertItem(clickedStack, 13, 14, false)) {
+			} else if (clickedStackCopy.is(SpectrumItems.MOONSTONE_POWDER)) {
+				if (!this.moveItemStackTo(clickedStack, 13, 14, false)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (clickedStackCopy.isOf(SpectrumItems.CRAFTING_TABLET)) {
-				if (!this.insertItem(clickedStack, PedestalBlockEntity.CRAFTING_TABLET_SLOT_ID, PedestalBlockEntity.CRAFTING_TABLET_SLOT_ID + 1, false)) {
+			} else if (clickedStackCopy.is(SpectrumItems.CRAFTING_TABLET)) {
+				if (!this.moveItemStackTo(clickedStack, PedestalBlockEntity.CRAFTING_TABLET_SLOT_ID, PedestalBlockEntity.CRAFTING_TABLET_SLOT_ID + 1, false)) {
 					return ItemStack.EMPTY;
 				}
 			}
 			
 			// crafting grid
-			if (!this.insertItem(clickedStack, 0, 9, false)) {
+			if (!this.moveItemStackTo(clickedStack, 0, 9, false)) {
 				return ItemStack.EMPTY;
 			}
 			
 			if (clickedStack.isEmpty()) {
-				slot.setStack(ItemStack.EMPTY);
+				slot.setByPlayer(ItemStack.EMPTY);
 			} else {
-				slot.markDirty();
+				slot.setChanged();
 			}
 			
 			if (clickedStack.getCount() == clickedStackCopy.getCount()) {
 				return ItemStack.EMPTY;
 			}
 			
-			slot.onTakeItem(player, clickedStack);
+			slot.onTake(player, clickedStack);
 		}
 		
 		return clickedStackCopy;
@@ -263,9 +266,9 @@ public class PedestalScreenHandler extends AbstractRecipeScreenHandler<Inventory
 	}
 	
 	@Override
-	public void onClosed(PlayerEntity player) {
-		super.onClosed(player);
-		this.inventory.onClose(player);
+	public void removed(Player player) {
+		super.removed(player);
+		this.inventory.stopOpen(player);
 	}
 	
 }

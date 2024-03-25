@@ -1,27 +1,30 @@
 package de.dafuqs.spectrum.items.energy;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.energy.storage.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.entry.*;
-import net.minecraft.text.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.InkStorageItem;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.storage.SingleInkStorage;
+import de.dafuqs.spectrum.api.item.LoomPatternProvider;
+import de.dafuqs.spectrum.registries.SpectrumBannerPatterns;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.core.Holder;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BannerPattern;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class InkFlaskItem extends Item implements InkStorageItem<SingleInkStorage>, LoomPatternProvider {
 	
 	private final long maxEnergy;
 	
-	public InkFlaskItem(Settings settings, long maxEnergy) {
+	public InkFlaskItem(Properties settings, long maxEnergy) {
 		super(settings);
 		this.maxEnergy = maxEnergy;
 	}
@@ -33,7 +36,7 @@ public class InkFlaskItem extends Item implements InkStorageItem<SingleInkStorag
 	
 	@Override
 	public SingleInkStorage getEnergyStorage(ItemStack itemStack) {
-		NbtCompound compound = itemStack.getNbt();
+		CompoundTag compound = itemStack.getTag();
 		if (compound != null && compound.contains("EnergyStore")) {
 			return SingleInkStorage.fromNbt(compound.getCompound("EnergyStore"));
 		}
@@ -42,28 +45,28 @@ public class InkFlaskItem extends Item implements InkStorageItem<SingleInkStorag
 	
 	// Omitting this would crash outside the dev env o.O
 	@Override
-	public ItemStack getDefaultStack() {
-		return super.getDefaultStack();
+	public ItemStack getDefaultInstance() {
+		return super.getDefaultInstance();
 	}
 	
 	@Override
 	public void setEnergyStorage(ItemStack itemStack, InkStorage storage) {
 		if (storage instanceof SingleInkStorage singleInkStorage) {
-			NbtCompound compound = itemStack.getOrCreateNbt();
+			CompoundTag compound = itemStack.getOrCreateTag();
 			compound.put("EnergyStore", singleInkStorage.toNbt());
 		}
 	}
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		getEnergyStorage(stack).addTooltip(tooltip, true);
 		addBannerPatternProviderTooltip(tooltip);
 	}
 	
 	public ItemStack getFullStack(InkColor color) {
-		ItemStack stack = this.getDefaultStack();
+		ItemStack stack = this.getDefaultInstance();
 		SingleInkStorage storage = getEnergyStorage(stack);
 		storage.fillCompletely();
 		storage.convertColor(color);
@@ -72,7 +75,7 @@ public class InkFlaskItem extends Item implements InkStorageItem<SingleInkStorag
 	}
 	
 	@Override
-	public RegistryEntry<BannerPattern> getPattern() {
+	public Holder<BannerPattern> getPattern() {
 		return SpectrumBannerPatterns.INK_FLASK;
 	}
 	

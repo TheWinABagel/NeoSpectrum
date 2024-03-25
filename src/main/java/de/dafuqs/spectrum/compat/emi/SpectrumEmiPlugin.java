@@ -1,25 +1,35 @@
 package de.dafuqs.spectrum.compat.emi;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.blocks.idols.*;
-import de.dafuqs.spectrum.compat.emi.handlers.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.recipe.GatedRecipe;
+import de.dafuqs.spectrum.blocks.idols.FirestarterIdolBlock;
+import de.dafuqs.spectrum.blocks.idols.FreezingIdolBlock;
+import de.dafuqs.spectrum.compat.emi.handlers.CinderhearthRecipeHandler;
+import de.dafuqs.spectrum.compat.emi.handlers.CraftingTabletRecipeHandler;
+import de.dafuqs.spectrum.compat.emi.handlers.PedestalRecipeHandler;
+import de.dafuqs.spectrum.compat.emi.handlers.PotionWorkshopRecipeHandler;
 import de.dafuqs.spectrum.compat.emi.recipes.*;
-import de.dafuqs.spectrum.data_loaders.*;
-import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.recipe.fluid_converting.*;
-import de.dafuqs.spectrum.registries.*;
-import dev.emi.emi.api.*;
-import dev.emi.emi.api.recipe.*;
-import dev.emi.emi.api.stack.*;
-import net.minecraft.block.*;
-import net.minecraft.inventory.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.data_loaders.NaturesStaffConversionDataLoader;
+import de.dafuqs.spectrum.inventories.SpectrumScreenHandlerTypes;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import dev.emi.emi.api.EmiPlugin;
+import dev.emi.emi.api.EmiRegistry;
+import dev.emi.emi.api.recipe.EmiRecipe;
+import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
+import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.api.stack.EmiStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.List;
+import java.util.function.Function;
 
 public class SpectrumEmiPlugin implements EmiPlugin {
 
@@ -117,29 +127,29 @@ public class SpectrumEmiPlugin implements EmiPlugin {
 		
 		FreezingIdolBlock.FREEZING_STATE_MAP.forEach((key, value) -> {
 			EmiStack in = EmiStack.of(key.getBlock());
-			EmiStack out = EmiStack.of(value.getLeft().getBlock()).setChance(value.getRight());
+			EmiStack out = EmiStack.of(value.getA().getBlock()).setChance(value.getB());
 			if (in.isEmpty() || out.isEmpty()) {
 				return;
 			}
-			Identifier id = syntheticId("freezing", key.getBlock()); // The synthetic IDs generated here assume there will never be multiple conversions of the same block with different states
+			ResourceLocation id = syntheticId("freezing", key.getBlock()); // The synthetic IDs generated here assume there will never be multiple conversions of the same block with different states
 			registry.addRecipe(new BlockToBlockWithChanceEmiRecipe(SpectrumEmiRecipeCategories.FREEZING, id, in, out, SpectrumCommon.locate("unlocks/blocks/idols")));
 		});
 		FreezingIdolBlock.FREEZING_MAP.forEach((key, value) -> {
 			EmiStack in = EmiStack.of(key);
-			EmiStack out = EmiStack.of(value.getLeft().getBlock()).setChance(value.getRight());
+			EmiStack out = EmiStack.of(value.getA().getBlock()).setChance(value.getB());
 			if (in.isEmpty() || out.isEmpty()) {
 				return;
 			}
-			Identifier id = syntheticId("freezing", key);
+			ResourceLocation id = syntheticId("freezing", key);
 			registry.addRecipe(new BlockToBlockWithChanceEmiRecipe(SpectrumEmiRecipeCategories.FREEZING, id, in, out, SpectrumCommon.locate("unlocks/blocks/idols")));
 		});
 		FirestarterIdolBlock.BURNING_MAP.forEach((key, value) -> {
 			EmiStack in = EmiStack.of(key);
-			EmiStack out = EmiStack.of(value.getLeft().getBlock()).setChance(value.getRight());
+			EmiStack out = EmiStack.of(value.getA().getBlock()).setChance(value.getB());
 			if (in.isEmpty() || out.isEmpty()) {
 				return;
 			}
-			Identifier id = syntheticId("heating", key);
+			ResourceLocation id = syntheticId("heating", key);
 			registry.addRecipe(new BlockToBlockWithChanceEmiRecipe(SpectrumEmiRecipeCategories.HEATING, id, in, out, SpectrumCommon.locate("unlocks/blocks/idols")));
 		});
 		NaturesStaffConversionDataLoader.CONVERSIONS.forEach((key, value) -> {
@@ -148,7 +158,7 @@ public class SpectrumEmiPlugin implements EmiPlugin {
 			if (in.isEmpty() || out.isEmpty()) {
 				return;
 			}
-			Identifier id = syntheticId("natures_staff", key);
+			ResourceLocation id = syntheticId("natures_staff", key);
 			registry.addRecipe(new BlockToBlockWithChanceEmiRecipe(SpectrumEmiRecipeCategories.NATURES_STAFF, id, in, out, SpectrumCommon.locate("unlocks/items/natures_staff")));
 		});
 	}
@@ -160,14 +170,14 @@ public class SpectrumEmiPlugin implements EmiPlugin {
 		registry.addRecipeHandler(SpectrumScreenHandlerTypes.POTION_WORKSHOP, new PotionWorkshopRecipeHandler());
 	}
 
-	public static Identifier syntheticId(String type, Block block) {
-		Identifier blockId = Registries.BLOCK.getId(block);
+	public static ResourceLocation syntheticId(String type, Block block) {
+		ResourceLocation blockId = BuiltInRegistries.BLOCK.getKey(block);
 		// Note that all recipe ids here start with "spectrum:/" which is legal, but impossible to represent with real files
-		return new Identifier("spectrum:/" + type + "/" + blockId.getNamespace() + "/" + blockId.getPath());
+		return new ResourceLocation("spectrum:/" + type + "/" + blockId.getNamespace() + "/" + blockId.getPath());
 	}
 
-	public <C extends Inventory, T extends Recipe<C>> void addAll(EmiRegistry registry, RecipeType<T> type, Function<T, EmiRecipe> constructor) {
-		for (T recipe : registry.getRecipeManager().listAllOfType(type)) {
+	public <C extends Container, T extends Recipe<C>> void addAll(EmiRegistry registry, RecipeType<T> type, Function<T, EmiRecipe> constructor) {
+		for (T recipe : registry.getRecipeManager().getAllRecipesFor(type)) {
 			if (recipe instanceof GatedRecipe gatedRecipe && gatedRecipe.isSecret()) {
 				continue; // secret recipes should never be shown in recipe viewers
 			}

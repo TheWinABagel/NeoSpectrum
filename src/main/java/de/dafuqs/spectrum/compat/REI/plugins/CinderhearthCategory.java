@@ -1,19 +1,23 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.registries.*;
-import me.shedaniel.math.*;
-import me.shedaniel.rei.api.client.gui.*;
-import me.shedaniel.rei.api.client.gui.widgets.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.fabricmc.api.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import me.shedaniel.math.Point;
+import me.shedaniel.math.Rectangle;
+import me.shedaniel.rei.api.client.gui.Renderer;
+import me.shedaniel.rei.api.client.gui.widgets.Widget;
+import me.shedaniel.rei.api.client.gui.widgets.Widgets;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import me.shedaniel.rei.api.common.util.EntryStacks;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class CinderhearthCategory extends GatedDisplayCategory<CinderhearthDisplay> {
@@ -24,8 +28,8 @@ public class CinderhearthCategory extends GatedDisplayCategory<CinderhearthDispl
 	}
 	
 	@Override
-	public Text getTitle() {
-		return Text.translatable("block.spectrum.cinderhearth");
+	public Component getTitle() {
+		return Component.translatable("block.spectrum.cinderhearth");
 	}
 	
 	@Override
@@ -40,27 +44,27 @@ public class CinderhearthCategory extends GatedDisplayCategory<CinderhearthDispl
 		widgets.add(Widgets.createArrow(new Point(startPoint.x - 6 + 18, startPoint.y + 2 + 5)).animationDurationTicks(display.craftingTime));
 		
 		// output arrow and slots
-		List<Pair<ItemStack, Float>> outputs = display.outputsWithChance;
+		List<Tuple<ItemStack, Float>> outputs = display.outputsWithChance;
 		for (int i = 0; i < outputs.size(); i++) {
-			Pair<ItemStack, Float> currentOutput = outputs.get(i);
-			ItemStack outputStack = currentOutput.getLeft();
-			Float chance = currentOutput.getRight();
+			Tuple<ItemStack, Float> currentOutput = outputs.get(i);
+			ItemStack outputStack = currentOutput.getA();
+			Float chance = currentOutput.getB();
 			
 			Point point = new Point(startPoint.x - 6 + 49 + i * 28, startPoint.y + 1 + 5);
 			widgets.add(Widgets.createResultSlotBackground(point));
 			widgets.add(Widgets.createSlot(point).disableBackground().markOutput().entries(EntryIngredients.of(outputStack)));
 			if (chance < 1.0) {
-				widgets.add(Widgets.createLabel(new Point(point.x - 2, point.y + 23), Text.literal((int) (chance * 100) + " %")).leftAligned().color(0x3f3f3f).noShadow());
+				widgets.add(Widgets.createLabel(new Point(point.x - 2, point.y + 23), Component.literal((int) (chance * 100) + " %")).leftAligned().color(0x3f3f3f).noShadow());
 			}
 		}
 		
 		// description text
 		// special handling for "1 second". Looks nicer
-		Text text;
+		Component text;
 		if (display.craftingTime == 20) {
-			text = Text.translatable("container.spectrum.rei.pedestal_crafting.crafting_time_one_second_and_xp", 1, display.experience);
+			text = Component.translatable("container.spectrum.rei.pedestal_crafting.crafting_time_one_second_and_xp", 1, display.experience);
 		} else {
-			text = Text.translatable("container.spectrum.rei.pedestal_crafting.crafting_time_and_xp", (display.craftingTime / 20), display.experience);
+			text = Component.translatable("container.spectrum.rei.pedestal_crafting.crafting_time_and_xp", (display.craftingTime / 20), display.experience);
 		}
 		widgets.add(Widgets.createLabel(new Point(startPoint.x - 6, startPoint.y + 1 + 43), text).leftAligned().color(0x3f3f3f).noShadow());
 	}

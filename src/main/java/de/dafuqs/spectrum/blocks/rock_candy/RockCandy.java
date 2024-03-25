@@ -1,15 +1,18 @@
 package de.dafuqs.spectrum.blocks.rock_candy;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Locale;
 
 public interface RockCandy {
 	
-	enum RockCandyVariant implements StringIdentifiable {
+	enum RockCandyVariant implements StringRepresentable {
 		SUGAR,
 		AMETHYST,
 		CITRINE,
@@ -36,7 +39,7 @@ public interface RockCandy {
 		}
 		
 		@Override
-		public String asString() {
+		public String getSerializedName() {
 			return this.toString().toLowerCase(Locale.ROOT);
 		}
 		

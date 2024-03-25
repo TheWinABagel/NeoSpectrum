@@ -1,39 +1,43 @@
 package de.dafuqs.spectrum.inventories;
 
-import de.dafuqs.spectrum.blocks.chests.*;
-import de.dafuqs.spectrum.inventories.slots.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.screen.*;
-import net.minecraft.screen.slot.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.blocks.chests.RestockingChestBlockEntity;
+import de.dafuqs.spectrum.inventories.slots.ExtractOnlySlot;
+import de.dafuqs.spectrum.inventories.slots.StackFilterSlot;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-public class RestockingChestScreenHandler extends ScreenHandler {
+public class RestockingChestScreenHandler extends AbstractContainerMenu {
 	
-	protected final World world;
-	private final Inventory inventory;
+	protected final Level world;
+	private final Container inventory;
 	
-	public RestockingChestScreenHandler(int syncId, PlayerInventory playerInventory) {
+	public RestockingChestScreenHandler(int syncId, Inventory playerInventory) {
 		this(SpectrumScreenHandlerTypes.RESTOCKING_CHEST, syncId, playerInventory);
 	}
 	
-	protected RestockingChestScreenHandler(ScreenHandlerType<?> type, int i, PlayerInventory playerInventory) {
-		this(type, i, playerInventory, new SimpleInventory(RestockingChestBlockEntity.INVENTORY_SIZE));
+	protected RestockingChestScreenHandler(MenuType<?> type, int i, Inventory playerInventory) {
+		this(type, i, playerInventory, new SimpleContainer(RestockingChestBlockEntity.INVENTORY_SIZE));
 	}
 	
-	public RestockingChestScreenHandler(int syncId, PlayerInventory playerInventory, Inventory inventory) {
+	public RestockingChestScreenHandler(int syncId, Inventory playerInventory, Container inventory) {
 		this(SpectrumScreenHandlerTypes.RESTOCKING_CHEST, syncId, playerInventory, inventory);
 	}
 	
-	protected RestockingChestScreenHandler(ScreenHandlerType<?> type, int syncId, PlayerInventory playerInventory, Inventory inventory) {
+	protected RestockingChestScreenHandler(MenuType<?> type, int syncId, Inventory playerInventory, Container inventory) {
 		super(type, syncId);
 		this.inventory = inventory;
-		this.world = playerInventory.player.getWorld();
+		this.world = playerInventory.player.level();
 		
-		checkSize(inventory, RestockingChestBlockEntity.INVENTORY_SIZE);
-		inventory.onOpen(playerInventory.player);
+		checkContainerSize(inventory, RestockingChestBlockEntity.INVENTORY_SIZE);
+		inventory.startOpen(playerInventory.player);
 		
 		// chest inventory
 		int l;
@@ -69,60 +73,60 @@ public class RestockingChestScreenHandler extends ScreenHandler {
 	}
 	
 	@Override
-	public boolean canUse(PlayerEntity player) {
-		return this.inventory.canPlayerUse(player);
+	public boolean stillValid(Player player) {
+		return this.inventory.stillValid(player);
 	}
 	
 	@Override
-	public ItemStack quickMove(PlayerEntity player, int index) {
+	public ItemStack quickMoveStack(Player player, int index) {
 		ItemStack clickedStackCopy = ItemStack.EMPTY;
 		Slot slot = this.slots.get(index);
 		
-		if (slot.hasStack()) {
-			ItemStack clickedStack = slot.getStack();
+		if (slot.hasItem()) {
+			ItemStack clickedStack = slot.getItem();
 			clickedStackCopy = clickedStack.copy();
 			
 			if (index < RestockingChestBlockEntity.INVENTORY_SIZE) {
 				// => player inv
-				if (!this.insertItem(clickedStack, 35, 71, false)) {
+				if (!this.moveItemStackTo(clickedStack, 35, 71, false)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (index > RestockingChestBlockEntity.INVENTORY_SIZE && clickedStackCopy.isOf(SpectrumItems.CRAFTING_TABLET)) {
-				if (!this.insertItem(clickedStack, RestockingChestBlockEntity.RECIPE_SLOTS[0], RestockingChestBlockEntity.RECIPE_SLOTS[RestockingChestBlockEntity.RECIPE_SLOTS.length - 1] + 1, false)) {
+			} else if (index > RestockingChestBlockEntity.INVENTORY_SIZE && clickedStackCopy.is(SpectrumItems.CRAFTING_TABLET)) {
+				if (!this.moveItemStackTo(clickedStack, RestockingChestBlockEntity.RECIPE_SLOTS[0], RestockingChestBlockEntity.RECIPE_SLOTS[RestockingChestBlockEntity.RECIPE_SLOTS.length - 1] + 1, false)) {
 					return ItemStack.EMPTY;
 				}
 			}
 			
 			// chest => inventory
-			if (!this.insertItem(clickedStack, 0, RestockingChestBlockEntity.CHEST_SLOTS.length - 1, false)) {
+			if (!this.moveItemStackTo(clickedStack, 0, RestockingChestBlockEntity.CHEST_SLOTS.length - 1, false)) {
 				return ItemStack.EMPTY;
 			}
 			
 			if (clickedStack.isEmpty()) {
-				slot.setStack(ItemStack.EMPTY);
+				slot.setByPlayer(ItemStack.EMPTY);
 			} else {
-				slot.markDirty();
+				slot.setChanged();
 			}
 			
 			if (clickedStack.getCount() == clickedStackCopy.getCount()) {
 				return ItemStack.EMPTY;
 			}
 			
-			slot.onTakeItem(player, clickedStack);
+			slot.onTake(player, clickedStack);
 		}
 		
 		
 		return clickedStackCopy;
 	}
 	
-	public Inventory getInventory() {
+	public Container getInventory() {
 		return this.inventory;
 	}
 	
 	@Override
-	public void onClosed(PlayerEntity player) {
-		super.onClosed(player);
-		this.inventory.onClose(player);
+	public void removed(Player player) {
+		super.removed(player);
+		this.inventory.stopOpen(player);
 	}
 	
 }

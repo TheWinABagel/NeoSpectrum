@@ -1,14 +1,18 @@
 package de.dafuqs.spectrum.recipe.cinderhearth;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.recipe.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.api.recipe.GatedRecipeSerializer;
+import de.dafuqs.spectrum.recipe.RecipeUtils;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CinderhearthRecipeSerializer implements GatedRecipeSerializer<CinderhearthRecipe> {
 	
@@ -19,64 +23,64 @@ public class CinderhearthRecipeSerializer implements GatedRecipeSerializer<Cinde
 	}
 	
 	public interface RecipeFactory {
-		CinderhearthRecipe create(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, Ingredient inputIngredient, int time, float experience, List<Pair<ItemStack, Float>> outputsWithChance);
+		CinderhearthRecipe create(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, Ingredient inputIngredient, int time, float experience, List<Tuple<ItemStack, Float>> outputsWithChance);
 	}
 	
 	@Override
-	public CinderhearthRecipe read(Identifier identifier, JsonObject jsonObject) {
+	public CinderhearthRecipe fromJson(ResourceLocation identifier, JsonObject jsonObject) {
 		String group = readGroup(jsonObject);
 		boolean secret = readSecret(jsonObject);
-		Identifier requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
+		ResourceLocation requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
 		
-		Ingredient inputIngredient = Ingredient.fromJson(JsonHelper.hasArray(jsonObject, "ingredient") ? JsonHelper.getArray(jsonObject, "ingredient") : JsonHelper.getObject(jsonObject, "ingredient"));
-		int time = JsonHelper.getInt(jsonObject, "time");
-		float experience = JsonHelper.getFloat(jsonObject, "experience");
+		Ingredient inputIngredient = Ingredient.fromJson(GsonHelper.isArrayNode(jsonObject, "ingredient") ? GsonHelper.getAsJsonArray(jsonObject, "ingredient") : GsonHelper.getAsJsonObject(jsonObject, "ingredient"));
+		int time = GsonHelper.getAsInt(jsonObject, "time");
+		float experience = GsonHelper.getAsFloat(jsonObject, "experience");
 		
-		List<Pair<ItemStack, Float>> outputsWithChance = new ArrayList<>();
-		for (JsonElement outputEntry : JsonHelper.getArray(jsonObject, "results")) {
+		List<Tuple<ItemStack, Float>> outputsWithChance = new ArrayList<>();
+		for (JsonElement outputEntry : GsonHelper.getAsJsonArray(jsonObject, "results")) {
 			JsonObject outputObject = outputEntry.getAsJsonObject();
 			ItemStack outputStack = RecipeUtils.itemStackWithNbtFromJson(outputObject);
 			float outputChance = 1.0F;
-			if (JsonHelper.hasNumber(outputObject, "chance")) {
-				outputChance = JsonHelper.getFloat(outputObject, "chance");
+			if (GsonHelper.isNumberValue(outputObject, "chance")) {
+				outputChance = GsonHelper.getAsFloat(outputObject, "chance");
 			}
-			outputsWithChance.add(new Pair<>(outputStack, outputChance));
+			outputsWithChance.add(new Tuple<>(outputStack, outputChance));
 		}
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, inputIngredient, time, experience, outputsWithChance);
 	}
 	
 	@Override
-	public void write(PacketByteBuf packetByteBuf, CinderhearthRecipe recipe) {
-		packetByteBuf.writeString(recipe.group);
+	public void write(FriendlyByteBuf packetByteBuf, CinderhearthRecipe recipe) {
+		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);
 		
-		recipe.inputIngredient.write(packetByteBuf);
+		recipe.inputIngredient.toNetwork(packetByteBuf);
 		packetByteBuf.writeInt(recipe.time);
 		packetByteBuf.writeFloat(recipe.experience);
 		
 		packetByteBuf.writeInt(recipe.outputsWithChance.size());
-		for (Pair<ItemStack, Float> output : recipe.outputsWithChance) {
-			packetByteBuf.writeItemStack(output.getLeft());
-			packetByteBuf.writeFloat(output.getRight());
+		for (Tuple<ItemStack, Float> output : recipe.outputsWithChance) {
+			packetByteBuf.writeItem(output.getA());
+			packetByteBuf.writeFloat(output.getB());
 		}
 	}
 	
 	@Override
-	public CinderhearthRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
-		String group = packetByteBuf.readString();
+	public CinderhearthRecipe fromNetwork(ResourceLocation identifier, FriendlyByteBuf packetByteBuf) {
+		String group = packetByteBuf.readUtf();
 		boolean secret = packetByteBuf.readBoolean();
-		Identifier requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
+		ResourceLocation requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
 		
-		Ingredient inputIngredient = Ingredient.fromPacket(packetByteBuf);
+		Ingredient inputIngredient = Ingredient.fromNetwork(packetByteBuf);
 		int time = packetByteBuf.readInt();
 		float experience = packetByteBuf.readFloat();
 		
 		int outputCount = packetByteBuf.readInt();
-		List<Pair<ItemStack, Float>> outputsWithChance = new ArrayList<>(outputCount);
+		List<Tuple<ItemStack, Float>> outputsWithChance = new ArrayList<>(outputCount);
 		for (int i = 0; i < outputCount; i++) {
-			outputsWithChance.add(new Pair<>(packetByteBuf.readItemStack(), packetByteBuf.readFloat()));
+			outputsWithChance.add(new Tuple<>(packetByteBuf.readItem(), packetByteBuf.readFloat()));
 		}
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, inputIngredient, time, experience, outputsWithChance);

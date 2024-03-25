@@ -1,18 +1,20 @@
 package de.dafuqs.spectrum.compat.patchouli.pages;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.networking.*;
-import net.minecraft.client.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.client.gui.widget.*;
-import net.minecraft.client.resource.language.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import vazkii.patchouli.api.*;
-import vazkii.patchouli.client.book.*;
-import vazkii.patchouli.client.book.gui.*;
-import vazkii.patchouli.client.book.page.abstr.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.networking.SpectrumC2SPacketSender;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import vazkii.patchouli.api.IVariable;
+import vazkii.patchouli.client.book.BookContentsBuilder;
+import vazkii.patchouli.client.book.BookEntry;
+import vazkii.patchouli.client.book.gui.GuiBook;
+import vazkii.patchouli.client.book.gui.GuiBookEntry;
+import vazkii.patchouli.client.book.page.abstr.PageWithText;
 
 public class PageConfirmationButton extends PageWithText {
 	
@@ -21,25 +23,25 @@ public class PageConfirmationButton extends PageWithText {
 	IVariable button_text_confirmed;
 	IVariable confirmation;
 	
-	Identifier checkedAdvancementIdentifier;
-	Text buttonText;
-	Text buttonTextConfirmed;
+	ResourceLocation checkedAdvancementIdentifier;
+	Component buttonText;
+	Component buttonTextConfirmed;
 	String confirmationString;
 	
 	String title;
 	
 	@Override
-	public void build(World world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
+	public void build(Level world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
 		super.build(world, entry, builder, pageNum);
 		
-		this.checkedAdvancementIdentifier = Identifier.tryParse(checked_advancement.asString());
-		this.buttonText = button_text.as(Text.class);
-		this.buttonTextConfirmed = button_text_confirmed.as(Text.class);
+		this.checkedAdvancementIdentifier = ResourceLocation.tryParse(checked_advancement.asString());
+		this.buttonText = button_text.as(Component.class);
+		this.buttonTextConfirmed = button_text_confirmed.as(Component.class);
 		this.confirmationString = confirmation.asString();
 	}
 	
 	public boolean isConfirmed() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return AdvancementHelper.hasAdvancement(client.player, checkedAdvancementIdentifier);
 	}
 	
@@ -49,10 +51,10 @@ public class PageConfirmationButton extends PageWithText {
 		
 		boolean completed = isConfirmed();
 		
-		Text buttonText = completed ? buttonTextConfirmed : this.buttonText;
-		ButtonWidget button = ButtonWidget.builder(buttonText, this::confirmationButtonClicked)
-				.size(GuiBook.PAGE_WIDTH - 12, ButtonWidget.DEFAULT_HEIGHT)
-				.position(6, 120)
+		Component buttonText = completed ? buttonTextConfirmed : this.buttonText;
+		Button button = Button.builder(buttonText, this::confirmationButtonClicked)
+				.size(GuiBook.PAGE_WIDTH - 12, Button.DEFAULT_HEIGHT)
+				.pos(6, 120)
 				.build();
 		button.active = !completed;
 		
@@ -64,17 +66,17 @@ public class PageConfirmationButton extends PageWithText {
 		return 22;
 	}
 	
-	protected void confirmationButtonClicked(ButtonWidget button) {
+	protected void confirmationButtonClicked(Button button) {
 		SpectrumC2SPacketSender.sendConfirmationButtonPressedPaket(confirmationString);
 		button.setMessage(buttonTextConfirmed);
 		entry.markReadStateDirty();
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float pticks) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float pticks) {
 		super.render(drawContext, mouseX, mouseY, pticks);
 		
-		parent.drawCenteredStringNoShadow(drawContext, title == null || title.isEmpty() ? I18n.translate("patchouli.gui.lexicon.objective") : i18n(title), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
+		parent.drawCenteredStringNoShadow(drawContext, title == null || title.isEmpty() ? I18n.get("patchouli.gui.lexicon.objective") : i18n(title), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
 		GuiBook.drawSeparator(drawContext, book, 0, 12);
 		GuiBook.drawSeparator(drawContext, book, 0, GuiBook.PAGE_HEIGHT - 44);
 	}

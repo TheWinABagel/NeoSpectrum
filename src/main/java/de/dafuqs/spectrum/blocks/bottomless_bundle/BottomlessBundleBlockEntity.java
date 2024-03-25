@@ -1,16 +1,18 @@
 package de.dafuqs.spectrum.blocks.bottomless_bundle;
 
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.transfer.v1.item.*;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.*;
-import net.fabricmc.fabric.api.transfer.v1.transaction.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.math.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 
 public class BottomlessBundleBlockEntity extends BlockEntity {
 
@@ -26,7 +28,7 @@ public class BottomlessBundleBlockEntity extends BlockEntity {
 		@Override
 		public long insert(ItemVariant insertedVariant, long maxAmount, TransactionContext transaction) {
 			long inserted = super.insert(insertedVariant, maxAmount, transaction);
-			if (EnchantmentHelper.getLevel(SpectrumEnchantments.VOIDING, bottomlessBundleStack) > 0) {
+			if (EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.VOIDING, bottomlessBundleStack) > 0) {
 				return maxAmount;
 			}
 			return inserted;
@@ -45,7 +47,7 @@ public class BottomlessBundleBlockEntity extends BlockEntity {
 		@Override
 		protected void onFinalCommit() {
 			super.onFinalCommit();
-			markDirty();
+			setChanged();
 		}
 	};
 
@@ -55,20 +57,20 @@ public class BottomlessBundleBlockEntity extends BlockEntity {
 	}
 
 	@Override
-	public void readNbt(NbtCompound nbt) {
-		super.readNbt(nbt);
-		this.bottomlessBundleStack = ItemStack.fromNbt(nbt.getCompound("Bundle"));
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
+		this.bottomlessBundleStack = ItemStack.of(nbt.getCompound("Bundle"));
 
 		this.storage.variant = ItemVariant.fromNbt(nbt.getCompound("StorageVariant"));
 		this.storage.amount = nbt.getLong("StorageCount");
 	}
 	
 	@Override
-	protected void writeNbt(NbtCompound nbt) {
-		super.writeNbt(nbt);
+	protected void saveAdditional(CompoundTag nbt) {
+		super.saveAdditional(nbt);
 
-		NbtCompound bundleCompound = new NbtCompound();
-		bottomlessBundleStack.writeNbt(bundleCompound);
+		CompoundTag bundleCompound = new CompoundTag();
+		bottomlessBundleStack.save(bundleCompound);
 		nbt.put("Bundle", bundleCompound);
 
 		nbt.put("StorageVariant", this.storage.variant.toNbt());
@@ -85,7 +87,7 @@ public class BottomlessBundleBlockEntity extends BlockEntity {
 
 	public ItemStack retrieveBundle() {
 		if (this.bottomlessBundleStack.isEmpty()) {
-			return SpectrumItems.BOTTOMLESS_BUNDLE.getDefaultStack();
+			return SpectrumItems.BOTTOMLESS_BUNDLE.getDefaultInstance();
 		} else {
 			BottomlessBundleItem.setBundledStack(this.bottomlessBundleStack, this.storage.getResource().toStack(), (int) this.storage.amount);
 			return this.bottomlessBundleStack;

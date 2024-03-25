@@ -1,13 +1,13 @@
 package de.dafuqs.spectrum.blocks.redstone;
 
-import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.screen.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
+import de.dafuqs.spectrum.inventories.Spectrum3x3ContainerScreenHandler;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.block.entity.DispenserBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class BlockPlacerBlockEntity extends DispenserBlockEntity {
 	
@@ -16,12 +16,12 @@ public class BlockPlacerBlockEntity extends DispenserBlockEntity {
 	}
 	
 	@Override
-	protected Text getContainerName() {
-		return Text.translatable("block.spectrum.block_placer");
+	protected Component getDefaultName() {
+		return Component.translatable("block.spectrum.block_placer");
 	}
 	
 	@Override
-	protected ScreenHandler createScreenHandler(int syncId, PlayerInventory playerInventory) {
+	protected AbstractContainerMenu createMenu(int syncId, Inventory playerInventory) {
 		return Spectrum3x3ContainerScreenHandler.createTier1(syncId, playerInventory, this);
 	}
 	

@@ -1,46 +1,53 @@
 package de.dafuqs.spectrum.api.interaction;
 
-import de.dafuqs.spectrum.entity.entity.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.entity.projectile.thrown.*;
-import net.minecraft.item.*;
-import net.minecraft.network.packet.s2c.play.*;
-import net.minecraft.predicate.item.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.entity.entity.ItemProjectileEntity;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.advancements.critereon.ItemPredicate;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ClientboundGameEventPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.DirectionalPlaceContext;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public interface ItemProjectileBehavior {
 
-	List<Pair<ItemPredicate, ItemProjectileBehavior>> BEHAVIORS = new ArrayList<>();
+	List<Tuple<ItemPredicate, ItemProjectileBehavior>> BEHAVIORS = new ArrayList<>();
 
 	ItemProjectileBehavior DEFAULT = new Default();
 
 	static void register(ItemProjectileBehavior behavior, ItemPredicate predicate) {
-		BEHAVIORS.add(new Pair<>(predicate, behavior));
+		BEHAVIORS.add(new Tuple<>(predicate, behavior));
 	}
 
 	static void register(ItemProjectileBehavior behavior, Item... items) {
-		BEHAVIORS.add(new Pair<>(ItemPredicate.Builder.create().items(items).build(), behavior));
+		BEHAVIORS.add(new Tuple<>(ItemPredicate.Builder.item().of(items).build(), behavior));
 	}
 
 	static void register(ItemProjectileBehavior behavior, TagKey<Item> tag) {
-		BEHAVIORS.add(new Pair<>(ItemPredicate.Builder.create().tag(tag).build(), behavior));
+		BEHAVIORS.add(new Tuple<>(ItemPredicate.Builder.item().of(tag).build(), behavior));
 	}
 	
 	static @Nullable ItemProjectileBehavior get(ItemStack stack) {
-		for (Pair<ItemPredicate, ItemProjectileBehavior> entry : BEHAVIORS) {
-			if (entry.getLeft().test(stack)) {
-				return entry.getRight();
+		for (Tuple<ItemPredicate, ItemProjectileBehavior> entry : BEHAVIORS) {
+			if (entry.getA().matches(stack)) {
+				return entry.getB();
 			}
 		}
 		return DEFAULT;
@@ -77,8 +84,8 @@ public interface ItemProjectileBehavior {
 			}
 			
 			@Override
-			public boolean dealDamage(ThrownItemEntity projectile, Entity owner, Entity target) {
-				return target.damage(target.getDamageSources().thrown(projectile, owner), damage);
+			public boolean dealDamage(ThrowableItemProjectile projectile, Entity owner, Entity target) {
+				return target.hurt(target.damageSources().thrown(projectile, owner), damage);
 			}
 		};
 	}
@@ -91,26 +98,26 @@ public interface ItemProjectileBehavior {
 			// Lots of fun(tm) is to be had
 			if (target instanceof LivingEntity livingTarget) {
 				// attaching name tags, saddle horses, memorize entities...
-				if (owner instanceof PlayerEntity playerOwner) {
-					stack.useOnEntity(playerOwner, livingTarget, Hand.MAIN_HAND);
+				if (owner instanceof Player playerOwner) {
+					stack.interactLivingEntity(playerOwner, livingTarget, InteractionHand.MAIN_HAND);
 				}
 				
 				// Force-feeds food, applies potions, ...
-				stack.getItem().finishUsing(stack, livingTarget.getWorld(), livingTarget);
+				stack.getItem().finishUsingItem(stack, livingTarget.level(), livingTarget);
 			}
 			return stack;
 		}
 		
 		@Override
 		public ItemStack onBlockHit(ItemProjectileEntity projectile, ItemStack stack, Entity owner, BlockHitResult hitResult) {
-			World world = projectile.getWorld();
+			Level world = projectile.level();
 			BlockPos hitPos = hitResult.getBlockPos();
 			
-			hitResult.withSide(hitResult.getSide());
-			Direction facing = hitResult.getSide().getOpposite();
-			BlockPos placementPos = hitPos.offset(facing);
-			Direction placementDirection = world.isAir(placementPos.down()) ? facing : Direction.UP;
-			stack.useOnBlock(new AutomaticItemPlacementContext(world, placementPos, facing, stack, placementDirection));
+			hitResult.withDirection(hitResult.getDirection());
+			Direction facing = hitResult.getDirection().getOpposite();
+			BlockPos placementPos = hitPos.relative(facing);
+			Direction placementDirection = world.isEmptyBlock(placementPos.below()) ? facing : Direction.UP;
+			stack.useOn(new DirectionalPlaceContext(world, placementPos, facing, stack, placementDirection));
 			
 			return stack;
 		}
@@ -122,41 +129,41 @@ public interface ItemProjectileBehavior {
 			Entity target = hitResult.getEntity();
 			
 			if (owner instanceof LivingEntity livingOwner) {
-				livingOwner.onAttacking(target);
+				livingOwner.setLastHurtMob(target);
 			}
 			
 			if (dealDamage(projectile, owner, target)) {
-				int targetFireTicks = target.getFireTicks();
+				int targetFireTicks = target.getRemainingFireTicks();
 				if (projectile.isOnFire()) {
-					target.setFireTicks(targetFireTicks);
+					target.setRemainingFireTicks(targetFireTicks);
 				}
 				
 				if (target instanceof LivingEntity livingTarget) {
-					if (!target.getWorld().isClient() && owner instanceof LivingEntity livingOwner) {
-						EnchantmentHelper.onUserDamaged(livingTarget, livingOwner);
-						EnchantmentHelper.onTargetDamaged(livingOwner, target);
+					if (!target.level().isClientSide() && owner instanceof LivingEntity livingOwner) {
+						EnchantmentHelper.doPostHurtEffects(livingTarget, livingOwner);
+						EnchantmentHelper.doPostDamageEffects(livingOwner, target);
 					}
-					if (target != owner && target instanceof PlayerEntity && owner instanceof ServerPlayerEntity serverPlayerOwner && !projectile.isSilent()) {
-						serverPlayerOwner.networkHandler.sendPacket(new GameStateChangeS2CPacket(GameStateChangeS2CPacket.PROJECTILE_HIT_PLAYER, 0.0F));
+					if (target != owner && target instanceof Player && owner instanceof ServerPlayer serverPlayerOwner && !projectile.isSilent()) {
+						serverPlayerOwner.connection.send(new ClientboundGameEventPacket(ClientboundGameEventPacket.ARROW_HIT_PLAYER, 0.0F));
 					}
-					projectile.playSound(SpectrumSoundEvents.BLOCK_CITRINE_CLUSTER_HIT, 1.0F, 1.2F / (projectile.getWorld().getRandom().nextFloat() * 0.2F + 0.9F));
+					projectile.playSound(SpectrumSoundEvents.BLOCK_CITRINE_CLUSTER_HIT, 1.0F, 1.2F / (projectile.level().getRandom().nextFloat() * 0.2F + 0.9F));
 				}
 			}
 			
 			if (destroyItemOnHit()) {
-				stack.decrement(1);
+				stack.shrink(1);
 			}
 			return stack;
 		}
 		
 		public abstract boolean destroyItemOnHit();
 		
-		public abstract boolean dealDamage(ThrownItemEntity projectile, Entity owner, Entity target);
+		public abstract boolean dealDamage(ThrowableItemProjectile projectile, Entity owner, Entity target);
 		
 		@Override
 		public ItemStack onBlockHit(ItemProjectileEntity projectile, ItemStack stack, Entity owner, BlockHitResult hitResult) {
 			if(destroyItemOnHit()) {
-				stack.decrement(1);
+				stack.shrink(1);
 			}
 			return stack;
 		}

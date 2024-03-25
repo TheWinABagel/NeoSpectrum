@@ -1,14 +1,15 @@
 package de.dafuqs.spectrum.registries.client;
 
-import de.dafuqs.spectrum.*;
+import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.blocks.mob_head.models.*;
 import de.dafuqs.spectrum.entity.models.*;
-import de.dafuqs.spectrum.render.armor.*;
-import net.fabricmc.api.*;
-import net.fabricmc.fabric.api.client.rendering.v1.*;
-import net.minecraft.client.model.*;
-import net.minecraft.client.render.entity.model.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.render.armor.BedrockArmorModel;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.minecraft.client.model.geom.ModelLayerLocation;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.resources.ResourceLocation;
 
 @Environment(EnvType.CLIENT)
 public class SpectrumModelLayers {
@@ -16,39 +17,39 @@ public class SpectrumModelLayers {
 	/**
 	 * Entities
 	 */
-	public static final EntityModelLayer WOOLY_PIG = new EntityModelLayer(SpectrumCommon.locate("egg_laying_wooly_pig"), "main");
-	public static final EntityModelLayer WOOLY_PIG_HAT = new EntityModelLayer(SpectrumCommon.locate("egg_laying_wooly_pig"), "hat");
-	public static final EntityModelLayer WOOLY_PIG_WOOL = new EntityModelLayer(SpectrumCommon.locate("egg_laying_wooly_pig"), "wool");
+	public static final ModelLayerLocation WOOLY_PIG = new ModelLayerLocation(SpectrumCommon.locate("egg_laying_wooly_pig"), "main");
+	public static final ModelLayerLocation WOOLY_PIG_HAT = new ModelLayerLocation(SpectrumCommon.locate("egg_laying_wooly_pig"), "hat");
+	public static final ModelLayerLocation WOOLY_PIG_WOOL = new ModelLayerLocation(SpectrumCommon.locate("egg_laying_wooly_pig"), "wool");
 	
-	public static final EntityModelLayer PRESERVATION_TURRET = new EntityModelLayer(SpectrumCommon.locate("preservation_turret"), "main");
-	public static final EntityModelLayer MONSTROSITY = new EntityModelLayer(SpectrumCommon.locate("monstrosity"), "main");
-	public static final EntityModelLayer LIZARD_SCALES = new EntityModelLayer(SpectrumCommon.locate("lizard"), "main");
-	public static final EntityModelLayer LIZARD_FRILLS = new EntityModelLayer(SpectrumCommon.locate("lizard"), "frills");
-	public static final EntityModelLayer LIZARD_HORNS = new EntityModelLayer(SpectrumCommon.locate("lizard"), "horns");
-	public static final EntityModelLayer KINDLING = new EntityModelLayer(SpectrumCommon.locate("kindling"), "main");
-	public static final EntityModelLayer KINDLING_SADDLE = new EntityModelLayer(SpectrumCommon.locate("kindling_saddle"), "main");
-	public static final EntityModelLayer KINDLING_ARMOR = new EntityModelLayer(SpectrumCommon.locate("kindling_armor"), "main");
-	public static final EntityModelLayer KINDLING_COUGH = new EntityModelLayer(SpectrumCommon.locate("kindling_cough"), "main");
-	public static final EntityModelLayer ERASER = new EntityModelLayer(SpectrumCommon.locate("eraser"), "body");
+	public static final ModelLayerLocation PRESERVATION_TURRET = new ModelLayerLocation(SpectrumCommon.locate("preservation_turret"), "main");
+	public static final ModelLayerLocation MONSTROSITY = new ModelLayerLocation(SpectrumCommon.locate("monstrosity"), "main");
+	public static final ModelLayerLocation LIZARD_SCALES = new ModelLayerLocation(SpectrumCommon.locate("lizard"), "main");
+	public static final ModelLayerLocation LIZARD_FRILLS = new ModelLayerLocation(SpectrumCommon.locate("lizard"), "frills");
+	public static final ModelLayerLocation LIZARD_HORNS = new ModelLayerLocation(SpectrumCommon.locate("lizard"), "horns");
+	public static final ModelLayerLocation KINDLING = new ModelLayerLocation(SpectrumCommon.locate("kindling"), "main");
+	public static final ModelLayerLocation KINDLING_SADDLE = new ModelLayerLocation(SpectrumCommon.locate("kindling_saddle"), "main");
+	public static final ModelLayerLocation KINDLING_ARMOR = new ModelLayerLocation(SpectrumCommon.locate("kindling_armor"), "main");
+	public static final ModelLayerLocation KINDLING_COUGH = new ModelLayerLocation(SpectrumCommon.locate("kindling_cough"), "main");
+	public static final ModelLayerLocation ERASER = new ModelLayerLocation(SpectrumCommon.locate("eraser"), "body");
 
 	
 	/**
 	 * Blocks
 	 */
-	public static final EntityModelLayer EGG_LAYING_WOOLY_PIG_HEAD = new EntityModelLayer(SpectrumCommon.locate("egg_laying_wooly_pig_head"), "main");
-	public static final EntityModelLayer MONSTROSITY_HEAD = new EntityModelLayer(SpectrumCommon.locate("monstrosity_head"), "main");
-	public static final EntityModelLayer KINDLING_HEAD = new EntityModelLayer(SpectrumCommon.locate("kindling_head"), "main");
-	public static final EntityModelLayer LIZARD_HEAD = new EntityModelLayer(SpectrumCommon.locate("lizard_head"), "main");
-	public static final EntityModelLayer PRESERVATION_TURRET_HEAD = new EntityModelLayer(SpectrumCommon.locate("preservation_turret_head"), "main");
-	public static final EntityModelLayer WARDEN_HEAD = new EntityModelLayer(SpectrumCommon.locate("warden_head"), "main");
-	public static final EntityModelLayer ERASER_HEAD = new EntityModelLayer(SpectrumCommon.locate("eraser_head"), "body");
+	public static final ModelLayerLocation EGG_LAYING_WOOLY_PIG_HEAD = new ModelLayerLocation(SpectrumCommon.locate("egg_laying_wooly_pig_head"), "main");
+	public static final ModelLayerLocation MONSTROSITY_HEAD = new ModelLayerLocation(SpectrumCommon.locate("monstrosity_head"), "main");
+	public static final ModelLayerLocation KINDLING_HEAD = new ModelLayerLocation(SpectrumCommon.locate("kindling_head"), "main");
+	public static final ModelLayerLocation LIZARD_HEAD = new ModelLayerLocation(SpectrumCommon.locate("lizard_head"), "main");
+	public static final ModelLayerLocation PRESERVATION_TURRET_HEAD = new ModelLayerLocation(SpectrumCommon.locate("preservation_turret_head"), "main");
+	public static final ModelLayerLocation WARDEN_HEAD = new ModelLayerLocation(SpectrumCommon.locate("warden_head"), "main");
+	public static final ModelLayerLocation ERASER_HEAD = new ModelLayerLocation(SpectrumCommon.locate("eraser_head"), "body");
 	
 	/**
 	 * Armor
 	 */
-	public static final EntityModelLayer FEET_BEDROCK_LAYER = new EntityModelLayer(SpectrumCommon.locate("bedrock_armor"), "feet");
-	public static final EntityModelLayer MAIN_BEDROCK_LAYER = new EntityModelLayer(SpectrumCommon.locate("bedrock_armor"), "main");
-	public static final Identifier BEDROCK_ARMOR_LOCATION = SpectrumCommon.locate("textures/armor/bedrock_armor_main.png");
+	public static final ModelLayerLocation FEET_BEDROCK_LAYER = new ModelLayerLocation(SpectrumCommon.locate("bedrock_armor"), "feet");
+	public static final ModelLayerLocation MAIN_BEDROCK_LAYER = new ModelLayerLocation(SpectrumCommon.locate("bedrock_armor"), "main");
+	public static final ResourceLocation BEDROCK_ARMOR_LOCATION = SpectrumCommon.locate("textures/armor/bedrock_armor_main.png");
 	
 	public static void register() {
 		EntityModelLayerRegistry.registerModelLayer(WOOLY_PIG, EggLayingWoolyPigEntityModel::getTexturedModelData);
@@ -73,8 +74,8 @@ public class SpectrumModelLayers {
 		EntityModelLayerRegistry.registerModelLayer(PRESERVATION_TURRET_HEAD, GuardianTurretHeadModel::getTexturedModelData);
 		EntityModelLayerRegistry.registerModelLayer(WARDEN_HEAD, WardenHeadModel::getTexturedModelData);
 		
-		EntityModelLayerRegistry.registerModelLayer(FEET_BEDROCK_LAYER, () -> TexturedModelData.of(BedrockArmorModel.getModelData(), 128, 128));
-		EntityModelLayerRegistry.registerModelLayer(MAIN_BEDROCK_LAYER, () -> TexturedModelData.of(BedrockArmorModel.getModelData(), 128, 128));
+		EntityModelLayerRegistry.registerModelLayer(FEET_BEDROCK_LAYER, () -> LayerDefinition.create(BedrockArmorModel.getModelData(), 128, 128));
+		EntityModelLayerRegistry.registerModelLayer(MAIN_BEDROCK_LAYER, () -> LayerDefinition.create(BedrockArmorModel.getModelData(), 128, 128));
 	}
 	
 }

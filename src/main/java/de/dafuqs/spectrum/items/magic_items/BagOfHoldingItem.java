@@ -1,31 +1,33 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.spectrum.inventories.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.screen.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.inventories.BagOfHoldingScreenHandler;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.PlayerEnderChestContainer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public class BagOfHoldingItem extends Item {
 	
-	public BagOfHoldingItem(Settings settings) {
+	public BagOfHoldingItem(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		ItemStack itemStack = user.getStackInHand(hand);
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		ItemStack itemStack = user.getItemInHand(hand);
 		
-		EnderChestInventory enderChestInventory = user.getEnderChestInventory();
+		PlayerEnderChestContainer enderChestInventory = user.getEnderChestInventory();
 		if (enderChestInventory != null) {
-			user.openHandledScreen(new SimpleNamedScreenHandlerFactory((syncId, inventory, playerx) -> new BagOfHoldingScreenHandler(syncId, playerx.getInventory(), playerx.getEnderChestInventory()), Text.translatable("container.enderchest")));
+			user.openMenu(new SimpleMenuProvider((syncId, inventory, playerx) -> new BagOfHoldingScreenHandler(syncId, playerx.getInventory(), playerx.getEnderChestInventory()), Component.translatable("container.enderchest")));
 			
-			return TypedActionResult.consume(itemStack);
+			return InteractionResultHolder.consume(itemStack);
 		} else {
-			return TypedActionResult.success(itemStack, world.isClient);
+			return InteractionResultHolder.sidedSuccess(itemStack, world.isClientSide);
 		}
 	}
 	

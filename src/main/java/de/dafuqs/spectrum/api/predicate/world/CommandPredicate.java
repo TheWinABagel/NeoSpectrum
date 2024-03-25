@@ -1,13 +1,16 @@
 package de.dafuqs.spectrum.api.predicate.world;
 
-import com.google.gson.*;
-import net.minecraft.server.*;
-import net.minecraft.server.command.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
+import com.google.gson.JsonObject;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
-public class CommandPredicate implements WorldConditionPredicate, CommandOutput {
+public class CommandPredicate implements WorldConditionPredicate, CommandSource {
 	public static final CommandPredicate ANY = new CommandPredicate(null);
 	
 	public final String command;
@@ -22,30 +25,30 @@ public class CommandPredicate implements WorldConditionPredicate, CommandOutput 
 	}
 	
 	@Override
-	public boolean test(ServerWorld world, BlockPos pos) {
+	public boolean test(ServerLevel world, BlockPos pos) {
 		if (this == ANY) return true;
 		MinecraftServer minecraftServer = world.getServer();
-		ServerCommandSource serverCommandSource = new ServerCommandSource(this, Vec3d.ofCenter(pos), Vec2f.ZERO, world, 2, "FusionShrine", world.getBlockState(pos).getBlock().getName(), minecraftServer, null);
-		return minecraftServer.getCommandManager().executeWithPrefix(serverCommandSource, command) > 0;
+		CommandSourceStack serverCommandSource = new CommandSourceStack(this, Vec3.atCenterOf(pos), Vec2.ZERO, world, 2, "FusionShrine", world.getBlockState(pos).getBlock().getName(), minecraftServer, null);
+		return minecraftServer.getCommands().performPrefixedCommand(serverCommandSource, command) > 0;
 	}
 	
 	@Override
-	public void sendMessage(Text message) {
+	public void sendSystemMessage(Component message) {
 	
 	}
 	
 	@Override
-	public boolean shouldReceiveFeedback() {
+	public boolean acceptsSuccess() {
 		return false;
 	}
 	
 	@Override
-	public boolean shouldTrackOutput() {
+	public boolean acceptsFailure() {
 		return false;
 	}
 	
 	@Override
-	public boolean shouldBroadcastConsoleToOps() {
+	public boolean shouldInformAdmins() {
 		return false;
 	}
 	

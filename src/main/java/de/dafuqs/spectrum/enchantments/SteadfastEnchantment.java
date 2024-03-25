@@ -1,25 +1,26 @@
 package de.dafuqs.spectrum.enchantments;
 
-import dev.emi.trinkets.api.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import dev.emi.trinkets.api.Trinket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.*;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
 
 public class SteadfastEnchantment extends SpectrumEnchantment {
 	
-	public SteadfastEnchantment(Rarity weight, Identifier unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
-		super(weight, EnchantmentTarget.BREAKABLE, slotTypes, unlockAdvancementIdentifier);
+	public SteadfastEnchantment(Rarity weight, ResourceLocation unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
+		super(weight, EnchantmentCategory.BREAKABLE, slotTypes, unlockAdvancementIdentifier);
 	}
 	
 	@Override
-	public int getMinPower(int level) {
+	public int getMinCost(int level) {
 		return 30;
 	}
 	
 	@Override
-	public int getMaxPower(int level) {
-		return super.getMinPower(level) + 30;
+	public int getMaxCost(int level) {
+		return super.getMinCost(level) + 30;
 	}
 	
 	@Override
@@ -28,14 +29,14 @@ public class SteadfastEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public boolean canAccept(Enchantment other) {
-		return super.canAccept(other);
+	public boolean checkCompatibility(Enchantment other) {
+		return super.checkCompatibility(other);
 	}
 	
 	@Override
-	public boolean isAcceptableItem(ItemStack stack) {
+	public boolean canEnchant(ItemStack stack) {
 		Item item = stack.getItem();
-		return super.isAcceptableItem(stack) || this.target.isAcceptableItem(item) || item instanceof ToolItem || item instanceof ShearsItem || item instanceof Vanishable || item instanceof Trinket;
+		return super.canEnchant(stack) || this.category.canEnchant(item) || item instanceof TieredItem || item instanceof ShearsItem || item instanceof Vanishable || item instanceof Trinket;
 	}
 	
 }

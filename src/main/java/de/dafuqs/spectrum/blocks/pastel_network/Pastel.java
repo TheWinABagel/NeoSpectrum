@@ -1,9 +1,12 @@
 package de.dafuqs.spectrum.blocks.pastel_network;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.blocks.pastel_network.network.*;
-import de.dafuqs.spectrum.particle.render.*;
-import net.fabricmc.api.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.blocks.pastel_network.network.ClientPastelNetworkManager;
+import de.dafuqs.spectrum.blocks.pastel_network.network.PastelNetworkManager;
+import de.dafuqs.spectrum.blocks.pastel_network.network.ServerPastelNetworkManager;
+import de.dafuqs.spectrum.particle.render.EarlyRenderingParticleContainer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 public class Pastel {
 
@@ -21,7 +24,7 @@ public class Pastel {
 
     public static ServerPastelNetworkManager getServerInstance() {
         if (serverManager == null) {
-            serverManager = ServerPastelNetworkManager.get(SpectrumCommon.minecraftServer.getOverworld());
+            serverManager = ServerPastelNetworkManager.get(SpectrumCommon.minecraftServer.overworld());
         }
         return serverManager;
     }

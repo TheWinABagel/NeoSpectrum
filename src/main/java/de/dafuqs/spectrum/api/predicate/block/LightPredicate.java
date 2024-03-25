@@ -1,38 +1,36 @@
 package de.dafuqs.spectrum.api.predicate.block;
 
-import org.jetbrains.annotations.Nullable;
-
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
-import net.minecraft.predicate.NumberRange;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.JsonHelper;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.LightType;
+import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.level.LightLayer;
+import org.jetbrains.annotations.Nullable;
 
 public class LightPredicate {
     public static final LightPredicate ANY = new LightPredicate(null, null);
 	
 	@Nullable
-	private final NumberRange.IntRange blockLight;
+	private final MinMaxBounds.Ints blockLight;
 	@Nullable
-	private final NumberRange.IntRange skyLight;
+	private final MinMaxBounds.Ints skyLight;
 	
-	public LightPredicate(@Nullable NumberRange.IntRange blockLight, @Nullable NumberRange.IntRange skyLight) {
+	public LightPredicate(@Nullable MinMaxBounds.Ints blockLight, @Nullable MinMaxBounds.Ints skyLight) {
 		this.blockLight = blockLight;
 		this.skyLight = skyLight;
 	}
 	
-	public boolean test(ServerWorld world, BlockPos pos) {
+	public boolean test(ServerLevel world, BlockPos pos) {
 		if (this == ANY) {
 			return true;
 		}
 		
-		if (this.blockLight != null && !this.blockLight.test(world.getLightLevel(LightType.BLOCK, pos))) {
+		if (this.blockLight != null && !this.blockLight.matches(world.getBrightness(LightLayer.BLOCK, pos))) {
 			return false;
 		}
-		if (this.skyLight != null && !this.skyLight.test(world.getLightLevel(LightType.SKY, pos))) {
+		if (this.skyLight != null && !this.skyLight.matches(world.getBrightness(LightLayer.SKY, pos))) {
 			return false;
 		}
 		
@@ -44,10 +42,10 @@ public class LightPredicate {
             return ANY;
         }
 		
-        JsonObject jsonObject = JsonHelper.asObject(json, "light");
+        JsonObject jsonObject = GsonHelper.convertToJsonObject(json, "light");
         
-		NumberRange.IntRange blockLight = NumberRange.IntRange.fromJson(jsonObject.get("block"));
-		NumberRange.IntRange skyLight = NumberRange.IntRange.fromJson(jsonObject.get("sky"));
+		MinMaxBounds.Ints blockLight = MinMaxBounds.Ints.fromJson(jsonObject.get("block"));
+		MinMaxBounds.Ints skyLight = MinMaxBounds.Ints.fromJson(jsonObject.get("sky"));
         
 		return new LightPredicate(blockLight, skyLight);
 	}

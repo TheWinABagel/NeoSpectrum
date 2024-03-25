@@ -1,21 +1,26 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkCost;
+import de.dafuqs.spectrum.api.energy.InkPowered;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
 
 public class CelestialPocketWatchItem extends Item {
 
@@ -30,33 +35,33 @@ public class CelestialPocketWatchItem extends Item {
 		FAILED_GAME_RULE
 	}
 
-	public CelestialPocketWatchItem(Settings settings) {
+	public CelestialPocketWatchItem(Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		ItemStack itemStack = user.getStackInHand(hand);
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		ItemStack itemStack = user.getItemInHand(hand);
 
-		if (!world.isClient) {
-			if (!tryAdvanceTime((ServerWorld) world, (ServerPlayerEntity) user)) {
-				world.playSound(null, user.getBlockPos(), SpectrumSoundEvents.USE_FAIL, SoundCategory.PLAYERS, 1.0F, 1.0F);
+		if (!world.isClientSide) {
+			if (!tryAdvanceTime((ServerLevel) world, (ServerPlayer) user)) {
+				world.playSound(null, user.blockPosition(), SpectrumSoundEvents.USE_FAIL, SoundSource.PLAYERS, 1.0F, 1.0F);
 			}
 
-			return TypedActionResult.consume(itemStack);
+			return InteractionResultHolder.consume(itemStack);
 		}
-		return TypedActionResult.success(itemStack, true);
+		return InteractionResultHolder.sidedSuccess(itemStack, true);
 	}
 
-	public static boolean tryAdvanceTime(ServerWorld world, ServerPlayerEntity user) {
+	public static boolean tryAdvanceTime(ServerLevel world, ServerPlayer user) {
 		switch (canAdvanceTime(world)) {
 			case FAILED_GAME_RULE ->
-					user.sendMessage(Text.translatable("item.spectrum.celestial_pocketwatch.tooltip.use_blocked_gamerule"), true);
+					user.displayClientMessage(Component.translatable("item.spectrum.celestial_pocketwatch.tooltip.use_blocked_gamerule"), true);
 			case FAILED_FIXED_TIME ->
-					user.sendMessage(Text.translatable("item.spectrum.celestial_pocketwatch.tooltip.use_blocked_fixed_time"), true);
+					user.displayClientMessage(Component.translatable("item.spectrum.celestial_pocketwatch.tooltip.use_blocked_fixed_time"), true);
 			case SUCCESS -> {
 				if (InkPowered.tryDrainEnergy(user, COST)) {
-					world.playSound(null, user.getBlockPos(), SpectrumSoundEvents.CELESTIAL_POCKET_WATCH_TICKING, SoundCategory.PLAYERS, 1.0F, 1.0F);
+					world.playSound(null, user.blockPosition(), SpectrumSoundEvents.CELESTIAL_POCKET_WATCH_TICKING, SoundSource.PLAYERS, 1.0F, 1.0F);
 					advanceTime(world, TIME_STEP_TICKS);
 				}
 				return true;
@@ -66,10 +71,10 @@ public class CelestialPocketWatchItem extends Item {
 	}
 
 	// the clocks use is blocked if the world has a fixed daylight cycle, or gamerule doDayLightCycle is set to false
-	private static TimeToggleResult canAdvanceTime(@NotNull World world) {
-		GameRules.BooleanRule doDaylightCycleRule = world.getGameRules().get(GameRules.DO_DAYLIGHT_CYCLE);
+	private static TimeToggleResult canAdvanceTime(@NotNull Level world) {
+		GameRules.BooleanValue doDaylightCycleRule = world.getGameRules().getRule(GameRules.RULE_DAYLIGHT);
 		if (doDaylightCycleRule.get()) {
-			if (world.getDimension().hasFixedTime()) {
+			if (world.dimensionType().hasFixedTime()) {
 				return TimeToggleResult.FAILED_FIXED_TIME;
 			} else {
 				return TimeToggleResult.SUCCESS;
@@ -79,25 +84,25 @@ public class CelestialPocketWatchItem extends Item {
 		}
 	}
 
-	private static void advanceTime(@NotNull ServerWorld world, int additionalTime) {
+	private static void advanceTime(@NotNull ServerLevel world, int additionalTime) {
 		SpectrumS2CPacketSender.startSkyLerping(world, additionalTime);
-		long timeOfDay = world.getTimeOfDay();
-		world.setTimeOfDay(timeOfDay + additionalTime);
+		long timeOfDay = world.getDayTime();
+		world.setDayTime(timeOfDay + additionalTime);
 	}
 
 	@Override
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
-		tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.magenta"));
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
+		tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.magenta"));
 
 		if (world != null) {
 			switch (canAdvanceTime(world)) {
 				case FAILED_GAME_RULE ->
-						tooltip.add(Text.translatable("item.spectrum.celestial_pocketwatch.tooltip.use_blocked_gamerule").formatted(Formatting.GRAY));
+						tooltip.add(Component.translatable("item.spectrum.celestial_pocketwatch.tooltip.use_blocked_gamerule").withStyle(ChatFormatting.GRAY));
 				case FAILED_FIXED_TIME ->
-						tooltip.add(Text.translatable("item.spectrum.celestial_pocketwatch.tooltip.use_blocked_fixed_time").formatted(Formatting.GRAY));
+						tooltip.add(Component.translatable("item.spectrum.celestial_pocketwatch.tooltip.use_blocked_fixed_time").withStyle(ChatFormatting.GRAY));
 				case SUCCESS ->
-						tooltip.add(Text.translatable("item.spectrum.celestial_pocketwatch.tooltip.working").formatted(Formatting.GRAY));
+						tooltip.add(Component.translatable("item.spectrum.celestial_pocketwatch.tooltip.working").withStyle(ChatFormatting.GRAY));
 			}
 		}
 	}

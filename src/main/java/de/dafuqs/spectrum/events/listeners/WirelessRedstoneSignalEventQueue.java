@@ -1,12 +1,14 @@
 package de.dafuqs.spectrum.events.listeners;
 
-import de.dafuqs.spectrum.events.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.effect.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
+import de.dafuqs.spectrum.events.RedstoneTransferGameEvent;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.effect.TypedTransmission;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.gameevent.PositionSource;
+import net.minecraft.world.phys.Vec3;
 
 public class WirelessRedstoneSignalEventQueue extends EventQueue<WirelessRedstoneSignalEventQueue.EventEntry> {
 	
@@ -15,13 +17,13 @@ public class WirelessRedstoneSignalEventQueue extends EventQueue<WirelessRedston
 	}
 	
 	@Override
-	public void acceptEvent(World world, GameEvent.Message event, Vec3d sourcePos) {
-		if (world instanceof ServerWorld && event.getEvent() instanceof RedstoneTransferGameEvent redstoneTransferEvent) {
-			Vec3d pos = event.getEmitterPos();
-			WirelessRedstoneSignalEventQueue.EventEntry eventEntry = new WirelessRedstoneSignalEventQueue.EventEntry(redstoneTransferEvent, MathHelper.floor(pos.distanceTo(sourcePos)));
+	public void acceptEvent(Level world, GameEvent.ListenerInfo event, Vec3 sourcePos) {
+		if (world instanceof ServerLevel && event.gameEvent() instanceof RedstoneTransferGameEvent redstoneTransferEvent) {
+			Vec3 pos = event.source();
+			WirelessRedstoneSignalEventQueue.EventEntry eventEntry = new WirelessRedstoneSignalEventQueue.EventEntry(redstoneTransferEvent, Mth.floor(pos.distanceTo(sourcePos)));
 			int delay = eventEntry.distance * 2;
 			this.schedule(eventEntry, delay);
-			SpectrumS2CPacketSender.playTransmissionParticle((ServerWorld) world, new TypedTransmission(pos, this.positionSource, delay, TypedTransmission.Variant.REDSTONE));
+			SpectrumS2CPacketSender.playTransmissionParticle((ServerLevel) world, new TypedTransmission(pos, this.positionSource, delay, TypedTransmission.Variant.REDSTONE));
 		}
 	}
 	

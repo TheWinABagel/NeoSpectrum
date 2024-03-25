@@ -1,13 +1,15 @@
 package de.dafuqs.spectrum.recipe.enchanter;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.recipe.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.api.recipe.GatedRecipeSerializer;
+import de.dafuqs.spectrum.recipe.RecipeUtils;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class EnchanterRecipeSerializer implements GatedRecipeSerializer<EnchanterRecipe> {
 	
@@ -18,64 +20,64 @@ public class EnchanterRecipeSerializer implements GatedRecipeSerializer<Enchante
 	}
 	
 	public interface RecipeFactory {
-		EnchanterRecipe create(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, DefaultedList<Ingredient> inputs, ItemStack output, int craftingTime, int requiredExperience, boolean noBenefitsFromYieldAndEfficiencyUpgrades);
+		EnchanterRecipe create(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, NonNullList<Ingredient> inputs, ItemStack output, int craftingTime, int requiredExperience, boolean noBenefitsFromYieldAndEfficiencyUpgrades);
 	}
 	
 	@Override
-	public EnchanterRecipe read(Identifier identifier, JsonObject jsonObject) {
+	public EnchanterRecipe fromJson(ResourceLocation identifier, JsonObject jsonObject) {
 		String group = readGroup(jsonObject);
 		boolean secret = readSecret(jsonObject);
-		Identifier requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
+		ResourceLocation requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
 		
-		JsonArray ingredientArray = JsonHelper.getArray(jsonObject, "ingredients");
-		DefaultedList<Ingredient> craftingInputs = DefaultedList.ofSize(ingredientArray.size());
+		JsonArray ingredientArray = GsonHelper.getAsJsonArray(jsonObject, "ingredients");
+		NonNullList<Ingredient> craftingInputs = NonNullList.createWithCapacity(ingredientArray.size());
 		for (int i = 0; i < ingredientArray.size(); i++) {
 			craftingInputs.add(Ingredient.fromJson(ingredientArray.get(i)));
 		}
 		
-		ItemStack output = RecipeUtils.itemStackWithNbtFromJson(JsonHelper.getObject(jsonObject, "result"));
+		ItemStack output = RecipeUtils.itemStackWithNbtFromJson(GsonHelper.getAsJsonObject(jsonObject, "result"));
 		
-		int requiredExperience = JsonHelper.getInt(jsonObject, "required_experience", 0);
-		int craftingTime = JsonHelper.getInt(jsonObject, "time", 200);
+		int requiredExperience = GsonHelper.getAsInt(jsonObject, "required_experience", 0);
+		int craftingTime = GsonHelper.getAsInt(jsonObject, "time", 200);
 		
 		boolean noBenefitsFromYieldAndEfficiencyUpgrades = false;
-		if (JsonHelper.hasPrimitive(jsonObject, "disable_yield_and_efficiency_upgrades")) {
-			noBenefitsFromYieldAndEfficiencyUpgrades = JsonHelper.getBoolean(jsonObject, "disable_yield_and_efficiency_upgrades", false);
+		if (GsonHelper.isValidPrimitive(jsonObject, "disable_yield_and_efficiency_upgrades")) {
+			noBenefitsFromYieldAndEfficiencyUpgrades = GsonHelper.getAsBoolean(jsonObject, "disable_yield_and_efficiency_upgrades", false);
 		}
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, craftingInputs, output, craftingTime, requiredExperience, noBenefitsFromYieldAndEfficiencyUpgrades);
 	}
 	
 	@Override
-	public void write(PacketByteBuf packetByteBuf, EnchanterRecipe recipe) {
-		packetByteBuf.writeString(recipe.group);
+	public void write(FriendlyByteBuf packetByteBuf, EnchanterRecipe recipe) {
+		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);
 		
 		packetByteBuf.writeShort(recipe.inputs.size());
 		for (Ingredient ingredient : recipe.inputs) {
-			ingredient.write(packetByteBuf);
+			ingredient.toNetwork(packetByteBuf);
 		}
 		
-		packetByteBuf.writeItemStack(recipe.output);
+		packetByteBuf.writeItem(recipe.output);
 		packetByteBuf.writeInt(recipe.craftingTime);
 		packetByteBuf.writeInt(recipe.requiredExperience);
 		packetByteBuf.writeBoolean(recipe.noBenefitsFromYieldAndEfficiencyUpgrades);
 	}
 	
 	@Override
-	public EnchanterRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
-		String group = packetByteBuf.readString();
+	public EnchanterRecipe fromNetwork(ResourceLocation identifier, FriendlyByteBuf packetByteBuf) {
+		String group = packetByteBuf.readUtf();
 		boolean secret = packetByteBuf.readBoolean();
-		Identifier requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
+		ResourceLocation requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
 		
 		short craftingInputCount = packetByteBuf.readShort();
-		DefaultedList<Ingredient> ingredients = DefaultedList.ofSize(craftingInputCount, Ingredient.EMPTY);
+		NonNullList<Ingredient> ingredients = NonNullList.withSize(craftingInputCount, Ingredient.EMPTY);
 		for (short i = 0; i < craftingInputCount; i++) {
-			ingredients.set(i, Ingredient.fromPacket(packetByteBuf));
+			ingredients.set(i, Ingredient.fromNetwork(packetByteBuf));
 		}
 		
-		ItemStack output = packetByteBuf.readItemStack();
+		ItemStack output = packetByteBuf.readItem();
 		int craftingTime = packetByteBuf.readInt();
 		int requiredExperience = packetByteBuf.readInt();
 		boolean noBenefitsFromYieldAndEfficiencyUpgrades = packetByteBuf.readBoolean();

@@ -1,9 +1,10 @@
 package de.dafuqs.spectrum.api.block;
 
-import net.minecraft.block.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.explosion.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 public interface ExplosionAware {
 
@@ -12,7 +13,7 @@ public interface ExplosionAware {
 	 * called before the block is set to air and therefore having state information
 	 * and still intact block entity.
 	 */
-	default void beforeDestroyedByExplosion(World world, BlockPos pos, BlockState state, Explosion explosion) {
+	default void beforeDestroyedByExplosion(Level world, BlockPos pos, BlockState state, Explosion explosion) {
 
 	}
 
@@ -21,8 +22,8 @@ public interface ExplosionAware {
 	 * Unless you want to use a custom block, return Blocks.AIR.getDefaultState() (vanilla default)
 	 * @return the state to replace the block with
 	 */
-	default BlockState getStateForExplosion(World world, BlockPos blockPos, BlockState stateAtPos) {
-		return Blocks.AIR.getDefaultState();
+	default BlockState getStateForExplosion(Level world, BlockPos blockPos, BlockState stateAtPos) {
+		return Blocks.AIR.defaultBlockState();
 	}
 
 }

@@ -1,10 +1,12 @@
 package de.dafuqs.spectrum.recipe.titration_barrel;
 
-import com.google.gson.*;
-import net.minecraft.network.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.GsonHelper;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public record FermentationData(float fermentationSpeedMod, float angelsSharePercentPerMcDay,
 							   List<FermentationStatusEffectEntry> statusEffectEntries) {
@@ -14,11 +16,11 @@ public record FermentationData(float fermentationSpeedMod, float angelsSharePerc
 	private static final String EFFECTS_STRING = "effects";
 	
 	public static FermentationData fromJson(JsonObject jsonObject) {
-		float fermentationSpeedMod = JsonHelper.getFloat(jsonObject, FERMENTATION_SPEED_MOD_STRING, 1.0F);
-		float angelsSharePerMcDay = JsonHelper.getFloat(jsonObject, ANGELS_SHARE_STRING, 0.01F);
+		float fermentationSpeedMod = GsonHelper.getAsFloat(jsonObject, FERMENTATION_SPEED_MOD_STRING, 1.0F);
+		float angelsSharePerMcDay = GsonHelper.getAsFloat(jsonObject, ANGELS_SHARE_STRING, 0.01F);
 		List<FermentationStatusEffectEntry> statusEffectEntries = new ArrayList<>();
-		if (JsonHelper.hasArray(jsonObject, EFFECTS_STRING)) {
-			JsonArray effectsArray = JsonHelper.getArray(jsonObject, EFFECTS_STRING);
+		if (GsonHelper.isArrayNode(jsonObject, EFFECTS_STRING)) {
+			JsonArray effectsArray = GsonHelper.getAsJsonArray(jsonObject, EFFECTS_STRING);
 			for (int i = 0; i < effectsArray.size(); i++) {
 				JsonObject object = effectsArray.get(i).getAsJsonObject();
 				statusEffectEntries.add(FermentationStatusEffectEntry.fromJson(object));
@@ -27,7 +29,7 @@ public record FermentationData(float fermentationSpeedMod, float angelsSharePerc
 		return new FermentationData(fermentationSpeedMod, angelsSharePerMcDay, statusEffectEntries);
 	}
 	
-	public void write(PacketByteBuf packetByteBuf) {
+	public void write(FriendlyByteBuf packetByteBuf) {
 		packetByteBuf.writeFloat(this.fermentationSpeedMod);
 		packetByteBuf.writeFloat(this.angelsSharePercentPerMcDay);
 		packetByteBuf.writeInt(this.statusEffectEntries.size());
@@ -36,7 +38,7 @@ public record FermentationData(float fermentationSpeedMod, float angelsSharePerc
 		}
 	}
 	
-	public static FermentationData read(PacketByteBuf packetByteBuf) {
+	public static FermentationData read(FriendlyByteBuf packetByteBuf) {
 		float fermentationSpeedMod = packetByteBuf.readFloat();
 		float angelsSharePerMcDay = packetByteBuf.readFloat();
 		int statusEffectEntryCount = packetByteBuf.readInt();

@@ -1,29 +1,41 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.blocks.memory.*;
-import de.dafuqs.spectrum.compat.claims.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.energy.InkCost;
+import de.dafuqs.spectrum.api.energy.InkPowered;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.api.item.PrioritizedEntityInteraction;
+import de.dafuqs.spectrum.blocks.memory.MemoryItem;
+import de.dafuqs.spectrum.compat.claims.GenericClaimModsCompat;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.registries.SpectrumEntityTypeTags;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.List;
 
 public class StaffOfRemembranceItem extends Item implements InkPowered, PrioritizedEntityInteraction {
 	
@@ -31,52 +43,52 @@ public class StaffOfRemembranceItem extends Item implements InkPowered, Prioriti
 	public static final InkCost TURN_NEUTRAL_TO_MEMORY_COST = new InkCost(USED_COLOR, 1000);
 	public static final InkCost TURN_HOSTILE_TO_MEMORY_COST = new InkCost(USED_COLOR, 10000);
 	
-	public static final Identifier UNLOCK_HOSTILE_MEMORIZING_ID = SpectrumCommon.locate("milestones/unlock_hostile_memorizing");
+	public static final ResourceLocation UNLOCK_HOSTILE_MEMORIZING_ID = SpectrumCommon.locate("milestones/unlock_hostile_memorizing");
 	
-	public StaffOfRemembranceItem(Settings settings) {
+	public StaffOfRemembranceItem(Properties settings) {
 		super(settings);
 	}
 	
 	@Environment(EnvType.CLIENT)
 	@Override
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
 		
-		tooltip.add(Text.translatable("item.spectrum.staff_of_remembrance.tooltip").formatted(Formatting.GRAY));
+		tooltip.add(Component.translatable("item.spectrum.staff_of_remembrance.tooltip").withStyle(ChatFormatting.GRAY));
 		addInkPoweredTooltip(tooltip);
 	}
 	
 	@Override
-	public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
-		World world = user.getWorld();
-		Vec3d pos = entity.getPos();
+	public InteractionResult interactLivingEntity(ItemStack stack, Player user, LivingEntity entity, InteractionHand hand) {
+		Level world = user.level();
+		Vec3 pos = entity.position();
 		
 		if (!GenericClaimModsCompat.canInteract(world, entity, user)) {
-			return ActionResult.FAIL;
+			return InteractionResult.FAIL;
 		}
 		
-		if (!world.isClient && entity instanceof MobEntity mobEntity) {
+		if (!world.isClientSide && entity instanceof Mob mobEntity) {
 			if (turnEntityToMemory(user, mobEntity)) {
-				SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerWorld) world, entity.getPos(), SpectrumParticleTypes.LIGHT_GRAY_SPARKLE_RISING, 10, Vec3d.ZERO, new Vec3d(0.2, 0.2, 0.2));
-				SpectrumS2CPacketSender.playParticleWithExactVelocity((ServerWorld) world, entity.getPos(), SpectrumParticleTypes.LIGHT_GRAY_EXPLOSION, 1, Vec3d.ZERO);
-				world.playSound(null, pos.getX(), pos.getY(), pos.getZ(), SpectrumSoundEvents.RADIANCE_STAFF_PLACE, SoundCategory.PLAYERS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
+				SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerLevel) world, entity.position(), SpectrumParticleTypes.LIGHT_GRAY_SPARKLE_RISING, 10, Vec3.ZERO, new Vec3(0.2, 0.2, 0.2));
+				SpectrumS2CPacketSender.playParticleWithExactVelocity((ServerLevel) world, entity.position(), SpectrumParticleTypes.LIGHT_GRAY_EXPLOSION, 1, Vec3.ZERO);
+				world.playSound(null, pos.x(), pos.y(), pos.z(), SpectrumSoundEvents.RADIANCE_STAFF_PLACE, SoundSource.PLAYERS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
 			} else {
-				world.playSound(null, pos.getX(), pos.getY(), pos.getZ(), SpectrumSoundEvents.USE_FAIL, SoundCategory.PLAYERS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
+				world.playSound(null, pos.x(), pos.y(), pos.z(), SpectrumSoundEvents.USE_FAIL, SoundSource.PLAYERS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
 			}
 		}
-		return ActionResult.success(world.isClient);
+		return InteractionResult.sidedSuccess(world.isClientSide);
 	}
 	
-	private boolean turnEntityToMemory(PlayerEntity user, MobEntity entity) {
-		if (!entity.isAlive() || entity.isRemoved() || entity.hasPassengers()) {
+	private boolean turnEntityToMemory(Player user, Mob entity) {
+		if (!entity.isAlive() || entity.isRemoved() || entity.isVehicle()) {
 			return false;
 		}
-		if (entity.getType().isIn(SpectrumEntityTypeTags.STAFF_OF_REMEMBRANCE_BLACKLISTED)) {
+		if (entity.getType().is(SpectrumEntityTypeTags.STAFF_OF_REMEMBRANCE_BLACKLISTED)) {
 			return false;
 		}
 		
-		SpawnGroup spawnGroup = entity.getType().getSpawnGroup();
-		if (spawnGroup == SpawnGroup.MONSTER && (user.isCreative() || AdvancementHelper.hasAdvancement(user, UNLOCK_HOSTILE_MEMORIZING_ID))) {
+		MobCategory spawnGroup = entity.getType().getCategory();
+		if (spawnGroup == MobCategory.MONSTER && (user.isCreative() || AdvancementHelper.hasAdvancement(user, UNLOCK_HOSTILE_MEMORIZING_ID))) {
 			if (!InkPowered.tryDrainEnergy(user, TURN_HOSTILE_TO_MEMORY_COST)) {
 				return false;
 			}
@@ -84,26 +96,26 @@ public class StaffOfRemembranceItem extends Item implements InkPowered, Prioriti
 			return false;
 		}
 		
-		entity.detachLeash(true, true);
+		entity.dropLeash(true, true);
 		entity.playAmbientSound();
-		entity.playSpawnEffects();
+		entity.spawnAnim();
 		
 		ItemStack memoryStack = MemoryItem.getMemoryForEntity(entity);
 		MemoryItem.setTicksToManifest(memoryStack, 1);
 		MemoryItem.setSpawnAsAdult(memoryStack, true);
 		
-		Vec3d entityPos = entity.getPos();
-		ItemEntity itemEntity = new ItemEntity(entity.getWorld(), entityPos.getX(), entityPos.getY(), entityPos.getZ(), memoryStack);
-		itemEntity.setVelocity(new Vec3d(0.0, 0.15, 0.0));
-		entity.getWorld().spawnEntity(itemEntity);
+		Vec3 entityPos = entity.position();
+		ItemEntity itemEntity = new ItemEntity(entity.level(), entityPos.x(), entityPos.y(), entityPos.z(), memoryStack);
+		itemEntity.setDeltaMovement(new Vec3(0.0, 0.15, 0.0));
+		entity.level().addFreshEntity(itemEntity);
 		entity.remove(Entity.RemovalReason.DISCARDED);
 		
 		return true;
 	}
 	
 	@Override
-	public UseAction getUseAction(ItemStack stack) {
-		return UseAction.SPEAR;
+	public UseAnim getUseAnimation(ItemStack stack) {
+		return UseAnim.SPEAR;
 	}
 	
 	@Override

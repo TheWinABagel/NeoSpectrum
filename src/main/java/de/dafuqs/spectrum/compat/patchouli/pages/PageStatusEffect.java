@@ -1,46 +1,47 @@
 package de.dafuqs.spectrum.compat.patchouli.pages;
 
-import com.google.gson.annotations.*;
-import com.mojang.blaze3d.systems.*;
-import net.minecraft.client.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.client.texture.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.registry.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import vazkii.patchouli.client.book.*;
-import vazkii.patchouli.client.book.gui.*;
-import vazkii.patchouli.client.book.page.abstr.*;
+import com.google.gson.annotations.SerializedName;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.level.Level;
+import vazkii.patchouli.client.book.BookContentsBuilder;
+import vazkii.patchouli.client.book.BookEntry;
+import vazkii.patchouli.client.book.gui.GuiBook;
+import vazkii.patchouli.client.book.page.abstr.PageWithText;
 
 public class PageStatusEffect extends PageWithText {
 	
 	String title;
 	@SerializedName("status_effect_id")
 	String statusEffectId;
-	transient StatusEffect statusEffect;
-	transient Sprite statusEffectSprite;
+	transient MobEffect statusEffect;
+	transient TextureAtlasSprite statusEffectSprite;
 	
 	@Override
-	public void build(World world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
+	public void build(Level world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
 		super.build(world, entry, builder, pageNum);
-		statusEffect = Registries.STATUS_EFFECT.get(new Identifier(statusEffectId));
-		statusEffectSprite = MinecraftClient.getInstance().getStatusEffectSpriteManager().getSprite(statusEffect);
+		statusEffect = BuiltInRegistries.MOB_EFFECT.get(new ResourceLocation(statusEffectId));
+		statusEffectSprite = Minecraft.getInstance().getMobEffectTextures().get(statusEffect);
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float pticks) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float pticks) {
 		RenderSystem.enableBlend();
-		drawContext.drawSprite(49, 14, 0, 18, 18, statusEffectSprite);
+		drawContext.blit(49, 14, 0, 18, 18, statusEffectSprite);
 
-		Text toDraw;
+		Component toDraw;
 		if (title != null && !title.isEmpty()) {
 			toDraw = i18nText(title);
 		} else {
-			toDraw = statusEffect.getName();
+			toDraw = statusEffect.getDisplayName();
 		}
-		parent.drawCenteredStringNoShadow(drawContext, toDraw.asOrderedText(), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
+		parent.drawCenteredStringNoShadow(drawContext, toDraw.getVisualOrderText(), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
 		
 		super.render(drawContext, mouseX, mouseY, pticks);
 	}

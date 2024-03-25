@@ -1,42 +1,45 @@
 package de.dafuqs.spectrum.items.trinkets;
 
-import com.google.common.collect.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.energy.storage.*;
-import dev.emi.trinkets.api.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.attribute.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import com.google.common.collect.Multimap;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.api.energy.storage.FixedSingleInkStorage;
+import dev.emi.trinkets.api.SlotReference;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.UUID;
 
 public class ExtraHealthRingItem extends InkDrainTrinketItem {
 	
-	public ExtraHealthRingItem(Settings settings) {
+	public ExtraHealthRingItem(Properties settings) {
 		super(settings, SpectrumCommon.locate("unlocks/trinkets/heartsingers_reward"), InkColors.PINK);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		tooltip.add(Text.translatable("item.spectrum.heartsingers_reward.tooltip").formatted(Formatting.GRAY));
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		tooltip.add(Component.translatable("item.spectrum.heartsingers_reward.tooltip").withStyle(ChatFormatting.GRAY));
+		super.appendHoverText(stack, world, tooltip, context);
 	}
 	
 	@Override
-	public Multimap<EntityAttribute, EntityAttributeModifier> getModifiers(ItemStack stack, SlotReference slot, LivingEntity entity, UUID uuid) {
-		Multimap<EntityAttribute, EntityAttributeModifier> modifiers = super.getModifiers(stack, slot, entity, uuid);
+	public Multimap<Attribute, AttributeModifier> getModifiers(ItemStack stack, SlotReference slot, LivingEntity entity, UUID uuid) {
+		Multimap<Attribute, AttributeModifier> modifiers = super.getModifiers(stack, slot, entity, uuid);
 		
 		FixedSingleInkStorage inkStorage = getEnergyStorage(stack);
 		long storedInk = inkStorage.getEnergy(inkStorage.getStoredColor());
 		int extraHearts = getExtraHearts(storedInk);
 		if (extraHearts != 0) {
-			modifiers.put(EntityAttributes.GENERIC_MAX_HEALTH, new EntityAttributeModifier(uuid, "spectrum:heartsingers_reward_ring", extraHearts, EntityAttributeModifier.Operation.ADDITION));
+			modifiers.put(Attributes.MAX_HEALTH, new AttributeModifier(uuid, "spectrum:heartsingers_reward_ring", extraHearts, AttributeModifier.Operation.ADDITION));
 		}
 		
 		return modifiers;

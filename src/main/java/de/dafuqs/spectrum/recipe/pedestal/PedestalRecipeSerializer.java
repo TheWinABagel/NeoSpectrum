@@ -1,13 +1,14 @@
 package de.dafuqs.spectrum.recipe.pedestal;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import net.minecraft.network.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.api.item.GemstoneColor;
+import de.dafuqs.spectrum.api.recipe.GatedRecipeSerializer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.GsonHelper;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class PedestalRecipeSerializer<T extends PedestalRecipe> implements GatedRecipeSerializer<T> {
 	
@@ -17,30 +18,30 @@ public abstract class PedestalRecipeSerializer<T extends PedestalRecipe> impleme
 	protected @NotNull
 	static Map<GemstoneColor, Integer> readGemstonePowderInputs(JsonObject jsonObject) {
 		HashMap<GemstoneColor, Integer> gemInputs = new HashMap<>();
-		int amount = JsonHelper.getInt(jsonObject, "cyan", 0);
+		int amount = GsonHelper.getAsInt(jsonObject, "cyan", 0);
 		if (amount > 0) {
 			gemInputs.put(BuiltinGemstoneColor.CYAN, amount);
 		}
-		amount = JsonHelper.getInt(jsonObject, "magenta", 0);
+		amount = GsonHelper.getAsInt(jsonObject, "magenta", 0);
 		if (amount > 0) {
 			gemInputs.put(BuiltinGemstoneColor.MAGENTA, amount);
 		}
-		amount = JsonHelper.getInt(jsonObject, "yellow", 0);
+		amount = GsonHelper.getAsInt(jsonObject, "yellow", 0);
 		if (amount > 0) {
 			gemInputs.put(BuiltinGemstoneColor.YELLOW, amount);
 		}
-		amount = JsonHelper.getInt(jsonObject, "black", 0);
+		amount = GsonHelper.getAsInt(jsonObject, "black", 0);
 		if (amount > 0) {
 			gemInputs.put(BuiltinGemstoneColor.BLACK, amount);
 		}
-		amount = JsonHelper.getInt(jsonObject, "white", 0);
+		amount = GsonHelper.getAsInt(jsonObject, "white", 0);
 		if (amount > 0) {
 			gemInputs.put(BuiltinGemstoneColor.WHITE, amount);
 		}
 		return gemInputs;
 	}
 	
-	protected void writeGemstonePowderInputs(@NotNull PacketByteBuf packetByteBuf, @NotNull PedestalRecipe recipe) {
+	protected void writeGemstonePowderInputs(@NotNull FriendlyByteBuf packetByteBuf, @NotNull PedestalRecipe recipe) {
 		packetByteBuf.writeInt(recipe.getGemstonePowderAmount(BuiltinGemstoneColor.CYAN));
 		packetByteBuf.writeInt(recipe.getGemstonePowderAmount(BuiltinGemstoneColor.MAGENTA));
 		packetByteBuf.writeInt(recipe.getGemstonePowderAmount(BuiltinGemstoneColor.YELLOW));
@@ -48,7 +49,7 @@ public abstract class PedestalRecipeSerializer<T extends PedestalRecipe> impleme
 		packetByteBuf.writeInt(recipe.getGemstonePowderAmount(BuiltinGemstoneColor.WHITE));
 	}
 	
-	protected @NotNull Map<GemstoneColor, Integer> readGemstonePowderInputs(@NotNull PacketByteBuf packetByteBuf) {
+	protected @NotNull Map<GemstoneColor, Integer> readGemstonePowderInputs(@NotNull FriendlyByteBuf packetByteBuf) {
 		int cyan = packetByteBuf.readInt();
 		int magenta = packetByteBuf.readInt();
 		int yellow = packetByteBuf.readInt();

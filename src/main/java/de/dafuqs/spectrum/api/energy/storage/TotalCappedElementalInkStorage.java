@@ -1,15 +1,23 @@
 package de.dafuqs.spectrum.api.energy.storage;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import net.fabricmc.api.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.color.CompoundColor;
+import de.dafuqs.spectrum.api.energy.color.ElementalColor;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static de.dafuqs.spectrum.helpers.Support.*;
+import static de.dafuqs.spectrum.helpers.Support.getShortenedNumberString;
 
 public class TotalCappedElementalInkStorage implements InkStorage {
 	
@@ -37,8 +45,8 @@ public class TotalCappedElementalInkStorage implements InkStorage {
 		this.storedEnergy.put(InkColors.WHITE, white);
 	}
 	
-	public static @Nullable TotalCappedElementalInkStorage fromNbt(@NotNull NbtCompound compound) {
-		if (compound.contains("MaxEnergyTotal", NbtElement.LONG_TYPE)) {
+	public static @Nullable TotalCappedElementalInkStorage fromNbt(@NotNull CompoundTag compound) {
+		if (compound.contains("MaxEnergyTotal", Tag.TAG_LONG)) {
 			long maxEnergyTotal = compound.getLong("MaxEnergyTotal");
 			long cyan = compound.getLong("Cyan");
 			long magenta = compound.getLong("Magenta");
@@ -209,8 +217,8 @@ public class TotalCappedElementalInkStorage implements InkStorage {
 		return this.currentTotal >= this.maxEnergyTotal;
 	}
 	
-	public NbtCompound toNbt() {
-		NbtCompound compound = new NbtCompound();
+	public CompoundTag toNbt() {
+		CompoundTag compound = new CompoundTag();
 		compound.putLong("MaxEnergyTotal", this.maxEnergyTotal);
 		compound.putLong("Cyan", this.storedEnergy.get(InkColors.CYAN));
 		compound.putLong("Magenta", this.storedEnergy.get(InkColors.MAGENTA));
@@ -243,30 +251,30 @@ public class TotalCappedElementalInkStorage implements InkStorage {
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void addTooltip(List<Text> tooltip, boolean includeHeader) {
+	public void addTooltip(List<Component> tooltip, boolean includeHeader) {
 		if (includeHeader) {
-			tooltip.add(Text.translatable("item.spectrum.artists_palette.tooltip", getShortenedNumberString(this.maxEnergyTotal)));
-			tooltip.add(Text.translatable("item.spectrum.artists_palette.tooltip.mix_on_demand"));
+			tooltip.add(Component.translatable("item.spectrum.artists_palette.tooltip", getShortenedNumberString(this.maxEnergyTotal)));
+			tooltip.add(Component.translatable("item.spectrum.artists_palette.tooltip.mix_on_demand"));
 		}
 		long cyan = this.storedEnergy.get(InkColors.CYAN);
 		if (cyan > 0) {
-			tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.bullet.cyan", getShortenedNumberString(cyan)));
+			tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.bullet.cyan", getShortenedNumberString(cyan)));
 		}
 		long magenta = this.storedEnergy.get(InkColors.MAGENTA);
 		if (magenta > 0) {
-			tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.bullet.magenta", getShortenedNumberString(magenta)));
+			tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.bullet.magenta", getShortenedNumberString(magenta)));
 		}
 		long yellow = this.storedEnergy.get(InkColors.YELLOW);
 		if (yellow > 0) {
-			tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.bullet.yellow", getShortenedNumberString(yellow)));
+			tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.bullet.yellow", getShortenedNumberString(yellow)));
 		}
 		long black = this.storedEnergy.get(InkColors.BLACK);
 		if (black > 0) {
-			tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.bullet.black", getShortenedNumberString(black)));
+			tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.bullet.black", getShortenedNumberString(black)));
 		}
 		long white = this.storedEnergy.get(InkColors.WHITE);
 		if (white > 0) {
-			tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.bullet.white", getShortenedNumberString(white)));
+			tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.bullet.white", getShortenedNumberString(white)));
 		}
 	}
 	

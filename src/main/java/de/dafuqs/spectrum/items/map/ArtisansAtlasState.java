@@ -1,39 +1,50 @@
 package de.dafuqs.spectrum.items.map;
 
 import com.mojang.datafixers.util.Pair;
-import de.dafuqs.spectrum.mixin.accessors.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.item.map.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.world.*;
-import net.minecraft.structure.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.gen.structure.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.mixin.accessors.MapStateAccessor;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Registry;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
+import net.minecraft.world.level.saveddata.maps.MapBanner;
+import net.minecraft.world.level.saveddata.maps.MapDecoration;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
-public class ArtisansAtlasState extends MapState {
+public class ArtisansAtlasState extends MapItemSavedData {
 
     private final MapStateAccessor accessor;
     private final Set<StructureStart> targets;
     private BlockPos displayedCenter;
-    private Identifier targetId;
+    private ResourceLocation targetId;
     @Nullable
     private Vec3i displayDelta;
     @Nullable
     private StructureLocatorAsync locator;
 
-    public ArtisansAtlasState(byte scale, boolean locked, RegistryKey<World> dimension) {
+    public ArtisansAtlasState(byte scale, boolean locked, ResourceKey<Level> dimension) {
         this(0, 0, scale, false, false, locked, dimension);
     }
 
-    public ArtisansAtlasState(double centerX, double centerZ, byte scale, boolean showIcons, boolean unlimitedTracking, boolean locked, RegistryKey<World> dimension) {
+    public ArtisansAtlasState(double centerX, double centerZ, byte scale, boolean showIcons, boolean unlimitedTracking, boolean locked, ResourceKey<Level> dimension) {
         super((int) centerX, (int) centerZ, scale, showIcons, unlimitedTracking, locked, dimension);
         this.accessor = (MapStateAccessor) this;
         this.targets = new HashSet<>();
@@ -42,30 +53,30 @@ public class ArtisansAtlasState extends MapState {
         this.locator = null;
     }
 
-    public ArtisansAtlasState(double centerX, double centerZ, byte scale, boolean showIcons, boolean unlimitedTracking, boolean locked, RegistryKey<World> dimension, NbtCompound nbt) {
+    public ArtisansAtlasState(double centerX, double centerZ, byte scale, boolean showIcons, boolean unlimitedTracking, boolean locked, ResourceKey<Level> dimension, CompoundTag nbt) {
         this((int) centerX, (int) centerZ, scale, showIcons, unlimitedTracking, locked, dimension);
 	
 		// We'll use the colors from nbt
 		this.displayDelta = Vec3i.ZERO;
 	
-		if (nbt.contains("targetId", NbtElement.STRING_TYPE)) {
-			this.targetId = new Identifier(nbt.getString("targetId"));
+		if (nbt.contains("targetId", Tag.TAG_STRING)) {
+			this.targetId = new ResourceLocation(nbt.getString("targetId"));
 		} else {
 			this.targetId = null;
 		}
 	
-		int xDisplay = nbt.contains("displayX", NbtElement.NUMBER_TYPE) ? nbt.getInt("displayX") : this.displayedCenter.getX();
-		int zDisplay = nbt.contains("displayZ", NbtElement.NUMBER_TYPE) ? nbt.getInt("displayZ") : this.displayedCenter.getZ();
+		int xDisplay = nbt.contains("displayX", Tag.TAG_ANY_NUMERIC) ? nbt.getInt("displayX") : this.displayedCenter.getX();
+		int zDisplay = nbt.contains("displayZ", Tag.TAG_ANY_NUMERIC) ? nbt.getInt("displayZ") : this.displayedCenter.getZ();
 		this.displayedCenter = new BlockPos(xDisplay, 0, zDisplay);
 	}
 
-    public static @Nullable Pair<Identifier, StructureStart> locateAnyStructureAtBlock(ServerWorld world, BlockPos pos) {
-        Registry<Structure> registry = world.getRegistryManager().getOptional(RegistryKeys.STRUCTURE).orElse(null);
+    public static @Nullable Pair<ResourceLocation, StructureStart> locateAnyStructureAtBlock(ServerLevel world, BlockPos pos) {
+        Registry<Structure> registry = world.registryAccess().registry(Registries.STRUCTURE).orElse(null);
         if (registry != null) {
             for (Structure structure : registry.stream().toList()) {
-                Identifier id = registry.getId(structure);
-                StructureStart start = world.getStructureAccessor().getStructureContaining(pos, structure);
-                if (start != StructureStart.DEFAULT && id != null) {
+                ResourceLocation id = registry.getKey(structure);
+                StructureStart start = world.structureManager().getStructureWithPieceAt(pos, structure);
+                if (start != StructureStart.INVALID_START && id != null) {
                     return new Pair<>(id, start);
                 }
             }
@@ -74,8 +85,8 @@ public class ArtisansAtlasState extends MapState {
     }
 
     @Override
-    public NbtCompound writeNbt(NbtCompound nbt) {
-        nbt = super.writeNbt(nbt);
+    public CompoundTag save(CompoundTag nbt) {
+        nbt = super.save(nbt);
 
         nbt.putBoolean("isArtisansAtlas", true);
 
@@ -90,33 +101,33 @@ public class ArtisansAtlasState extends MapState {
     }
 
     @Override
-    public MapState zoomOut(int zoomOutScale) {
-        return of(this.centerX, this.centerZ, (byte) MathHelper.clamp(this.scale + zoomOutScale, 0, 4), accessor.getShowIcons(), accessor.getUnlimitedTracking(), this.dimension);
+    public MapItemSavedData scaled(int zoomOutScale) {
+        return createFresh(this.centerX, this.centerZ, (byte) Mth.clamp(this.scale + zoomOutScale, 0, 4), accessor.getShowIcons(), accessor.getUnlimitedTracking(), this.dimension);
     }
 
     @Override
-    public void update(PlayerEntity player, ItemStack stack) {
+    public void tickCarriedBy(Player player, ItemStack stack) {
         if (this.displayDelta != null) {
-            if (this.locator == null && this.targetId != null && player.getWorld() instanceof ServerWorld world) {
+            if (this.locator == null && this.targetId != null && player.level() instanceof ServerLevel world) {
                 startLocator(world);
             }
 
-            this.displayDelta = player.getBlockPos().subtract(this.displayedCenter);
+            this.displayDelta = player.blockPosition().subtract(this.displayedCenter);
         } else {
-            this.displayedCenter = player.getBlockPos();
+            this.displayedCenter = player.blockPosition();
         }
 
         this.accessor.getIcons().clear();
 
-        super.update(player, stack);
+        super.tickCarriedBy(player, stack);
 
         for (StructureStart target : this.targets) {
-            addTargetIcon(player.getWorld(), target);
+            addTargetIcon(player.level(), target);
         }
     }
 
     @Override
-    public void addIcon(MapIcon.Type type, @Nullable WorldAccess world, String key, double x, double z, double rotation, @Nullable Text text) {
+    public void addDecoration(MapDecoration.Type type, @Nullable LevelAccessor world, String key, double x, double z, double rotation, @Nullable Component text) {
         int scale = 1 << this.scale;
 
         float scaledX = (float)(x - this.displayedCenter.getX()) / scale;
@@ -127,8 +138,8 @@ public class ArtisansAtlasState extends MapState {
 
         rotation += rotation < 0.0 ? -8.0 : 8.0;
         byte rotationByte = (byte)(rotation * 16.0 / 360.0);
-        if (this.dimension == World.NETHER && world != null) {
-            int light = (int)(world.getLevelProperties().getTimeOfDay() / 10L);
+        if (this.dimension == Level.NETHER && world != null) {
+            int light = (int)(world.getLevelData().getDayTime() / 10L);
             rotationByte = (byte)(light * light * 34187121 + light * 121 >> 15 & 15);
         }
 
@@ -164,23 +175,23 @@ public class ArtisansAtlasState extends MapState {
                 borderRotation = 90.0F;
             }
 
-            if (type == MapIcon.Type.PLAYER) {
-                type = MapIcon.Type.PLAYER_OFF_MAP;
+            if (type == MapDecoration.Type.PLAYER) {
+                type = MapDecoration.Type.PLAYER_OFF_MAP;
                 rotationByte = 0;
-            } else if (type == MapIcon.Type.TARGET_POINT) {
+            } else if (type == MapDecoration.Type.TARGET_POINT) {
                 borderRotation += borderRotation < 0.0 ? -8.0 : 8.0;
                 rotationByte = (byte)(borderRotation * 16.0 / 360.0);
             }
         }
 
-        MapIcon icon = new MapIcon(type, pixelX, pixelZ, rotationByte, text);
-        MapIcon previousIcon = accessor.getIcons().put(key, icon);
+        MapDecoration icon = new MapDecoration(type, pixelX, pixelZ, rotationByte, text);
+        MapDecoration previousIcon = accessor.getIcons().put(key, icon);
         if (!icon.equals(previousIcon)) {
-            if (previousIcon != null && previousIcon.getType().shouldUseIconCountLimit()) {
+            if (previousIcon != null && previousIcon.getType().shouldTrackCount()) {
                 accessor.setIconCount(accessor.getIconCount() - 1);
             }
 
-            if (type.shouldUseIconCountLimit()) {
+            if (type.shouldTrackCount()) {
                 accessor.setIconCount(accessor.getIconCount() + 1);
             }
 
@@ -189,7 +200,7 @@ public class ArtisansAtlasState extends MapState {
     }
 
     @Override
-    public boolean addBanner(WorldAccess world, BlockPos pos) {
+    public boolean toggleBanner(LevelAccessor world, BlockPos pos) {
         double x = pos.getX() + 0.5;
         double z = pos.getZ() + 0.5;
 
@@ -198,21 +209,21 @@ public class ArtisansAtlasState extends MapState {
         double scaledZ = (z - this.displayedCenter.getZ()) / scale;
 
         if (scaledX >= -63.0 && scaledZ >= -63.0 && scaledX <= 63.0 && scaledZ <= 63.0) {
-            MapBannerMarker marker = MapBannerMarker.fromWorldBlock(world, pos);
+            MapBanner marker = MapBanner.fromWorld(world, pos);
             if (marker == null) {
                 return false;
             }
 
-            String key = marker.getKey();
+            String key = marker.getId();
 
             if (accessor.getBanners().remove(key, marker)) {
-                accessor.invokeRemoveIcon(marker.getKey());
+                accessor.invokeRemoveIcon(marker.getId());
                 return true;
             }
 
-            if (!this.iconCountNotLessThan(256)) {
+            if (!this.isTrackedCountOverLimit(256)) {
                 accessor.getBanners().put(key, marker);
-                this.addIcon(marker.getIconType(), world, key, x, z, 180.0, marker.getName());
+                this.addDecoration(marker.getDecoration(), world, key, x, z, 180.0, marker.getName());
                 return true;
             }
         }
@@ -220,17 +231,17 @@ public class ArtisansAtlasState extends MapState {
         return false;
     }
 
-    private void addTargetIcon(WorldAccess world, StructureStart target) {
+    private void addTargetIcon(LevelAccessor world, StructureStart target) {
         if (target != null) {
-            addIcon(MapIcon.Type.TARGET_POINT, world, getTargetKey(target), target.getPos().getCenterX(), target.getPos().getCenterZ(), 180, null);
+            addDecoration(MapDecoration.Type.TARGET_POINT, world, getTargetKey(target), target.getChunkPos().getMiddleBlockX(), target.getChunkPos().getMiddleBlockZ(), 180, null);
         }
     }
 
     private String getTargetKey(StructureStart start) {
-        return String.format("target-%d-%d", start.getPos().x, start.getPos().z);
+        return String.format("target-%d-%d", start.getChunkPos().x, start.getChunkPos().z);
     }
 
-    public void startLocator(ServerWorld world) {
+    public void startLocator(ServerLevel world) {
         if (targetId == null) return;
         this.locator = new StructureLocatorAsync(world, this::addTarget, this.targetId, new ChunkPos(this.displayedCenter), 32);
     }
@@ -245,19 +256,19 @@ public class ArtisansAtlasState extends MapState {
         return this.displayedCenter;
     }
 
-    public void addTarget(WorldAccess world, StructureStart target) {
+    public void addTarget(LevelAccessor world, StructureStart target) {
         this.targets.add(target);
         addTargetIcon(world, target);
     }
     
-    public void setTargetId(@Nullable Identifier targetId) {
+    public void setTargetId(@Nullable ResourceLocation targetId) {
         if (this.targetId != targetId) {
             this.targetId = targetId;
-            this.markDirty();
+            this.setDirty();
         }
     }
     
-    public @Nullable Identifier getTargetId() {
+    public @Nullable ResourceLocation getTargetId() {
         return this.targetId;
     }
     
@@ -272,11 +283,11 @@ public class ArtisansAtlasState extends MapState {
 
             Vec3i remainder = new Vec3i(this.displayDelta.getX() % sampleSize, 0, this.displayDelta.getZ() % sampleSize);
             Vec3i delta = this.displayDelta.subtract(remainder);
-            BlockPos newDisplayedCenter = this.displayedCenter.add(delta);
+            BlockPos newDisplayedCenter = this.displayedCenter.offset(delta);
 
             if (this.locator != null) {
-                ChunkSectionPos startChunk = ChunkSectionPos.from(this.displayedCenter);
-                ChunkSectionPos endChunk = ChunkSectionPos.from(newDisplayedCenter);
+                SectionPos startChunk = SectionPos.of(this.displayedCenter);
+                SectionPos endChunk = SectionPos.of(newDisplayedCenter);
                 this.locator.move(endChunk.getX() - startChunk.getX(), endChunk.getZ() - startChunk.getZ());
             }
 
@@ -287,13 +298,13 @@ public class ArtisansAtlasState extends MapState {
         }
     }
 
-    public void updateDimension(RegistryKey<World> dimension) {
+    public void updateDimension(ResourceKey<Level> dimension) {
         if (!this.dimension.equals(dimension)) {
             this.dimension = dimension;
             this.displayDelta = null;
             this.targets.clear();
             this.targetId = null;
-            this.markDirty();
+            this.setDirty();
         }
     }
 

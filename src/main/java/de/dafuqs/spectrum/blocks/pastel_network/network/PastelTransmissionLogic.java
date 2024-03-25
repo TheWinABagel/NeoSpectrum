@@ -1,19 +1,23 @@
 package de.dafuqs.spectrum.blocks.pastel_network.network;
 
-import de.dafuqs.spectrum.blocks.pastel_network.nodes.*;
-import de.dafuqs.spectrum.networking.*;
-import net.fabricmc.fabric.api.transfer.v1.item.*;
-import net.fabricmc.fabric.api.transfer.v1.storage.*;
-import net.fabricmc.fabric.api.transfer.v1.transaction.*;
-import net.minecraft.util.math.*;
-import org.jetbrains.annotations.*;
-import org.jgrapht.*;
-import org.jgrapht.alg.interfaces.*;
-import org.jgrapht.alg.shortestpath.*;
-import org.jgrapht.graph.*;
+import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity;
+import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeType;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.Nullable;
+import org.jgrapht.Graph;
+import org.jgrapht.GraphPath;
+import org.jgrapht.alg.interfaces.ShortestPathAlgorithm;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.graph.DefaultEdge;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.Predicate;
 
 @SuppressWarnings("UnstableApiUsage")
 public class PastelTransmissionLogic {
@@ -169,7 +173,7 @@ public class PastelTransmissionLogic {
 		if (graphPath != null) {
 			List<BlockPos> vertexPositions = new ArrayList<>();
 			for (PastelNodeBlockEntity vertex : graphPath.getVertexList()) {
-				vertexPositions.add(vertex.getPos());
+				vertexPositions.add(vertex.getBlockPos());
 			}
 			return Optional.of(new PastelTransmission(vertexPositions, variant, amount));
 		}

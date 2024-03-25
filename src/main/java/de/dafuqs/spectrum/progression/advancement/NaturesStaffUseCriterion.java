@@ -1,50 +1,51 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.block.*;
-import net.minecraft.predicate.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-public class NaturesStaffUseCriterion extends AbstractCriterion<NaturesStaffUseCriterion.Conditions> {
+public class NaturesStaffUseCriterion extends SimpleCriterionTrigger<NaturesStaffUseCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("natures_staff_conversion");
+	static final ResourceLocation ID = SpectrumCommon.locate("natures_staff_conversion");
 	
 	@Nullable
 	private static Block getBlock(JsonObject obj, String propertyName) {
 		if (obj.has(propertyName)) {
-			Identifier identifier = new Identifier(JsonHelper.getString(obj, propertyName));
-			return Registries.BLOCK.getOrEmpty(identifier).orElseThrow(() -> new JsonSyntaxException("Unknown block type '" + identifier + "'"));
+			ResourceLocation identifier = new ResourceLocation(GsonHelper.getAsString(obj, propertyName));
+			return BuiltInRegistries.BLOCK.getOptional(identifier).orElseThrow(() -> new JsonSyntaxException("Unknown block type '" + identifier + "'"));
 		} else {
 			return null;
 		}
 	}
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
 	@Override
-	public NaturesStaffUseCriterion.Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate extended, AdvancementEntityPredicateDeserializer advancementEntityPredicateDeserializer) {
+	public NaturesStaffUseCriterion.Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate extended, DeserializationContext advancementEntityPredicateDeserializer) {
 		Block sourceBlock = getBlock(jsonObject, "source_block");
-		StatePredicate sourceStatePredicate = StatePredicate.fromJson(jsonObject.get("source_state"));
+		StatePropertiesPredicate sourceStatePredicate = StatePropertiesPredicate.fromJson(jsonObject.get("source_state"));
 		
 		if (sourceBlock != null) {
-			sourceStatePredicate.check(sourceBlock.getStateManager(), (name) -> {
+			sourceStatePredicate.checkState(sourceBlock.getStateDefinition(), (name) -> {
 				throw new JsonSyntaxException("Block " + sourceBlock + " has no property " + name);
 			});
 		}
 		
 		Block targetBlock = getBlock(jsonObject, "target_block");
-		StatePredicate targetStatePredicate = StatePredicate.fromJson(jsonObject.get("target_state"));
+		StatePropertiesPredicate targetStatePredicate = StatePropertiesPredicate.fromJson(jsonObject.get("target_state"));
 		if (targetBlock != null) {
-			targetStatePredicate.check(targetBlock.getStateManager(), (name) -> {
+			targetStatePredicate.checkState(targetBlock.getStateDefinition(), (name) -> {
 				throw new JsonSyntaxException("Block " + targetBlock + " has no property " + name);
 			});
 		}
@@ -52,20 +53,20 @@ public class NaturesStaffUseCriterion extends AbstractCriterion<NaturesStaffUseC
 		return new NaturesStaffUseCriterion.Conditions(extended, sourceBlock, sourceStatePredicate, targetBlock, targetStatePredicate);
 	}
 	
-	public void trigger(ServerPlayerEntity player, BlockState sourceBlockState, BlockState targetBlockState) {
+	public void trigger(ServerPlayer player, BlockState sourceBlockState, BlockState targetBlockState) {
 		this.trigger(player, (conditions) -> conditions.matches(sourceBlockState, targetBlockState));
 	}
 	
-	public static class Conditions extends AbstractCriterionConditions {
+	public static class Conditions extends AbstractCriterionTriggerInstance {
 		
 		@Nullable
 		private final Block sourceBlock;
-		private final StatePredicate sourceBlockState;
+		private final StatePropertiesPredicate sourceBlockState;
 		@Nullable
 		private final Block targetBlock;
-		private final StatePredicate targetBlockState;
+		private final StatePropertiesPredicate targetBlockState;
 		
-		public Conditions(LootContextPredicate player, @Nullable Block sourceBlock, StatePredicate sourceBlockState, @Nullable Block targetBlock, StatePredicate targetBlockState) {
+		public Conditions(ContextAwarePredicate player, @Nullable Block sourceBlock, StatePropertiesPredicate sourceBlockState, @Nullable Block targetBlock, StatePropertiesPredicate targetBlockState) {
 			super(ID, player);
 			this.sourceBlock = sourceBlock;
 			this.sourceBlockState = sourceBlockState;
@@ -74,30 +75,30 @@ public class NaturesStaffUseCriterion extends AbstractCriterion<NaturesStaffUseC
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
 			if (this.sourceBlock != null) {
-				jsonObject.addProperty("source_block", Registries.BLOCK.getId(this.sourceBlock).toString());
+				jsonObject.addProperty("source_block", BuiltInRegistries.BLOCK.getKey(this.sourceBlock).toString());
 			}
-			jsonObject.add("source_state:", this.sourceBlockState.toJson());
+			jsonObject.add("source_state:", this.sourceBlockState.serializeToJson());
 			if (this.targetBlock != null) {
-				jsonObject.addProperty("target_block", Registries.BLOCK.getId(this.targetBlock).toString());
+				jsonObject.addProperty("target_block", BuiltInRegistries.BLOCK.getKey(this.targetBlock).toString());
 			}
-			jsonObject.add("target_state", this.targetBlockState.toJson());
+			jsonObject.add("target_state", this.targetBlockState.serializeToJson());
 			return jsonObject;
 		}
 		
 		public boolean matches(BlockState sourceBlockState, BlockState targetBlockState) {
-			if (this.sourceBlock != null && !sourceBlockState.isOf(this.sourceBlock)) {
+			if (this.sourceBlock != null && !sourceBlockState.is(this.sourceBlock)) {
 				return false;
 			}
-			if (!this.sourceBlockState.test(sourceBlockState)) {
+			if (!this.sourceBlockState.matches(sourceBlockState)) {
 				return false;
 			}
-			if (this.targetBlock != null && !targetBlockState.isOf(this.targetBlock)) {
+			if (this.targetBlock != null && !targetBlockState.is(this.targetBlock)) {
 				return false;
 			} else {
-				return this.targetBlockState.test(targetBlockState);
+				return this.targetBlockState.matches(targetBlockState);
 			}
 		}
 		

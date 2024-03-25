@@ -1,62 +1,70 @@
 package de.dafuqs.spectrum.blocks.ender;
 
-import de.dafuqs.spectrum.inventories.*;
+import de.dafuqs.spectrum.inventories.GenericSpectrumContainerScreenHandler;
+import de.dafuqs.spectrum.inventories.ScreenBackgroundVariant;
 import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
 import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
-import net.minecraft.block.*;
-import net.minecraft.block.dispenser.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.screen.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockSourceImpl;
+import net.minecraft.core.Direction;
+import net.minecraft.core.dispenser.DefaultDispenseItemBehavior;
+import net.minecraft.core.dispenser.DispenseItemBehavior;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.piglin.PiglinAi;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.PlayerEnderChestContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.DispenserBlock;
+import net.minecraft.world.level.block.LevelEvent;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
 
 public class EnderDropperBlock extends DispenserBlock {
 	
-	private static final DispenserBehavior BEHAVIOR = new ItemDispenserBehavior();
+	private static final DispenseItemBehavior BEHAVIOR = new DefaultDispenseItemBehavior();
 	
-	public EnderDropperBlock(Settings settings) {
+	public EnderDropperBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	protected DispenserBehavior getBehaviorForItem(ItemStack stack) {
+	protected DispenseItemBehavior getDispenseMethod(ItemStack stack) {
 		return BEHAVIOR;
 	}
 	
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new EnderDropperBlockEntity(pos, state);
 	}
 	
 	@Override
-	public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-		if (placer instanceof ServerPlayerEntity) {
+	public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+		if (placer instanceof ServerPlayer) {
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			if (blockEntity instanceof EnderDropperBlockEntity) {
-				((EnderDropperBlockEntity) blockEntity).setOwner((ServerPlayerEntity) placer);
-				blockEntity.markDirty();
+				((EnderDropperBlockEntity) blockEntity).setOwner((ServerPlayer) placer);
+				blockEntity.setChanged();
 			}
 		}
 	}
 	
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		if (world.isClient) {
-			return ActionResult.SUCCESS;
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		if (world.isClientSide) {
+			return InteractionResult.SUCCESS;
 		} else {
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			if (blockEntity instanceof EnderDropperBlockEntity enderDropperBlockEntity) {
@@ -66,40 +74,40 @@ public class EnderDropperBlock extends DispenserBlock {
 				}
 				
 				if (enderDropperBlockEntity.isOwner(player)) {
-					EnderChestInventory enderChestInventory = player.getEnderChestInventory();
+					PlayerEnderChestContainer enderChestInventory = player.getEnderChestInventory();
 					
-					player.openHandledScreen(new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> GenericSpectrumContainerScreenHandler.createGeneric9x3(i, playerInventory, enderChestInventory, ScreenBackgroundVariant.EARLYGAME), enderDropperBlockEntity.getContainerName()));
+					player.openMenu(new SimpleMenuProvider((i, playerInventory, playerEntity) -> GenericSpectrumContainerScreenHandler.createGeneric9x3(i, playerInventory, enderChestInventory, ScreenBackgroundVariant.EARLYGAME), enderDropperBlockEntity.getContainerName()));
 					
-					PiglinBrain.onGuardedBlockInteracted(player, true);
+					PiglinAi.angerNearbyPiglins(player, true);
 				} else {
-					player.sendMessage(Text.translatable("block.spectrum.ender_dropper_with_owner", enderDropperBlockEntity.getOwnerName()), true);
+					player.displayClientMessage(Component.translatable("block.spectrum.ender_dropper_with_owner", enderDropperBlockEntity.getOwnerName()), true);
 				}
 			}
-			return ActionResult.CONSUME;
+			return InteractionResult.CONSUME;
 		}
 	}
 	
 	@SuppressWarnings("UnstableApiUsage")
 	@Override
-	protected void dispense(ServerWorld world, BlockPos pos) {
-		BlockPointerImpl blockPointerImpl = new BlockPointerImpl(world, pos);
-		EnderDropperBlockEntity enderDropperBlockEntity = blockPointerImpl.getBlockEntity();
+	protected void dispenseFrom(ServerLevel world, BlockPos pos) {
+		BlockSourceImpl blockPointerImpl = new BlockSourceImpl(world, pos);
+		EnderDropperBlockEntity enderDropperBlockEntity = blockPointerImpl.getEntity();
 		
 		int i = enderDropperBlockEntity.chooseNonEmptySlot();
 		if (i < 0) {
-			world.syncWorldEvent(WorldEvents.DISPENSER_FAILS, pos, 0); // no items in inv
+			world.levelEvent(LevelEvent.SOUND_DISPENSER_FAIL, pos, 0); // no items in inv
 		} else {
 			ItemStack itemStack = enderDropperBlockEntity.getStack(i);
 			if (!itemStack.isEmpty()) {
-				Direction direction = world.getBlockState(pos).get(FACING);
-				if (world.getBlockState(pos.offset(direction)).isAir()) {
+				Direction direction = world.getBlockState(pos).getValue(FACING);
+				if (world.getBlockState(pos.relative(direction)).isAir()) {
 					ItemStack itemStack3 = BEHAVIOR.dispense(blockPointerImpl, itemStack);
 					enderDropperBlockEntity.setStack(i, itemStack3);
 				} else {
-					Storage<ItemVariant> target = ItemStorage.SIDED.find(world, pos.offset(direction), direction.getOpposite());
+					Storage<ItemVariant> target = ItemStorage.SIDED.find(world, pos.relative(direction), direction.getOpposite());
 					if (target != null) {
 						// getting inv will always work since .chooseNonEmptySlot() and others would fail otherwise
-						Inventory inv = enderDropperBlockEntity.getOwnerIfOnline().getEnderChestInventory();
+						Container inv = enderDropperBlockEntity.getOwnerIfOnline().getEnderChestInventory();
 						long moved = StorageUtil.move(
 								InventoryStorage.of(inv, direction).getSlot(i),
 								target,
@@ -110,14 +118,14 @@ public class EnderDropperBlock extends DispenserBlock {
 						// return without triggering fail event if successfully moved
 						if (moved == 1) return;
 					}
-					world.syncWorldEvent(WorldEvents.DISPENSER_FAILS, pos, 0); // no room to dispense to
+					world.levelEvent(LevelEvent.SOUND_DISPENSER_FAIL, pos, 0); // no room to dispense to
 				}
 			}
 		}
 	}
 
-	public DispenserBehavior getDefaultBehaviorForItem(ItemStack stack) {
-		return super.getBehaviorForItem(stack);
+	public DispenseItemBehavior getDefaultBehaviorForItem(ItemStack stack) {
+		return super.getDispenseMethod(stack);
 	}
 
 }

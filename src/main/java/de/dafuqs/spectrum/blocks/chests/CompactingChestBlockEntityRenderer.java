@@ -1,73 +1,84 @@
 package de.dafuqs.spectrum.blocks.chests;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.client.model.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.block.entity.*;
-import net.minecraft.client.util.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.screen.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.resources.model.Material;
+import net.minecraft.core.Direction;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ChestBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 
 @Environment(EnvType.CLIENT)
 public class CompactingChestBlockEntityRenderer implements BlockEntityRenderer<CompactingChestBlockEntity> {
 	
-	private static final SpriteIdentifier SPRITE_IDENTIFIER = new SpriteIdentifier(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE, SpectrumCommon.locate("block/compacting_chest"));
+	private static final Material SPRITE_IDENTIFIER = new Material(InventoryMenu.BLOCK_ATLAS, SpectrumCommon.locate("block/compacting_chest"));
 	private final ModelPart root;
 	private final ModelPart lid;
 	private final ModelPart column;
 	private final ModelPart lock;
 	
-	public CompactingChestBlockEntityRenderer(BlockEntityRendererFactory.Context ctx) {
-		TexturedModelData texturedModelData = getTexturedModelData();
-		root = texturedModelData.createModel();
+	public CompactingChestBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {
+		LayerDefinition texturedModelData = getTexturedModelData();
+		root = texturedModelData.bakeRoot();
 		lid = root.getChild("lid");
 		column = root.getChild("column");
 		lock = root.getChild("lock");
 	}
 	
-	public static @NotNull TexturedModelData getTexturedModelData() {
-		ModelData modelData = new ModelData();
-		ModelPartData modelPartData = modelData.getRoot();
+	public static @NotNull LayerDefinition getTexturedModelData() {
+		MeshDefinition modelData = new MeshDefinition();
+		PartDefinition modelPartData = modelData.getRoot();
 		
-		modelPartData.addChild("bottom", ModelPartBuilder.create().uv(0, 17).cuboid(1.0F, 0.0F, 1.0F, 14.0F, 11.0F, 14.0F), ModelTransform.pivot(0.0F, 0.0F, 0.0F));
-		modelPartData.addChild("lid", ModelPartBuilder.create().uv(0, 0).cuboid(1.0F, 0.0F, 1.0F, 14.0F, 3.0F, 14.0F), ModelTransform.pivot(0.0F, 13.0F, 0.0F));
-		modelPartData.addChild("column", ModelPartBuilder.create().uv(18, 32).cuboid(7.0F, -7.0F, 7.0F, 2.0F, 7.0F, 2.0F), ModelTransform.pivot(0.0F, 13.0F, 0.0F));
-		modelPartData.addChild("lock", ModelPartBuilder.create().uv(34, 4).cuboid(7.0F, -2.0F, 15.0F, 2.0F, 4.0F, 1.0F), ModelTransform.pivot(0.0F, 14.0F, 0.0F));
+		modelPartData.addOrReplaceChild("bottom", CubeListBuilder.create().texOffs(0, 17).addBox(1.0F, 0.0F, 1.0F, 14.0F, 11.0F, 14.0F), PartPose.offset(0.0F, 0.0F, 0.0F));
+		modelPartData.addOrReplaceChild("lid", CubeListBuilder.create().texOffs(0, 0).addBox(1.0F, 0.0F, 1.0F, 14.0F, 3.0F, 14.0F), PartPose.offset(0.0F, 13.0F, 0.0F));
+		modelPartData.addOrReplaceChild("column", CubeListBuilder.create().texOffs(18, 32).addBox(7.0F, -7.0F, 7.0F, 2.0F, 7.0F, 2.0F), PartPose.offset(0.0F, 13.0F, 0.0F));
+		modelPartData.addOrReplaceChild("lock", CubeListBuilder.create().texOffs(34, 4).addBox(7.0F, -2.0F, 15.0F, 2.0F, 4.0F, 1.0F), PartPose.offset(0.0F, 14.0F, 0.0F));
 		
-		return TexturedModelData.of(modelData, 64, 64);
+		return LayerDefinition.create(modelData, 64, 64);
 	}
 	
 	@Override
-	public void render(CompactingChestBlockEntity entity, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, int light, int overlay) {
-		World world = entity.getWorld();
+	public void render(CompactingChestBlockEntity entity, float tickDelta, PoseStack matrixStack, MultiBufferSource vertexConsumers, int light, int overlay) {
+		Level world = entity.getLevel();
 		boolean bl = world != null;
-		BlockState blockState = bl ? entity.getCachedState() : SpectrumBlocks.COMPACTING_CHEST.getDefaultState().with(ChestBlock.FACING, Direction.SOUTH);
+		BlockState blockState = bl ? entity.getBlockState() : SpectrumBlocks.COMPACTING_CHEST.defaultBlockState().setValue(ChestBlock.FACING, Direction.SOUTH);
 		
-		matrixStack.push();
-		float f = (blockState.get(ChestBlock.FACING)).asRotation();
+		matrixStack.pushPose();
+		float f = (blockState.getValue(ChestBlock.FACING)).toYRot();
 		matrixStack.translate(0.5D, 0.5D, 0.5D);
-		matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-f));
+		matrixStack.mulPose(Axis.YP.rotationDegrees(-f));
 		matrixStack.translate(-0.5D, -0.5D, -0.5D);
 		
-		float openFactor = entity.getAnimationProgress(tickDelta);
+		float openFactor = entity.getOpenNess(tickDelta);
 		openFactor = 1.0F - openFactor;
 		openFactor = 1.0F - openFactor * openFactor * openFactor;
 		
-		lid.pivotY = 11 + openFactor * 6;
-		column.pivotY = 11 + openFactor * 6;
-		lock.pivotY = 11 + openFactor * 6;
+		lid.y = 11 + openFactor * 6;
+		column.y = 11 + openFactor * 6;
+		lock.y = 11 + openFactor * 6;
 		
-		VertexConsumer vertexConsumer = SPRITE_IDENTIFIER.getVertexConsumer(vertexConsumers, RenderLayer::getEntityCutout);
+		VertexConsumer vertexConsumer = SPRITE_IDENTIFIER.buffer(vertexConsumers, RenderType::entityCutout);
 		
 		root.render(matrixStack, vertexConsumer, light, overlay);
 		
-		matrixStack.pop();
+		matrixStack.popPose();
 	}
 	
 }

@@ -1,18 +1,20 @@
 package de.dafuqs.spectrum.items.tools;
 
-import net.minecraft.enchantment.*;
-import net.minecraft.item.*;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 
-import java.util.*;
+import java.util.Map;
 
 public class BedrockPickaxeItem extends SpectrumPickaxeItem {
 	
-	public BedrockPickaxeItem(ToolMaterial material, int attackDamage, float attackSpeed, Settings settings) {
+	public BedrockPickaxeItem(Tier material, int attackDamage, float attackSpeed, Properties settings) {
 		super(material, attackDamage, attackSpeed, settings);
 	}
 	
 	@Override
-	public boolean isDamageable() {
+	public boolean canBeDepleted() {
 		return false;
 	}
 	
@@ -22,7 +24,7 @@ public class BedrockPickaxeItem extends SpectrumPickaxeItem {
 	}
 	
 	@Override
-	public ItemStack getDefaultStack() {
+	public ItemStack getDefaultInstance() {
 		return getDefaultEnchantedStack(this);
 	}
 	

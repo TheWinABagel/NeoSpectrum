@@ -1,20 +1,21 @@
 package de.dafuqs.spectrum.blocks.spirit_sallow;
 
-import de.dafuqs.spectrum.particle.*;
-import net.minecraft.block.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class SpiritSallowLeavesBlock extends LeavesBlock {
 	
-	public SpiritSallowLeavesBlock(Settings settings) {
+	public SpiritSallowLeavesBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-		super.randomDisplayTick(state, world, pos, random);
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
+		super.animateTick(state, world, pos, random);
 		
 		if (random.nextBoolean() /*!state.get(LeavesBlock.PERSISTENT) && state.get(LeavesBlock.DISTANCE) > 1 && world.getBlockState(pos.up()).isAir()*/) {
 			double startX = pos.getX() + random.nextFloat();

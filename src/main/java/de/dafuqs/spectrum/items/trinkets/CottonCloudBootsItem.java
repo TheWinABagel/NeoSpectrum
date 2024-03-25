@@ -1,36 +1,36 @@
 package de.dafuqs.spectrum.items.trinkets;
 
-import de.dafuqs.spectrum.*;
-import dev.emi.trinkets.api.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import dev.emi.trinkets.api.SlotReference;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class CottonCloudBootsItem extends SpectrumTrinketItem {
 	
-	public CottonCloudBootsItem(Settings settings) {
+	public CottonCloudBootsItem(Properties settings) {
 		super(settings, SpectrumCommon.locate("unlocks/trinkets/cotton_cloud_boots"));
 	}
 	
 	@Override
 	public void tick(ItemStack stack, SlotReference slot, LivingEntity entity) {
 		super.tick(stack, slot, entity);
-		World world = entity.getWorld();
-		if (entity.isSprinting() && !entity.isOnGround() && !entity.isSneaking()) {
-			Vec3d velocity = entity.getVelocity();
+		Level world = entity.level();
+		if (entity.isSprinting() && !entity.onGround() && !entity.isShiftKeyDown()) {
+			Vec3 velocity = entity.getDeltaMovement();
 			if (velocity.y < 0) {
-				entity.setVelocity(entity.getVelocity().multiply(1, 0.1, 1));
-				if (world.isClient) {
-					Random random = world.random;
+				entity.setDeltaMovement(entity.getDeltaMovement().multiply(1, 0.1, 1));
+				if (world.isClientSide) {
+					RandomSource random = world.random;
 					world.addParticle(ParticleTypes.CLOUD, entity.getX(), entity.getY(), entity.getZ(),
 							0.125 - random.nextFloat() * 0.25, 0.04 - random.nextFloat() * 0.08, 0.125 - random.nextFloat() * 0.25);
 				}
@@ -39,10 +39,10 @@ public class CottonCloudBootsItem extends SpectrumTrinketItem {
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
-		tooltip.add(Text.translatable("item.spectrum.cotton_cloud_boots.tooltip").formatted(Formatting.GRAY));
-		tooltip.add(Text.translatable("item.spectrum.cotton_cloud_boots.tooltip2").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
+		tooltip.add(Component.translatable("item.spectrum.cotton_cloud_boots.tooltip").withStyle(ChatFormatting.GRAY));
+		tooltip.add(Component.translatable("item.spectrum.cotton_cloud_boots.tooltip2").withStyle(ChatFormatting.GRAY));
 	}
 	
 }

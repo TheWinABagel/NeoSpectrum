@@ -1,20 +1,25 @@
 package de.dafuqs.spectrum.recipe.fluid_converting;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class DragonrotConvertingRecipe extends FluidConvertingRecipe {
 
-    public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("hidden/interact_with_dragonrot");
+    public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("hidden/interact_with_dragonrot");
     private static final Set<Item> outputItems = new HashSet<>();
 
-    public DragonrotConvertingRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, @NotNull Ingredient inputIngredient, ItemStack outputItemStack) {
+    public DragonrotConvertingRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, @NotNull Ingredient inputIngredient, ItemStack outputItemStack) {
         super(id, group, secret, requiredAdvancementIdentifier, inputIngredient, outputItemStack);
         outputItems.add(outputItemStack.getItem());
     }
@@ -24,7 +29,7 @@ public class DragonrotConvertingRecipe extends FluidConvertingRecipe {
     }
 
     @Override
-    public ItemStack createIcon() {
+    public ItemStack getToastSymbol() {
         return new ItemStack(SpectrumItems.DRAGONROT_BUCKET);
     }
 
@@ -39,7 +44,7 @@ public class DragonrotConvertingRecipe extends FluidConvertingRecipe {
     }
 
     @Override
-    public Identifier getRecipeTypeUnlockIdentifier() {
+    public ResourceLocation getRecipeTypeUnlockIdentifier() {
         return UNLOCK_IDENTIFIER;
     }
 

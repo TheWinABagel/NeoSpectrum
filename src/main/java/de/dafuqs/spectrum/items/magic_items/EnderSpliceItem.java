@@ -1,47 +1,60 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.registries.*;
-import de.dafuqs.spectrum.sound.*;
-import net.fabricmc.api.*;
-import net.fabricmc.fabric.api.dimension.v1.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.client.*;
-import net.minecraft.client.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.stat.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.block.PlayerOwned;
+import de.dafuqs.spectrum.api.item.ExtendedEnchantable;
+import de.dafuqs.spectrum.helpers.Support;
+import de.dafuqs.spectrum.networking.SpectrumC2SPacketSender;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import de.dafuqs.spectrum.sound.EnderSpliceChargingSoundInstance;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
+import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.*;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.portal.PortalInfo;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 	
-	public EnderSpliceItem(Settings settings) {
+	public EnderSpliceItem(Properties settings) {
 		super(settings);
 	}
 	
-	public static boolean isSameWorld(World world1, World world2) {
-		return world1.getRegistryKey().getValue().toString().equals(world2.getRegistryKey().getValue().toString());
+	public static boolean isSameWorld(Level world1, Level world2) {
+		return world1.dimension().location().toString().equals(world2.dimension().location().toString());
 	}
 	
-	public static void setTeleportTargetPos(@NotNull ItemStack itemStack, World world, Vec3d pos) {
-		NbtCompound nbtCompound = itemStack.getOrCreateNbt();
+	public static void setTeleportTargetPos(@NotNull ItemStack itemStack, Level world, Vec3 pos) {
+		CompoundTag nbtCompound = itemStack.getOrCreateTag();
 		
 		// Remove player tags, if present
 		if (nbtCompound.contains("TargetPlayerName")) {
@@ -52,15 +65,15 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 		}
 		
 		// Add pos
-		nbtCompound.putDouble("PosX", pos.getX());
-		nbtCompound.putDouble("PosY", pos.getY());
-		nbtCompound.putDouble("PosZ", pos.getZ());
-		nbtCompound.putString("Dimension", world.getRegistryKey().getValue().toString());
-		itemStack.setNbt(nbtCompound);
+		nbtCompound.putDouble("PosX", pos.x());
+		nbtCompound.putDouble("PosY", pos.y());
+		nbtCompound.putDouble("PosZ", pos.z());
+		nbtCompound.putString("Dimension", world.dimension().location().toString());
+		itemStack.setTag(nbtCompound);
 	}
 	
-	public static void setTeleportTargetPlayer(@NotNull ItemStack itemStack, ServerPlayerEntity player) {
-		NbtCompound nbtCompound = itemStack.getOrCreateNbt();
+	public static void setTeleportTargetPlayer(@NotNull ItemStack itemStack, ServerPlayer player) {
+		CompoundTag nbtCompound = itemStack.getOrCreateTag();
 		
 		// Override target pos, if present
 		if (nbtCompound.contains("PosX")) {
@@ -78,12 +91,12 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 		
 		// Add player
 		nbtCompound.putString("TargetPlayerName", player.getName().getString());
-		nbtCompound.putUuid("TargetPlayerUUID", player.getUuid());
-		itemStack.setNbt(nbtCompound);
+		nbtCompound.putUUID("TargetPlayerUUID", player.getUUID());
+		itemStack.setTag(nbtCompound);
 	}
 	
 	public static boolean hasTeleportTarget(ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getNbt();
+		CompoundTag nbtCompound = itemStack.getTag();
 		if (nbtCompound == null) {
 			return false;
 		}
@@ -92,7 +105,7 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 	}
 	
 	public static void clearTeleportTarget(ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getOrCreateNbt();
+		CompoundTag nbtCompound = itemStack.getOrCreateTag();
 		
 		if (nbtCompound.contains("PosX")) {
 			nbtCompound.remove("PosX");
@@ -113,26 +126,26 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 			nbtCompound.remove("TargetPlayerUUID");
 		}
 		
-		itemStack.setNbt(nbtCompound);
+		itemStack.setTag(nbtCompound);
 	}
 	
 	@Override
-	public ItemStack finishUsing(ItemStack itemStack, World world, LivingEntity user) {
-		if (world.isClient) {
+	public ItemStack finishUsingItem(ItemStack itemStack, Level world, LivingEntity user) {
+		if (world.isClientSide) {
 			if (getTeleportTargetPos(itemStack).isEmpty() && getTeleportTargetPlayerUUID(itemStack).isEmpty()) {
 				interactWithEntityClient();
 			}
-		} else if (user instanceof ServerPlayerEntity playerEntity) {
-			Criteria.CONSUME_ITEM.trigger(playerEntity, itemStack);
+		} else if (user instanceof ServerPlayer playerEntity) {
+			CriteriaTriggers.CONSUME_ITEM.trigger(playerEntity, itemStack);
 			
-			boolean resonance = EnchantmentHelper.getLevel(SpectrumEnchantments.RESONANCE, itemStack) > 0;
+			boolean resonance = EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.RESONANCE, itemStack) > 0;
 			
 			// If Dimension & Pos stored => Teleport to that position
-			Optional<Pair<String, Vec3d>> teleportTargetPos = getTeleportTargetPos(itemStack);
+			Optional<Tuple<String, Vec3>> teleportTargetPos = getTeleportTargetPos(itemStack);
 			if (teleportTargetPos.isPresent()) {
-				RegistryKey<World> targetWorldKey = RegistryKey.of(RegistryKeys.WORLD, new Identifier(teleportTargetPos.get().getLeft()));
-				World targetWorld = world.getServer().getWorld(targetWorldKey);
-				if (teleportPlayerToPos(world, user, playerEntity, targetWorld, teleportTargetPos.get().getRight(), resonance)) {
+				ResourceKey<Level> targetWorldKey = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(teleportTargetPos.get().getA()));
+				Level targetWorld = world.getServer().getLevel(targetWorldKey);
+				if (teleportPlayerToPos(world, user, playerEntity, targetWorld, teleportTargetPos.get().getB(), resonance)) {
 					decrementWithChance(itemStack, world, playerEntity);
 				}
 			} else {
@@ -144,26 +157,26 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 					}
 				} else {
 					// Nothing stored => Store current position
-					setTeleportTargetPos(itemStack, playerEntity.getEntityWorld(), playerEntity.getPos());
-					world.playSound(null, playerEntity.getBlockPos(), SpectrumSoundEvents.ENDER_SPLICE_BOUND, SoundCategory.PLAYERS, 1.0F, 1.0F);
+					setTeleportTargetPos(itemStack, playerEntity.getCommandSenderWorld(), playerEntity.position());
+					world.playSound(null, playerEntity.blockPosition(), SpectrumSoundEvents.ENDER_SPLICE_BOUND, SoundSource.PLAYERS, 1.0F, 1.0F);
 				}
 			}
-			playerEntity.incrementStat(Stats.USED.getOrCreateStat(this));
+			playerEntity.awardStat(Stats.ITEM_USED.get(this));
 		}
 		
 		return itemStack;
 	}
 	
-	private static void decrementWithChance(ItemStack itemStack, World world, ServerPlayerEntity playerEntity) {
-		if (EnchantmentHelper.getLevel(SpectrumEnchantments.INDESTRUCTIBLE, itemStack) > 0) {
+	private static void decrementWithChance(ItemStack itemStack, Level world, ServerPlayer playerEntity) {
+		if (EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.INDESTRUCTIBLE, itemStack) > 0) {
 			return;
 		}
-		if (!playerEntity.getAbilities().creativeMode) {
-			int unbreakingLevel = EnchantmentHelper.getLevel(Enchantments.UNBREAKING, itemStack);
+		if (!playerEntity.getAbilities().instabuild) {
+			int unbreakingLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.UNBREAKING, itemStack);
 			if (unbreakingLevel == 0) {
-				itemStack.decrement(1);
+				itemStack.shrink(1);
 			} else {
-				itemStack.decrement(Support.getIntFromDecimalWithChance(1.0 / (1 + unbreakingLevel), world.random));
+				itemStack.shrink(Support.getIntFromDecimalWithChance(1.0 / (1 + unbreakingLevel), world.random));
 			}
 		}
 	}
@@ -171,82 +184,82 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 	@Environment(EnvType.CLIENT)
     public void interactWithEntityClient() {
 		// If aiming at an entity: trigger entity interaction
-		MinecraftClient client = MinecraftClient.getInstance();
-		HitResult hitResult = client.crosshairTarget;
+		Minecraft client = Minecraft.getInstance();
+		HitResult hitResult = client.hitResult;
 		if (hitResult.getType() == HitResult.Type.ENTITY) {
 			EntityHitResult entityHitResult = (EntityHitResult) hitResult;
-			if (entityHitResult.getEntity() instanceof PlayerEntity playerEntity) {
+			if (entityHitResult.getEntity() instanceof Player playerEntity) {
 				SpectrumC2SPacketSender.sendBindEnderSpliceToPlayer(playerEntity);
 			}
 		}
 	}
 	
-	private boolean teleportPlayerToPlayerWithUUID(World world, LivingEntity user, PlayerEntity playerEntity, UUID targetPlayerUUID, boolean hasResonance) {
-		PlayerEntity targetPlayer = PlayerOwned.getPlayerEntityIfOnline(targetPlayerUUID);
+	private boolean teleportPlayerToPlayerWithUUID(Level world, LivingEntity user, Player playerEntity, UUID targetPlayerUUID, boolean hasResonance) {
+		Player targetPlayer = PlayerOwned.getPlayerEntityIfOnline(targetPlayerUUID);
 		if (targetPlayer != null) {
-			return teleportPlayerToPos(targetPlayer.getEntityWorld(), user, playerEntity, targetPlayer.getEntityWorld(), targetPlayer.getPos(), hasResonance);
+			return teleportPlayerToPos(targetPlayer.getCommandSenderWorld(), user, playerEntity, targetPlayer.getCommandSenderWorld(), targetPlayer.position(), hasResonance);
 		}
 		return false;
 	}
 	
-	private boolean teleportPlayerToPos(World world, LivingEntity user, PlayerEntity playerEntity, World targetWorld, Vec3d targetPos, boolean hasResonance) {
-		boolean isSameWorld = isSameWorld(user.getEntityWorld(), targetWorld);
-		Vec3d currentPos = playerEntity.getPos();
+	private boolean teleportPlayerToPos(Level world, LivingEntity user, Player playerEntity, Level targetWorld, Vec3 targetPos, boolean hasResonance) {
+		boolean isSameWorld = isSameWorld(user.getCommandSenderWorld(), targetWorld);
+		Vec3 currentPos = playerEntity.position();
 		if (hasResonance || isSameWorld) {
-			world.playSound(playerEntity, currentPos.getX(), currentPos.getY(), currentPos.getZ(), SpectrumSoundEvents.PLAYER_TELEPORTS, SoundCategory.PLAYERS, 1.0F, 1.0F);
+			world.playSound(playerEntity, currentPos.x(), currentPos.y(), currentPos.z(), SpectrumSoundEvents.PLAYER_TELEPORTS, SoundSource.PLAYERS, 1.0F, 1.0F);
 			
 			if (!isSameWorld) {
-				FabricDimensions.teleport(user, (ServerWorld) targetWorld, new TeleportTarget(targetPos.add(0, 0.25, 0), new Vec3d(0, 0, 0), user.getYaw(), user.getPitch()));
+				FabricDimensions.teleport(user, (ServerLevel) targetWorld, new PortalInfo(targetPos.add(0, 0.25, 0), new Vec3(0, 0, 0), user.getYRot(), user.getXRot()));
 			} else {
-				user.requestTeleport(targetPos.getX(), targetPos.y + 0.25, targetPos.z); // +0.25 makes it look way more lively
+				user.teleportTo(targetPos.x(), targetPos.y + 0.25, targetPos.z); // +0.25 makes it look way more lively
 			}
-			world.playSound(playerEntity, targetPos.getX(), targetPos.y, targetPos.z, SpectrumSoundEvents.PLAYER_TELEPORTS, SoundCategory.PLAYERS, 1.0F, 1.0F);
+			world.playSound(playerEntity, targetPos.x(), targetPos.y, targetPos.z, SpectrumSoundEvents.PLAYER_TELEPORTS, SoundSource.PLAYERS, 1.0F, 1.0F);
 			
 			// make sure the sound plays even when the player currently teleports
-			if (playerEntity instanceof ServerPlayerEntity) {
-				world.playSound(null, playerEntity.getBlockPos(), SpectrumSoundEvents.PLAYER_TELEPORTS, SoundCategory.PLAYERS, 1.0F, 1.0F);
-				world.playSound(null, playerEntity.getBlockPos(), SoundEvents.BLOCK_GLASS_BREAK, SoundCategory.PLAYERS, 1.0F, 1.0F);
+			if (playerEntity instanceof ServerPlayer) {
+				world.playSound(null, playerEntity.blockPosition(), SpectrumSoundEvents.PLAYER_TELEPORTS, SoundSource.PLAYERS, 1.0F, 1.0F);
+				world.playSound(null, playerEntity.blockPosition(), SoundEvents.GLASS_BREAK, SoundSource.PLAYERS, 1.0F, 1.0F);
 			}
 			return true;
 		} else {
-			user.stopUsingItem();
-			world.playSound(null, currentPos.getX(), currentPos.getY(), currentPos.getZ(), SpectrumSoundEvents.USE_FAIL, SoundCategory.PLAYERS, 1.0F, 1.0F);
+			user.releaseUsingItem();
+			world.playSound(null, currentPos.x(), currentPos.y(), currentPos.z(), SpectrumSoundEvents.USE_FAIL, SoundSource.PLAYERS, 1.0F, 1.0F);
 			return false;
 		}
 	}
 	
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		if (world.isClient) {
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		if (world.isClientSide) {
 			startSoundInstance(user);
 		}
-		return ItemUsage.consumeHeldItem(world, user, hand);
+		return ItemUtils.startUsingInstantly(world, user, hand);
 	}
 	
 	@Environment(EnvType.CLIENT)
-	public void startSoundInstance(PlayerEntity user) {
-		MinecraftClient.getInstance().getSoundManager().play(new EnderSpliceChargingSoundInstance(user));
+	public void startSoundInstance(Player user) {
+		Minecraft.getInstance().getSoundManager().play(new EnderSpliceChargingSoundInstance(user));
 	}
 	
 	@Override
-	public int getMaxUseTime(ItemStack stack) {
+	public int getUseDuration(ItemStack stack) {
 		return 48;
 	}
 	
 	@Override
-	public UseAction getUseAction(ItemStack stack) {
-		return UseAction.BOW;
+	public UseAnim getUseAnimation(ItemStack stack) {
+		return UseAnim.BOW;
 	}
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void appendTooltip(ItemStack itemStack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
+	public void appendHoverText(ItemStack itemStack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		// If Dimension & Pos stored => Teleport to that position
-		Optional<Pair<String, Vec3d>> teleportTargetPos = getTeleportTargetPos(itemStack);
+		Optional<Tuple<String, Vec3>> teleportTargetPos = getTeleportTargetPos(itemStack);
 		if (teleportTargetPos.isPresent()) {
-			String dimensionDisplayString = Support.getReadableDimensionString(teleportTargetPos.get().getLeft());
-			Vec3d pos = teleportTargetPos.get().getRight();
-			tooltip.add(Text.translatable("item.spectrum.ender_splice.tooltip.bound_pos", (int) pos.x, (int) pos.y, (int) pos.z, dimensionDisplayString));
+			String dimensionDisplayString = Support.getReadableDimensionString(teleportTargetPos.get().getA());
+			Vec3 pos = teleportTargetPos.get().getB();
+			tooltip.add(Component.translatable("item.spectrum.ender_splice.tooltip.bound_pos", (int) pos.x, (int) pos.y, (int) pos.z, dimensionDisplayString));
 			return;
 		} else {
 			// If UUID stored => Teleport to player, if online
@@ -254,41 +267,41 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 			if (teleportTargetPlayerUUID.isPresent()) {
 				Optional<String> teleportTargetPlayerName = getTeleportTargetPlayerName(itemStack);
 				if (teleportTargetPlayerName.isPresent()) {
-					tooltip.add(Text.translatable("item.spectrum.ender_splice.tooltip.bound_player", teleportTargetPlayerName.get()));
+					tooltip.add(Component.translatable("item.spectrum.ender_splice.tooltip.bound_player", teleportTargetPlayerName.get()));
 				} else {
-					tooltip.add(Text.translatable("item.spectrum.ender_splice.tooltip.bound_player", "???"));
+					tooltip.add(Component.translatable("item.spectrum.ender_splice.tooltip.bound_player", "???"));
 				}
 				return;
 			}
 		}
 		
-		tooltip.add(Text.translatable("item.spectrum.ender_splice.tooltip.unbound"));
+		tooltip.add(Component.translatable("item.spectrum.ender_splice.tooltip.unbound"));
 	}
 	
-	public Optional<Pair<String, Vec3d>> getTeleportTargetPos(@NotNull ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getNbt();
+	public Optional<Tuple<String, Vec3>> getTeleportTargetPos(@NotNull ItemStack itemStack) {
+		CompoundTag nbtCompound = itemStack.getTag();
 		if (nbtCompound != null && nbtCompound.contains("PosX") && nbtCompound.contains("PosY") && nbtCompound.contains("PosZ") && nbtCompound.contains("Dimension")) {
 			String dimensionKeyString = nbtCompound.getString("Dimension");
 			double x = nbtCompound.getDouble("PosX");
 			double y = nbtCompound.getDouble("PosY");
 			double z = nbtCompound.getDouble("PosZ");
-			Vec3d pos = new Vec3d(x, y, z);
+			Vec3 pos = new Vec3(x, y, z);
 			
-			return Optional.of(new Pair<>(dimensionKeyString, pos));
+			return Optional.of(new Tuple<>(dimensionKeyString, pos));
 		}
 		return Optional.empty();
 	}
 	
 	public Optional<UUID> getTeleportTargetPlayerUUID(@NotNull ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getNbt();
+		CompoundTag nbtCompound = itemStack.getTag();
 		if (nbtCompound != null && nbtCompound.contains("TargetPlayerUUID")) {
-			return Optional.of(nbtCompound.getUuid("TargetPlayerUUID"));
+			return Optional.of(nbtCompound.getUUID("TargetPlayerUUID"));
 		}
 		return Optional.empty();
 	}
 	
 	public Optional<String> getTeleportTargetPlayerName(@NotNull ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getNbt();
+		CompoundTag nbtCompound = itemStack.getTag();
 		if (nbtCompound != null && nbtCompound.contains("TargetPlayerName")) {
 			return Optional.of(nbtCompound.getString("TargetPlayerName"));
 		}
@@ -306,7 +319,7 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 	}
 	
 	@Override
-	public int getEnchantability() {
+	public int getEnchantmentValue() {
 		return 50;
 	}
 	

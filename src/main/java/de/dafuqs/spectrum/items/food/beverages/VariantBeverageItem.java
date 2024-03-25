@@ -1,11 +1,12 @@
 package de.dafuqs.spectrum.items.food.beverages;
 
-import de.dafuqs.spectrum.items.food.beverages.properties.*;
-import net.minecraft.item.*;
+import de.dafuqs.spectrum.items.food.beverages.properties.BeverageProperties;
+import de.dafuqs.spectrum.items.food.beverages.properties.VariantBeverageProperties;
+import net.minecraft.world.item.ItemStack;
 
 public class VariantBeverageItem extends BeverageItem {
 	
-	public VariantBeverageItem(Settings settings) {
+	public VariantBeverageItem(Properties settings) {
 		super(settings);
 	}
 	

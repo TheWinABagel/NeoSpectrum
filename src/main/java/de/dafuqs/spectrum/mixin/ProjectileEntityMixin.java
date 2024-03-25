@@ -1,29 +1,36 @@
 package de.dafuqs.spectrum.mixin;
 
-import de.dafuqs.spectrum.cca.azure_dike.*;
-import de.dafuqs.spectrum.items.trinkets.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.registries.*;
-import dev.emi.trinkets.api.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.entity.projectile.*;
-import net.minecraft.item.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.World;
+import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
+import de.dafuqs.spectrum.items.trinkets.PuffCircletItem;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
+import dev.emi.trinkets.api.SlotReference;
+import dev.emi.trinkets.api.TrinketComponent;
+import dev.emi.trinkets.api.TrinketsApi;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import java.util.List;
+import java.util.Optional;
 
-import java.util.*;
-
-@Mixin(ProjectileEntity.class)
+@Mixin(Projectile.class)
 public abstract class ProjectileEntityMixin {
 	
 	@Shadow
@@ -33,20 +40,20 @@ public abstract class ProjectileEntityMixin {
 	protected void onProjectileHit(EntityHitResult entityHitResult, CallbackInfo ci) {
 		// if the target has a Puff circlet equipped
 		// protect it from this projectile
-		ProjectileEntity thisEntity = (ProjectileEntity) (Object) this;
-		World world = thisEntity.getWorld();
-		if (!world.isClient) {
+		Projectile thisEntity = (Projectile) (Object) this;
+		Level world = thisEntity.level();
+		if (!world.isClientSide) {
 			Entity entity = entityHitResult.getEntity();
 			if (entity instanceof LivingEntity livingEntity) {
 				boolean protect = false;
 				
-				StatusEffectInstance reboundInstance = livingEntity.getStatusEffect(SpectrumStatusEffects.PROJECTILE_REBOUND);
-				if (reboundInstance != null && entity.getWorld().getRandom().nextFloat() < SpectrumStatusEffects.PROJECTILE_REBOUND_CHANCE_PER_LEVEL * reboundInstance.getAmplifier()) {
+				MobEffectInstance reboundInstance = livingEntity.getEffect(SpectrumStatusEffects.PROJECTILE_REBOUND);
+				if (reboundInstance != null && entity.level().getRandom().nextFloat() < SpectrumStatusEffects.PROJECTILE_REBOUND_CHANCE_PER_LEVEL * reboundInstance.getAmplifier()) {
 					protect = true;
 				} else {
 					Optional<TrinketComponent> component = TrinketsApi.getTrinketComponent(livingEntity);
 					if (component.isPresent()) {
-						List<Pair<SlotReference, ItemStack>> equipped = component.get().getEquipped(SpectrumItems.PUFF_CIRCLET);
+						List<Tuple<SlotReference, ItemStack>> equipped = component.get().getEquipped(SpectrumItems.PUFF_CIRCLET);
 						if (!equipped.isEmpty()) {
 							int charges = AzureDikeProvider.getAzureDikeCharges(livingEntity);
 							if (charges > 0) {
@@ -60,16 +67,16 @@ public abstract class ProjectileEntityMixin {
 				if (protect) {
 					this.setVelocity(0, 0, 0, 0, 0);
 					
-					SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerWorld) world, thisEntity.getPos(),
+					SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerLevel) world, thisEntity.position(),
 							SpectrumParticleTypes.WHITE_CRAFTING, 6,
-							new Vec3d(0, 0, 0),
-							new Vec3d(thisEntity.getX() - livingEntity.getPos().x, thisEntity.getY() - livingEntity.getPos().y, thisEntity.getZ() - livingEntity.getPos().z));
-					SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerWorld) world, thisEntity.getPos(),
+							new Vec3(0, 0, 0),
+							new Vec3(thisEntity.getX() - livingEntity.position().x, thisEntity.getY() - livingEntity.position().y, thisEntity.getZ() - livingEntity.position().z));
+					SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerLevel) world, thisEntity.position(),
 							SpectrumParticleTypes.BLUE_CRAFTING, 6,
-							new Vec3d(0, 0, 0),
-							new Vec3d(thisEntity.getX() - livingEntity.getPos().x, thisEntity.getY() - livingEntity.getPos().y, thisEntity.getZ() - livingEntity.getPos().z));
+							new Vec3(0, 0, 0),
+							new Vec3(thisEntity.getX() - livingEntity.position().x, thisEntity.getY() - livingEntity.position().y, thisEntity.getZ() - livingEntity.position().z));
 					
-					world.playSound(null, thisEntity.getBlockPos(), SpectrumSoundEvents.PUFF_CIRCLET_PFFT, SoundCategory.PLAYERS, 1.0F, 1.0F);
+					world.playSound(null, thisEntity.blockPosition(), SpectrumSoundEvents.PUFF_CIRCLET_PFFT, SoundSource.PLAYERS, 1.0F, 1.0F);
 					ci.cancel();
 				}
 				

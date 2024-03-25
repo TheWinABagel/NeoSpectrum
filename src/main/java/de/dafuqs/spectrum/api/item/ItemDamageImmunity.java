@@ -1,12 +1,19 @@
 package de.dafuqs.spectrum.api.item;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.item.*;
-import net.minecraft.registry.tag.*;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.ItemLike;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Making Items immune to certain forms of damage
@@ -15,7 +22,7 @@ public class ItemDamageImmunity {
 
 	private static final Map<Item, List<TagKey<DamageType>>> damageSourceImmunities = new HashMap<>();
 	
-	public static void registerImmunity(ItemConvertible itemConvertible, TagKey<DamageType> damageTypeTag) {
+	public static void registerImmunity(ItemLike itemConvertible, TagKey<DamageType> damageTypeTag) {
 		Item item = itemConvertible.asItem();
 		List<TagKey<DamageType>> current = damageSourceImmunities.getOrDefault(item, new ArrayList<>());
 		current.add(damageTypeTag);
@@ -24,12 +31,12 @@ public class ItemDamageImmunity {
 	
 	public static boolean isImmuneTo(ItemStack itemStack, DamageSource damageSource) {
 		// otherwise items would fall endlessly when falling into the end, causing lag
-		if (damageSource.isOf(DamageTypes.OUT_OF_WORLD)) {
+		if (damageSource.is(DamageTypes.FELL_OUT_OF_WORLD)) {
 			return false;
 		}
 		
 		// does itemStack have Damage Proof enchantment?
-		if (EnchantmentHelper.getLevel(SpectrumEnchantments.STEADFAST, itemStack) > 0) {
+		if (EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.STEADFAST, itemStack) > 0) {
 			return true;
 			// is item immune to this specific kind of damage?
 		}
@@ -37,7 +44,7 @@ public class ItemDamageImmunity {
 		Item item = itemStack.getItem();
 		if (damageSourceImmunities.containsKey(item)) {
 			for (TagKey<DamageType> type : damageSourceImmunities.get(item)) {
-				if (damageSource.isIn(type)) {
+				if (damageSource.is(type)) {
 					return true;
 				}
 			}

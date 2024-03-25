@@ -1,23 +1,23 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.block.entity.*;
-import net.minecraft.registry.entry.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.entity.BannerPattern;
 
-import java.util.*;
+import java.util.List;
 
 public interface LoomPatternProvider {
 	
-	Text PATTERN_AVAILABLE_TOOLTIP_TEXT = Text.translatable("item.spectrum.tooltip.loom_pattern_available").formatted(Formatting.GRAY);
+	Component PATTERN_AVAILABLE_TOOLTIP_TEXT = Component.translatable("item.spectrum.tooltip.loom_pattern_available").withStyle(ChatFormatting.GRAY);
 
-	RegistryEntry<BannerPattern> getPattern();
+	Holder<BannerPattern> getPattern();
 	
-	default List<RegistryEntry<BannerPattern>> getPatterns() {
+	default List<Holder<BannerPattern>> getPatterns() {
 		return List.of(getPattern());
 	}
 	
-	default void addBannerPatternProviderTooltip(List<Text> tooltips) {
+	default void addBannerPatternProviderTooltip(List<Component> tooltips) {
 		tooltips.add(PATTERN_AVAILABLE_TOOLTIP_TEXT);
 	}
 

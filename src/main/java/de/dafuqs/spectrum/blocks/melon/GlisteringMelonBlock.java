@@ -1,11 +1,13 @@
 package de.dafuqs.spectrum.blocks.melon;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import net.minecraft.world.level.block.AttachedStemBlock;
+import net.minecraft.world.level.block.MelonBlock;
+import net.minecraft.world.level.block.StemBlock;
 
 public class GlisteringMelonBlock extends MelonBlock {
 	
-	public GlisteringMelonBlock(Settings settings) {
+	public GlisteringMelonBlock(Properties settings) {
 		super(settings);
 	}
 	

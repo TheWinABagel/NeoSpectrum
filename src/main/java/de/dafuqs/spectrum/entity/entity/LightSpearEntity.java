@@ -1,25 +1,27 @@
 package de.dafuqs.spectrum.entity.entity;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.entity.*;
-import net.minecraft.command.argument.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.projectile.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.intprovider.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.entity.SpectrumEntityTypes;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Optional;
 
 public class LightSpearEntity extends LightShardBaseEntity {
     
-    public LightSpearEntity(EntityType<? extends ProjectileEntity> entityType, World world) {
+    public LightSpearEntity(EntityType<? extends Projectile> entityType, Level world) {
         super(entityType, world);
     }
     
-    public LightSpearEntity(World world, LivingEntity owner, Optional<LivingEntity> target, float damage, int lifeSpanTicks) {
+    public LightSpearEntity(Level world, LivingEntity owner, Optional<LivingEntity> target, float damage, int lifeSpanTicks) {
 		super(SpectrumEntityTypes.LIGHT_SPEAR, world, owner, target, -1, damage, lifeSpanTicks);
 	}
 
@@ -27,19 +29,19 @@ public class LightSpearEntity extends LightShardBaseEntity {
     public void tick() {
         super.tick();
 
-        targetEntity.ifPresent(entity -> this.lookAt(EntityAnchorArgumentType.EntityAnchor.EYES, entity.getPos()));
+        targetEntity.ifPresent(entity -> this.lookAt(EntityAnchorArgument.Anchor.EYES, entity.position()));
 	}
 
 	@Override
-	public Identifier getTexture() {
+	public ResourceLocation getTexture() {
 		return SpectrumCommon.locate("textures/entity/projectile/light_spear.png");
 	}
 
-	public static void summonBarrage(World world, @NotNull LivingEntity user, @Nullable LivingEntity target) {
-		summonBarrage(world, user, target, user.getEyePos(), DEFAULT_COUNT_PROVIDER);
+	public static void summonBarrage(Level world, @NotNull LivingEntity user, @Nullable LivingEntity target) {
+		summonBarrage(world, user, target, user.getEyePosition(), DEFAULT_COUNT_PROVIDER);
 	}
 
-	public static void summonBarrage(World world, @Nullable LivingEntity user, @Nullable LivingEntity target, Vec3d position, IntProvider count) {
+	public static void summonBarrage(Level world, @Nullable LivingEntity user, @Nullable LivingEntity target, Vec3 position, IntProvider count) {
 		summonBarrageInternal(world, user, () -> new LightSpearEntity(world, user, Optional.ofNullable(target), 12.0F, 200), position, count);
 	}
 

@@ -1,43 +1,47 @@
 package de.dafuqs.spectrum.particle.client;
 
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.client.particle.*;
-import net.minecraft.client.world.*;
-import net.minecraft.particle.*;
-import net.minecraft.util.math.*;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.ParticleProvider;
+import net.minecraft.client.particle.SimpleAnimatedParticle;
+import net.minecraft.client.particle.SpriteSet;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.util.Mth;
 
-public class LightTrailparticle extends AnimatedParticle {
-    protected LightTrailparticle(ClientWorld world, double x, double y, double z,  double velocityX, double velocityY, double velocityZ, SpriteProvider spriteProvider) {
+public class LightTrailparticle extends SimpleAnimatedParticle {
+    protected LightTrailparticle(ClientLevel world, double x, double y, double z,  double velocityX, double velocityY, double velocityZ, SpriteSet spriteProvider) {
         super(world, x, y, z, spriteProvider, 0);
-        this.velocityX = velocityX;
-        this.velocityY = velocityY;
-        this.velocityZ = velocityZ;
-        this.scale = 0.2F;
-        this.maxAge = 25;
-        this.setSpriteForAge(spriteProvider);
+        this.xd = velocityX;
+        this.yd = velocityY;
+        this.zd = velocityZ;
+        this.quadSize = 0.2F;
+        this.lifetime = 25;
+        this.setSpriteFromAge(spriteProvider);
         setAlpha(0.8f);
-        setTargetColor(0xa8baff);
+        setFadeColor(0xa8baff);
     }
 
     @Override
     public void tick() {
         super.tick();
-        var fadeProgress = MathHelper.clamp((age + MinecraftClient.getInstance().getTickDelta()) / maxAge, 0, 1);
-        setAlpha(MathHelper.lerp(fadeProgress, 0.8F, 0F));
-        scale = MathHelper.lerp(fadeProgress, 0.2F, 0.1F);
+        var fadeProgress = Mth.clamp((age + Minecraft.getInstance().getFrameTime()) / lifetime, 0, 1);
+        setAlpha(Mth.lerp(fadeProgress, 0.8F, 0F));
+        quadSize = Mth.lerp(fadeProgress, 0.2F, 0.1F);
     }
 	
 	@Environment(EnvType.CLIENT)
-	public static class Factory implements ParticleFactory<DefaultParticleType> {
-		private final SpriteProvider spriteProvider;
+	public static class Factory implements ParticleProvider<SimpleParticleType> {
+		private final SpriteSet spriteProvider;
 		
-		public Factory(SpriteProvider spriteProvider) {
+		public Factory(SpriteSet spriteProvider) {
 			this.spriteProvider = spriteProvider;
 		}
 		
 		@Override
-		public Particle createParticle(DefaultParticleType defaultParticleType, ClientWorld clientWorld, double d, double e, double f, double g, double h, double i) {
+		public Particle createParticle(SimpleParticleType defaultParticleType, ClientLevel clientWorld, double d, double e, double f, double g, double h, double i) {
 			return new LightTrailparticle(clientWorld, d, e, f, g, h, i, this.spriteProvider);
 		}
 	}

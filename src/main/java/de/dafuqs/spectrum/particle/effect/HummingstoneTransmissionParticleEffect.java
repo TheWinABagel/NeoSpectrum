@@ -1,14 +1,16 @@
 package de.dafuqs.spectrum.particle.effect;
 
-import com.mojang.brigadier.*;
-import com.mojang.brigadier.exceptions.*;
-import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.*;
-import de.dafuqs.spectrum.particle.*;
-import net.minecraft.network.*;
-import net.minecraft.particle.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.event.*;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.gameevent.BlockPositionSource;
+import net.minecraft.world.level.gameevent.PositionSource;
+import net.minecraft.world.level.gameevent.PositionSourceType;
 
 public class HummingstoneTransmissionParticleEffect extends SimpleTransmissionParticleEffect {
 	
@@ -18,9 +20,9 @@ public class HummingstoneTransmissionParticleEffect extends SimpleTransmissionPa
 	).apply(instance, HummingstoneTransmissionParticleEffect::new));
 	
 	@SuppressWarnings("deprecation")
-	public static final Factory<HummingstoneTransmissionParticleEffect> FACTORY = new Factory<>() {
+	public static final Deserializer<HummingstoneTransmissionParticleEffect> FACTORY = new Deserializer<>() {
 		@Override
-		public HummingstoneTransmissionParticleEffect read(ParticleType<HummingstoneTransmissionParticleEffect> particleType, StringReader stringReader) throws CommandSyntaxException {
+		public HummingstoneTransmissionParticleEffect fromCommand(ParticleType<HummingstoneTransmissionParticleEffect> particleType, StringReader stringReader) throws CommandSyntaxException {
 			stringReader.expect(' ');
 			float f = (float) stringReader.readDouble();
 			stringReader.expect(' ');
@@ -29,13 +31,13 @@ public class HummingstoneTransmissionParticleEffect extends SimpleTransmissionPa
 			float h = (float) stringReader.readDouble();
 			stringReader.expect(' ');
 			int i = stringReader.readInt();
-			BlockPos blockPos = BlockPos.ofFloored(f, g, h);
+			BlockPos blockPos = BlockPos.containing(f, g, h);
 			return new HummingstoneTransmissionParticleEffect(new BlockPositionSource(blockPos), i);
 		}
 		
 		@Override
-		public HummingstoneTransmissionParticleEffect read(ParticleType<HummingstoneTransmissionParticleEffect> particleType, PacketByteBuf packetByteBuf) {
-			PositionSource positionSource = PositionSourceType.read(packetByteBuf);
+		public HummingstoneTransmissionParticleEffect fromNetwork(ParticleType<HummingstoneTransmissionParticleEffect> particleType, FriendlyByteBuf packetByteBuf) {
+			PositionSource positionSource = PositionSourceType.fromNetwork(packetByteBuf);
 			int i = packetByteBuf.readVarInt();
 			return new HummingstoneTransmissionParticleEffect(positionSource, i);
 		}

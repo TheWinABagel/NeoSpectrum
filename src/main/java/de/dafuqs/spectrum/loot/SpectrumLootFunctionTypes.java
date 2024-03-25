@@ -1,20 +1,25 @@
 package de.dafuqs.spectrum.loot;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.loot.functions.*;
-import net.minecraft.loot.function.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.loot.functions.DyeRandomlyLootFunction;
+import de.dafuqs.spectrum.loot.functions.FermentRandomlyLootFunction;
+import de.dafuqs.spectrum.loot.functions.FillPotionFillableLootCondition;
+import de.dafuqs.spectrum.loot.functions.MergeNbtRandomlyLootFunction;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.level.storage.loot.Serializer;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 
 public class SpectrumLootFunctionTypes {
 	
-	public static LootFunctionType DYE_RANDOMLY;
-	public static LootFunctionType FERMENT_RANDOMLY;
-	public static LootFunctionType SET_NBT_RANDOMLY;
-	public static LootFunctionType FILL_POTION_FILLABLE;
+	public static LootItemFunctionType DYE_RANDOMLY;
+	public static LootItemFunctionType FERMENT_RANDOMLY;
+	public static LootItemFunctionType SET_NBT_RANDOMLY;
+	public static LootItemFunctionType FILL_POTION_FILLABLE;
 	
-	private static LootFunctionType register(String id, JsonSerializer<? extends LootFunction> jsonSerializer) {
-		return Registry.register(Registries.LOOT_FUNCTION_TYPE, SpectrumCommon.locate(id), new LootFunctionType(jsonSerializer));
+	private static LootItemFunctionType register(String id, Serializer<? extends LootItemFunction> jsonSerializer) {
+		return Registry.register(BuiltInRegistries.LOOT_FUNCTION_TYPE, SpectrumCommon.locate(id), new LootItemFunctionType(jsonSerializer));
 	}
 	
 	public static void register() {

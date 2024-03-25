@@ -1,7 +1,7 @@
 package de.dafuqs.spectrum.compat.biome_makeover;
 
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
 
 public class BiomeMakeoverCompat {
 	
@@ -12,9 +12,9 @@ public class BiomeMakeoverCompat {
 	// enchantment level by transferring the enchantment to new items
 	public static void transferBMCursedTag(ItemStack sourceStack, ItemStack destinationStack) {
 		for (int i = 0; i < 8; i++) {
-			NbtCompound bowlCompound = sourceStack.getNbt();
+			CompoundTag bowlCompound = sourceStack.getTag();
 			if (bowlCompound != null && bowlCompound.getBoolean(CURSED_TAG)) {
-				destinationStack.getOrCreateNbt().putBoolean(CURSED_TAG, true);
+				destinationStack.getOrCreateTag().putBoolean(CURSED_TAG, true);
 			}
 		}
 	}

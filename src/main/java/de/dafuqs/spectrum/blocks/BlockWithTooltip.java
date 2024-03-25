@@ -1,27 +1,27 @@
 package de.dafuqs.spectrum.blocks;
 
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class BlockWithTooltip extends Block {
 	
-	protected final Text tooltipText;
+	protected final Component tooltipText;
 	
-	public BlockWithTooltip(Settings settings, Text tooltipText) {
+	public BlockWithTooltip(Properties settings, Component tooltipText) {
 		super(settings);
 		this.tooltipText = tooltipText;
 	}
 	
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
 		tooltip.add(tooltipText);
 	}
 }

@@ -1,11 +1,12 @@
 package de.dafuqs.spectrum.items.tooltip;
 
-import net.fabricmc.api.*;
-import net.minecraft.client.font.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.item.*;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class PresentTooltipComponent extends SpectrumTooltipComponent {
@@ -22,12 +23,12 @@ public class PresentTooltipComponent extends SpectrumTooltipComponent {
 	}
 	
 	@Override
-	public int getWidth(TextRenderer textRenderer) {
+	public int getWidth(Font textRenderer) {
 		return this.itemStacks.size() * 20 + 2 + 4;
 	}
 	
 	@Override
-	public void drawItems(TextRenderer textRenderer, int x, int y, DrawContext context) {
+	public void renderImage(Font textRenderer, int x, int y, GuiGraphics context) {
 		int n = x + 1;
 		int o = y + 1;
 		for (int i = 0; i < this.itemStacks.size(); i++) {

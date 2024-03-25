@@ -1,44 +1,48 @@
 package de.dafuqs.spectrum.blocks;
 
-import de.dafuqs.spectrum.inventories.*;
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.screen.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.inventories.BedrockAnvilScreenHandler;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.item.FallingBlockEntity;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.AnvilBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class BedrockAnvilBlock extends AnvilBlock {
 	
-	private static final Text TITLE = Text.translatable("container.spectrum.bedrock_anvil");
+	private static final Component TITLE = Component.translatable("container.spectrum.bedrock_anvil");
 	
-	public BedrockAnvilBlock(Settings settings) {
+	public BedrockAnvilBlock(Properties settings) {
 		super(settings);
 	}
 	
 	// Heavier => More damage
 	@Override
-	protected void configureFallingBlockEntity(FallingBlockEntity entity) {
-		entity.setHurtEntities(3.0F, 64);
+	protected void falling(FallingBlockEntity entity) {
+		entity.setHurtsEntities(3.0F, 64);
 	}
 	
 	@Override
 	@Nullable
-	public NamedScreenHandlerFactory createScreenHandlerFactory(BlockState state, World world, BlockPos pos) {
-		return new SimpleNamedScreenHandlerFactory((syncId, inventory, player) -> new BedrockAnvilScreenHandler(syncId, inventory, ScreenHandlerContext.create(world, pos)), TITLE);
+	public MenuProvider getMenuProvider(BlockState state, Level world, BlockPos pos) {
+		return new SimpleMenuProvider((syncId, inventory, player) -> new BedrockAnvilScreenHandler(syncId, inventory, ContainerLevelAccess.create(world, pos)), TITLE);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("container.spectrum.bedrock_anvil.tooltip").formatted(Formatting.GRAY));
-		tooltip.add(Text.translatable("container.spectrum.bedrock_anvil.tooltip2").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("container.spectrum.bedrock_anvil.tooltip").withStyle(ChatFormatting.GRAY));
+		tooltip.add(Component.translatable("container.spectrum.bedrock_anvil.tooltip2").withStyle(ChatFormatting.GRAY));
 	}
 	
 }

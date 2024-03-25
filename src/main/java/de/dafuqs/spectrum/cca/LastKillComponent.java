@@ -1,10 +1,13 @@
 package de.dafuqs.spectrum.cca;
 
-import de.dafuqs.spectrum.*;
-import dev.onyxstudios.cca.api.v3.component.*;
-import net.minecraft.entity.*;
-import net.minecraft.nbt.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import dev.onyxstudios.cca.api.v3.component.Component;
+import dev.onyxstudios.cca.api.v3.component.ComponentKey;
+import dev.onyxstudios.cca.api.v3.component.ComponentRegistry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class LastKillComponent implements Component {
 	
@@ -23,15 +26,15 @@ public class LastKillComponent implements Component {
 	}
 	
 	@Override
-	public void writeToNbt(@NotNull NbtCompound tag) {
+	public void writeToNbt(@NotNull CompoundTag tag) {
 		if (this.lastKillTick >= 0) {
 			tag.putLong("last_kill_tick", this.lastKillTick);
 		}
 	}
 	
 	@Override
-	public void readFromNbt(NbtCompound tag) {
-		if (tag.contains("last_kill_tick", NbtElement.LONG_TYPE)) {
+	public void readFromNbt(CompoundTag tag) {
+		if (tag.contains("last_kill_tick", Tag.TAG_LONG)) {
 			this.lastKillTick = tag.getLong("last_kill_tick");
 		}
 	}

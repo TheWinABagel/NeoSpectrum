@@ -1,59 +1,64 @@
 package de.dafuqs.spectrum.blocks.idols;
 
-import de.dafuqs.spectrum.helpers.*;
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.stat.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.helpers.TimeHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.stats.Stats;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.monster.Phantom;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class InsomniaIdolBlock extends IdolBlock {
 	
 	public final int additionalTicksSinceLastRest;
 	
-	public InsomniaIdolBlock(Settings settings, ParticleEffect particleEffect, int additionalTicksSinceLastRest) {
+	public InsomniaIdolBlock(Properties settings, ParticleOptions particleEffect, int additionalTicksSinceLastRest) {
 		super(settings, particleEffect);
 		this.additionalTicksSinceLastRest = additionalTicksSinceLastRest;
 	}
 	
 	@Override
-	public boolean trigger(ServerWorld world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
+	public boolean trigger(ServerLevel world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
 		// spawn phantoms regardless of gamerule
 		// makes phantom drops accessible even with gamerule disabled
-		if (entity instanceof ServerPlayerEntity serverPlayerEntity /*&& !world.getGameRules().getBoolean(GameRules.DO_INSOMNIA)*/) {
-			Random random = world.random;
+		if (entity instanceof ServerPlayer serverPlayerEntity /*&& !world.getGameRules().getBoolean(GameRules.DO_INSOMNIA)*/) {
+			RandomSource random = world.random;
 			
 			// play a phantom sound
-			world.playSound(null, blockPos, SoundEvents.ENTITY_PHANTOM_AMBIENT, SoundCategory.BLOCKS, 1.0F, 0.8F + random.nextFloat() * 0.4F);
+			world.playSound(null, blockPos, SoundEvents.PHANTOM_AMBIENT, SoundSource.BLOCKS, 1.0F, 0.8F + random.nextFloat() * 0.4F);
 			
 			// cause insomnia
-			int currentStatValue = serverPlayerEntity.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(Stats.TIME_SINCE_REST));
-			int newValue = MathHelper.clamp(currentStatValue, 0, 2147483647 - additionalTicksSinceLastRest) + this.additionalTicksSinceLastRest; // prevent overflows
-			serverPlayerEntity.getStatHandler().setStat(serverPlayerEntity, Stats.CUSTOM.getOrCreateStat(Stats.TIME_SINCE_REST), newValue);
+			int currentStatValue = serverPlayerEntity.getStats().getValue(Stats.CUSTOM.get(Stats.TIME_SINCE_REST));
+			int newValue = Mth.clamp(currentStatValue, 0, 2147483647 - additionalTicksSinceLastRest) + this.additionalTicksSinceLastRest; // prevent overflows
+			serverPlayerEntity.getStats().setValue(serverPlayerEntity, Stats.CUSTOM.get(Stats.TIME_SINCE_REST), newValue);
 			
 			// if sky visible & night: immediately spawn phantom
-			if (world.isSkyVisible(blockPos.up()) && TimeHelper.getTimeOfDay(world).isNight()) {
-				PhantomEntity phantomEntity = EntityType.PHANTOM.create(world);
+			if (world.canSeeSky(blockPos.above()) && TimeHelper.getTimeOfDay(world).isNight()) {
+				Phantom phantomEntity = EntityType.PHANTOM.create(world);
 				if (phantomEntity != null) {
-					phantomEntity.refreshPositionAndAngles(blockPos.up(20 + random.nextInt(15)).east(-10 + random.nextInt(21)).south(-10 + random.nextInt(21)), 0.0F, 0.0F);
-					phantomEntity.initialize(world, world.getLocalDifficulty(blockPos), SpawnReason.MOB_SUMMONED, null, null);
+					phantomEntity.moveTo(blockPos.above(20 + random.nextInt(15)).east(-10 + random.nextInt(21)).south(-10 + random.nextInt(21)), 0.0F, 0.0F);
+					phantomEntity.finalizeSpawn(world, world.getCurrentDifficultyAt(blockPos), MobSpawnType.MOB_SUMMONED, null, null);
 					
 					int phantomSize = Math.min(64, newValue / 24000);
 					phantomEntity.setPhantomSize(phantomSize);
 					
-					world.spawnEntityAndPassengers(phantomEntity);
+					world.addFreshEntityWithPassengers(phantomEntity);
 				}
 			}
 			
@@ -68,9 +73,9 @@ public class InsomniaIdolBlock extends IdolBlock {
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("block.spectrum.insomnia_idol.tooltip"));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("block.spectrum.insomnia_idol.tooltip"));
 	}
 	
 }

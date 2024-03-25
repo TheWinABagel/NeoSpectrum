@@ -1,15 +1,17 @@
 package de.dafuqs.spectrum.compat.emi.recipes;
 
-import de.dafuqs.spectrum.compat.emi.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.recipe.spirit_instiller.*;
-import de.dafuqs.spectrum.recipe.spirit_instiller.spawner.*;
-import de.dafuqs.spectrum.registries.*;
-import dev.emi.emi.api.stack.*;
-import dev.emi.emi.api.widget.*;
-import net.minecraft.item.*;
+import de.dafuqs.spectrum.compat.emi.GatedSpectrumEmiRecipe;
+import de.dafuqs.spectrum.compat.emi.SpectrumEmiRecipeCategories;
+import de.dafuqs.spectrum.helpers.LoreHelper;
+import de.dafuqs.spectrum.recipe.spirit_instiller.SpiritInstillerRecipe;
+import de.dafuqs.spectrum.recipe.spirit_instiller.spawner.SpawnerChangeRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.widget.WidgetHolder;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.List;
 
 public class SpiritInstillingEmiRecipeGated extends GatedSpectrumEmiRecipe<SpiritInstillerRecipe> {
 	
@@ -18,7 +20,7 @@ public class SpiritInstillingEmiRecipeGated extends GatedSpectrumEmiRecipe<Spiri
 		inputs = recipe.getIngredientStacks().stream().map(s -> EmiIngredient.of(s.getStacks().stream().map(EmiStack::of).toList())).toList();
 		
 		if (recipe instanceof SpawnerChangeRecipe spawnerChangeRecipe) {
-			ItemStack outputStack = recipe.getOutput(getRegistryManager());
+			ItemStack outputStack = recipe.getResultItem(getRegistryManager());
 			LoreHelper.setLore(outputStack, spawnerChangeRecipe.getOutputLoreText());
 			outputs = List.of(EmiStack.of(outputStack));
 		}

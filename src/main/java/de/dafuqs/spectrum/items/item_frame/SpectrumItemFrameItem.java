@@ -1,52 +1,57 @@
 package de.dafuqs.spectrum.items.item_frame;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.decoration.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.decoration.HangingEntity;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemFrameItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
 
 public abstract class SpectrumItemFrameItem extends ItemFrameItem {
 	
-	public SpectrumItemFrameItem(EntityType<? extends AbstractDecorationEntity> entityType, Item.Settings settings) {
+	public SpectrumItemFrameItem(EntityType<? extends HangingEntity> entityType, Item.Properties settings) {
 		super(entityType, settings);
 	}
 	
-	public abstract ItemFrameEntity getItemFrameEntity(World world, BlockPos blockPos, Direction direction);
+	public abstract ItemFrame getItemFrameEntity(Level world, BlockPos blockPos, Direction direction);
 	
 	@Override
-	public ActionResult useOnBlock(ItemUsageContext context) {
-		BlockPos blockPos = context.getBlockPos();
-		Direction direction = context.getSide();
-		BlockPos blockPos2 = blockPos.offset(direction);
-		PlayerEntity playerEntity = context.getPlayer();
-		ItemStack itemStack = context.getStack();
-		if (playerEntity != null && !this.canPlaceOn(playerEntity, direction, itemStack, blockPos2)) {
-			return ActionResult.FAIL;
+	public InteractionResult useOn(UseOnContext context) {
+		BlockPos blockPos = context.getClickedPos();
+		Direction direction = context.getClickedFace();
+		BlockPos blockPos2 = blockPos.relative(direction);
+		Player playerEntity = context.getPlayer();
+		ItemStack itemStack = context.getItemInHand();
+		if (playerEntity != null && !this.mayPlace(playerEntity, direction, itemStack, blockPos2)) {
+			return InteractionResult.FAIL;
 		} else {
-			World world = context.getWorld();
-			ItemFrameEntity invisibleItemFrameEntity = getItemFrameEntity(world, blockPos2, direction);
+			Level world = context.getLevel();
+			ItemFrame invisibleItemFrameEntity = getItemFrameEntity(world, blockPos2, direction);
 			
-			NbtCompound nbtCompound = itemStack.getNbt();
+			CompoundTag nbtCompound = itemStack.getTag();
 			if (nbtCompound != null) {
-				EntityType.loadFromEntityNbt(world, playerEntity, invisibleItemFrameEntity, nbtCompound);
+				EntityType.updateCustomEntityTag(world, playerEntity, invisibleItemFrameEntity, nbtCompound);
 			}
 			
-			if (invisibleItemFrameEntity.canStayAttached()) {
-				if (!world.isClient) {
-					invisibleItemFrameEntity.onPlace();
-					world.emitGameEvent(playerEntity, GameEvent.ENTITY_PLACE, blockPos);
-					world.spawnEntity(invisibleItemFrameEntity);
+			if (invisibleItemFrameEntity.survives()) {
+				if (!world.isClientSide) {
+					invisibleItemFrameEntity.playPlacementSound();
+					world.gameEvent(playerEntity, GameEvent.ENTITY_PLACE, blockPos);
+					world.addFreshEntity(invisibleItemFrameEntity);
 				}
 				
-				itemStack.decrement(1);
-				return ActionResult.success(world.isClient);
+				itemStack.shrink(1);
+				return InteractionResult.sidedSuccess(world.isClientSide);
 			} else {
-				return ActionResult.CONSUME;
+				return InteractionResult.CONSUME;
 			}
 		}
 	}

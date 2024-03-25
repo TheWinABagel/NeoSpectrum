@@ -1,18 +1,21 @@
 package de.dafuqs.spectrum.compat.patchouli.pages;
 
-import com.mojang.brigadier.*;
-import com.mojang.brigadier.exceptions.*;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.command.*;
-import net.minecraft.command.argument.*;
-import net.minecraft.item.*;
-import net.minecraft.world.*;
-import vazkii.patchouli.api.*;
-import vazkii.patchouli.client.book.*;
-import vazkii.patchouli.client.book.gui.*;
-import vazkii.patchouli.client.book.page.abstr.*;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.arguments.item.ItemArgument;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import vazkii.patchouli.api.IVariable;
+import vazkii.patchouli.api.PatchouliAPI;
+import vazkii.patchouli.client.book.BookContentsBuilder;
+import vazkii.patchouli.client.book.BookEntry;
+import vazkii.patchouli.client.book.gui.GuiBook;
+import vazkii.patchouli.client.book.page.abstr.PageWithText;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PageCollection extends PageWithText {
 	
@@ -24,7 +27,7 @@ public class PageCollection extends PageWithText {
 	transient List<ItemStack> stacks;
 	
 	@Override
-	public void build(World world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
+	public void build(Level world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
 		super.build(world, entry, builder, pageNum);
 		
 		stacks = new ArrayList<>();
@@ -32,7 +35,7 @@ public class PageCollection extends PageWithText {
 			String stackString = item.asString();
 			ItemStack stack;
 			try {
-				stack = new ItemStackArgumentType(CommandRegistryAccess.of(world.getRegistryManager(), world.getEnabledFeatures())).parse(new StringReader(stackString)).createStack(1, false);
+				stack = new ItemArgument(CommandBuildContext.configurable(world.registryAccess(), world.enabledFeatures())).parse(new StringReader(stackString)).createItemStack(1, false);
 			} catch (CommandSyntaxException e) {
 				PatchouliAPI.LOGGER.warn("Unable to parse stack {} in collection page", stackString);
 				continue;
@@ -43,7 +46,7 @@ public class PageCollection extends PageWithText {
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float pticks) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float pticks) {
 		super.render(drawContext, mouseX, mouseY, pticks);
 		
 		boolean hasTitle = title != null && !title.isEmpty();

@@ -1,6 +1,10 @@
 package de.dafuqs.spectrum.render.armor;
 
-import net.minecraft.client.model.*;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
 
 public class BedrockArmorModel {
 	public final ModelPart head;
@@ -19,124 +23,124 @@ public class BedrockArmorModel {
 		this.leftLeg = root.getChild("left_leg");
 	}
 	
-	public static ModelData getModelData() {
-		ModelData data = new ModelData();
+	public static MeshDefinition getModelData() {
+		MeshDefinition data = new MeshDefinition();
 		var root = data.getRoot();
 		
-		root.addChild("hat", ModelPartBuilder.create(), ModelTransform.NONE);
+		root.addOrReplaceChild("hat", CubeListBuilder.create(), PartPose.ZERO);
 		
-		var head = root.addChild("head", ModelPartBuilder.create(), ModelTransform.NONE);
+		var head = root.addOrReplaceChild("head", CubeListBuilder.create(), PartPose.ZERO);
 		
-		head.addChild(
+		head.addOrReplaceChild(
 				"armor_head",
-				ModelPartBuilder.create()
-						.uv(0, 20)
-						.cuboid(-4.5F, -8.5F, -4.5F, 9.0F, 9.0F, 9.0F)
-						.uv(0, 0)
-						.cuboid(-5.0F, -9.0F, -5.0F, 10.0F, 10.0F, 10.0F),
-				ModelTransform.NONE
+				CubeListBuilder.create()
+						.texOffs(0, 20)
+						.addBox(-4.5F, -8.5F, -4.5F, 9.0F, 9.0F, 9.0F)
+						.texOffs(0, 0)
+						.addBox(-5.0F, -9.0F, -5.0F, 10.0F, 10.0F, 10.0F),
+				PartPose.ZERO
 		);
 		
-		var body = root.addChild("body", ModelPartBuilder.create(), ModelTransform.NONE);
+		var body = root.addOrReplaceChild("body", CubeListBuilder.create(), PartPose.ZERO);
 		
-		body.addChild(
+		body.addOrReplaceChild(
 				"armor_body",
-				ModelPartBuilder.create()
-						.uv(31, 33)
-						.cuboid(-4.5F, -0.5F, -2.5F, 9.0F, 13.0F, 5.0F)
-						.uv(36, 20)
-						.cuboid(-5.0F, 0.0F, -3.0F, 10.0F, 10.0F, 3.0F),
-				ModelTransform.NONE
+				CubeListBuilder.create()
+						.texOffs(31, 33)
+						.addBox(-4.5F, -0.5F, -2.5F, 9.0F, 13.0F, 5.0F)
+						.texOffs(36, 20)
+						.addBox(-5.0F, 0.0F, -3.0F, 10.0F, 10.0F, 3.0F),
+				PartPose.ZERO
 		);
 		
-		var rightArm = root.addChild(
+		var rightArm = root.addOrReplaceChild(
 				"right_arm",
-				ModelPartBuilder.create(),
-				ModelTransform.NONE
+				CubeListBuilder.create(),
+				PartPose.ZERO
 		);
 
-		var armorRightArm = rightArm.addChild(
+		var armorRightArm = rightArm.addOrReplaceChild(
 				"armor_right_arm",
-				ModelPartBuilder.create()
-						.uv(22, 51)
-						.cuboid(-4.25F, -2.5F, -2.5F, 5.0F, 13.0F, 5.0F),
-				ModelTransform.pivot(1.0F, 0.0F, 0.0F)
+				CubeListBuilder.create()
+						.texOffs(22, 51)
+						.addBox(-4.25F, -2.5F, -2.5F, 5.0F, 13.0F, 5.0F),
+				PartPose.offset(1.0F, 0.0F, 0.0F)
 		);
 
-		armorRightArm.addChild(
+		armorRightArm.addOrReplaceChild(
 				"armor_right_arm_extra",
-				ModelPartBuilder.create()
-						.uv(57, 45)
-						.cuboid(-4.0F, -1.5F, -3.0F, 6.0F, 4.0F, 6.0F, new Dilation(0.10F)),
-				ModelTransform.of(-1.5F, -2.0F, 0.0F, 0.0F, 0.0F, -0.4363F)
+				CubeListBuilder.create()
+						.texOffs(57, 45)
+						.addBox(-4.0F, -1.5F, -3.0F, 6.0F, 4.0F, 6.0F, new CubeDeformation(0.10F)),
+				PartPose.offsetAndRotation(-1.5F, -2.0F, 0.0F, 0.0F, 0.0F, -0.4363F)
 		);
 		
-		var leftArm = root.addChild(
+		var leftArm = root.addOrReplaceChild(
 				"left_arm",
-				ModelPartBuilder.create(),
-				ModelTransform.NONE
+				CubeListBuilder.create(),
+				PartPose.ZERO
 		);
 		
-		var armorLeftArm = leftArm.addChild(
+		var armorLeftArm = leftArm.addOrReplaceChild(
 				"armor_left_arm",
-				ModelPartBuilder.create()
-						.uv(40, 0)
-						.cuboid(-1.5F, -2.5F, -2.5F, 5.0F, 13.0F, 5.0F),
-				ModelTransform.NONE
+				CubeListBuilder.create()
+						.texOffs(40, 0)
+						.addBox(-1.5F, -2.5F, -2.5F, 5.0F, 13.0F, 5.0F),
+				PartPose.ZERO
 		);
 		
-		armorLeftArm.addChild(
+		armorLeftArm.addOrReplaceChild(
 				"armor_left_arm_extra",
-				ModelPartBuilder.create()
-						.uv(62, 20)
-						.cuboid(-1.75F, -1.25F, -2.0F, 5.0F, 1.0F, 5.0F, new Dilation(0.10F))
-						.uv(54, 12)
-						.cuboid(-1.75F, -0.25F, -2.5F, 6.0F, 2.0F, 6.0F, new Dilation(0.10F)),
-				ModelTransform.of(1.0F, -2.25F, -0.5F, 0.0F, 0.0F, 0.4363F)
+				CubeListBuilder.create()
+						.texOffs(62, 20)
+						.addBox(-1.75F, -1.25F, -2.0F, 5.0F, 1.0F, 5.0F, new CubeDeformation(0.10F))
+						.texOffs(54, 12)
+						.addBox(-1.75F, -0.25F, -2.5F, 6.0F, 2.0F, 6.0F, new CubeDeformation(0.10F)),
+				PartPose.offsetAndRotation(1.0F, -2.25F, -0.5F, 0.0F, 0.0F, 0.4363F)
 		);
 		
-		var leftLeg = root.addChild(
+		var leftLeg = root.addOrReplaceChild(
 				"left_leg",
-				ModelPartBuilder.create(),
-				ModelTransform.NONE
+				CubeListBuilder.create(),
+				PartPose.ZERO
 		);
 		
-		leftLeg.addChild(
+		leftLeg.addOrReplaceChild(
 				"armor_left_leg",
-				ModelPartBuilder.create()
-						.uv(42, 51)
-						.cuboid(-2.5F, -0.15F, -2.5F, 5.0F, 10.0F, 5.0F, new Dilation(0.15F)),
-				ModelTransform.NONE
+				CubeListBuilder.create()
+						.texOffs(42, 51)
+						.addBox(-2.5F, -0.15F, -2.5F, 5.0F, 10.0F, 5.0F, new CubeDeformation(0.15F)),
+				PartPose.ZERO
 		);
 		
-		leftLeg.addChild(
+		leftLeg.addOrReplaceChild(
 				"left_boot",
-				ModelPartBuilder.create()
-						.uv(60, 0)
-						.cuboid(-2.5F, 9.15F, -2.5F, 5.0F, 3.0F, 5.0F, new Dilation(0.25F)),
-				ModelTransform.NONE
+				CubeListBuilder.create()
+						.texOffs(60, 0)
+						.addBox(-2.5F, 9.15F, -2.5F, 5.0F, 3.0F, 5.0F, new CubeDeformation(0.25F)),
+				PartPose.ZERO
 		);
 		
-		var rightLeg = root.addChild(
+		var rightLeg = root.addOrReplaceChild(
 				"right_leg",
-				ModelPartBuilder.create(),
-				ModelTransform.NONE
+				CubeListBuilder.create(),
+				PartPose.ZERO
 		);
 		
-		rightLeg.addChild(
+		rightLeg.addOrReplaceChild(
 				"armor_right_leg",
-				ModelPartBuilder.create()
-						.uv(59, 28)
-						.cuboid(-2.5F, -0.15F, -2.5F, 5.0F, 10.0F, 5.0F, new Dilation(0.149F)),
-				ModelTransform.NONE
+				CubeListBuilder.create()
+						.texOffs(59, 28)
+						.addBox(-2.5F, -0.15F, -2.5F, 5.0F, 10.0F, 5.0F, new CubeDeformation(0.149F)),
+				PartPose.ZERO
 		);
 		
-		rightLeg.addChild(
+		rightLeg.addOrReplaceChild(
 				"right_boot",
-				ModelPartBuilder.create()
-						.uv(0, 61)
-						.cuboid(-2.5F, 9.15F, -2.5F, 5.0F, 3.0F, 5.0F, new Dilation(0.249F)),
-				ModelTransform.NONE
+				CubeListBuilder.create()
+						.texOffs(0, 61)
+						.addBox(-2.5F, 9.15F, -2.5F, 5.0F, 3.0F, 5.0F, new CubeDeformation(0.249F)),
+				PartPose.ZERO
 		);
 		
 		return data;

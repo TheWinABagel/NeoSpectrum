@@ -1,24 +1,30 @@
 package de.dafuqs.spectrum.blocks.particle_spawner;
 
-import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.screenhandler.v1.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.nbt.*;
-import net.minecraft.network.*;
-import net.minecraft.network.listener.*;
-import net.minecraft.network.packet.*;
-import net.minecraft.network.packet.s2c.play.*;
-import net.minecraft.screen.*;
-import net.minecraft.server.network.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import org.joml.*;
+import de.dafuqs.spectrum.inventories.ParticleSpawnerScreenHandler;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
+import org.joml.Vector3i;
 
 public class ParticleSpawnerBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory {
 	
@@ -49,7 +55,7 @@ public class ParticleSpawnerBlockEntity extends BlockEntity implements ExtendedS
 				true);
 	}
 	
-	public static void clientTick(World world, BlockPos pos, BlockState state, ParticleSpawnerBlockEntity blockEntity) {
+	public static void clientTick(Level world, BlockPos pos, BlockState state, ParticleSpawnerBlockEntity blockEntity) {
 		BlockState blockState = world.getBlockState(pos);
 		if (blockState.getBlock() instanceof AbstractParticleSpawnerBlock particleSpawnerBlock && particleSpawnerBlock.shouldSpawnParticles(world, pos)) {
 			blockEntity.configuration.spawnParticles(world, pos);
@@ -58,35 +64,35 @@ public class ParticleSpawnerBlockEntity extends BlockEntity implements ExtendedS
 	
 	// Called when the chunk is first loaded to initialize this be
 	@Override
-	public NbtCompound toInitialChunkDataNbt() {
-		NbtCompound nbtCompound = new NbtCompound();
-		this.writeNbt(nbtCompound);
+	public CompoundTag getUpdateTag() {
+		CompoundTag nbtCompound = new CompoundTag();
+		this.saveAdditional(nbtCompound);
 		return nbtCompound;
 	}
 	
 	@Nullable
 	@Override
-	public Packet<ClientPlayPacketListener> toUpdatePacket() {
-		return BlockEntityUpdateS2CPacket.create(this);
+	public Packet<ClientGamePacketListener> getUpdatePacket() {
+		return ClientboundBlockEntityDataPacket.create(this);
 	}
 	
 	public void updateInClientWorld() {
-		if (world != null) {
-			world.updateListeners(pos, world.getBlockState(pos), world.getBlockState(pos), Block.NO_REDRAW);
+		if (level != null) {
+			level.sendBlockUpdated(worldPosition, level.getBlockState(worldPosition), level.getBlockState(worldPosition), Block.UPDATE_INVISIBLE);
 		}
 	}
 	
 	@Override
-	public void writeNbt(NbtCompound tag) {
-		super.writeNbt(tag);
+	public void saveAdditional(CompoundTag tag) {
+		super.saveAdditional(tag);
 		tag.put("particle_config", this.configuration.toNbt());
 	}
 	
 	@Override
-	public void readNbt(NbtCompound tag) {
-		super.readNbt(tag);
+	public void load(CompoundTag tag) {
+		super.load(tag);
 		this.initialized = false;
-		if (tag.contains("particle_config", NbtElement.COMPOUND_TYPE)) {
+		if (tag.contains("particle_config", Tag.TAG_COMPOUND)) {
 			this.configuration = ParticleSpawnerConfiguration.fromNbt(tag.getCompound("particle_config"));
 			this.initialized = true;
 		}
@@ -94,13 +100,13 @@ public class ParticleSpawnerBlockEntity extends BlockEntity implements ExtendedS
 	
 	@Nullable
 	@Override
-	public ScreenHandler createMenu(int syncId, PlayerInventory inv, PlayerEntity player) {
+	public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
 		return new ParticleSpawnerScreenHandler(syncId, inv, this);
 	}
 	
 	@Override
-	public Text getDisplayName() {
-		return Text.translatable("block.spectrum.particle_spawner");
+	public Component getDisplayName() {
+		return Component.translatable("block.spectrum.particle_spawner");
 	}
 	
 	public void applySettings(ParticleSpawnerConfiguration configuration) {
@@ -108,12 +114,12 @@ public class ParticleSpawnerBlockEntity extends BlockEntity implements ExtendedS
 		this.initialized = true;
 		
 		this.updateInClientWorld();
-		this.markDirty();
+		this.setChanged();
 	}
 	
 	@Override
-	public void writeScreenOpeningData(ServerPlayerEntity player, @NotNull PacketByteBuf buf) {
-		buf.writeBlockPos(this.pos);
+	public void writeScreenOpeningData(ServerPlayer player, @NotNull FriendlyByteBuf buf) {
+		buf.writeBlockPos(this.worldPosition);
 	}
 	
 	public ParticleSpawnerConfiguration getConfiguration() {

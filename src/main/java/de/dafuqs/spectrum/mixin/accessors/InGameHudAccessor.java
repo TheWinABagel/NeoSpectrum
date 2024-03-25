@@ -1,12 +1,13 @@
 package de.dafuqs.spectrum.mixin.accessors;
 
-import net.fabricmc.api.*;
-import net.minecraft.client.gui.hud.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.gen.*;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.Gui;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Environment(EnvType.CLIENT)
-@Mixin(InGameHud.class)
+@Mixin(Gui.class)
 public interface InGameHudAccessor {
     @Accessor(value = "scaledWidth")
     int getWidth();

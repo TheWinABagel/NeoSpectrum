@@ -1,116 +1,127 @@
 package de.dafuqs.spectrum.blocks.dd_deco;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.blocks.jade_vines.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.tag.convention.v1.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.blocks.jade_vines.JadeVinePlantBlock;
+import de.dafuqs.spectrum.registries.SpectrumBlockTags;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class SawbladeHollyBushBlock extends PlantBlock implements Fertilizable {
+public class SawbladeHollyBushBlock extends BushBlock implements BonemealableBlock {
     
     public static final int MAX_TINY_AGE = 0;
     public static final int MAX_SMALL_AGE = 2;
-    public static final int MAX_AGE = Properties.AGE_7_MAX;
-    public static final IntProperty AGE = Properties.AGE_7;
-    private static final VoxelShape SMALL_SHAPE = Block.createCuboidShape(3.0, 0.0, 3.0, 13.0, 8.0, 13.0);
-    private static final VoxelShape LARGE_SHAPE = Block.createCuboidShape(1.0, 0.0, 1.0, 15.0, 16.0, 15.0);
+    public static final int MAX_AGE = BlockStateProperties.MAX_AGE_7;
+    public static final IntegerProperty AGE = BlockStateProperties.AGE_7;
+    private static final VoxelShape SMALL_SHAPE = Block.box(3.0, 0.0, 3.0, 13.0, 8.0, 13.0);
+    private static final VoxelShape LARGE_SHAPE = Block.box(1.0, 0.0, 1.0, 15.0, 16.0, 15.0);
     
-    public static final Identifier HARVESTING_LOOT_TABLE_ID = SpectrumCommon.locate("gameplay/sawblade_holly_harvesting");
-    public static final Identifier SHEARING_LOOT_TABLE_ID = SpectrumCommon.locate("gameplay/sawblade_holly_shearing");
+    public static final ResourceLocation HARVESTING_LOOT_TABLE_ID = SpectrumCommon.locate("gameplay/sawblade_holly_harvesting");
+    public static final ResourceLocation SHEARING_LOOT_TABLE_ID = SpectrumCommon.locate("gameplay/sawblade_holly_shearing");
     
-    public SawbladeHollyBushBlock(Settings settings) {
+    public SawbladeHollyBushBlock(Properties settings) {
         super(settings);
-        this.setDefaultState(this.stateManager.getDefaultState().with(AGE, 0));
+        this.registerDefaultState(this.stateDefinition.any().setValue(AGE, 0));
     }
     
     @Override
-    protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(AGE);
     }
     
     @Override
-    public boolean hasRandomTicks(BlockState state) {
-        return state.get(AGE) < MAX_AGE;
+    public boolean isRandomlyTicking(BlockState state) {
+        return state.getValue(AGE) < MAX_AGE;
     }
     
     @Override
-    public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-        int i = state.get(AGE);
-        if (i < MAX_AGE && random.nextInt(5) == 0 && world.getBaseLightLevel(pos.up(), 0) >= 9) {
-            BlockState blockState = state.with(AGE, i + 1);
-            world.setBlockState(pos, blockState, Block.NOTIFY_LISTENERS);
-            world.emitGameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Emitter.of(blockState));
+    public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
+        int i = state.getValue(AGE);
+        if (i < MAX_AGE && random.nextInt(5) == 0 && world.getRawBrightness(pos.above(), 0) >= 9) {
+            BlockState blockState = state.setValue(AGE, i + 1);
+            world.setBlock(pos, blockState, Block.UPDATE_CLIENTS);
+            world.gameEvent(GameEvent.BLOCK_CHANGE, pos, GameEvent.Context.of(blockState));
         }
     }
     
     @Override
-    public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
+    public ItemStack getCloneItemStack(BlockGetter world, BlockPos pos, BlockState state) {
         return new ItemStack(SpectrumItems.SAWBLADE_HOLLY_BERRY);
     }
     
     @Override
-    protected boolean canPlantOnTop(BlockState floor, BlockView world, BlockPos pos) {
-        return floor.isIn(SpectrumBlockTags.SAWBLADE_HOLLY_PLANTABLE);
+    protected boolean mayPlaceOn(BlockState floor, BlockGetter world, BlockPos pos) {
+        return floor.is(SpectrumBlockTags.SAWBLADE_HOLLY_PLANTABLE);
     }
     
     @Override
 	@SuppressWarnings("deprecation")
-    public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-        if (state.get(AGE) <= MAX_TINY_AGE) {
+    public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+        if (state.getValue(AGE) <= MAX_TINY_AGE) {
             return SMALL_SHAPE;
         } else {
-            return state.get(AGE) <= MAX_SMALL_AGE ? LARGE_SHAPE : super.getOutlineShape(state, world, pos, context);
+            return state.getValue(AGE) <= MAX_SMALL_AGE ? LARGE_SHAPE : super.getShape(state, world, pos, context);
         }
     }
 	
 	@Override
 	@SuppressWarnings("deprecation")
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-        int age = state.get(AGE);
+    public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        int age = state.getValue(AGE);
         
-        ItemStack handStack = player.getStackInHand(hand);
-        if (canBeSheared(age) && handStack.isIn(ConventionalItemTags.SHEARS)) {
-            if (!world.isClient) {
-                for (ItemStack stack : JadeVinePlantBlock.getHarvestedStacks(state, (ServerWorld) world, pos, world.getBlockEntity(pos), player, player.getMainHandStack(), SHEARING_LOOT_TABLE_ID)) {
-                    dropStack(world, pos, stack);
+        ItemStack handStack = player.getItemInHand(hand);
+        if (canBeSheared(age) && handStack.is(ConventionalItemTags.SHEARS)) {
+            if (!world.isClientSide) {
+                for (ItemStack stack : JadeVinePlantBlock.getHarvestedStacks(state, (ServerLevel) world, pos, world.getBlockEntity(pos), player, player.getMainHandItem(), SHEARING_LOOT_TABLE_ID)) {
+                    popResource(world, pos, stack);
                 }
-                handStack.damage(1, player, (p) -> p.sendToolBreakStatus(hand));
+                handStack.hurtAndBreak(1, player, (p) -> p.broadcastBreakEvent(hand));
             }
             
-            BlockState newState = state.with(AGE, state.get(AGE) - 1);
-            world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
-            world.emitGameEvent(GameEvent.SHEAR, pos, GameEvent.Emitter.of(player, newState));
-            world.playSound(null, pos, SoundEvents.BLOCK_BEEHIVE_SHEAR, SoundCategory.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
+            BlockState newState = state.setValue(AGE, state.getValue(AGE) - 1);
+            world.setBlock(pos, newState, Block.UPDATE_CLIENTS);
+            world.gameEvent(GameEvent.SHEAR, pos, GameEvent.Context.of(player, newState));
+            world.playSound(null, pos, SoundEvents.BEEHIVE_SHEAR, SoundSource.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
             
-            return ActionResult.success(world.isClient);
+            return InteractionResult.sidedSuccess(world.isClientSide);
         } else if (age == MAX_AGE) {
-            if (!world.isClient) {
-                for (ItemStack stack : JadeVinePlantBlock.getHarvestedStacks(state, (ServerWorld) world, pos, world.getBlockEntity(pos), player, player.getMainHandStack(), HARVESTING_LOOT_TABLE_ID)) {
-                    dropStack(world, pos, stack);
+            if (!world.isClientSide) {
+                for (ItemStack stack : JadeVinePlantBlock.getHarvestedStacks(state, (ServerLevel) world, pos, world.getBlockEntity(pos), player, player.getMainHandItem(), HARVESTING_LOOT_TABLE_ID)) {
+                    popResource(world, pos, stack);
                 }
             }
-            world.playSound(null, pos, SoundEvents.BLOCK_SWEET_BERRY_BUSH_PICK_BERRIES, SoundCategory.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
+            world.playSound(null, pos, SoundEvents.SWEET_BERRY_BUSH_PICK_BERRIES, SoundSource.BLOCKS, 1.0F, 0.8F + world.random.nextFloat() * 0.4F);
             
-            BlockState newState = state.with(AGE, 4);
-            world.setBlockState(pos, newState, Block.NOTIFY_LISTENERS);
-            world.emitGameEvent(GameEvent.SHEAR, pos, GameEvent.Emitter.of(player, newState));
+            BlockState newState = state.setValue(AGE, 4);
+            world.setBlock(pos, newState, Block.UPDATE_CLIENTS);
+            world.gameEvent(GameEvent.SHEAR, pos, GameEvent.Context.of(player, newState));
             
-            return ActionResult.success(world.isClient);
+            return InteractionResult.sidedSuccess(world.isClientSide);
         } else {
-            return super.onUse(state, world, pos, player, hand, hit);
+            return super.use(state, world, pos, player, hand, hit);
         }
     }
     
@@ -119,19 +130,19 @@ public class SawbladeHollyBushBlock extends PlantBlock implements Fertilizable {
     }
     
     @Override
-	public boolean isFertilizable(WorldView world, BlockPos pos, BlockState state, boolean isClient) {
-		return state.get(AGE) < MAX_AGE;
+	public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
+		return state.getValue(AGE) < MAX_AGE;
 	}
     
     @Override
-    public boolean canGrow(World world, Random random, BlockPos pos, BlockState state) {
+    public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
     
     @Override
-    public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
-        int newAge = Math.min(MAX_AGE, state.get(AGE) + (random.nextBoolean() ? 1 : 2));
-        world.setBlockState(pos, state.with(AGE, newAge), Block.NOTIFY_LISTENERS);
+    public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+        int newAge = Math.min(MAX_AGE, state.getValue(AGE) + (random.nextBoolean() ? 1 : 2));
+        world.setBlock(pos, state.setValue(AGE, newAge), Block.UPDATE_CLIENTS);
     }
     
 }

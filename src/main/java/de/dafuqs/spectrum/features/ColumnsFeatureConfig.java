@@ -1,18 +1,18 @@
 package de.dafuqs.spectrum.features;
 
-import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.*;
-import net.minecraft.block.*;
-import net.minecraft.util.math.intprovider.*;
-import net.minecraft.world.gen.feature.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 
 public record ColumnsFeatureConfig(BlockState blockState, IntProvider reach,
-                                   IntProvider height) implements FeatureConfig {
+                                   IntProvider height) implements FeatureConfiguration {
 
     public static final Codec<ColumnsFeatureConfig> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
             BlockState.CODEC.fieldOf("state").forGetter((config) -> config.blockState),
-            IntProvider.createValidatingCodec(1, 10).fieldOf("height").forGetter((config) -> config.height),
-            IntProvider.createValidatingCodec(1, 10).fieldOf("height").forGetter((config) -> config.height)
+            IntProvider.codec(1, 10).fieldOf("height").forGetter((config) -> config.height),
+            IntProvider.codec(1, 10).fieldOf("height").forGetter((config) -> config.height)
     ).apply(instance, ColumnsFeatureConfig::new));
 
 }

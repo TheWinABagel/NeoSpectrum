@@ -1,53 +1,51 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import it.unimi.dsi.fastutil.objects.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.item.*;
-import net.minecraft.predicate.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.predicate.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
-public class PedestalCraftingCriterion extends AbstractCriterion<PedestalCraftingCriterion.Conditions> {
+public class PedestalCraftingCriterion extends SimpleCriterionTrigger<PedestalCraftingCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("crafted_with_pedestal");
+	static final ResourceLocation ID = SpectrumCommon.locate("crafted_with_pedestal");
 	
-	public static PedestalCraftingCriterion.Conditions create(ItemPredicate[] item, NumberRange.IntRange experienceRange, NumberRange.IntRange durationTicks) {
-		return new PedestalCraftingCriterion.Conditions(LootContextPredicate.EMPTY, item, experienceRange, durationTicks);
+	public static PedestalCraftingCriterion.Conditions create(ItemPredicate[] item, MinMaxBounds.Ints experienceRange, MinMaxBounds.Ints durationTicks) {
+		return new PedestalCraftingCriterion.Conditions(ContextAwarePredicate.ANY, item, experienceRange, durationTicks);
 	}
 
 	@Override
-	protected Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate playerPredicate, AdvancementEntityPredicateDeserializer predicateDeserializer) {
-		ItemPredicate[] itemPredicates = ItemPredicate.deserializeAll(jsonObject.get("items"));
-		NumberRange.IntRange experienceRange = NumberRange.IntRange.fromJson(jsonObject.get("gained_experience"));
-		NumberRange.IntRange craftingDurationTicksRange = NumberRange.IntRange.fromJson(jsonObject.get("crafting_duration_ticks"));
+	protected Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate playerPredicate, DeserializationContext predicateDeserializer) {
+		ItemPredicate[] itemPredicates = ItemPredicate.fromJsonArray(jsonObject.get("items"));
+		MinMaxBounds.Ints experienceRange = MinMaxBounds.Ints.fromJson(jsonObject.get("gained_experience"));
+		MinMaxBounds.Ints craftingDurationTicksRange = MinMaxBounds.Ints.fromJson(jsonObject.get("crafting_duration_ticks"));
 		return new PedestalCraftingCriterion.Conditions(playerPredicate, itemPredicates, experienceRange, craftingDurationTicksRange);
 	}
 
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
-	public void trigger(ServerPlayerEntity player, ItemStack itemStack, int experience, int durationTicks) {
+	public void trigger(ServerPlayer player, ItemStack itemStack, int experience, int durationTicks) {
 		this.trigger(player, (conditions) -> conditions.matches(itemStack, experience, durationTicks));
 	}
 	
-	public static class Conditions extends AbstractCriterionConditions {
+	public static class Conditions extends AbstractCriterionTriggerInstance {
 		private final ItemPredicate[] itemPredicates;
-		private final NumberRange.IntRange experienceRange;
-		private final NumberRange.IntRange craftingDurationTicksRange;
+		private final MinMaxBounds.Ints experienceRange;
+		private final MinMaxBounds.Ints craftingDurationTicksRange;
 		
-		public Conditions(LootContextPredicate player, ItemPredicate[] itemPredicates, NumberRange.IntRange experienceRange, NumberRange.IntRange craftingDurationTicksRange) {
+		public Conditions(ContextAwarePredicate player, ItemPredicate[] itemPredicates, MinMaxBounds.Ints experienceRange, MinMaxBounds.Ints craftingDurationTicksRange) {
 			this(ID, player, itemPredicates, experienceRange, craftingDurationTicksRange);
 		}
 		
-		public Conditions(Identifier id, LootContextPredicate player, ItemPredicate[] itemPredicates, NumberRange.IntRange experienceRange, NumberRange.IntRange craftingDurationTicksRange) {
+		public Conditions(ResourceLocation id, ContextAwarePredicate player, ItemPredicate[] itemPredicates, MinMaxBounds.Ints experienceRange, MinMaxBounds.Ints craftingDurationTicksRange) {
 			super(id, player);
 			this.itemPredicates = itemPredicates;
 			this.experienceRange = experienceRange;
@@ -55,22 +53,22 @@ public class PedestalCraftingCriterion extends AbstractCriterion<PedestalCraftin
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
 			jsonObject.addProperty("items", Arrays.toString(this.itemPredicates));
-			jsonObject.add("gained_experience", this.experienceRange.toJson());
-			jsonObject.add("crafting_duration_ticks", this.experienceRange.toJson());
+			jsonObject.add("gained_experience", this.experienceRange.serializeToJson());
+			jsonObject.add("crafting_duration_ticks", this.experienceRange.serializeToJson());
 			return jsonObject;
 		}
 		
 		public boolean matches(ItemStack itemStack, int experience, int durationTicks) {
-			if (this.experienceRange.test(experience) && this.craftingDurationTicksRange.test(durationTicks)) {
+			if (this.experienceRange.matches(experience) && this.craftingDurationTicksRange.matches(durationTicks)) {
 				List<ItemPredicate> list = new ObjectArrayList<>(this.itemPredicates);
 				if (list.isEmpty()) {
 					return true;
 				} else {
 					if (!itemStack.isEmpty()) {
-						list.removeIf((itemPredicate) -> itemPredicate.test(itemStack));
+						list.removeIf((itemPredicate) -> itemPredicate.matches(itemStack));
 					}
 					return list.isEmpty();
 				}

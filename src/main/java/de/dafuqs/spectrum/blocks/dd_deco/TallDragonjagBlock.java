@@ -1,59 +1,66 @@
 package de.dafuqs.spectrum.blocks.dd_deco;
 
-import de.dafuqs.spectrum.api.interaction.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.enums.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.world.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.api.interaction.NaturesStaffTriggered;
+import de.dafuqs.spectrum.registries.SpectrumConfiguredFeatures;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.DoublePlantBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-public class TallDragonjagBlock extends TallPlantBlock implements Dragonjag, Fertilizable, NaturesStaffTriggered {
+public class TallDragonjagBlock extends DoublePlantBlock implements Dragonjag, BonemealableBlock, NaturesStaffTriggered {
     
-    protected static final VoxelShape SHAPE_UPPER = Block.createCuboidShape(2.0, 0.0, 2.0, 14.0, 7.0, 14.0);
-    protected static final VoxelShape SHAPE_UPPER_DEAD = Block.createCuboidShape(2.0, 0.0, 2.0, 10.0, 3.0, 14.0);
-    protected static final VoxelShape SHAPE_LOWER = Block.createCuboidShape(2.0, 0.0, 2.0, 14.0, 16.0, 14.0);
+    protected static final VoxelShape SHAPE_UPPER = Block.box(2.0, 0.0, 2.0, 14.0, 7.0, 14.0);
+    protected static final VoxelShape SHAPE_UPPER_DEAD = Block.box(2.0, 0.0, 2.0, 10.0, 3.0, 14.0);
+    protected static final VoxelShape SHAPE_LOWER = Block.box(2.0, 0.0, 2.0, 14.0, 16.0, 14.0);
     
-    public static final BooleanProperty DEAD = BooleanProperty.of("dead");
+    public static final BooleanProperty DEAD = BooleanProperty.create("dead");
     protected static final Map<Dragonjag.Variant, TallDragonjagBlock> VARIANTS = new HashMap<>();
     protected final Dragonjag.Variant variant;
     
-    public TallDragonjagBlock(Settings settings, Dragonjag.Variant variant) {
+    public TallDragonjagBlock(Properties settings, Dragonjag.Variant variant) {
         super(settings);
         this.variant = variant;
         VARIANTS.put(variant, this);
-        this.setDefaultState(this.stateManager.getDefaultState().with(HALF, DoubleBlockHalf.LOWER).with(DEAD, false));
+        this.registerDefaultState(this.stateDefinition.any().setValue(HALF, DoubleBlockHalf.LOWER).setValue(DEAD, false));
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		if (state.get(HALF) == DoubleBlockHalf.UPPER) {
-			return state.get(DEAD) ? SHAPE_UPPER_DEAD : SHAPE_UPPER;
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		if (state.getValue(HALF) == DoubleBlockHalf.UPPER) {
+			return state.getValue(DEAD) ? SHAPE_UPPER_DEAD : SHAPE_UPPER;
 		}
 		return SHAPE_LOWER;
 	}
 	
 	@Override
-	protected boolean canPlantOnTop(BlockState floor, BlockView world, BlockPos pos) {
+	protected boolean mayPlaceOn(BlockState floor, BlockGetter world, BlockPos pos) {
 		return Dragonjag.canPlantOnTop(floor, world, pos);
 	}
 	
 	@Override
-	public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
-		return SmallDragonjagBlock.getBlockForVariant(this.variant).getPickStack(world, pos, state);
+	public ItemStack getCloneItemStack(BlockGetter world, BlockPos pos, BlockState state) {
+		return SmallDragonjagBlock.getBlockForVariant(this.variant).getCloneItemStack(world, pos, state);
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(HALF, DEAD);
 	}
 	
@@ -67,52 +74,52 @@ public class TallDragonjagBlock extends TallPlantBlock implements Dragonjag, Fer
     }
 	
 	@Override
-	public boolean isFertilizable(WorldView world, BlockPos pos, BlockState state, boolean isClient) {
-		return !state.get(DEAD);
+	public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
+		return !state.getValue(DEAD);
 	}
 
     @Override
-    public boolean canGrow(World world, Random random, BlockPos pos, BlockState state) {
-        return !state.get(DEAD);
+    public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
+        return !state.getValue(DEAD);
     }
 
     @Override
-    public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
-		boolean success = world.getRegistryManager()
-				.get(RegistryKeys.CONFIGURED_FEATURE)
+    public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+		boolean success = world.registryAccess()
+				.registryOrThrow(Registries.CONFIGURED_FEATURE)
 				.get(SpectrumConfiguredFeatures.DRAGONJAGS.get(variant))
-				.generate(world, world.getChunkManager().getChunkGenerator(), random, pos);
+				.place(world, world.getChunkSource().getGenerator(), random, pos);
 
 		if (success) {
             setDead(world, pos, state, true);
         }
     }
     
-    private void setDead(World world, BlockPos pos, BlockState state, boolean dead) {
+    private void setDead(Level world, BlockPos pos, BlockState state, boolean dead) {
         BlockState posState = world.getBlockState(pos);
-        if (posState.isOf(this)) {
-            world.setBlockState(pos, posState.with(DEAD, dead));
+        if (posState.is(this)) {
+            world.setBlockAndUpdate(pos, posState.setValue(DEAD, dead));
         }
-        if (state.get(HALF) == DoubleBlockHalf.LOWER) {
-            posState = world.getBlockState(pos.up());
-            if (posState.isOf(this)) {
-                world.setBlockState(pos.up(), posState.with(DEAD, dead));
+        if (state.getValue(HALF) == DoubleBlockHalf.LOWER) {
+            posState = world.getBlockState(pos.above());
+            if (posState.is(this)) {
+                world.setBlockAndUpdate(pos.above(), posState.setValue(DEAD, dead));
             }
         } else {
-            posState = world.getBlockState(pos.down());
-            if (posState.isOf(this)) {
-                world.setBlockState(pos.down(), posState.with(DEAD, dead));
+            posState = world.getBlockState(pos.below());
+            if (posState.is(this)) {
+                world.setBlockAndUpdate(pos.below(), posState.setValue(DEAD, dead));
             }
         }
     }
     
     @Override
-    public boolean canUseNaturesStaff(World world, BlockPos pos, BlockState state) {
-        return state.get(DEAD);
+    public boolean canUseNaturesStaff(Level world, BlockPos pos, BlockState state) {
+        return state.getValue(DEAD);
     }
     
     @Override
-    public boolean onNaturesStaffUse(World world, BlockPos pos, BlockState state, PlayerEntity player) {
+    public boolean onNaturesStaffUse(Level world, BlockPos pos, BlockState state, Player player) {
         setDead(world, pos, state, false);
         return true;
     }

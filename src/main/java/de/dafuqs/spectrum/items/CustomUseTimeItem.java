@@ -1,18 +1,19 @@
 package de.dafuqs.spectrum.items;
 
-import net.minecraft.item.*;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 public class CustomUseTimeItem extends Item {
 	
 	private final int useTime;
 	
-	public CustomUseTimeItem(Settings settings, int useTime) {
+	public CustomUseTimeItem(Properties settings, int useTime) {
 		super(settings);
 		this.useTime = useTime;
 	}
 	
 	@Override
-	public int getMaxUseTime(ItemStack stack) {
+	public int getUseDuration(ItemStack stack) {
 		return useTime;
 	}
 }

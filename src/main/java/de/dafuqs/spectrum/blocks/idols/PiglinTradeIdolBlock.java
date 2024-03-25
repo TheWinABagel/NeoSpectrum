@@ -1,34 +1,44 @@
 package de.dafuqs.spectrum.blocks.idols;
 
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.loot.*;
-import net.minecraft.loot.context.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.BlockSourceImpl;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Position;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.monster.piglin.Piglin;
+import net.minecraft.world.entity.monster.piglin.PiglinAi;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.BuiltInLootTables;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class PiglinTradeIdolBlock extends IdolBlock {
 	
-	public PiglinTradeIdolBlock(Settings settings, ParticleEffect particleEffect) {
+	public PiglinTradeIdolBlock(Properties settings, ParticleOptions particleEffect) {
 		super(settings, particleEffect);
 	}
 	
-	private static List<ItemStack> getBarteredStacks(@NotNull ServerWorld world, BlockPos blockPos) {
-		PiglinEntity piglin = new PiglinEntity(EntityType.PIGLIN, world);
-		piglin.setPos(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+	private static List<ItemStack> getBarteredStacks(@NotNull ServerLevel world, BlockPos blockPos) {
+		Piglin piglin = new Piglin(EntityType.PIGLIN, world);
+		piglin.setPosRaw(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 		
-		LootTable lootTable = world.getServer().getLootManager().getLootTable(LootTables.PIGLIN_BARTERING_GAMEPLAY);
-		List<ItemStack> loot = lootTable.generateLoot(new LootContextParameterSet.Builder(world).add(LootContextParameters.THIS_ENTITY, piglin).build(LootContextTypes.BARTER));
+		LootTable lootTable = world.getServer().getLootData().getLootTable(BuiltInLootTables.PIGLIN_BARTERING);
+		List<ItemStack> loot = lootTable.getRandomItems(new LootParams.Builder(world).withParameter(LootContextParams.THIS_ENTITY, piglin).create(LootContextParamSets.PIGLIN_BARTER));
 		
 		piglin.discard();
 		
@@ -36,24 +46,24 @@ public class PiglinTradeIdolBlock extends IdolBlock {
 	}
 	
 	@Override
-	public boolean trigger(ServerWorld world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
+	public boolean trigger(ServerLevel world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
 		if (entity instanceof ItemEntity itemEntity) {
-			ItemStack stack = itemEntity.getStack();
-			if (stack.isOf(PiglinBrain.BARTERING_ITEM)) {
+			ItemStack stack = itemEntity.getItem();
+			if (stack.is(PiglinAi.BARTERING_ITEM)) {
 				int newAmount = stack.getCount() - 1;
 				if (newAmount <= 0) {
 					itemEntity.discard();
 				} else {
-					stack.decrement(1);
+					stack.shrink(1);
 				}
 				
 				outputLoot(world, blockPos, side);
 				return true;
 			}
-		} else if (entity instanceof PlayerEntity player) {
-			for (ItemStack handStack : player.getHandItems()) {
-				if (handStack.isOf(PiglinBrain.BARTERING_ITEM)) {
-					handStack.decrement(1);
+		} else if (entity instanceof Player player) {
+			for (ItemStack handStack : player.getHandSlots()) {
+				if (handStack.is(PiglinAi.BARTERING_ITEM)) {
+					handStack.shrink(1);
 					
 					outputLoot(world, blockPos, side);
 					return true;
@@ -63,19 +73,19 @@ public class PiglinTradeIdolBlock extends IdolBlock {
 		return false;
 	}
 	
-	private void outputLoot(ServerWorld world, BlockPos blockPos, Direction side) {
-		Position outputLocation = getOutputLocation(new BlockPointerImpl(world, blockPos), side);
+	private void outputLoot(ServerLevel world, BlockPos blockPos, Direction side) {
+		Position outputLocation = getOutputLocation(new BlockSourceImpl(world, blockPos), side);
 		for (ItemStack barteredStack : getBarteredStacks(world, blockPos)) {
-			ItemEntity itemEntity = new ItemEntity(world, outputLocation.getX(), outputLocation.getY(), outputLocation.getZ(), barteredStack);
-			itemEntity.addVelocity(side.getOffsetX() * 0.25, side.getOffsetY() * 0.25 + 0.03, side.getOffsetZ() * 0.25);
-			world.spawnEntity(itemEntity);
+			ItemEntity itemEntity = new ItemEntity(world, outputLocation.x(), outputLocation.y(), outputLocation.z(), barteredStack);
+			itemEntity.push(side.getStepX() * 0.25, side.getStepY() * 0.25 + 0.03, side.getStepZ() * 0.25);
+			world.addFreshEntity(itemEntity);
 		}
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("block.spectrum.piglin_trade_idol.tooltip"));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("block.spectrum.piglin_trade_idol.tooltip"));
 	}
 	
 }

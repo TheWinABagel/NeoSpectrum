@@ -1,9 +1,9 @@
 package de.dafuqs.spectrum.items.tooltip;
 
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
+import net.minecraft.world.item.ItemStack;
 
-public class BottomlessBundleTooltipData implements TooltipData {
+public class BottomlessBundleTooltipData implements TooltipComponent {
 	
 	private final ItemStack itemStack;
 	private final int amount;

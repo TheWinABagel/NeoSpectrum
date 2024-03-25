@@ -1,26 +1,33 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.spectrum.helpers.*;
-import net.minecraft.client.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.*;
-import net.minecraft.screen.slot.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.helpers.SpectrumEnchantmentHelper;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.SlotAccess;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ClickAction;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.EnchantedBookItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class EnchantmentCanvasItem extends Item {
 	
-	public EnchantmentCanvasItem(Settings settings) {
+	public EnchantmentCanvasItem(Properties settings) {
 		super(settings);
 	}
 	
@@ -28,9 +35,9 @@ public class EnchantmentCanvasItem extends Item {
 	 * clicked onto another stack
 	 */
 	@Override
-	public boolean onStackClicked(ItemStack stack, Slot slot, ClickType clickType, PlayerEntity player) {
-		if (clickType == ClickType.RIGHT) {
-			ItemStack otherStack = slot.getStack();
+	public boolean overrideStackedOnOther(ItemStack stack, Slot slot, ClickAction clickType, Player player) {
+		if (clickType == ClickAction.SECONDARY) {
+			ItemStack otherStack = slot.getItem();
 			if (!otherStack.isEmpty() && tryExchangeEnchantments(stack, otherStack, player)) {
 				if (player != null) {
 					playExchangeSound(player);
@@ -45,8 +52,8 @@ public class EnchantmentCanvasItem extends Item {
 	 * itemStack is right-clicked onto this
 	 */
 	@Override
-	public boolean onClicked(ItemStack stack, ItemStack otherStack, Slot slot, ClickType clickType, PlayerEntity player, StackReference cursorStackReference) {
-		if (clickType == ClickType.RIGHT && !otherStack.isEmpty() && slot.canTakePartial(player)) {
+	public boolean overrideOtherStackedOnMe(ItemStack stack, ItemStack otherStack, Slot slot, ClickAction clickType, Player player, SlotAccess cursorStackReference) {
+		if (clickType == ClickAction.SECONDARY && !otherStack.isEmpty() && slot.allowModification(player)) {
 			if (tryExchangeEnchantments(stack, otherStack, player)) {
 				if (player != null) {
 					playExchangeSound(player);
@@ -59,12 +66,12 @@ public class EnchantmentCanvasItem extends Item {
 	
 	public static boolean tryExchangeEnchantments(ItemStack canvasStack, ItemStack targetStack, @Nullable Entity receiver) {
 		Optional<Item> itemLock = getItemBoundTo(canvasStack);
-		if (itemLock.isPresent() && !targetStack.isOf(itemLock.get())) {
+		if (itemLock.isPresent() && !targetStack.is(itemLock.get())) {
 			return false;
 		}
 		
-		Map<Enchantment, Integer> canvasEnchantments = EnchantmentHelper.fromNbt(EnchantedBookItem.getEnchantmentNbt(canvasStack));
-		Map<Enchantment, Integer> targetEnchantments = EnchantmentHelper.fromNbt(targetStack.getEnchantments());
+		Map<Enchantment, Integer> canvasEnchantments = EnchantmentHelper.deserializeEnchantments(EnchantedBookItem.getEnchantments(canvasStack));
+		Map<Enchantment, Integer> targetEnchantments = EnchantmentHelper.deserializeEnchantments(targetStack.getEnchantmentTags());
 		if (canvasEnchantments.isEmpty() && targetEnchantments.isEmpty()) {
 			return false;
 		}
@@ -80,13 +87,13 @@ public class EnchantmentCanvasItem extends Item {
 			bindTo(canvasStack, targetStack);
 		}
 		SpectrumEnchantmentHelper.setStoredEnchantments(targetEnchantments, canvasStack);
-		EnchantmentHelper.set(canvasEnchantments, targetStack);
+		EnchantmentHelper.setEnchantments(canvasEnchantments, targetStack);
 		
 		if (drop && receiver != null) {
-			if(receiver instanceof PlayerEntity player) {
-				player.getInventory().offerOrDrop(canvasStack);
+			if(receiver instanceof Player player) {
+				player.getInventory().placeItemBackInInventory(canvasStack);
 			} else {
-				receiver.dropStack(canvasStack);
+				receiver.spawnAtLocation(canvasStack);
 			}
 		}
 		
@@ -94,39 +101,39 @@ public class EnchantmentCanvasItem extends Item {
 	}
 	
 	private void playExchangeSound(Entity entity) {
-		entity.playSound(SoundEvents.BLOCK_GRINDSTONE_USE, 0.8F, 0.8F + entity.getWorld().getRandom().nextFloat() * 0.4F);
+		entity.playSound(SoundEvents.GRINDSTONE_USE, 0.8F, 0.8F + entity.level().getRandom().nextFloat() * 0.4F);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, World world, List<Text> tooltip, TooltipContext context) {
+	public void appendHoverText(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag context) {
 		Optional<Item> boundItem = getItemBoundTo(stack);
 		if (boundItem.isPresent()) {
-			tooltip.add(Text.translatable("item.spectrum.enchantment_canvas.tooltip.bound_to").append(boundItem.get().getName()));
+			tooltip.add(Component.translatable("item.spectrum.enchantment_canvas.tooltip.bound_to").append(boundItem.get().getDescription()));
 		} else {
-			tooltip.add(Text.translatable("item.spectrum.enchantment_canvas.tooltip.not_bound"));
-			tooltip.add(Text.translatable("item.spectrum.enchantment_canvas.tooltip.not_bound2"));
+			tooltip.add(Component.translatable("item.spectrum.enchantment_canvas.tooltip.not_bound"));
+			tooltip.add(Component.translatable("item.spectrum.enchantment_canvas.tooltip.not_bound2"));
 		}
-		ItemStack.appendEnchantments(tooltip, EnchantedBookItem.getEnchantmentNbt(stack));
+		ItemStack.appendEnchantmentNames(tooltip, EnchantedBookItem.getEnchantments(stack));
 	}
 	
 	@Override
-	public boolean hasGlint(ItemStack stack) {
-		return !EnchantedBookItem.getEnchantmentNbt(stack).isEmpty();
+	public boolean isFoil(ItemStack stack) {
+		return !EnchantedBookItem.getEnchantments(stack).isEmpty();
 	}
 	
 	private static void bindTo(ItemStack enchantmentExchangerStack, ItemStack targetStack) {
-		NbtCompound nbt = enchantmentExchangerStack.getOrCreateNbt();
-		nbt.putString("BoundItem", Registries.ITEM.getId(targetStack.getItem()).toString());
-		enchantmentExchangerStack.setNbt(nbt);
+		CompoundTag nbt = enchantmentExchangerStack.getOrCreateTag();
+		nbt.putString("BoundItem", BuiltInRegistries.ITEM.getKey(targetStack.getItem()).toString());
+		enchantmentExchangerStack.setTag(nbt);
 	}
 	
 	private static Optional<Item> getItemBoundTo(ItemStack enchantmentExchangerStack) {
-		NbtCompound nbt = enchantmentExchangerStack.getNbt();
-		if (nbt == null || !nbt.contains("BoundItem", NbtElement.STRING_TYPE)) {
+		CompoundTag nbt = enchantmentExchangerStack.getTag();
+		if (nbt == null || !nbt.contains("BoundItem", Tag.TAG_STRING)) {
 			return Optional.empty();
 		}
 		String targetItemString = nbt.getString("BoundItem");
-		return Optional.of(Registries.ITEM.get(Identifier.tryParse(targetItemString)));
+		return Optional.of(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(targetItemString)));
 	}
 	
 }

@@ -1,41 +1,42 @@
 package de.dafuqs.spectrum.items.food;
 
-import de.dafuqs.spectrum.items.trinkets.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.items.trinkets.WhispyCircletItem;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.List;
 
 public class EnchantedStarCandyItem extends Item {
 	
-	public EnchantedStarCandyItem(Settings settings) {
+	public EnchantedStarCandyItem(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
-		ItemStack itemStack = super.finishUsing(stack, world, user);
+	public ItemStack finishUsingItem(ItemStack stack, Level world, LivingEntity user) {
+		ItemStack itemStack = super.finishUsingItem(stack, world, user);
 		
 		user.heal(user.getMaxHealth());
-		if (!world.isClient) {
+		if (!world.isClientSide) {
 			WhispyCircletItem.removeNegativeStatusEffects(user);
 		}
-		if (user instanceof PlayerEntity player) {
-			player.getHungerManager().add(1000, 1.0F);
+		if (user instanceof Player player) {
+			player.getFoodData().eat(1000, 1.0F);
 		}
 		return itemStack;
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
-		tooltip.add(Text.translatable("item.spectrum.purple_star_candy.tooltip").formatted(Formatting.GRAY));
-		tooltip.add(Text.translatable("item.spectrum.purple_star_candy.tooltip2").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
+		tooltip.add(Component.translatable("item.spectrum.purple_star_candy.tooltip").withStyle(ChatFormatting.GRAY));
+		tooltip.add(Component.translatable("item.spectrum.purple_star_candy.tooltip2").withStyle(ChatFormatting.GRAY));
 	}
 	
 }

@@ -1,25 +1,27 @@
 package de.dafuqs.spectrum.entity;
 
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.entity.variants.*;
-import de.dafuqs.spectrum.items.tools.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.data.*;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.entity.variants.LizardFrillVariant;
+import de.dafuqs.spectrum.entity.variants.LizardHornVariant;
+import de.dafuqs.spectrum.items.tools.GlassArrowVariant;
+import de.dafuqs.spectrum.registries.SpectrumRegistries;
+import net.minecraft.network.syncher.EntityDataSerializer;
+import net.minecraft.network.syncher.EntityDataSerializers;
 
 public class SpectrumTrackedDataHandlerRegistry {
 	
-	public static final TrackedDataHandler<InkColor> INK_COLOR = TrackedDataHandler.of(SpectrumRegistries.INK_COLORS);
-	public static final TrackedDataHandler<GlassArrowVariant> GLASS_ARROW_VARIANT = TrackedDataHandler.of(SpectrumRegistries.GLASS_ARROW_VARIANT);
+	public static final EntityDataSerializer<InkColor> INK_COLOR = EntityDataSerializer.simpleId(SpectrumRegistries.INK_COLORS);
+	public static final EntityDataSerializer<GlassArrowVariant> GLASS_ARROW_VARIANT = EntityDataSerializer.simpleId(SpectrumRegistries.GLASS_ARROW_VARIANT);
 	
-	public static final TrackedDataHandler<LizardFrillVariant> LIZARD_FRILL_VARIANT = TrackedDataHandler.of(SpectrumRegistries.LIZARD_FRILL_VARIANT);
-	public static final TrackedDataHandler<LizardHornVariant> LIZARD_HORN_VARIANT = TrackedDataHandler.of(SpectrumRegistries.LIZARD_HORN_VARIANT);
+	public static final EntityDataSerializer<LizardFrillVariant> LIZARD_FRILL_VARIANT = EntityDataSerializer.simpleId(SpectrumRegistries.LIZARD_FRILL_VARIANT);
+	public static final EntityDataSerializer<LizardHornVariant> LIZARD_HORN_VARIANT = EntityDataSerializer.simpleId(SpectrumRegistries.LIZARD_HORN_VARIANT);
 	
 	public static void register() {
-		TrackedDataHandlerRegistry.register(INK_COLOR);
-		TrackedDataHandlerRegistry.register(GLASS_ARROW_VARIANT);
+		EntityDataSerializers.registerSerializer(INK_COLOR);
+		EntityDataSerializers.registerSerializer(GLASS_ARROW_VARIANT);
 		
-		TrackedDataHandlerRegistry.register(LIZARD_FRILL_VARIANT);
-		TrackedDataHandlerRegistry.register(LIZARD_HORN_VARIANT);
+		EntityDataSerializers.registerSerializer(LIZARD_FRILL_VARIANT);
+		EntityDataSerializers.registerSerializer(LIZARD_HORN_VARIANT);
 	}
 	
 }

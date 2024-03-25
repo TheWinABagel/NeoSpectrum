@@ -1,9 +1,13 @@
 package de.dafuqs.spectrum.cca;
 
-import de.dafuqs.spectrum.cca.azure_dike.*;
-import dev.onyxstudios.cca.api.v3.entity.*;
-import dev.onyxstudios.cca.api.v3.level.*;
-import net.minecraft.entity.*;
+import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
+import de.dafuqs.spectrum.cca.azure_dike.DefaultAzureDikeComponent;
+import dev.onyxstudios.cca.api.v3.entity.EntityComponentFactoryRegistry;
+import dev.onyxstudios.cca.api.v3.entity.EntityComponentInitializer;
+import dev.onyxstudios.cca.api.v3.entity.RespawnCopyStrategy;
+import dev.onyxstudios.cca.api.v3.level.LevelComponentFactoryRegistry;
+import dev.onyxstudios.cca.api.v3.level.LevelComponentInitializer;
+import net.minecraft.world.entity.LivingEntity;
 
 public class SpectrumComponentInitializers implements EntityComponentInitializer, LevelComponentInitializer {
 	

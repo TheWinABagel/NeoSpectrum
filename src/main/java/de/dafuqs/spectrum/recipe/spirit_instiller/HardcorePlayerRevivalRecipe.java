@@ -1,51 +1,56 @@
 package de.dafuqs.spectrum.recipe.spirit_instiller;
 
-import com.google.gson.*;
-import com.mojang.authlib.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.blocks.spirit_instiller.*;
-import de.dafuqs.spectrum.cca.*;
-import de.dafuqs.spectrum.recipe.*;
-import net.fabricmc.fabric.api.dimension.v1.*;
-import de.dafuqs.matchbooks.recipe.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.apache.commons.lang3.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonObject;
+import com.mojang.authlib.GameProfile;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.blocks.spirit_instiller.SpiritInstillerBlockEntity;
+import de.dafuqs.spectrum.cca.HardcoreDeathComponent;
+import de.dafuqs.spectrum.recipe.EmptyRecipeSerializer;
+import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.PlayerList;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.portal.PortalInfo;
+import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Nullable;
 
 public class HardcorePlayerRevivalRecipe extends SpiritInstillerRecipe {
 	
 	public static final RecipeSerializer<HardcorePlayerRevivalRecipe> SERIALIZER = new EmptyRecipeSerializer<>(HardcorePlayerRevivalRecipe::new);
 	
-	public HardcorePlayerRevivalRecipe(Identifier identifier) {
+	public HardcorePlayerRevivalRecipe(ResourceLocation identifier) {
 		super(identifier, "", false, null,
-				IngredientStack.of(Ingredient.ofItems(Blocks.PLAYER_HEAD.asItem())), IngredientStack.of(Ingredient.ofItems(Items.TOTEM_OF_UNDYING)), IngredientStack.of(Ingredient.ofItems(Items.ENCHANTED_GOLDEN_APPLE)),
+				IngredientStack.of(Ingredient.of(Blocks.PLAYER_HEAD.asItem())), IngredientStack.of(Ingredient.of(Items.TOTEM_OF_UNDYING)), IngredientStack.of(Ingredient.of(Items.ENCHANTED_GOLDEN_APPLE)),
 				ItemStack.EMPTY, 1200, 100, true);
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inv, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inv, RegistryAccess drm) {
 		if (inv instanceof SpiritInstillerBlockEntity spiritInstillerBlockEntity) {
-			GameProfile gameProfile = getSkullOwner(inv.getStack(SpiritInstillerRecipe.CENTER_INGREDIENT));
+			GameProfile gameProfile = getSkullOwner(inv.getItem(SpiritInstillerRecipe.CENTER_INGREDIENT));
 			if (gameProfile != null) {
-				ServerPlayerEntity revivedPlayer = SpectrumCommon.minecraftServer.getPlayerManager().getPlayer(gameProfile.getName());
+				ServerPlayer revivedPlayer = SpectrumCommon.minecraftServer.getPlayerList().getPlayerByName(gameProfile.getName());
 				if (revivedPlayer != null) {
 					HardcoreDeathComponent.removeHardcoreDeath(gameProfile);
-					revivedPlayer.changeGameMode(SpectrumCommon.minecraftServer.getDefaultGameMode());
+					revivedPlayer.setGameMode(SpectrumCommon.minecraftServer.getDefaultGameType());
 					
-					BlockRotation blockRotation = spiritInstillerBlockEntity.getMultiblockRotation();
+					Rotation blockRotation = spiritInstillerBlockEntity.getMultiblockRotation();
 					float yaw = 0.0F;
 					switch (blockRotation) {
 						case NONE -> yaw = -90.0F;
@@ -54,7 +59,7 @@ public class HardcorePlayerRevivalRecipe extends SpiritInstillerRecipe {
 						case COUNTERCLOCKWISE_90 -> yaw = 180.0F;
 					}
 					
-					FabricDimensions.teleport(revivedPlayer, (ServerWorld) spiritInstillerBlockEntity.getWorld(), new TeleportTarget(Vec3d.ofCenter(spiritInstillerBlockEntity.getPos().up()), new Vec3d(0, 0, 0), yaw, revivedPlayer.getPitch()));
+					FabricDimensions.teleport(revivedPlayer, (ServerLevel) spiritInstillerBlockEntity.getLevel(), new PortalInfo(Vec3.atCenterOf(spiritInstillerBlockEntity.getBlockPos().above()), new Vec3(0, 0, 0), yaw, revivedPlayer.getXRot()));
 				}
 			}
 		}
@@ -62,34 +67,34 @@ public class HardcorePlayerRevivalRecipe extends SpiritInstillerRecipe {
 	}
 	
 	@Override
-	public boolean canCraftWithStacks(Inventory inventory) {
-		ItemStack instillerStack = inventory.getStack(0);
-		if (instillerStack.isOf(Blocks.PLAYER_HEAD.asItem())) {
+	public boolean canCraftWithStacks(Container inventory) {
+		ItemStack instillerStack = inventory.getItem(0);
+		if (instillerStack.is(Blocks.PLAYER_HEAD.asItem())) {
 			GameProfile gameProfile = getSkullOwner(instillerStack);
 			if (gameProfile == null) {
 				return false;
 			}
 			
-			PlayerManager playerManager = SpectrumCommon.minecraftServer.getPlayerManager();
-			ServerPlayerEntity playerToRevive = gameProfile.getId() == null ? playerManager.getPlayer(gameProfile.getName()) : playerManager.getPlayer(gameProfile.getId());
+			PlayerList playerManager = SpectrumCommon.minecraftServer.getPlayerList();
+			ServerPlayer playerToRevive = gameProfile.getId() == null ? playerManager.getPlayerByName(gameProfile.getName()) : playerManager.getPlayer(gameProfile.getId());
 			return playerToRevive != null && HardcoreDeathComponent.hasHardcoreDeath(gameProfile);
 		}
 		return false;
 	}
 	
 	@Override
-	public boolean canPlayerCraft(PlayerEntity playerEntity) {
+	public boolean canPlayerCraft(Player playerEntity) {
 		return true;
 	}
 	
 	@Nullable
 	private GameProfile getSkullOwner(ItemStack instillerStack) {
 		GameProfile gameProfile = null;
-		NbtCompound nbtCompound = instillerStack.getNbt();
+		CompoundTag nbtCompound = instillerStack.getTag();
 		if (nbtCompound != null) {
-			if (nbtCompound.contains("SkullOwner", NbtElement.COMPOUND_TYPE)) {
-				gameProfile = NbtHelper.toGameProfile(nbtCompound.getCompound("SkullOwner"));
-			} else if (nbtCompound.contains("SkullOwner", NbtElement.STRING_TYPE) && !StringUtils.isBlank(nbtCompound.getString("SkullOwner"))) {
+			if (nbtCompound.contains("SkullOwner", Tag.TAG_COMPOUND)) {
+				gameProfile = NbtUtils.readGameProfile(nbtCompound.getCompound("SkullOwner"));
+			} else if (nbtCompound.contains("SkullOwner", Tag.TAG_STRING) && !StringUtils.isBlank(nbtCompound.getString("SkullOwner"))) {
 				gameProfile = new GameProfile(null, nbtCompound.getString("SkullOwner"));
 			}
 		}
@@ -99,17 +104,17 @@ public class HardcorePlayerRevivalRecipe extends SpiritInstillerRecipe {
 	public static class Serializer implements RecipeSerializer<HardcorePlayerRevivalRecipe> {
 		
 		@Override
-		public HardcorePlayerRevivalRecipe read(Identifier id, JsonObject json) {
+		public HardcorePlayerRevivalRecipe fromJson(ResourceLocation id, JsonObject json) {
 			return null;
 		}
 		
 		@Override
-		public HardcorePlayerRevivalRecipe read(Identifier id, PacketByteBuf buf) {
+		public HardcorePlayerRevivalRecipe fromNetwork(ResourceLocation id, FriendlyByteBuf buf) {
 			return null;
 		}
 		
 		@Override
-		public void write(PacketByteBuf buf, HardcorePlayerRevivalRecipe recipe) {
+		public void write(FriendlyByteBuf buf, HardcorePlayerRevivalRecipe recipe) {
 		
 		}
 	}

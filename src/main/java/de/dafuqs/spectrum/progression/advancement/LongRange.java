@@ -1,16 +1,18 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import com.mojang.brigadier.*;
-import com.mojang.brigadier.exceptions.*;
-import net.minecraft.predicate.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonElement;
+import com.mojang.brigadier.ImmutableStringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import net.minecraft.advancements.critereon.MinMaxBounds;
+import net.minecraft.util.GsonHelper;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.StringReader;
-import java.util.function.*;
+import java.util.function.Function;
 
-public class LongRange extends NumberRange<Long> {
+public class LongRange extends MinMaxBounds<Long> {
 	
 	public static final LongRange ANY = new LongRange(null, null);
 	
@@ -21,7 +23,7 @@ public class LongRange extends NumberRange<Long> {
 	@Contract("_, null, _ -> new; _, !null, null -> new")
 	private static @NotNull LongRange parse(StringReader reader, @Nullable Long min, @Nullable Long max) throws CommandSyntaxException {
 		if (min != null && max != null && min > max) {
-			throw EXCEPTION_SWAPPED.createWithContext((ImmutableStringReader) reader);
+			throw ERROR_SWAPPED.createWithContext((ImmutableStringReader) reader);
 		} else {
 			return new LongRange(min, max);
 		}
@@ -44,7 +46,7 @@ public class LongRange extends NumberRange<Long> {
 	}
 	
 	public static LongRange fromJson(@Nullable JsonElement element) {
-		return fromJson(element, ANY, JsonHelper::asLong, LongRange::new);
+		return fromJson(element, ANY, GsonHelper::convertToLong, LongRange::new);
 	}
 	
 	public static LongRange parse(StringReader reader) throws CommandSyntaxException {

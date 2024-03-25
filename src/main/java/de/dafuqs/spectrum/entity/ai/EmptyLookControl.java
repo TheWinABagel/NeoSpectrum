@@ -1,11 +1,11 @@
 package de.dafuqs.spectrum.entity.ai;
 
-import net.minecraft.entity.ai.control.*;
-import net.minecraft.entity.mob.*;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.control.LookControl;
 
 public class EmptyLookControl extends LookControl {
 	
-	public EmptyLookControl(MobEntity entity) {
+	public EmptyLookControl(Mob entity) {
 		super(entity);
 	}
 	

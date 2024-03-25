@@ -1,19 +1,23 @@
 package de.dafuqs.spectrum.recipe.crystallarieum;
 
-import com.google.gson.*;
-import com.mojang.brigadier.exceptions.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.recipe.*;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.recipe.GatedRecipeSerializer;
+import de.dafuqs.spectrum.recipe.RecipeUtils;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CrystallarieumRecipeSerializer implements GatedRecipeSerializer<CrystallarieumRecipe> {
 	
@@ -24,19 +28,19 @@ public class CrystallarieumRecipeSerializer implements GatedRecipeSerializer<Cry
 	}
 	
 	public interface RecipeFactory {
-		CrystallarieumRecipe create(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, Ingredient inputIngredient, List<BlockState> growthStages, int secondsPerGrowthStage, InkColor inkColor, int inkPerSecond, boolean growsWithoutCatalyst, List<CrystallarieumCatalyst> catalysts, List<ItemStack> additionalOutputs);
+		CrystallarieumRecipe create(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, Ingredient inputIngredient, List<BlockState> growthStages, int secondsPerGrowthStage, InkColor inkColor, int inkPerSecond, boolean growsWithoutCatalyst, List<CrystallarieumCatalyst> catalysts, List<ItemStack> additionalOutputs);
 	}
 	
 	@Override
-	public CrystallarieumRecipe read(Identifier identifier, JsonObject jsonObject) {
+	public CrystallarieumRecipe fromJson(ResourceLocation identifier, JsonObject jsonObject) {
 		String group = readGroup(jsonObject);
 		boolean secret = readSecret(jsonObject);
-		Identifier requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
+		ResourceLocation requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
 		
-		Ingredient inputIngredient = Ingredient.fromJson(JsonHelper.getObject(jsonObject, "ingredient"));
+		Ingredient inputIngredient = Ingredient.fromJson(GsonHelper.getAsJsonObject(jsonObject, "ingredient"));
 		
 		List<BlockState> growthStages = new ArrayList<>();
-		JsonArray growthStageArray = JsonHelper.getArray(jsonObject, "growth_stage_states");
+		JsonArray growthStageArray = GsonHelper.getAsJsonArray(jsonObject, "growth_stage_states");
 		for (int i = 0; i < growthStageArray.size(); i++) {
 			String blockStateString = growthStageArray.get(i).getAsString();
 			try {
@@ -46,25 +50,25 @@ public class CrystallarieumRecipeSerializer implements GatedRecipeSerializer<Cry
 				return null;
 			}
 		}
-		int secondsPerGrowthStage = JsonHelper.getInt(jsonObject, "seconds_per_growth_stage");
-		InkColor inkColor = InkColor.of(JsonHelper.getString(jsonObject, "ink_color"));
-		int inkCostTier = JsonHelper.getInt(jsonObject, "ink_cost_tier");
+		int secondsPerGrowthStage = GsonHelper.getAsInt(jsonObject, "seconds_per_growth_stage");
+		InkColor inkColor = InkColor.of(GsonHelper.getAsString(jsonObject, "ink_color"));
+		int inkCostTier = GsonHelper.getAsInt(jsonObject, "ink_cost_tier");
 		int inkPerSecond = inkCostTier == 0 ? 0 : (int) Math.pow(2, inkCostTier - 1); // 0=0; 1=1; 2=4; 3=16; 4=64; 5=256)
-		boolean growsWithoutCatalyst = JsonHelper.getBoolean(jsonObject,   "grows_without_catalyst", false);
+		boolean growsWithoutCatalyst = GsonHelper.getAsBoolean(jsonObject,   "grows_without_catalyst", false);
 		
 		List<CrystallarieumCatalyst> catalysts = new ArrayList<>();
 		if (jsonObject.has("catalysts")) {
-			JsonArray catalystArray = JsonHelper.getArray(jsonObject, "catalysts");
+			JsonArray catalystArray = GsonHelper.getAsJsonArray(jsonObject, "catalysts");
 			for (JsonElement jsonElement : catalystArray) {
 				catalysts.add(CrystallarieumCatalyst.fromJson(jsonElement.getAsJsonObject()));
 			}
 		}
 		List<ItemStack> additionalOutputs = new ArrayList<>();
 		if (jsonObject.has("additional_recipe_manager_outputs")) {
-			JsonArray additionalOutputArray = JsonHelper.getArray(jsonObject, "additional_recipe_manager_outputs");
+			JsonArray additionalOutputArray = GsonHelper.getAsJsonArray(jsonObject, "additional_recipe_manager_outputs");
 			for (JsonElement jsonElement : additionalOutputArray) {
-				Identifier additionalOutputItemIdentifier = new Identifier(jsonElement.getAsString());
-				ItemStack itemStack = new ItemStack(Registries.ITEM.getOrEmpty(additionalOutputItemIdentifier).orElseThrow(() -> new IllegalStateException("Item: " + additionalOutputItemIdentifier + " does not exist")));
+				ResourceLocation additionalOutputItemIdentifier = new ResourceLocation(jsonElement.getAsString());
+				ItemStack itemStack = new ItemStack(BuiltInRegistries.ITEM.getOptional(additionalOutputItemIdentifier).orElseThrow(() -> new IllegalStateException("Item: " + additionalOutputItemIdentifier + " does not exist")));
 				additionalOutputs.add(itemStack);
 			}
 		}
@@ -73,18 +77,18 @@ public class CrystallarieumRecipeSerializer implements GatedRecipeSerializer<Cry
 	}
 	
 	@Override
-	public void write(PacketByteBuf packetByteBuf, CrystallarieumRecipe recipe) {
-		packetByteBuf.writeString(recipe.group);
+	public void write(FriendlyByteBuf packetByteBuf, CrystallarieumRecipe recipe) {
+		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);
 		
-		recipe.inputIngredient.write(packetByteBuf);
+		recipe.inputIngredient.toNetwork(packetByteBuf);
 		packetByteBuf.writeInt(recipe.growthStages.size());
 		for (BlockState state : recipe.growthStages) {
-			packetByteBuf.writeString(RecipeUtils.blockStateToString(state));
+			packetByteBuf.writeUtf(RecipeUtils.blockStateToString(state));
 		}
 		packetByteBuf.writeInt(recipe.secondsPerGrowthStage);
-		packetByteBuf.writeString(recipe.inkColor.toString());
+		packetByteBuf.writeUtf(recipe.inkColor.toString());
 		packetByteBuf.writeInt(recipe.inkPerSecond);
 		packetByteBuf.writeBoolean(recipe.growsWithoutCatalyst);
 		packetByteBuf.writeInt(recipe.catalysts.size());
@@ -93,21 +97,21 @@ public class CrystallarieumRecipeSerializer implements GatedRecipeSerializer<Cry
 		}
 		packetByteBuf.writeInt(recipe.additionalOutputs.size());
 		for (ItemStack additionalOutput : recipe.additionalOutputs) {
-			packetByteBuf.writeItemStack(additionalOutput);
+			packetByteBuf.writeItem(additionalOutput);
 		}
 	}
 	
 	@Override
-	public CrystallarieumRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
-		String group = packetByteBuf.readString();
+	public CrystallarieumRecipe fromNetwork(ResourceLocation identifier, FriendlyByteBuf packetByteBuf) {
+		String group = packetByteBuf.readUtf();
 		boolean secret = packetByteBuf.readBoolean();
-		Identifier requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
+		ResourceLocation requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
 		
-		Ingredient inputIngredient = Ingredient.fromPacket(packetByteBuf);
+		Ingredient inputIngredient = Ingredient.fromNetwork(packetByteBuf);
 		List<BlockState> growthStages = new ArrayList<>();
 		int count = packetByteBuf.readInt();
 		for (int i = 0; i < count; i++) {
-			String blockStateString = packetByteBuf.readString();
+			String blockStateString = packetByteBuf.readUtf();
 			try {
 				growthStages.add(RecipeUtils.blockStateFromString(blockStateString));
 			} catch (CommandSyntaxException e) {
@@ -117,7 +121,7 @@ public class CrystallarieumRecipeSerializer implements GatedRecipeSerializer<Cry
 		}
 
 		int secondsPerGrowthStage = packetByteBuf.readInt();
-		InkColor inkColor = InkColor.of(packetByteBuf.readString());
+		InkColor inkColor = InkColor.of(packetByteBuf.readUtf());
 		int inkPerSecond = packetByteBuf.readInt();
 		boolean growthWithoutCatalyst = packetByteBuf.readBoolean();
 		List<CrystallarieumCatalyst> catalysts = new ArrayList<>();
@@ -128,7 +132,7 @@ public class CrystallarieumRecipeSerializer implements GatedRecipeSerializer<Cry
 		List<ItemStack> additionalOutputs = new ArrayList<>();
 		count = packetByteBuf.readInt();
 		for (int i = 0; i < count; i++) {
-			additionalOutputs.add(packetByteBuf.readItemStack());
+			additionalOutputs.add(packetByteBuf.readItem());
 		}
 
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, inputIngredient, growthStages, secondsPerGrowthStage, inkColor, inkPerSecond, growthWithoutCatalyst, catalysts, additionalOutputs);

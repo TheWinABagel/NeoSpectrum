@@ -1,51 +1,50 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import it.unimi.dsi.fastutil.objects.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.item.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.predicate.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
-public class PotionWorkshopCraftingCriterion extends AbstractCriterion<PotionWorkshopCraftingCriterion.Conditions> {
+public class PotionWorkshopCraftingCriterion extends SimpleCriterionTrigger<PotionWorkshopCraftingCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("crafted_with_potion_workshop");
+	static final ResourceLocation ID = SpectrumCommon.locate("crafted_with_potion_workshop");
 	
 	public static PotionWorkshopCraftingCriterion.Conditions create(ItemPredicate[] item) {
-		return new PotionWorkshopCraftingCriterion.Conditions(LootContextPredicate.EMPTY, item);
+		return new PotionWorkshopCraftingCriterion.Conditions(ContextAwarePredicate.ANY, item);
 	}
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
 	@Override
-	public PotionWorkshopCraftingCriterion.Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate extended, AdvancementEntityPredicateDeserializer advancementEntityPredicateDeserializer) {
-		ItemPredicate[] itemPredicates = ItemPredicate.deserializeAll(jsonObject.get("items"));
+	public PotionWorkshopCraftingCriterion.Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate extended, DeserializationContext advancementEntityPredicateDeserializer) {
+		ItemPredicate[] itemPredicates = ItemPredicate.fromJsonArray(jsonObject.get("items"));
 		return new PotionWorkshopCraftingCriterion.Conditions(extended, itemPredicates);
 	}
 	
-	public void trigger(ServerPlayerEntity player, ItemStack itemStack) {
+	public void trigger(ServerPlayer player, ItemStack itemStack) {
 		this.trigger(player, (conditions) -> conditions.matches(itemStack));
 	}
 	
-	public static class Conditions extends AbstractCriterionConditions {
+	public static class Conditions extends AbstractCriterionTriggerInstance {
 		private final ItemPredicate[] itemPredicates;
 		
-		public Conditions(LootContextPredicate player, ItemPredicate[] itemPredicates) {
+		public Conditions(ContextAwarePredicate player, ItemPredicate[] itemPredicates) {
 			super(ID, player);
 			this.itemPredicates = itemPredicates;
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
 			jsonObject.addProperty("items", Arrays.toString(this.itemPredicates));
 			return jsonObject;
 		}
@@ -56,7 +55,7 @@ public class PotionWorkshopCraftingCriterion extends AbstractCriterion<PotionWor
 				return true;
 			} else {
 				if (!itemStack.isEmpty()) {
-					list.removeIf((itemPredicate) -> itemPredicate.test(itemStack));
+					list.removeIf((itemPredicate) -> itemPredicate.matches(itemStack));
 				}
 				return list.isEmpty();
 			}

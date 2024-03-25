@@ -1,10 +1,10 @@
 package de.dafuqs.spectrum.api.item;
 
-import de.dafuqs.spectrum.blocks.present.*;
-import net.minecraft.item.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
+import de.dafuqs.spectrum.blocks.present.PresentBlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Doing a lil trolling
@@ -16,6 +16,6 @@ public interface PresentUnpackBehavior {
      *
      * @return the resulting stack after unpacking. Can be the original stack, ItemStack.AIR, or a new stack alltogether
      */
-    ItemStack onPresentUnpack(ItemStack stack, PresentBlockEntity presentBlockEntity, ServerWorld world, BlockPos pos, Random random);
+    ItemStack onPresentUnpack(ItemStack stack, PresentBlockEntity presentBlockEntity, ServerLevel world, BlockPos pos, RandomSource random);
     
 }

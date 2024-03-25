@@ -1,20 +1,22 @@
 package de.dafuqs.spectrum.recipe.pedestal;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.blocks.pedestal.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.api.item.GemstoneColor;
+import de.dafuqs.spectrum.blocks.pedestal.PedestalBlockEntity;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 public class ShapelessPedestalRecipe extends PedestalRecipe {
 	
-	public ShapelessPedestalRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier,
+	public ShapelessPedestalRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier,
 								   PedestalRecipeTier tier, List<IngredientStack> craftingInputs, Map<GemstoneColor, Integer> gemstonePowderInputs, ItemStack output,
 								   float experience, int craftingTime, boolean skipRecipeRemainders, boolean noBenefitsFromYieldUpgrades) {
 		
@@ -22,7 +24,7 @@ public class ShapelessPedestalRecipe extends PedestalRecipe {
 	}
 	
 	@Override
-	public boolean matches(Inventory inv, World world) {
+	public boolean matches(Container inv, Level world) {
 		return matchIngredientStacksExclusively(inv, getIngredientStacks(), CRAFTING_GRID_SLOTS) && super.matches(inv, world);
 	}
 	
@@ -42,7 +44,7 @@ public class ShapelessPedestalRecipe extends PedestalRecipe {
 		
 		for (int slot : CRAFTING_GRID_SLOTS) {
 			for (IngredientStack ingredientStack : this.inputs) {
-				ItemStack slotStack = pedestal.getStack(slot);
+				ItemStack slotStack = pedestal.getItem(slot);
 				if (ingredientStack.test(slotStack)) {
 					decrementGridSlot(pedestal, slot, ingredientStack.getCount(), slotStack);
 					break;

@@ -1,14 +1,14 @@
 package de.dafuqs.spectrum.blocks.redstone;
 
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.math.*;
+import de.dafuqs.spectrum.api.block.PlayerOwned;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.UUID;
 
 public class BlockBreakerBlockEntity extends BlockEntity implements PlayerOwned {
 	
@@ -24,21 +24,21 @@ public class BlockBreakerBlockEntity extends BlockEntity implements PlayerOwned 
 	}
 	
 	@Override
-	public void setOwner(PlayerEntity playerEntity) {
-		this.ownerUUID = playerEntity.getUuid();
-		this.markDirty();
+	public void setOwner(Player playerEntity) {
+		this.ownerUUID = playerEntity.getUUID();
+		this.setChanged();
 	}
 	
 	@Override
-	public void writeNbt(NbtCompound nbt) {
-		super.writeNbt(nbt);
+	public void saveAdditional(CompoundTag nbt) {
+		super.saveAdditional(nbt);
 		
 		PlayerOwned.writeOwnerUUID(nbt, this.ownerUUID);
 	}
 	
 	@Override
-	public void readNbt(NbtCompound nbt) {
-		super.readNbt(nbt);
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
 		
 		this.ownerUUID = PlayerOwned.readOwnerUUID(nbt);
 	}

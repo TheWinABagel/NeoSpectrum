@@ -1,54 +1,66 @@
 package de.dafuqs.spectrum.recipe.pedestal.dynamic;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.blocks.pedestal.*;
-import de.dafuqs.spectrum.explosion.*;
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.recipe.pedestal.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.item.ModularExplosionProvider;
+import de.dafuqs.spectrum.blocks.pedestal.PedestalBlockEntity;
+import de.dafuqs.spectrum.explosion.ExplosionArchetype;
+import de.dafuqs.spectrum.explosion.ExplosionModifier;
+import de.dafuqs.spectrum.explosion.ExplosionModifierProviders;
+import de.dafuqs.spectrum.explosion.ModularExplosionDefinition;
+import de.dafuqs.spectrum.recipe.EmptyRecipeSerializer;
+import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipeTier;
+import de.dafuqs.spectrum.recipe.pedestal.ShapelessPedestalRecipe;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 // this hurt to write
 public class ExplosionModificationRecipe extends ShapelessPedestalRecipe {
 	
 	public static final RecipeSerializer<ExplosionModificationRecipe> SERIALIZER = new EmptyRecipeSerializer<>(ExplosionModificationRecipe::new);
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/blocks/modular_explosives");
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/blocks/modular_explosives");
 	
-	public ExplosionModificationRecipe(Identifier id) {
+	public ExplosionModificationRecipe(ResourceLocation id) {
 		super(id, "", false, UNLOCK_IDENTIFIER, PedestalRecipeTier.BASIC, collectIngredients(), Map.of(), ItemStack.EMPTY, 0.0F, 40, false, true);
 	}
 	
 	private static List<IngredientStack> collectIngredients() {
-		List<ItemConvertible> providers = new ArrayList<>();
-		Registries.ITEM.stream().filter(item -> item instanceof ModularExplosionProvider).forEach(providers::add);
-		IngredientStack providerIngredient = IngredientStack.of(Ingredient.ofItems(providers.toArray(new ItemConvertible[]{})));
+		List<ItemLike> providers = new ArrayList<>();
+		BuiltInRegistries.ITEM.stream().filter(item -> item instanceof ModularExplosionProvider).forEach(providers::add);
+		IngredientStack providerIngredient = IngredientStack.of(Ingredient.of(providers.toArray(new ItemLike[]{})));
 		
 		Set<Item> modifiers = ExplosionModifierProviders.getProviders();
-		IngredientStack modifierIngredient = IngredientStack.of(Ingredient.ofItems(modifiers.toArray(new ItemConvertible[]{})));
+		IngredientStack modifierIngredient = IngredientStack.of(Ingredient.of(modifiers.toArray(new ItemLike[]{})));
 		
 		return List.of(providerIngredient, modifierIngredient);
 	}
 	
 	@Override
-	public boolean matches(Inventory inventory, World world) {
+	public boolean matches(Container inventory, Level world) {
 		ItemStack nonModStack = validateGridAndFindModularExplosiveStack(inventory);
 		if (!(nonModStack.getItem() instanceof ModularExplosionProvider modularExplosionProvider)) {
 			return false;
 		}
 		
-		Pair<List<ExplosionArchetype>, List<ExplosionModifier>> pair = findArchetypeAndModifiers(inventory);
+		Tuple<List<ExplosionArchetype>, List<ExplosionModifier>> pair = findArchetypeAndModifiers(inventory);
 		ModularExplosionDefinition currentSet = ModularExplosionDefinition.getFromStack(nonModStack);
-		List<ExplosionArchetype> archetypes = pair.getLeft();
-		List<ExplosionModifier> mods = pair.getRight();
+		List<ExplosionArchetype> archetypes = pair.getA();
+		List<ExplosionModifier> mods = pair.getB();
 
 		// if there are no new modifiers to add present, treat it
 		// as a recipe to clear existing archetype and / or modifiers
@@ -91,12 +103,12 @@ public class ExplosionModificationRecipe extends ShapelessPedestalRecipe {
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inventory, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inventory, RegistryAccess drm) {
 		ItemStack output = validateGridAndFindModularExplosiveStack(inventory).copy();
 		
-		Pair<List<ExplosionArchetype>, List<ExplosionModifier>> pair = findArchetypeAndModifiers(inventory);
-		List<ExplosionArchetype> archetypes = pair.getLeft();
-		List<ExplosionModifier> mods = pair.getRight();
+		Tuple<List<ExplosionArchetype>, List<ExplosionModifier>> pair = findArchetypeAndModifiers(inventory);
+		List<ExplosionArchetype> archetypes = pair.getA();
+		List<ExplosionModifier> mods = pair.getB();
 		
 		if (archetypes.isEmpty() && mods.isEmpty()) { // clearing existing modifiers
 			ModularExplosionDefinition.removeFromStack(output);
@@ -107,7 +119,7 @@ public class ExplosionModificationRecipe extends ShapelessPedestalRecipe {
 		
 		// adding new modifiers
 		if (!archetypes.isEmpty()) {
-			ExplosionArchetype newArchetype = calculateExplosionArchetype(set.getArchetype(), pair.getLeft());
+			ExplosionArchetype newArchetype = calculateExplosionArchetype(set.getArchetype(), pair.getA());
 			if (newArchetype != null) { // should never happen, but better safe than sorry
 				set.setArchetype(newArchetype);
 			}
@@ -122,11 +134,11 @@ public class ExplosionModificationRecipe extends ShapelessPedestalRecipe {
 	@Override
 	public void consumeIngredients(PedestalBlockEntity pedestal) {
 		for (int slot : CRAFTING_GRID_SLOTS) {
-			ItemStack slotStack = pedestal.getStack(slot);
+			ItemStack slotStack = pedestal.getItem(slot);
 			if (slotStack.getItem() instanceof ModularExplosionProvider) {
-				pedestal.setStack(slot, ItemStack.EMPTY);
+				pedestal.setItem(slot, ItemStack.EMPTY);
 			} else {
-				slotStack.decrement(1);
+				slotStack.shrink(1);
 			}
 		}
 	}
@@ -135,10 +147,10 @@ public class ExplosionModificationRecipe extends ShapelessPedestalRecipe {
 	 * Iterates all stacks in the grid and returns the modular explosive
 	 * if the grid only contains that one and modifiers
 	 */
-	public ItemStack validateGridAndFindModularExplosiveStack(Inventory inventory) {
+	public ItemStack validateGridAndFindModularExplosiveStack(Container inventory) {
 		ItemStack foundStack = ItemStack.EMPTY;
 		for (int slot : CRAFTING_GRID_SLOTS) {
-			ItemStack stack = inventory.getStack(slot);
+			ItemStack stack = inventory.getItem(slot);
 			if (!stack.isEmpty()
 					&& stack.getItem() instanceof ModularExplosionProvider
 					&& ExplosionModifierProviders.getModifier(stack) == null
@@ -155,11 +167,11 @@ public class ExplosionModificationRecipe extends ShapelessPedestalRecipe {
 		return foundStack;
 	}
 	
-	public Pair<List<ExplosionArchetype>, List<ExplosionModifier>> findArchetypeAndModifiers(Inventory inventory) {
+	public Tuple<List<ExplosionArchetype>, List<ExplosionModifier>> findArchetypeAndModifiers(Container inventory) {
 		List<ExplosionModifier> modifiers = new ArrayList<>();
 		List<ExplosionArchetype> archetypes = new ArrayList<>();
 		for (int slot : CRAFTING_GRID_SLOTS) {
-			ItemStack stack = inventory.getStack(slot);
+			ItemStack stack = inventory.getItem(slot);
 			if (!stack.isEmpty()) {
 				ExplosionModifier modifier = ExplosionModifierProviders.getModifier(stack);
 				if (modifier != null) {
@@ -172,7 +184,7 @@ public class ExplosionModificationRecipe extends ShapelessPedestalRecipe {
 				}
 			}
 		}
-		return new Pair<>(archetypes, modifiers);
+		return new Tuple<>(archetypes, modifiers);
 	}
 	
 }

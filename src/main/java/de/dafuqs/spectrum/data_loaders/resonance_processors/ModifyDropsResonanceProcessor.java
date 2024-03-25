@@ -1,16 +1,23 @@
 package de.dafuqs.spectrum.data_loaders.resonance_processors;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.api.interaction.*;
-import de.dafuqs.spectrum.api.predicate.block.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import de.dafuqs.spectrum.api.interaction.ResonanceDropProcessor;
+import de.dafuqs.spectrum.api.predicate.block.BrokenBlockPredicate;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ModifyDropsResonanceProcessor extends ResonanceDropProcessor {
 	
@@ -21,13 +28,13 @@ public class ModifyDropsResonanceProcessor extends ResonanceDropProcessor {
 			BrokenBlockPredicate blockTarget = BrokenBlockPredicate.fromJson(json.get("block"));
 			
 			Map<Ingredient, Item> modifiedDrops = new HashMap<>();
-			JsonArray modifyDropsArray = JsonHelper.getArray(json, "modify_drops");
+			JsonArray modifyDropsArray = GsonHelper.getAsJsonArray(json, "modify_drops");
 			for (JsonElement entry : modifyDropsArray) {
 				if (!(entry instanceof JsonObject entryObject)) {
 					throw new JsonSyntaxException("modify_drops is not an json object");
 				}
 				Ingredient ingredient = Ingredient.fromJson(entryObject.get("input"));
-				Item output = Registries.ITEM.get(Identifier.tryParse(JsonHelper.getString(entryObject, "output")));
+				Item output = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse(GsonHelper.getAsString(entryObject, "output")));
 				modifiedDrops.put(ingredient, output);
 			}
 			
@@ -57,7 +64,7 @@ public class ModifyDropsResonanceProcessor extends ResonanceDropProcessor {
 			for (Map.Entry<Ingredient, Item> modifiedDrop : modifiedDrops.entrySet()) {
 				if (modifiedDrop.getKey().test(stack)) {
 					ItemStack convertedStack;
-					convertedStack = modifiedDrop.getValue().getDefaultStack();
+					convertedStack = modifiedDrop.getValue().getDefaultInstance();
 					convertedStack.setCount(stack.getCount());
 					
 					droppedStacks.remove(stack);

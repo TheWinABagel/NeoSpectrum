@@ -1,17 +1,26 @@
 package de.dafuqs.spectrum.explosion;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.item.ModularExplosionProvider;
+import de.dafuqs.spectrum.registries.SpectrumRegistries;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A Set of ExplosionModifiers
@@ -77,31 +86,31 @@ public class ModularExplosionDefinition {
 	protected static String NBT_MODIFIER_LIST_KEY = "mods";
 	
 	// Serialization
-	public NbtCompound toNbt() {
-		NbtCompound nbt = new NbtCompound();
+	public CompoundTag toNbt() {
+		CompoundTag nbt = new CompoundTag();
 		
 		nbt.putString(NBT_ARCHETYPE_KEY, this.archetype.toString());
-		NbtList modifierList = new NbtList();
+		ListTag modifierList = new ListTag();
 		for (ExplosionModifier modifier : this.modifiers) {
-			modifierList.add(NbtString.of(modifier.getId().toString()));
+			modifierList.add(StringTag.valueOf(modifier.getId().toString()));
 		}
 		nbt.put(NBT_MODIFIER_LIST_KEY, modifierList);
 		
 		return nbt;
 	}
 	
-	public static ModularExplosionDefinition fromNbt(NbtCompound nbt) {
+	public static ModularExplosionDefinition fromNbt(CompoundTag nbt) {
 		ModularExplosionDefinition set = new ModularExplosionDefinition();
 		if (nbt == null) {
 			return set;
 		}
 		
-		if (nbt.contains(NBT_ARCHETYPE_KEY, NbtElement.STRING_TYPE)) {
+		if (nbt.contains(NBT_ARCHETYPE_KEY, Tag.TAG_STRING)) {
 			set.archetype = ExplosionArchetype.tryParse(nbt.getString(NBT_ARCHETYPE_KEY));
 		}
-		NbtList modifierList = nbt.getList(NBT_MODIFIER_LIST_KEY, NbtElement.STRING_TYPE);
-		for (NbtElement e : modifierList) {
-			ExplosionModifier mod = SpectrumRegistries.EXPLOSION_MODIFIERS.get(Identifier.tryParse(e.asString()));
+		ListTag modifierList = nbt.getList(NBT_MODIFIER_LIST_KEY, Tag.TAG_STRING);
+		for (Tag e : modifierList) {
+			ExplosionModifier mod = SpectrumRegistries.EXPLOSION_MODIFIERS.get(ResourceLocation.tryParse(e.getAsString()));
 			if (mod != null) {
 				set.modifiers.add(mod);
 			}
@@ -111,31 +120,31 @@ public class ModularExplosionDefinition {
 	}
 	
 	public static ModularExplosionDefinition getFromStack(ItemStack stack) {
-		NbtCompound nbt = stack.getNbt();
-		if (nbt != null && nbt.contains(NBT_ROOT_KEY, NbtElement.COMPOUND_TYPE)) {
+		CompoundTag nbt = stack.getTag();
+		if (nbt != null && nbt.contains(NBT_ROOT_KEY, Tag.TAG_COMPOUND)) {
 			return fromNbt(nbt.getCompound(NBT_ROOT_KEY));
 		}
 		return new ModularExplosionDefinition();
 	}
 	
 	public void attachToStack(ItemStack stack) {
-		stack.setSubNbt(NBT_ROOT_KEY, toNbt());
+		stack.addTagElement(NBT_ROOT_KEY, toNbt());
 	}
 	
 	public static void removeFromStack(ItemStack stack) {
-		stack.removeSubNbt(NBT_ROOT_KEY);
+		stack.removeTagKey(NBT_ROOT_KEY);
 	}
 	
 	// Tooltips
-	public void appendTooltip(List<Text> tooltip, ModularExplosionProvider provider) {
+	public void appendTooltip(List<Component> tooltip, ModularExplosionProvider provider) {
 		int modifierCount = this.modifiers.size();
 		int maxModifierCount = provider.getMaxExplosionModifiers();
 		
 		tooltip.add(archetype.getName());
-		tooltip.add(Text.translatable("item.spectrum.tooltip.explosives.remaining_slots", modifierCount, maxModifierCount).formatted(Formatting.GRAY));
+		tooltip.add(Component.translatable("item.spectrum.tooltip.explosives.remaining_slots", modifierCount, maxModifierCount).withStyle(ChatFormatting.GRAY));
 		
 		if (modifierCount == 0) {
-			tooltip.add(Text.translatable("item.spectrum.tooltip.explosives.modifiers").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.tooltip.explosives.modifiers").withStyle(ChatFormatting.GRAY));
 		} else {
 			for (ExplosionModifier explosionModifier : modifiers) {
 				tooltip.add(explosionModifier.getName());
@@ -144,22 +153,22 @@ public class ModularExplosionDefinition {
 	}
 	
 	// Calls the explosion logic
-	public void explode(@NotNull ServerWorld world, BlockPos pos, @Nullable PlayerEntity owner, double baseBlastRadius, float baseDamage) {
+	public void explode(@NotNull ServerLevel world, BlockPos pos, @Nullable Player owner, double baseBlastRadius, float baseDamage) {
 		ModularExplosion.explode(world, pos, owner, baseBlastRadius, baseDamage, this.archetype, this.modifiers);
 	}
 	
 	// Calls the explosion logic
-	public static void explode(@NotNull ServerWorld world, BlockPos pos, @Nullable PlayerEntity owner, ItemStack stack) {
+	public static void explode(@NotNull ServerLevel world, BlockPos pos, @Nullable Player owner, ItemStack stack) {
 		if (stack.getItem() instanceof ModularExplosionProvider provider) {
 			ModularExplosionDefinition definition = getFromStack(stack);
 			ModularExplosion.explode(world, pos, owner, provider.getBaseExplosionBlastRadius(), provider.getBaseExplosionDamage(), definition.archetype, definition.modifiers);
 		}
 	}
 	
-	public static void explode(@NotNull ServerWorld world, BlockPos pos, Direction direction, @Nullable PlayerEntity owner, ItemStack stack) {
+	public static void explode(@NotNull ServerLevel world, BlockPos pos, Direction direction, @Nullable Player owner, ItemStack stack) {
 		if (stack.getItem() instanceof ModularExplosionProvider provider) {
 			ModularExplosionDefinition definition = getFromStack(stack);
-			BlockPos finalPos = pos.offset(direction, (int) provider.getBaseExplosionBlastRadius() - 2); // TODO: Add distance added via blast range modification
+			BlockPos finalPos = pos.relative(direction, (int) provider.getBaseExplosionBlastRadius() - 2); // TODO: Add distance added via blast range modification
 			ModularExplosion.explode(world, finalPos, owner, provider.getBaseExplosionBlastRadius(), provider.getBaseExplosionDamage(), definition.archetype, definition.modifiers);
 		}
 	}

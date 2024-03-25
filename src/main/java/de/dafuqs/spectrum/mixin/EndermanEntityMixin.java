@@ -1,21 +1,24 @@
 package de.dafuqs.spectrum.mixin;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.monster.EnderMan;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(EndermanEntity.class)
+@Mixin(EnderMan.class)
 public abstract class EndermanEntityMixin {
 	
-	final BlockState carriedBlockState = SpectrumBlocks.RADIATING_ENDER.getDefaultState();
+	final BlockState carriedBlockState = SpectrumBlocks.RADIATING_ENDER.defaultBlockState();
 	
 	@Shadow
 	@Nullable
@@ -23,13 +26,13 @@ public abstract class EndermanEntityMixin {
 	
 	@Inject(at = @At("TAIL"), method = "<init>")
 	private void init(CallbackInfo info) {
-		EndermanEntity endermanEntity = ((EndermanEntity) (Object) this);
-		World world = endermanEntity.getEntityWorld();
-		if (world instanceof ServerWorld) {
-			Random random = world.random;
+		EnderMan endermanEntity = ((EnderMan) (Object) this);
+		Level world = endermanEntity.getCommandSenderWorld();
+		if (world instanceof ServerLevel) {
+			RandomSource random = world.random;
 			
 			float chance;
-			if (world.getRegistryKey().equals(World.END)) {
+			if (world.dimension().equals(Level.END)) {
 				chance = SpectrumCommon.CONFIG.EndermanHoldingEnderTreasureInEndChance;
 			} else {
 				chance = SpectrumCommon.CONFIG.EndermanHoldingEnderTreasureChance;
@@ -45,7 +48,7 @@ public abstract class EndermanEntityMixin {
 	
 	@Inject(at = @At("RETURN"), method = "cannotDespawn()Z", cancellable = true)
 	public void cannotDespawn(CallbackInfoReturnable<Boolean> cir) {
-		if (cir.getReturnValue() && this.getCarriedBlock() != null && this.getCarriedBlock().isOf(SpectrumBlocks.RADIATING_ENDER)) {
+		if (cir.getReturnValue() && this.getCarriedBlock() != null && this.getCarriedBlock().is(SpectrumBlocks.RADIATING_ENDER)) {
 			cir.setReturnValue(false);
 		}
 	}

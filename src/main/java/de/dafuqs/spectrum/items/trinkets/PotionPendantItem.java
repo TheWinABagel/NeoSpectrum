@@ -1,20 +1,21 @@
 package de.dafuqs.spectrum.items.trinkets;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.item.*;
-import dev.emi.trinkets.api.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.potion.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkPowered;
+import de.dafuqs.spectrum.api.energy.InkPoweredStatusEffectInstance;
+import de.dafuqs.spectrum.api.item.InkPoweredPotionFillable;
+import dev.emi.trinkets.api.SlotReference;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class PotionPendantItem extends SpectrumTrinketItem implements InkPoweredPotionFillable {
 	
@@ -24,21 +25,21 @@ public class PotionPendantItem extends SpectrumTrinketItem implements InkPowered
 	private final int maxEffectCount;
 	private final int maxAmplifier;
 	
-	public PotionPendantItem(Settings settings, int maxEffectCount, int maxAmplifier, Identifier unlockIdentifier) {
+	public PotionPendantItem(Properties settings, int maxEffectCount, int maxAmplifier, ResourceLocation unlockIdentifier) {
 		super(settings, unlockIdentifier);
 		this.maxEffectCount = maxEffectCount;
 		this.maxAmplifier = maxAmplifier;
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
-		appendPotionFillableTooltip(stack, tooltip, Text.translatable("item.spectrum.potion_pendant.when_worn"), false);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
+		appendPotionFillableTooltip(stack, tooltip, Component.translatable("item.spectrum.potion_pendant.when_worn"), false);
 	}
 	
 	@Override
-	public boolean hasGlint(ItemStack stack) {
-		return super.hasGlint(stack) || PotionUtil.getCustomPotionEffects(stack).size() > 0;
+	public boolean isFoil(ItemStack stack) {
+		return super.isFoil(stack) || PotionUtils.getCustomEffects(stack).size() > 0;
 	}
 	
 	@Override
@@ -53,27 +54,27 @@ public class PotionPendantItem extends SpectrumTrinketItem implements InkPowered
 	
 	@Override
     public void onEquip(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		World world = entity.getWorld();
+		Level world = entity.level();
 		super.onEquip(stack, slot, entity);
-		if (!world.isClient && entity instanceof PlayerEntity player) {
+		if (!world.isClientSide && entity instanceof Player player) {
 			grantEffects(stack, player);
 		}
 	}
 	
 	@Override
     public void tick(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		World world = entity.getWorld();
+		Level world = entity.level();
 		super.tick(stack, slot, entity);
-		if (!world.isClient && entity.getWorld().getTime() % TRIGGER_EVERY_X_TICKS == 0 && entity instanceof PlayerEntity player) {
+		if (!world.isClientSide && entity.level().getGameTime() % TRIGGER_EVERY_X_TICKS == 0 && entity instanceof Player player) {
 			grantEffects(stack, player);
 		}
 	}
 	
-	private void grantEffects(ItemStack stack, PlayerEntity player) {
+	private void grantEffects(ItemStack stack, Player player) {
 		for (InkPoweredStatusEffectInstance inkPoweredEffect : getEffects(stack)) {
 			if (InkPowered.tryDrainEnergy(player, inkPoweredEffect.getInkCost())) {
-				StatusEffectInstance effect = inkPoweredEffect.getStatusEffectInstance();
-				player.addStatusEffect(new StatusEffectInstance(effect.getEffectType(), EFFECT_DURATION, effect.getAmplifier(), effect.isAmbient(), effect.shouldShowParticles(), true));
+				MobEffectInstance effect = inkPoweredEffect.getStatusEffectInstance();
+				player.addEffect(new MobEffectInstance(effect.getEffect(), EFFECT_DURATION, effect.getAmplifier(), effect.isAmbient(), effect.isVisible(), true));
 			}
 		}
 	}

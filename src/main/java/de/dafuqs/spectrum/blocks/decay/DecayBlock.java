@@ -1,29 +1,38 @@
 package de.dafuqs.spectrum.blocks.decay;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.compat.claims.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import net.minecraft.world.tick.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.compat.claims.GenericClaimModsCompat;
+import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.ticks.TickPriority;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class DecayBlock extends Block {
 	
-	public enum Conversion implements StringIdentifiable {
+	public enum Conversion implements StringRepresentable {
 		NONE("none"),
 		DEFAULT("default"),
 		SPECIAL("special");
@@ -40,19 +49,19 @@ public abstract class DecayBlock extends Block {
 		}
 		
 		@Override
-		public String asString() {
+		public String getSerializedName() {
 			return this.name;
 		}
 	}
 	
-	public static final EnumProperty<Conversion> CONVERSION = EnumProperty.of("conversion", Conversion.class);
+	public static final EnumProperty<Conversion> CONVERSION = EnumProperty.create("conversion", Conversion.class);
 	
 	protected final float spreadChance;
 	protected final boolean canSpreadToBlockEntities;
 	protected final float damageOnTouching;
 	protected final int tier;
 	
-	public DecayBlock(Settings settings, float spreadChance, boolean canSpreadToBlockEntities, int tier, float damageOnTouching) {
+	public DecayBlock(Properties settings, float spreadChance, boolean canSpreadToBlockEntities, int tier, float damageOnTouching) {
 		super(settings);
 		this.spreadChance = spreadChance;
 		this.canSpreadToBlockEntities = canSpreadToBlockEntities;
@@ -61,43 +70,43 @@ public abstract class DecayBlock extends Block {
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> stateManager) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> stateManager) {
 		stateManager.add(CONVERSION);
 	}
 
 	@Override
-	public void onSteppedOn(World world, BlockPos pos, BlockState state, Entity entity) {
-		if (entity instanceof LivingEntity && !entity.isFireImmune() && !EnchantmentHelper.hasFrostWalker((LivingEntity) entity)) {
-			entity.damage(SpectrumDamageTypes.decay(world), damageOnTouching);
+	public void stepOn(Level world, BlockPos pos, BlockState state, Entity entity) {
+		if (entity instanceof LivingEntity && !entity.fireImmune() && !EnchantmentHelper.hasFrostWalker((LivingEntity) entity)) {
+			entity.hurt(SpectrumDamageTypes.decay(world), damageOnTouching);
 		}
-		super.onSteppedOn(world, pos, state, entity);
+		super.stepOn(world, pos, state, entity);
 	}
 	
 	@Override
-	public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-		super.onPlaced(world, pos, state, placer, itemStack);
+	public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+		super.setPlacedBy(world, pos, state, placer, itemStack);
 		
-		if (!world.isClient && SpectrumCommon.CONFIG.LogPlacingOfDecay && placer != null) {
-			SpectrumCommon.logInfo(state.getBlock().getName().getString() + " was placed in " + world.getRegistryKey().getValue() + " at " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + " by " + placer.getEntityName());
+		if (!world.isClientSide && SpectrumCommon.CONFIG.LogPlacingOfDecay && placer != null) {
+			SpectrumCommon.logInfo(state.getBlock().getName().getString() + " was placed in " + world.dimension().location() + " at " + pos.getX() + " " + pos.getY() + " " + pos.getZ() + " by " + placer.getScoreboardName());
 		}
 	}
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-		if (state.get(CONVERSION).equals(Conversion.SPECIAL)) {
-			world.addParticle(new BlockStateParticleEffect(ParticleTypes.BLOCK, state), pos.getX() + random.nextFloat(), pos.getY() + 1, pos.getZ() + random.nextFloat(), 0.0D, 0.0D, 0.0D);
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
+		if (state.getValue(CONVERSION).equals(Conversion.SPECIAL)) {
+			world.addParticle(new BlockParticleOption(ParticleTypes.BLOCK, state), pos.getX() + random.nextFloat(), pos.getY() + 1, pos.getZ() + random.nextFloat(), 0.0D, 0.0D, 0.0D);
 		}
 	}
 	
-	private boolean canSpreadTo(World world, BlockPos targetBlockPos, BlockState stateAtTargetPos) {
+	private boolean canSpreadTo(Level world, BlockPos targetBlockPos, BlockState stateAtTargetPos) {
 		if (SpectrumCommon.CONFIG.DecayIsStoppedByClaimMods && !GenericClaimModsCompat.canModify(world, targetBlockPos, null)) {
 			return false;
 		}
 		
 		return (this.canSpreadToBlockEntities || world.getBlockEntity(targetBlockPos) == null)
 				&& (!(stateAtTargetPos.getBlock() instanceof DecayBlock decayBlock) || this.tier > decayBlock.tier) // decay can convert decay of a lower tier
-				&& (stateAtTargetPos.getBlock() == Blocks.BEDROCK || (stateAtTargetPos.getBlock().getHardness() > -1.0F && stateAtTargetPos.getBlock().getBlastResistance() < 10000.0F));
+				&& (stateAtTargetPos.getBlock() == Blocks.BEDROCK || (stateAtTargetPos.getBlock().defaultDestroyTime() > -1.0F && stateAtTargetPos.getBlock().getExplosionResistance() < 10000.0F));
 	}
 
 	/**
@@ -106,8 +115,8 @@ public abstract class DecayBlock extends Block {
 	 */
 	@Override
 	@SuppressWarnings("deprecation")
-	public void neighborUpdate(BlockState state, World world, BlockPos pos, Block previousBlock, BlockPos fromPos, boolean notify) {
-		super.neighborUpdate(state, world, pos, previousBlock, fromPos, notify);
+	public void neighborChanged(BlockState state, Level world, BlockPos pos, Block previousBlock, BlockPos fromPos, boolean notify) {
+		super.neighborChanged(state, world, pos, previousBlock, fromPos, notify);
 		
 		if (previousBlock == Blocks.AIR) {
 			BlockState updatedState = world.getBlockState(fromPos);
@@ -116,14 +125,14 @@ public abstract class DecayBlock extends Block {
 			if (!(updatedBlock instanceof DecayBlock) && !(updatedBlock instanceof DecayAwayBlock)) {
 				@Nullable BlockState spreadState = this.getSpreadState(state, updatedState, world, fromPos);
 				if (spreadState != null) {
-					world.scheduleBlockTick(pos, this, 40 + world.random.nextInt(200), TickPriority.EXTREMELY_LOW);
+					world.scheduleTick(pos, this, 40 + world.random.nextInt(200), TickPriority.EXTREMELY_LOW);
 				}
 			}
 		}
 	}
 	
 	@Override
-	public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		this.randomTick(state, world, pos, random);
 		
 		trySpreadToRandomNeighboringBlock(state, world, pos);
@@ -131,18 +140,18 @@ public abstract class DecayBlock extends Block {
 	
 	// jump to neighboring blocks
 	@Override
-	public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		if (this.spreadChance < 1.0F) {
 			if (random.nextFloat() > this.spreadChance) {
 				return;
 			}
 		}
 
-		Direction randomDirection = Direction.random(random);
+		Direction randomDirection = Direction.getRandom(random);
 		trySpreadInDirection(world, state, pos, randomDirection);
 	}
 
-	private void trySpreadToRandomNeighboringBlock(BlockState state, ServerWorld world, BlockPos pos) {
+	private void trySpreadToRandomNeighboringBlock(BlockState state, ServerLevel world, BlockPos pos) {
 		List<Direction> directions = new ArrayList<>(List.of(Direction.values()));
 		Collections.shuffle(directions);
 
@@ -153,20 +162,20 @@ public abstract class DecayBlock extends Block {
 		}
 	}
 	
-	protected boolean trySpreadInDirection(@NotNull World world, BlockState state, @NotNull BlockPos originPos, Direction direction) {
-		BlockPos targetPos = originPos.offset(direction);
+	protected boolean trySpreadInDirection(@NotNull Level world, BlockState state, @NotNull BlockPos originPos, Direction direction) {
+		BlockPos targetPos = originPos.relative(direction);
 		BlockState targetBlockState = world.getBlockState(targetPos);
 		
 		if (canSpreadTo(world, targetPos, targetBlockState)) {
 			@Nullable BlockState spreadState = this.getSpreadState(state, targetBlockState, world, targetPos);
 			if (spreadState != null) {
-				world.setBlockState(targetPos, spreadState);
+				world.setBlockAndUpdate(targetPos, spreadState);
 			}
 			return true;
 		}
 		return false;
 	}
 	
-	protected abstract @Nullable BlockState getSpreadState(BlockState stateToSpreadFrom, BlockState stateToSpreadTo, World world, BlockPos stateToSpreadToPos);
+	protected abstract @Nullable BlockState getSpreadState(BlockState stateToSpreadFrom, BlockState stateToSpreadTo, Level world, BlockPos stateToSpreadToPos);
 	
 }

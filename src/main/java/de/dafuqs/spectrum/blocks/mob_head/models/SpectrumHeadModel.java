@@ -1,34 +1,35 @@
 package de.dafuqs.spectrum.blocks.mob_head.models;
 
-import net.fabricmc.api.*;
-import net.minecraft.client.model.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.block.entity.*;
-import net.minecraft.client.render.entity.model.*;
-import net.minecraft.client.util.math.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.SkullModelBase;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartNames;
 
 @Environment(EnvType.CLIENT)
-public abstract class SpectrumHeadModel extends SkullBlockEntityModel {
+public abstract class SpectrumHeadModel extends SkullModelBase {
 	
 	private final ModelPart head;
 	
 	public SpectrumHeadModel(ModelPart root) {
-		this.head = root.getChild(EntityModelPartNames.HEAD);
+		this.head = root.getChild(PartNames.HEAD);
 	}
 	
 	@Override
-	public void setHeadRotation(float animationProgress, float yaw, float pitch) {
-		this.head.yaw = yaw * 0.017453292F;
-		this.head.pitch = pitch * 0.017453292F;
+	public void setupAnim(float animationProgress, float yaw, float pitch) {
+		this.head.yRot = yaw * 0.017453292F;
+		this.head.xRot = pitch * 0.017453292F;
 	}
 	
 	@Override
-	public void render(MatrixStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
-		matrices.push();
+	public void renderToBuffer(PoseStack matrices, VertexConsumer vertices, int light, int overlay, float red, float green, float blue, float alpha) {
+		matrices.pushPose();
 		float scale = getScale();
 		matrices.scale(scale, scale, scale);
 		this.head.render(matrices, vertices, light, overlay, red, green, blue, alpha);
-		matrices.pop();
+		matrices.popPose();
 	}
 	
 	public float getScale() {

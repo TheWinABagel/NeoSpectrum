@@ -1,21 +1,35 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.recipe.anvil_crushing.*;
-import de.dafuqs.spectrum.recipe.cinderhearth.*;
-import de.dafuqs.spectrum.recipe.crystallarieum.*;
-import de.dafuqs.spectrum.recipe.enchanter.*;
-import de.dafuqs.spectrum.recipe.enchantment_upgrade.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.recipe.anvil_crushing.AnvilCrushingRecipe;
+import de.dafuqs.spectrum.recipe.anvil_crushing.AnvilCrushingRecipeSerializer;
+import de.dafuqs.spectrum.recipe.cinderhearth.CinderhearthRecipe;
+import de.dafuqs.spectrum.recipe.cinderhearth.CinderhearthRecipeSerializer;
+import de.dafuqs.spectrum.recipe.crystallarieum.CrystallarieumRecipe;
+import de.dafuqs.spectrum.recipe.crystallarieum.CrystallarieumRecipeSerializer;
+import de.dafuqs.spectrum.recipe.enchanter.EnchanterRecipe;
+import de.dafuqs.spectrum.recipe.enchanter.EnchanterRecipeSerializer;
+import de.dafuqs.spectrum.recipe.enchantment_upgrade.EnchantmentUpgradeRecipe;
+import de.dafuqs.spectrum.recipe.enchantment_upgrade.EnchantmentUpgradeRecipeSerializer;
 import de.dafuqs.spectrum.recipe.fluid_converting.*;
-import de.dafuqs.spectrum.recipe.fusion_shrine.*;
-import de.dafuqs.spectrum.recipe.ink_converting.*;
+import de.dafuqs.spectrum.recipe.fusion_shrine.FusionShrineRecipe;
+import de.dafuqs.spectrum.recipe.fusion_shrine.FusionShrineRecipeSerializer;
+import de.dafuqs.spectrum.recipe.ink_converting.InkConvertingRecipe;
+import de.dafuqs.spectrum.recipe.ink_converting.InkConvertingRecipeSerializer;
 import de.dafuqs.spectrum.recipe.pedestal.*;
 import de.dafuqs.spectrum.recipe.potion_workshop.*;
-import de.dafuqs.spectrum.recipe.primordial_fire_burning.*;
-import de.dafuqs.spectrum.recipe.spirit_instiller.*;
-import de.dafuqs.spectrum.recipe.titration_barrel.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
+import de.dafuqs.spectrum.recipe.primordial_fire_burning.PrimordialFireBurningRecipe;
+import de.dafuqs.spectrum.recipe.primordial_fire_burning.PrimordialFireBurningRecipeSerializer;
+import de.dafuqs.spectrum.recipe.spirit_instiller.SpiritInstillerRecipe;
+import de.dafuqs.spectrum.recipe.spirit_instiller.SpiritInstillerRecipeSerializer;
+import de.dafuqs.spectrum.recipe.titration_barrel.ITitrationBarrelRecipe;
+import de.dafuqs.spectrum.recipe.titration_barrel.TitrationBarrelRecipe;
+import de.dafuqs.spectrum.recipe.titration_barrel.TitrationBarrelRecipeSerializer;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
 
 public class SpectrumRecipeTypes {
 	
@@ -94,11 +108,11 @@ public class SpectrumRecipeTypes {
 	public static RecipeType<PrimordialFireBurningRecipe> PRIMORDIAL_FIRE_BURNING;
 	
 	static <S extends RecipeSerializer<T>, T extends Recipe<?>> S registerSerializer(String id, S serializer) {
-		return Registry.register(Registries.RECIPE_SERIALIZER, SpectrumCommon.locate(id), serializer);
+		return Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, SpectrumCommon.locate(id), serializer);
 	}
 	
 	static <T extends Recipe<?>> RecipeType<T> registerRecipeType(String id) {
-		return Registry.register(Registries.RECIPE_TYPE, SpectrumCommon.locate(id), new RecipeType<T>() {
+		return Registry.register(BuiltInRegistries.RECIPE_TYPE, SpectrumCommon.locate(id), new RecipeType<T>() {
 			@Override
 			public String toString() {
 				return "spectrum:" + id;

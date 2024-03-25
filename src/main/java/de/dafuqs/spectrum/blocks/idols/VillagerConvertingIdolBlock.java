@@ -1,42 +1,46 @@
 package de.dafuqs.spectrum.blocks.idols;
 
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.entity.passive.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.monster.ZombieVillager;
+import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class VillagerConvertingIdolBlock extends IdolBlock {
 	
-	public VillagerConvertingIdolBlock(Settings settings, ParticleEffect particleEffect) {
+	public VillagerConvertingIdolBlock(Properties settings, ParticleOptions particleEffect) {
 		super(settings, particleEffect);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("block.spectrum.villager_converting_idol.tooltip"));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("block.spectrum.villager_converting_idol.tooltip"));
 	}
 	
 	@Override
-	public boolean trigger(ServerWorld world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
-		if (entity instanceof VillagerEntity villagerEntity) {
-			ZombieVillagerEntity zombieVillagerEntity = villagerEntity.convertTo(EntityType.ZOMBIE_VILLAGER, false);
-			zombieVillagerEntity.initialize(world, world.getLocalDifficulty(zombieVillagerEntity.getBlockPos()), SpawnReason.CONVERSION, new ZombieEntity.ZombieData(false, true), null);
+	public boolean trigger(ServerLevel world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
+		if (entity instanceof Villager villagerEntity) {
+			ZombieVillager zombieVillagerEntity = villagerEntity.convertTo(EntityType.ZOMBIE_VILLAGER, false);
+			zombieVillagerEntity.finalizeSpawn(world, world.getCurrentDifficultyAt(zombieVillagerEntity.blockPosition()), MobSpawnType.CONVERSION, new Zombie.ZombieGroupData(false, true), null);
 			zombieVillagerEntity.setVillagerData(villagerEntity.getVillagerData());
-			zombieVillagerEntity.setGossipData(villagerEntity.getGossip().serialize(NbtOps.INSTANCE));
-			zombieVillagerEntity.setOfferData(villagerEntity.getOffers().toNbt());
-			zombieVillagerEntity.setXp(villagerEntity.getExperience());
+			zombieVillagerEntity.setGossips(villagerEntity.getGossips().store(NbtOps.INSTANCE));
+			zombieVillagerEntity.setTradeOffers(villagerEntity.getOffers().createTag());
+			zombieVillagerEntity.setVillagerXp(villagerEntity.getVillagerXp());
 			
 			zombieVillagerEntity.playAmbientSound();
 			return true;

@@ -1,30 +1,31 @@
 package de.dafuqs.spectrum.status_effects;
 
-import de.dafuqs.spectrum.api.status_effect.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.attribute.*;
-import net.minecraft.entity.effect.*;
+import de.dafuqs.spectrum.api.status_effect.StackableStatusEffect;
+import de.dafuqs.spectrum.registries.SpectrumStatusEffectTags;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
 
 public class EffectProlongingStatusEffect extends SpectrumStatusEffect implements StackableStatusEffect {
 	
 	public static final float ADDITIONAL_EFFECT_DURATION_MODIFIER_PER_LEVEL = 0.25F;
 	
-	public EffectProlongingStatusEffect(StatusEffectCategory category, int color) {
+	public EffectProlongingStatusEffect(MobEffectCategory category, int color) {
 		super(category, color);
 	}
 	
 	@Override
-	public void onApplied(LivingEntity entity, AttributeContainer attributes, int amplifier) {
+	public void addAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
 	
 	}
 	
 	@Override
-	public void onRemoved(LivingEntity entity, AttributeContainer attributes, int amplifier) {
+	public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
 	
 	}
 	
-	public static boolean canBeExtended(StatusEffect statusEffect) {
+	public static boolean canBeExtended(MobEffect statusEffect) {
 		return !SpectrumStatusEffectTags.isIn(SpectrumStatusEffectTags.NO_DURATION_EXTENSION, statusEffect);
 	}
 	

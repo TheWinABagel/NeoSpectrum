@@ -1,10 +1,10 @@
 package de.dafuqs.spectrum.compat.patchouli.pages;
 
-import de.dafuqs.spectrum.api.recipe.*;
-import net.minecraft.client.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.recipe.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.api.recipe.GatedRecipe;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 
 /**
  * Like PageGatedRecipeDouble, but only displays a single recipe
@@ -16,9 +16,9 @@ public abstract class PageGatedRecipeSingle<T extends GatedRecipe> extends PageG
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float tickDelta) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float tickDelta) {
 		if (recipe != null) {
-			World world = MinecraftClient.getInstance().world;
+			Level world = Minecraft.getInstance().level;
 			if (world == null) {
 				return;
 			}
@@ -30,6 +30,6 @@ public abstract class PageGatedRecipeSingle<T extends GatedRecipe> extends PageG
 		super.render(drawContext, mouseX, mouseY, tickDelta);
 	}
 	
-	protected abstract void drawRecipe(DrawContext drawContext, World world, T recipe, int recipeX, int recipeY, int mouseX, int mouseY);
+	protected abstract void drawRecipe(GuiGraphics drawContext, Level world, T recipe, int recipeX, int recipeY, int mouseX, int mouseY);
 	
 }

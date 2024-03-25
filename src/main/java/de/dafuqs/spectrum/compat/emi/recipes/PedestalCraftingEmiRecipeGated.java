@@ -1,19 +1,22 @@
 package de.dafuqs.spectrum.compat.emi.recipes;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.compat.emi.*;
-import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.recipe.pedestal.*;
-import dev.emi.emi.api.render.*;
-import dev.emi.emi.api.stack.*;
-import dev.emi.emi.api.widget.TextWidget.*;
-import dev.emi.emi.api.widget.*;
-import net.minecraft.client.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.api.item.GemstoneColor;
+import de.dafuqs.spectrum.compat.emi.GatedSpectrumEmiRecipe;
+import de.dafuqs.spectrum.compat.emi.SpectrumEmiRecipeCategories;
+import de.dafuqs.spectrum.inventories.PedestalScreen;
+import de.dafuqs.spectrum.recipe.pedestal.BuiltinGemstoneColor;
+import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipe;
+import dev.emi.emi.api.render.EmiTexture;
+import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.widget.TextWidget.Alignment;
+import dev.emi.emi.api.widget.WidgetHolder;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
 
-import java.util.*;
+import java.util.List;
 
 public class PedestalCraftingEmiRecipeGated extends GatedSpectrumEmiRecipe<PedestalRecipe> {
 	
@@ -24,7 +27,7 @@ public class PedestalCraftingEmiRecipeGated extends GatedSpectrumEmiRecipe<Pedes
 	
 	@Override
 	public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return recipe.getTier().hasUnlocked(client.player) && super.isUnlocked();
 	}
 	
@@ -33,7 +36,7 @@ public class PedestalCraftingEmiRecipeGated extends GatedSpectrumEmiRecipe<Pedes
 		List<IngredientStack> ingredients = recipe.getIngredientStacks();
 		int ingredientCount = ingredients.size();
 		
-		List<EmiIngredient> list = DefaultedList.ofSize(9 + powderSlotCount, EmiStack.EMPTY);
+		List<EmiIngredient> list = NonNullList.withSize(9 + powderSlotCount, EmiStack.EMPTY);
 		
 		for (int i = 0; i < ingredientCount; i++) {
 			list.set(recipe.getGridSlotId(i), EmiIngredient.of(ingredients.get(i).getStacks().stream().map(EmiStack::of).toList()));
@@ -54,7 +57,7 @@ public class PedestalCraftingEmiRecipeGated extends GatedSpectrumEmiRecipe<Pedes
 		int gemstoneSlotStartX = 62 - powderSlotCount * 9;
 		int gemstoneSlotTextureStartU = 88 - powderSlotCount * 9;
 		
-		Identifier backgroundTexture = PedestalScreen.getBackgroundTextureForTier(recipe.getTier());
+		ResourceLocation backgroundTexture = PedestalScreen.getBackgroundTextureForTier(recipe.getTier());
 		// gemstone slot background
 		widgets.addTexture(backgroundTexture, gemstoneSlotStartX, 59, 18 * powderSlotCount, 18, gemstoneSlotTextureStartU, 76);
 		// crafting input

@@ -1,6 +1,7 @@
 package de.dafuqs.spectrum.blocks.pastel_network.nodes;
 
-import net.minecraft.text.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 
 public enum PastelNodeType {
     CONNECTION("block.spectrum.connection_node.tooltip", false),
@@ -9,15 +10,15 @@ public enum PastelNodeType {
     SENDER("block.spectrum.sender_node.tooltip", false),
     GATHER("block.spectrum.gather_node.tooltip", true);
 
-    private final MutableText tooltip;
+    private final MutableComponent tooltip;
     private final boolean usesFilters;
 
     PastelNodeType(String tooltip, boolean usesFilters) {
-        this.tooltip = Text.translatable(tooltip);
+        this.tooltip = Component.translatable(tooltip);
         this.usesFilters = usesFilters;
     }
 
-    public MutableText getTooltip() {
+    public MutableComponent getTooltip() {
         return this.tooltip;
     }
 

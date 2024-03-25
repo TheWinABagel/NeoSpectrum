@@ -1,38 +1,47 @@
 package de.dafuqs.spectrum.recipe;
 
-import com.google.common.collect.*;
-import com.google.gson.*;
-import com.mojang.brigadier.*;
-import com.mojang.brigadier.exceptions.*;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.matchbooks.recipe.RecipeParser;
 import de.dafuqs.spectrum.helpers.NbtHelper;
-import de.dafuqs.matchbooks.recipe.*;
-import net.minecraft.block.*;
-import net.minecraft.command.argument.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
+import net.minecraft.commands.arguments.blocks.BlockStateParser;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.level.block.state.BlockState;
 
-import net.minecraft.util.collection.*;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 public class RecipeUtils {
 	
 	public static ItemStack itemStackWithNbtFromJson(JsonObject json) {
-		Item item = ShapedRecipe.getItem(json);
+		Item item = ShapedRecipe.itemFromJson(json);
 		if (json.has("data")) {
 			throw new JsonParseException("Disallowed data tag found");
 		} else {
-			int count = JsonHelper.getInt(json, "count", 1);
+			int count = GsonHelper.getAsInt(json, "count", 1);
 			
 			if (count < 1) {
 				throw new JsonSyntaxException("Invalid output count: " + count);
 			} else {
 				ItemStack stack = new ItemStack(item, count);
 				
-				Optional<NbtCompound> nbt = NbtHelper.getNbtCompound(json.get("nbt"));
-				nbt.ifPresent(stack::setNbt);
+				Optional<CompoundTag> nbt = NbtHelper.getNbtCompound(json.get("nbt"));
+				nbt.ifPresent(stack::setTag);
 				
 				return stack;
 			}
@@ -40,17 +49,17 @@ public class RecipeUtils {
 	}
 	
 	public static BlockState blockStateFromString(String string) throws CommandSyntaxException {
-		return BlockArgumentParser.block(Registries.BLOCK.getReadOnlyWrapper(), new StringReader(string), true).blockState();
+		return BlockStateParser.parseForBlock(BuiltInRegistries.BLOCK.asLookup(), new StringReader(string), true).blockState();
 	}
 	
 	public static String blockStateToString(BlockState state) {
-		return BlockArgumentParser.stringifyBlockState(state);
+		return BlockStateParser.serialize(state);
 	}
 	
 
 	
 	public static List<IngredientStack> createIngredientStackPatternMatrix(String[] pattern, Map<String, IngredientStack> symbols, int width, int height) {
-		List<IngredientStack> list = DefaultedList.ofSize(width * height, IngredientStack.EMPTY);
+		List<IngredientStack> list = NonNullList.withSize(width * height, IngredientStack.EMPTY);
 		Set<String> set = Sets.newHashSet(symbols.keySet());
 		set.remove(" ");
 

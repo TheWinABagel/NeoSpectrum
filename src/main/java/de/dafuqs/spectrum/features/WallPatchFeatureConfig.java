@@ -1,30 +1,32 @@
 package de.dafuqs.spectrum.features;
 
-import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.*;
-import it.unimi.dsi.fastutil.objects.*;
-import net.minecraft.block.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.entry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.intprovider.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.gen.feature.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.Util;
+import net.minecraft.core.Direction;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.RegistryCodecs;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.valueproviders.IntProvider;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.levelgen.feature.configurations.FeatureConfiguration;
 
-import java.util.*;
+import java.util.List;
 
-public class WallPatchFeatureConfig implements FeatureConfig {
+public class WallPatchFeatureConfig implements FeatureConfiguration {
 	
 	public static final Codec<WallPatchFeatureConfig> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
-				Registries.BLOCK.getCodec().fieldOf("block").forGetter((config) -> config.block),
+				BuiltInRegistries.BLOCK.byNameCodec().fieldOf("block").forGetter((config) -> config.block),
 				Codec.intRange(1, 64).fieldOf("search_range").orElse(10).forGetter((config) -> config.searchRange),
 				Codec.BOOL.fieldOf("can_place_on_floor").orElse(false).forGetter((config) -> config.placeOnFloor),
 				Codec.BOOL.fieldOf("can_place_on_ceiling").orElse(false).forGetter((config) -> config.placeOnCeiling),
 				Codec.BOOL.fieldOf("can_place_on_wall").orElse(false).forGetter((config) -> config.placeOnWalls),
 				IntProvider.NON_NEGATIVE_CODEC.fieldOf("width").forGetter((config) -> config.width),
 				IntProvider.NON_NEGATIVE_CODEC.fieldOf("height").forGetter((config) -> config.height),
-				RegistryCodecs.entryList(RegistryKeys.BLOCK).fieldOf("can_be_placed_on").forGetter((config) -> config.canPlaceOn))
+				RegistryCodecs.homogeneousList(Registries.BLOCK).fieldOf("can_be_placed_on").forGetter((config) -> config.canPlaceOn))
 				.apply(instance, WallPatchFeatureConfig::new)
 	);
 	
@@ -35,10 +37,10 @@ public class WallPatchFeatureConfig implements FeatureConfig {
 	public final boolean placeOnWalls;
 	public final IntProvider width;
 	public final IntProvider height;
-	public final RegistryEntryList<Block> canPlaceOn;
+	public final HolderSet<Block> canPlaceOn;
 	private final ObjectArrayList<Direction> directions;
 	
-	public WallPatchFeatureConfig(Block block, Integer searchRange, Boolean placeOnFloor, Boolean placeOnCeiling, Boolean placeOnWalls, IntProvider width, IntProvider height, RegistryEntryList<Block> canPlaceOn) {
+	public WallPatchFeatureConfig(Block block, Integer searchRange, Boolean placeOnFloor, Boolean placeOnCeiling, Boolean placeOnWalls, IntProvider width, IntProvider height, HolderSet<Block> canPlaceOn) {
 		this.block = block;
 		this.searchRange = searchRange;
 		this.placeOnFloor = placeOnFloor;
@@ -55,16 +57,16 @@ public class WallPatchFeatureConfig implements FeatureConfig {
 			this.directions.add(Direction.DOWN);
 		}
 		if (placeOnWalls) {
-			Direction.Type.HORIZONTAL.forEach(this.directions::add);
+			Direction.Plane.HORIZONTAL.forEach(this.directions::add);
 		}
 	}
 	
-	public List<Direction> shuffleDirections(Random random, Direction excluded) {
-		return Util.copyShuffled(this.directions.stream().filter((direction) -> direction != excluded), random);
+	public List<Direction> shuffleDirections(RandomSource random, Direction excluded) {
+		return Util.toShuffledList(this.directions.stream().filter((direction) -> direction != excluded), random);
 	}
 	
-	public List<Direction> shuffleDirections(Random random) {
-		return Util.copyShuffled(this.directions, random);
+	public List<Direction> shuffleDirections(RandomSource random) {
+		return Util.shuffledCopy(this.directions, random);
 	}
 	
 }

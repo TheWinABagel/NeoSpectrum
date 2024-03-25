@@ -1,14 +1,19 @@
 package de.dafuqs.spectrum.helpers;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.registries.SpectrumBlockTags;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class BlockVariantHelper {
 	
@@ -17,16 +22,16 @@ public class BlockVariantHelper {
 	// ordered color strings so "light_" variants match before non-light
 	private static final List<String> COLOR_STRINGS = List.of("light_blue", "light_gray", "white", "orange", "magenta", "yellow", "lime", "pink", "gray", "cyan", "purple", "blue", "brown", "green", "red", "black");
 	
-	public static BlockState getCursedBlockColorVariant(World world, BlockPos blockPos, DyeColor newColor) {
+	public static BlockState getCursedBlockColorVariant(Level world, BlockPos blockPos, DyeColor newColor) {
 		BlockEntity blockEntity = world.getBlockEntity(blockPos);
 		if (blockEntity != null) {
-			return Blocks.AIR.getDefaultState();
+			return Blocks.AIR.defaultBlockState();
 		}
 		
 		BlockState blockState = world.getBlockState(blockPos);
 		
-		if (blockState.isIn(SpectrumBlockTags.INK_EFFECT_BLACKLISTED)) {
-			return Blocks.AIR.getDefaultState();
+		if (blockState.is(SpectrumBlockTags.INK_EFFECT_BLACKLISTED)) {
+			return Blocks.AIR.defaultBlockState();
 		}
 		
 		Block block = blockState.getBlock();
@@ -34,11 +39,11 @@ public class BlockVariantHelper {
 			Map<DyeColor, Block> colorMap = coloredStates.get(block);
 			if (colorMap.containsKey(newColor)) {
 				Block newBlock = colorMap.get(newColor);
-				return newBlock.getStateWithProperties(blockState);
+				return newBlock.withPropertiesOf(blockState);
 			}
 		}
 		
-		Identifier identifier = Registries.BLOCK.getId(block);
+		ResourceLocation identifier = BuiltInRegistries.BLOCK.getKey(block);
 		
 		String newPath = null;
 		for (String colorString : COLOR_STRINGS) {
@@ -50,8 +55,8 @@ public class BlockVariantHelper {
 		
 		Block returnBlock = Blocks.AIR;
 		if (newPath != null) {
-			Identifier newIdentifier = new Identifier(identifier.getNamespace(), newPath);
-			Block newIdentifierBlock = Registries.BLOCK.get(newIdentifier);
+			ResourceLocation newIdentifier = new ResourceLocation(identifier.getNamespace(), newPath);
+			Block newIdentifierBlock = BuiltInRegistries.BLOCK.get(newIdentifier);
 			if (newIdentifierBlock != block) {
 				returnBlock = newIdentifierBlock;
 			}
@@ -67,7 +72,7 @@ public class BlockVariantHelper {
 			coloredStates.put(block, colorMap);
 		}
 		
-		return returnBlock.getStateWithProperties(blockState);
+		return returnBlock.withPropertiesOf(blockState);
 	}
 	
 	// cache for getCursedRepairedBlockVariant()
@@ -90,14 +95,14 @@ public class BlockVariantHelper {
 		put(Blocks.OXIDIZED_CUT_COPPER, Blocks.WEATHERED_CUT_COPPER);
 	}};
 	
-	public static Block getCursedRepairedBlockVariant(World world, BlockPos blockPos) {
+	public static Block getCursedRepairedBlockVariant(Level world, BlockPos blockPos) {
 		BlockEntity blockEntity = world.getBlockEntity(blockPos);
 		if (blockEntity != null) {
 			return Blocks.AIR;
 		}
 		
 		BlockState blockState = world.getBlockState(blockPos);
-		if (blockState.isIn(SpectrumBlockTags.INK_EFFECT_BLACKLISTED)) {
+		if (blockState.is(SpectrumBlockTags.INK_EFFECT_BLACKLISTED)) {
 			return Blocks.AIR;
 		}
 		
@@ -107,7 +112,7 @@ public class BlockVariantHelper {
 			return repairedStates.get(block);
 		}
 		
-		Identifier identifier = Registries.BLOCK.getId(block);
+		ResourceLocation identifier = BuiltInRegistries.BLOCK.getKey(block);
 		
 		String newPath = identifier.getPath();
 		newPath = newPath.replace("cracked_", "");
@@ -116,8 +121,8 @@ public class BlockVariantHelper {
 		
 		Block returnBlock = Blocks.AIR;
 		if (!newPath.equals(identifier.getPath())) {
-			Identifier newIdentifier = new Identifier(identifier.getNamespace(), newPath);
-			Block newIdentifierBlock = Registries.BLOCK.get(newIdentifier);
+			ResourceLocation newIdentifier = new ResourceLocation(identifier.getNamespace(), newPath);
+			Block newIdentifierBlock = BuiltInRegistries.BLOCK.get(newIdentifier);
 			if (newIdentifierBlock != block) {
 				returnBlock = newIdentifierBlock;
 			}

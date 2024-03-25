@@ -1,18 +1,24 @@
 package de.dafuqs.spectrum.blocks.pastel_network.network;
 
-import de.dafuqs.spectrum.blocks.pastel_network.nodes.*;
-import net.minecraft.nbt.*;
-import net.minecraft.server.world.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import org.jgrapht.alg.connectivity.*;
-import org.jgrapht.graph.*;
+import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.SavedData;
+import org.jetbrains.annotations.Nullable;
+import org.jgrapht.alg.connectivity.ConnectivityInspector;
+import org.jgrapht.graph.DefaultEdge;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 // Persisted together with the overworld
 // resetting the overworld will also reset all networks
-public class ServerPastelNetworkManager extends PersistentState implements PastelNetworkManager {
+public class ServerPastelNetworkManager extends SavedData implements PastelNetworkManager {
 	
 	private static final String PERSISTENT_STATE_ID = "spectrum_pastel_network_manager";
 	
@@ -27,30 +33,30 @@ public class ServerPastelNetworkManager extends PersistentState implements Paste
 		return true;
 	}
 	
-	public static ServerPastelNetworkManager get(ServerWorld world) {
-		return world.getPersistentStateManager().getOrCreate(ServerPastelNetworkManager::fromNbt, ServerPastelNetworkManager::new, PERSISTENT_STATE_ID);
+	public static ServerPastelNetworkManager get(ServerLevel world) {
+		return world.getDataStorage().computeIfAbsent(ServerPastelNetworkManager::fromNbt, ServerPastelNetworkManager::new, PERSISTENT_STATE_ID);
 	}
 	
 	@Override
-	public NbtCompound writeNbt(NbtCompound nbt) {
-		NbtList networkList = new NbtList();
+	public CompoundTag save(CompoundTag nbt) {
+		ListTag networkList = new ListTag();
 		for (ServerPastelNetwork network : this.networks) {
-			NbtCompound compound = network.toNbt();
+			CompoundTag compound = network.toNbt();
 			networkList.add(compound);
 		}
 		nbt.put("Networks", networkList);
 		return nbt;
 	}
 	
-	public static ServerPastelNetworkManager fromNbt(NbtCompound nbt) {
+	public static ServerPastelNetworkManager fromNbt(CompoundTag nbt) {
 		ServerPastelNetworkManager manager = new ServerPastelNetworkManager();
-		for (NbtElement element : nbt.getList("Networks", NbtElement.COMPOUND_TYPE)) {
-			manager.networks.add(ServerPastelNetwork.fromNbt((NbtCompound) element));
+		for (Tag element : nbt.getList("Networks", Tag.TAG_COMPOUND)) {
+			manager.networks.add(ServerPastelNetwork.fromNbt((CompoundTag) element));
 		}
 		return manager;
 	}
 	
-	private ServerPastelNetwork createNetwork(World world, @Nullable UUID uuid) {
+	private ServerPastelNetwork createNetwork(Level world, @Nullable UUID uuid) {
 		ServerPastelNetwork network = new ServerPastelNetwork(world, uuid);
 		this.networks.add(network);
 		return network;
@@ -85,7 +91,7 @@ public class ServerPastelNetworkManager extends PersistentState implements Paste
 			}
 		}
 		
-		ServerPastelNetwork network = createNetwork(node.getWorld(), uuid);
+		ServerPastelNetwork network = createNetwork(node.getLevel(), uuid);
 		network.addNode(node);
 		return network;
 	}

@@ -1,73 +1,81 @@
 package de.dafuqs.spectrum.blocks.redstone;
 
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.world.*;
-import net.minecraft.world.tick.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.DiodeBlock;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.ticks.TickPriority;
+import org.jetbrains.annotations.NotNull;
 
-public class RedstoneCalculatorBlock extends AbstractRedstoneGateBlock implements BlockEntityProvider {
+public class RedstoneCalculatorBlock extends DiodeBlock implements EntityBlock {
 	
-	public static final EnumProperty<CalculationMode> CALCULATION_MODE = EnumProperty.of("calculation_mode", CalculationMode.class);
+	public static final EnumProperty<CalculationMode> CALCULATION_MODE = EnumProperty.create("calculation_mode", CalculationMode.class);
 	
-	public RedstoneCalculatorBlock(Settings settings) {
+	public RedstoneCalculatorBlock(Properties settings) {
 		super(settings);
-		this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH).with(POWERED, false).with(CALCULATION_MODE, CalculationMode.ADDITION));
+		this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(POWERED, false).setValue(CALCULATION_MODE, CalculationMode.ADDITION));
 	}
 
 	@Override
-	protected int getUpdateDelayInternal(BlockState state) {
+	protected int getDelay(BlockState state) {
 		return 2;
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(FACING, POWERED, CALCULATION_MODE);
 	}
 	
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new RedstoneCalculatorBlockEntity(pos, state);
 	}
 
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		if (!player.getAbilities().allowModifyWorld) {
-			return ActionResult.PASS;
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		if (!player.getAbilities().mayBuild) {
+			return InteractionResult.PASS;
 		} else {
 			BlockState newModeState = state.cycle(CALCULATION_MODE);
-			world.setBlockState(pos, newModeState, Block.NOTIFY_ALL);
-			float pitch = 0.5F + state.get(CALCULATION_MODE).ordinal() * 0.05F;
-			world.playSound(player, pos, SoundEvents.BLOCK_COMPARATOR_CLICK, SoundCategory.BLOCKS, 0.3F, pitch);
-			if (player instanceof ServerPlayerEntity serverPlayerEntity) {
+			world.setBlock(pos, newModeState, Block.UPDATE_ALL);
+			float pitch = 0.5F + state.getValue(CALCULATION_MODE).ordinal() * 0.05F;
+			world.playSound(player, pos, SoundEvents.COMPARATOR_CLICK, SoundSource.BLOCKS, 0.3F, pitch);
+			if (player instanceof ServerPlayer serverPlayerEntity) {
 				// since this triggers both on server and client side: just send the
 				// message once, client side is enough, since it is pretty irrelevant on the server
-				serverPlayerEntity.sendMessage(Text.translatable("block.spectrum.redstone_calculator.mode_set").append(Text.translatable(newModeState.get(CALCULATION_MODE).localizationString)), true);
+				serverPlayerEntity.displayClientMessage(Component.translatable("block.spectrum.redstone_calculator.mode_set").append(Component.translatable(newModeState.getValue(CALCULATION_MODE).localizationString)), true);
 			}
 
 			this.update(world, pos, state);
 
-			return ActionResult.success(world.isClient);
+			return InteractionResult.sidedSuccess(world.isClientSide);
 		}
 	}
 	
 	@Override
-	public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		this.update(world, pos, state);
 	}
 
-	private void update(World world, BlockPos pos, BlockState state) {
+	private void update(Level world, BlockPos pos, BlockState state) {
 		int newSignal = this.calculateOutputSignal(world, pos, state);
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		int previousSignal = 0;
@@ -78,35 +86,35 @@ public class RedstoneCalculatorBlock extends AbstractRedstoneGateBlock implement
 		
 		if (previousSignal != newSignal) {
 			boolean bl = newSignal != 0;
-			boolean bl2 = state.get(POWERED);
+			boolean bl2 = state.getValue(POWERED);
 			if (bl2 && !bl) {
-				world.setBlockState(pos, state.with(POWERED, false), Block.NOTIFY_LISTENERS);
+				world.setBlock(pos, state.setValue(POWERED, false), Block.UPDATE_CLIENTS);
 			} else if (!bl2 && bl) {
-				world.setBlockState(pos, state.with(POWERED, true), Block.NOTIFY_LISTENERS);
+				world.setBlock(pos, state.setValue(POWERED, true), Block.UPDATE_CLIENTS);
 			}
 			
-			this.updateTarget(world, pos, state);
+			this.updateNeighborsInFront(world, pos, state);
 		}
 	}
 	
 	@Override
-	protected void updatePowered(World world, BlockPos pos, BlockState state) {
-		if (!world.getBlockTickScheduler().isTicking(pos, this)) {
+	protected void checkTickOnNeighbor(Level world, BlockPos pos, BlockState state) {
+		if (!world.getBlockTicks().willTickThisTick(pos, this)) {
 			int previousSignal = world.getBlockEntity(pos) instanceof RedstoneCalculatorBlockEntity redstoneCalculatorBlockEntity ? redstoneCalculatorBlockEntity.getOutputSignal() : 0;
 			int newSignal = this.calculateOutputSignal(world, pos, state);
 
 			if (newSignal != previousSignal) {
-				TickPriority tickPriority = this.isTargetNotAligned(world, pos, state) ? TickPriority.HIGH : TickPriority.NORMAL;
-				world.scheduleBlockTick(pos, this, getUpdateDelayInternal(state), tickPriority);
+				TickPriority tickPriority = this.shouldPrioritize(world, pos, state) ? TickPriority.HIGH : TickPriority.NORMAL;
+				world.scheduleTick(pos, this, getDelay(state), tickPriority);
 			}
 		}
 	}
 
-	private int calculateOutputSignal(World world, BlockPos pos, BlockState state) {
-		int power = this.getPower(world, pos, state);
-		int powerSides = this.getMaxInputLevelSides(world, pos, state);
+	private int calculateOutputSignal(Level world, BlockPos pos, BlockState state) {
+		int power = this.getInputSignal(world, pos, state);
+		int powerSides = this.getAlternateSignal(world, pos, state);
 		
-		switch (state.get(CALCULATION_MODE)) {
+		switch (state.getValue(CALCULATION_MODE)) {
 			case ADDITION -> {
 				return power + powerSides;
 			}
@@ -140,11 +148,11 @@ public class RedstoneCalculatorBlock extends AbstractRedstoneGateBlock implement
 	}
 
 	@Override
-	protected int getOutputLevel(@NotNull BlockView world, BlockPos pos, BlockState state) {
+	protected int getOutputSignal(@NotNull BlockGetter world, BlockPos pos, BlockState state) {
 		return world.getBlockEntity(pos) instanceof RedstoneCalculatorBlockEntity redstoneCalculatorBlockEntity ? redstoneCalculatorBlockEntity.getOutputSignal() : 0;
 	}
 	
-	public enum CalculationMode implements StringIdentifiable {
+	public enum CalculationMode implements StringRepresentable {
 		ADDITION("addition", "block.spectrum.redstone_calculator.mode.addition"),
 		SUBTRACTION("subtraction", "block.spectrum.redstone_calculator.mode.subtraction"),
 		MULTIPLICATION("multiplication", "block.spectrum.redstone_calculator.mode.multiplication"),
@@ -166,7 +174,7 @@ public class RedstoneCalculatorBlock extends AbstractRedstoneGateBlock implement
 		}
 		
 		@Override
-		public String asString() {
+		public String getSerializedName() {
 			return this.name;
 		}
 	}

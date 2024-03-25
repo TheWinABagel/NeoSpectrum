@@ -1,12 +1,14 @@
 package de.dafuqs.spectrum.recipe.anvil_crushing;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.recipe.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.api.recipe.GatedRecipeSerializer;
+import de.dafuqs.spectrum.recipe.RecipeUtils;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class AnvilCrushingRecipeSerializer implements GatedRecipeSerializer<AnvilCrushingRecipe> {
 	
@@ -17,61 +19,61 @@ public class AnvilCrushingRecipeSerializer implements GatedRecipeSerializer<Anvi
 	}
 	
 	public interface RecipeFactory {
-		AnvilCrushingRecipe create(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, Ingredient inputIngredient, ItemStack outputItemStack, float crushedItemsPerPointOfDamage, float experience, Identifier particleEffectIdentifier, int particleCount, Identifier soundEventIdentifier);
+		AnvilCrushingRecipe create(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, Ingredient inputIngredient, ItemStack outputItemStack, float crushedItemsPerPointOfDamage, float experience, ResourceLocation particleEffectIdentifier, int particleCount, ResourceLocation soundEventIdentifier);
 	}
 	
 	@Override
-	public AnvilCrushingRecipe read(Identifier identifier, JsonObject jsonObject) {
+	public AnvilCrushingRecipe fromJson(ResourceLocation identifier, JsonObject jsonObject) {
 		String group = readGroup(jsonObject);
 		boolean secret = readSecret(jsonObject);
-		Identifier requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
+		ResourceLocation requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
 		
-		JsonElement jsonElement = JsonHelper.hasArray(jsonObject, "ingredient") ? JsonHelper.getArray(jsonObject, "ingredient") : JsonHelper.getObject(jsonObject, "ingredient");
+		JsonElement jsonElement = GsonHelper.isArrayNode(jsonObject, "ingredient") ? GsonHelper.getAsJsonArray(jsonObject, "ingredient") : GsonHelper.getAsJsonObject(jsonObject, "ingredient");
 		Ingredient ingredient = Ingredient.fromJson(jsonElement);
-		ItemStack outputItemStack = RecipeUtils.itemStackWithNbtFromJson(JsonHelper.getObject(jsonObject, "result"));
-		float crushedItemsPerPointOfDamage = JsonHelper.getFloat(jsonObject, "crushedItemsPerPointOfDamage");
-		float experience = JsonHelper.getFloat(jsonObject, "experience");
-		Identifier particleEffectIdentifier = Identifier.tryParse(JsonHelper.getString(jsonObject, "particleEffectIdentifier"));
+		ItemStack outputItemStack = RecipeUtils.itemStackWithNbtFromJson(GsonHelper.getAsJsonObject(jsonObject, "result"));
+		float crushedItemsPerPointOfDamage = GsonHelper.getAsFloat(jsonObject, "crushedItemsPerPointOfDamage");
+		float experience = GsonHelper.getAsFloat(jsonObject, "experience");
+		ResourceLocation particleEffectIdentifier = ResourceLocation.tryParse(GsonHelper.getAsString(jsonObject, "particleEffectIdentifier"));
 		
 		int particleCount = 1;
-		if (JsonHelper.hasNumber(jsonObject, "particleCount")) {
-			particleCount = JsonHelper.getInt(jsonObject, "particleCount");
+		if (GsonHelper.isNumberValue(jsonObject, "particleCount")) {
+			particleCount = GsonHelper.getAsInt(jsonObject, "particleCount");
 		}
 		
-		String soundEventString = JsonHelper.getString(jsonObject, "soundEventIdentifier");
-		Identifier soundEventIdentifier = new Identifier(soundEventString);
+		String soundEventString = GsonHelper.getAsString(jsonObject, "soundEventIdentifier");
+		ResourceLocation soundEventIdentifier = new ResourceLocation(soundEventString);
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, ingredient, outputItemStack, crushedItemsPerPointOfDamage, experience, particleEffectIdentifier, particleCount, soundEventIdentifier);
 	}
 	
 	@Override
-	public void write(PacketByteBuf packetByteBuf, AnvilCrushingRecipe recipe) {
-		packetByteBuf.writeString(recipe.group);
+	public void write(FriendlyByteBuf packetByteBuf, AnvilCrushingRecipe recipe) {
+		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);
 		
-		recipe.inputIngredient.write(packetByteBuf);
-		packetByteBuf.writeItemStack(recipe.outputItemStack);
+		recipe.inputIngredient.toNetwork(packetByteBuf);
+		packetByteBuf.writeItem(recipe.outputItemStack);
 		packetByteBuf.writeFloat(recipe.crushedItemsPerPointOfDamage);
 		packetByteBuf.writeFloat(recipe.experience);
-		packetByteBuf.writeIdentifier(recipe.particleEffectIdentifier);
+		packetByteBuf.writeResourceLocation(recipe.particleEffectIdentifier);
 		packetByteBuf.writeInt(recipe.particleCount);
-		packetByteBuf.writeIdentifier(recipe.soundEvent);
+		packetByteBuf.writeResourceLocation(recipe.soundEvent);
 	}
 	
 	@Override
-	public AnvilCrushingRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
-		String group = packetByteBuf.readString();
+	public AnvilCrushingRecipe fromNetwork(ResourceLocation identifier, FriendlyByteBuf packetByteBuf) {
+		String group = packetByteBuf.readUtf();
 		boolean secret = packetByteBuf.readBoolean();
-		Identifier requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
+		ResourceLocation requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
 		
-		Ingredient ingredient = Ingredient.fromPacket(packetByteBuf);
-		ItemStack outputItemStack = packetByteBuf.readItemStack();
+		Ingredient ingredient = Ingredient.fromNetwork(packetByteBuf);
+		ItemStack outputItemStack = packetByteBuf.readItem();
 		float crushedItemsPerPointOfDamage = packetByteBuf.readFloat();
 		float experience = packetByteBuf.readFloat();
-		Identifier particleEffectIdentifier = packetByteBuf.readIdentifier();
+		ResourceLocation particleEffectIdentifier = packetByteBuf.readResourceLocation();
 		int particleCount = packetByteBuf.readInt();
-		Identifier soundEventIdentifier = packetByteBuf.readIdentifier();
+		ResourceLocation soundEventIdentifier = packetByteBuf.readResourceLocation();
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, ingredient, outputItemStack, crushedItemsPerPointOfDamage, experience, particleEffectIdentifier, particleCount, soundEventIdentifier);
 	}

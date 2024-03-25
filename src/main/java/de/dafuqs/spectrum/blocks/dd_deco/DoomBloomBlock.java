@@ -1,88 +1,100 @@
 package de.dafuqs.spectrum.blocks.dd_deco;
 
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.tag.convention.v1.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.entity.projectile.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
-import net.minecraft.world.explosion.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.block.ExplosionAware;
+import de.dafuqs.spectrum.registries.SpectrumBlockTags;
+import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
+import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.*;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.FlowerBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
-public class DoomBloomBlock extends FlowerBlock implements Fertilizable, ExplosionAware {
+public class DoomBloomBlock extends FlowerBlock implements BonemealableBlock, ExplosionAware {
 	
-	public static final IntProperty AGE = Properties.AGE_4;
-	public static final int AGE_MAX = Properties.AGE_4_MAX;
-	protected static final VoxelShape SHAPE = Block.createCuboidShape(4.0, 0.0, 4.0, 12.0, 9.0, 12.0);
+	public static final IntegerProperty AGE = BlockStateProperties.AGE_4;
+	public static final int AGE_MAX = BlockStateProperties.MAX_AGE_4;
+	protected static final VoxelShape SHAPE = Block.box(4.0, 0.0, 4.0, 12.0, 9.0, 12.0);
 	protected static final double GROW_CHANCE = 0.2;
 	
-	public DoomBloomBlock(Settings settings) {
+	public DoomBloomBlock(Properties settings) {
 		super(SpectrumStatusEffects.STIFFNESS, 8, settings);
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		super.appendProperties(builder);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		super.createBlockStateDefinition(builder);
 		builder.add(AGE);
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return SHAPE;
 	}
 	
 	@Override
-	protected boolean canPlantOnTop(BlockState floor, BlockView world, BlockPos pos) {
-		return floor.isIn(SpectrumBlockTags.DOOMBLOOM_PLANTABLE);
+	protected boolean mayPlaceOn(BlockState floor, BlockGetter world, BlockPos pos) {
+		return floor.is(SpectrumBlockTags.DOOMBLOOM_PLANTABLE);
 	}
 	
 	@Override
-	public boolean isFertilizable(WorldView world, BlockPos pos, BlockState state, boolean isClient) {
-		return state.get(AGE) < Properties.AGE_4_MAX;
+	public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
+		return state.getValue(AGE) < BlockStateProperties.MAX_AGE_4;
 	}
 	
 	@Override
-	public boolean canGrow(World world, Random random, BlockPos pos, BlockState state) {
+	public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
 		return random.nextFloat() > GROW_CHANCE;
 	}
 	
 	@Override
-	public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-		grow(world, random, pos, state);
+	public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
+		performBonemeal(world, random, pos, state);
 	}
 	
 	@Override
-	public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
-		if (canPlaceAt(state, world, pos)) {
-			int age = state.get(AGE);
-			if (age < Properties.AGE_4_MAX) {
-				world.setBlockState(pos, state.with(AGE, age + 1));
-				world.playSound(null, pos, state.getSoundGroup().getPlaceSound(), SoundCategory.BLOCKS, 1.0F, 1.0F);
+	public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+		if (canSurvive(state, world, pos)) {
+			int age = state.getValue(AGE);
+			if (age < BlockStateProperties.MAX_AGE_4) {
+				world.setBlockAndUpdate(pos, state.setValue(AGE, age + 1));
+				world.playSound(null, pos, state.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
 			}
 		} else {
-			Block.replace(state, Blocks.AIR.getDefaultState(), world, pos, 10, 512);
+			Block.updateOrDestroy(state, Blocks.AIR.defaultBlockState(), world, pos, 10, 512);
 		}
 	}
 
 	@Override
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-		super.randomDisplayTick(state, world, pos, random);
-		if (state.get(AGE) == AGE_MAX) {
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
+		super.animateTick(state, world, pos, random);
+		if (state.getValue(AGE) == AGE_MAX) {
 			int r = random.nextInt(100);
 			if (r < 16) {
 				double posX = (double) pos.getX() + 0.25D + random.nextDouble() * 0.5D;
@@ -90,50 +102,50 @@ public class DoomBloomBlock extends FlowerBlock implements Fertilizable, Explosi
 				double posZ = (double) pos.getZ() + 0.25D + random.nextDouble() * 0.5D;
 				world.addParticle(ParticleTypes.LAVA, posX, posY, posZ, 0.0D, 0.0D, 0.0D);
 				if (r < 2) {
-					world.playSound(posX, posY, posZ, SoundEvents.BLOCK_LAVA_POP, SoundCategory.BLOCKS, 0.2F + random.nextFloat() * 0.2F, 0.9F + random.nextFloat() * 0.15F, false);
+					world.playLocalSound(posX, posY, posZ, SoundEvents.LAVA_POP, SoundSource.BLOCKS, 0.2F + random.nextFloat() * 0.2F, 0.9F + random.nextFloat() * 0.15F, false);
 				}
 			}
 			if (random.nextInt(100) == 0) {
-				world.playSound(pos.getX(), pos.getY(), pos.getZ(), SoundEvents.BLOCK_FIRE_EXTINGUISH, SoundCategory.BLOCKS, 0.2F + random.nextFloat() * 0.2F, 0.9F + random.nextFloat() * 0.15F, false);
+				world.playLocalSound(pos.getX(), pos.getY(), pos.getZ(), SoundEvents.FIRE_EXTINGUISH, SoundSource.BLOCKS, 0.2F + random.nextFloat() * 0.2F, 0.9F + random.nextFloat() * 0.15F, false);
 			}
 		}
 	}
 
 	@Override
-	public boolean shouldDropItemsOnExplosion(Explosion explosion) {
+	public boolean dropFromExplosion(Explosion explosion) {
 		return false;
 	}
 
 	@Override
-	public void beforeDestroyedByExplosion(World world, BlockPos pos, BlockState state, Explosion explosion) {
+	public void beforeDestroyedByExplosion(Level world, BlockPos pos, BlockState state, Explosion explosion) {
 		explode(world, pos, state);
 	}
 
 	@Override
-	public void onSteppedOn(World world, BlockPos pos, BlockState state, Entity entity) {
-		super.onSteppedOn(world, pos, state, entity);
+	public void stepOn(Level world, BlockPos pos, BlockState state, Entity entity) {
+		super.stepOn(world, pos, state, entity);
 		if (entity.isSprinting() && world.random.nextBoolean()) {
 			explode(world, pos, state);
 		}
 	}
 	
 	@Override
-	public void onLandedUpon(World world, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
-		super.onLandedUpon(world, state, pos, entity, fallDistance);
+	public void fallOn(Level world, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
+		super.fallOn(world, state, pos, entity, fallDistance);
 		explode(world, pos, state);
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onProjectileHit(World world, BlockState state, BlockHitResult hit, ProjectileEntity projectile) {
+	public void onProjectileHit(Level world, BlockState state, BlockHitResult hit, Projectile projectile) {
 		super.onProjectileHit(world, state, hit, projectile);
 		explode(world, hit.getBlockPos(), state);
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void neighborUpdate(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
-		super.neighborUpdate(state, world, pos, block, fromPos, notify);
+	public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
+		super.neighborChanged(state, world, pos, block, fromPos, notify);
 		if (world.random.nextInt(10) == 0) {
 			explode(world, pos, state);
 		}
@@ -142,38 +154,38 @@ public class DoomBloomBlock extends FlowerBlock implements Fertilizable, Explosi
 	// does not run in creative
 	// => creative players can easily break it without causing an explosion
 	@Override
-	public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
-		super.afterBreak(world, player, pos, state, blockEntity, stack);
-		if (EnchantmentHelper.getLevel(Enchantments.SILK_TOUCH, stack) == 0 && !stack.isIn(ConventionalItemTags.SHEARS)) {
+	public void playerDestroy(Level world, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
+		super.playerDestroy(world, player, pos, state, blockEntity, stack);
+		if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, stack) == 0 && !stack.is(ConventionalItemTags.SHEARS)) {
 			explode(world, pos, state);
 		}
 	}
 	
-	protected static void explode(World world, BlockPos pos, BlockState state) {
-		if (state.get(AGE) == AGE_MAX) {
+	protected static void explode(Level world, BlockPos pos, BlockState state) {
+		if (state.getValue(AGE) == AGE_MAX) {
 			world.removeBlock(pos, false);
-			world.createExplosion(null, SpectrumDamageTypes.incandescence(world), new ExplosionBehavior(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 3.0F, true, World.ExplosionSourceType.BLOCK);
-			if (!world.isClient) {
-				dropStack(world, pos, new ItemStack(SpectrumItems.DOOMBLOOM_SEED, world.random.nextBetween(3, 7)));
+			world.explode(null, SpectrumDamageTypes.incandescence(world), new ExplosionDamageCalculator(), pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 3.0F, true, Level.ExplosionInteraction.BLOCK);
+			if (!world.isClientSide) {
+				popResource(world, pos, new ItemStack(SpectrumItems.DOOMBLOOM_SEED, world.random.nextIntBetweenInclusive(3, 7)));
 			}
 		}
 	}
 	
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		int age = state.get(AGE);
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		int age = state.getValue(AGE);
 		if (age == AGE_MAX) {
-			if (world.isClient) {
-				return ActionResult.SUCCESS;
+			if (world.isClientSide) {
+				return InteractionResult.SUCCESS;
 			} else {
-				world.setBlockState(pos, state.with(AGE, 0));
-				int randomCount = world.random.nextBetween(2, 3);
-				player.getInventory().offerOrDrop(new ItemStack(Items.GUNPOWDER, randomCount));
-				world.playSound(null, pos, SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS, 1.0F, 0.9F + world.random.nextFloat() * 0.2F);
-				return ActionResult.CONSUME;
+				world.setBlockAndUpdate(pos, state.setValue(AGE, 0));
+				int randomCount = world.random.nextIntBetweenInclusive(2, 3);
+				player.getInventory().placeItemBackInInventory(new ItemStack(Items.GUNPOWDER, randomCount));
+				world.playSound(null, pos, SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS, 1.0F, 0.9F + world.random.nextFloat() * 0.2F);
+				return InteractionResult.CONSUME;
 			}
 		}
-		return ActionResult.PASS;
+		return InteractionResult.PASS;
 	}
 
 }

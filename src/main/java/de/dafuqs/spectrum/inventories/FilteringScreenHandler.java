@@ -1,39 +1,41 @@
 package de.dafuqs.spectrum.inventories;
 
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.inventories.slots.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.screen.*;
-import net.minecraft.screen.slot.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.api.block.FilterConfigurable;
+import de.dafuqs.spectrum.inventories.slots.ShadowSlot;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickAction;
+import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-public class FilteringScreenHandler extends ScreenHandler {
+public class FilteringScreenHandler extends AbstractContainerMenu {
 
-	protected final World world;
+	protected final Level world;
 	protected FilterConfigurable filterConfigurable;
-	protected final Inventory filterInventory;
+	protected final Container filterInventory;
 
-	public FilteringScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf packetByteBuf) {
+	public FilteringScreenHandler(int syncId, Inventory playerInventory, FriendlyByteBuf packetByteBuf) {
 		this(SpectrumScreenHandlerTypes.FILTERING, syncId, playerInventory, FilterConfigurable.getFilterInventoryFromPacket(packetByteBuf));
 	}
 
-	public FilteringScreenHandler(int syncId, PlayerInventory playerInventory, FilterConfigurable filterConfigurable) {
+	public FilteringScreenHandler(int syncId, Inventory playerInventory, FilterConfigurable filterConfigurable) {
 		this(SpectrumScreenHandlerTypes.FILTERING, syncId, playerInventory, FilterConfigurable.getFilterInventoryFromItems(filterConfigurable.getItemFilters()));
 		this.filterConfigurable = filterConfigurable;
 	}
 
-	protected FilteringScreenHandler(ScreenHandlerType<?> type, int syncId, PlayerInventory playerInventory, Inventory filterInventory) {
+	protected FilteringScreenHandler(MenuType<?> type, int syncId, Inventory playerInventory, Container filterInventory) {
 		super(type, syncId);
-		this.world = playerInventory.player.getWorld();
+		this.world = playerInventory.player.level();
 		this.filterInventory = filterInventory;
 
 		// filter slots
-		int startX = (176 / 2) - (filterInventory.size() + 1) * 9;
-		for (int k = 0; k < filterInventory.size(); ++k) {
+		int startX = (176 / 2) - (filterInventory.getContainerSize() + 1) * 9;
+		for (int k = 0; k < filterInventory.getContainerSize(); ++k) {
 			this.addSlot(new FilterSlot(filterInventory, k, startX + k * 23, 18));
 		}
 
@@ -53,22 +55,22 @@ public class FilteringScreenHandler extends ScreenHandler {
 	
 	
 	@Override
-	public boolean canUse(PlayerEntity player) {
+	public boolean stillValid(Player player) {
 		return true;
 	}
 
 	@Override
-	public ItemStack quickMove(PlayerEntity player, int index) {
+	public ItemStack quickMoveStack(Player player, int index) {
 		return ItemStack.EMPTY;
 	}
 
-	public Inventory getInventory() {
+	public Container getInventory() {
 		return null;
 	}
 	
 	@Override
-	public void onClosed(PlayerEntity player) {
-		super.onClosed(player);
+	public void removed(Player player) {
+		super.removed(player);
 	}
 
 	public FilterConfigurable getFilterConfigurable() {
@@ -77,14 +79,14 @@ public class FilteringScreenHandler extends ScreenHandler {
 
 	protected class FilterSlot extends ShadowSlot {
 
-		public FilterSlot(Inventory inventory, int index, int x, int y) {
+		public FilterSlot(Container inventory, int index, int x, int y) {
 			super(inventory, index, x, y);
 		}
 
 		@Override
-		public boolean onClicked(ItemStack heldStack, ClickType type, PlayerEntity player) {
-			if (!world.isClient && filterConfigurable != null) {
-				filterConfigurable.setFilterItem(getIndex(), heldStack.getItem());
+		public boolean onClicked(ItemStack heldStack, ClickAction type, Player player) {
+			if (!world.isClientSide && filterConfigurable != null) {
+				filterConfigurable.setFilterItem(getContainerSlot(), heldStack.getItem());
 			}
 			return super.onClicked(heldStack, type, player);
 		}

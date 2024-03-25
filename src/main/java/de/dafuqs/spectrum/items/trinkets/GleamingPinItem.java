@@ -1,25 +1,29 @@
 package de.dafuqs.spectrum.items.trinkets;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.client.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.item.ExtendedEnchantable;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class GleamingPinItem extends SpectrumTrinketItem implements ExtendedEnchantable {
 	
@@ -28,29 +32,29 @@ public class GleamingPinItem extends SpectrumTrinketItem implements ExtendedEnch
 	public static final int EFFECT_DURATION = 240;
 	public static final long COOLDOWN_TICKS = 160;
 	
-	public GleamingPinItem(Settings settings) {
+	public GleamingPinItem(Properties settings) {
 		super(settings, SpectrumCommon.locate("unlocks/trinkets/gleaming_pin"));
 	}
 	
-	public static void doGleamingPinEffect(@NotNull PlayerEntity player, @NotNull ServerWorld world, ItemStack gleamingPinStack) {
-		world.playSound(null, player.getX(), player.getY(), player.getZ(), SpectrumSoundEvents.RADIANCE_PIN_TRIGGER, SoundCategory.PLAYERS, 0.4F, 0.9F + world.getRandom().nextFloat() * 0.2F);
-		SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity(world, player.getPos().add(0, 0.75, 0), SpectrumParticleTypes.LIQUID_CRYSTAL_SPARKLE, 100, new Vec3d(0, 0.5, 0), new Vec3d(2.5, 0.1, 2.5));
+	public static void doGleamingPinEffect(@NotNull Player player, @NotNull ServerLevel world, ItemStack gleamingPinStack) {
+		world.playSound(null, player.getX(), player.getY(), player.getZ(), SpectrumSoundEvents.RADIANCE_PIN_TRIGGER, SoundSource.PLAYERS, 0.4F, 0.9F + world.getRandom().nextFloat() * 0.2F);
+		SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity(world, player.position().add(0, 0.75, 0), SpectrumParticleTypes.LIQUID_CRYSTAL_SPARKLE, 100, new Vec3(0, 0.5, 0), new Vec3(2.5, 0.1, 2.5));
 		
-		world.getOtherEntities(player, player.getBoundingBox().expand(getEffectRange(gleamingPinStack)), EntityPredicates.VALID_LIVING_ENTITY).forEach((entity) -> {
+		world.getEntities(player, player.getBoundingBox().inflate(getEffectRange(gleamingPinStack)), EntitySelector.LIVING_ENTITY_STILL_ALIVE).forEach((entity) -> {
 			if (entity instanceof LivingEntity livingEntity) {
-				livingEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, EFFECT_DURATION, 0, true, true));
+				livingEntity.addEffect(new MobEffectInstance(MobEffects.GLOWING, EFFECT_DURATION, 0, true, true));
 			}
 		});
 	}
 	
 	public static int getEffectRange(ItemStack stack) {
-		return BASE_RANGE + RANGE_BONUS_PER_LEVEL_OF_SNIPING * EnchantmentHelper.getLevel(SpectrumEnchantments.SNIPER, stack);
+		return BASE_RANGE + RANGE_BONUS_PER_LEVEL_OF_SNIPING * EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.SNIPER, stack);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
-		tooltip.add(Text.translatable("item.spectrum.gleaming_pin.tooltip"));
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
+		tooltip.add(Component.translatable("item.spectrum.gleaming_pin.tooltip"));
 	}
 	
 	@Override
@@ -64,7 +68,7 @@ public class GleamingPinItem extends SpectrumTrinketItem implements ExtendedEnch
 	}
 	
 	@Override
-	public int getEnchantability() {
+	public int getEnchantmentValue() {
 		return 16;
 	}
 	

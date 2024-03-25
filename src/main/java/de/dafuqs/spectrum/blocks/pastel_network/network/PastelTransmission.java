@@ -1,17 +1,22 @@
 package de.dafuqs.spectrum.blocks.pastel_network.network;
 
-import de.dafuqs.spectrum.blocks.pastel_network.nodes.*;
-import de.dafuqs.spectrum.helpers.*;
-import net.fabricmc.fabric.api.transfer.v1.item.*;
-import net.fabricmc.fabric.api.transfer.v1.storage.*;
-import net.fabricmc.fabric.api.transfer.v1.transaction.*;
-import net.minecraft.nbt.*;
-import net.minecraft.network.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity;
+import de.dafuqs.spectrum.helpers.InWorldInteractionHelper;
+import de.dafuqs.spectrum.helpers.SchedulerMap;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PastelTransmission implements SchedulerMap.Callback {
 
@@ -62,8 +67,8 @@ public class PastelTransmission implements SchedulerMap.Callback {
 
         BlockPos destinationPos = nodePositions.get(nodePositions.size() - 1);
         PastelNodeBlockEntity destinationNode = this.network.getNodeAt(destinationPos);
-        World world = this.network.getWorld();
-        if (!world.isClient) {
+        Level world = this.network.getWorld();
+        if (!world.isClientSide) {
             int inserted = 0;
             if (destinationNode != null) {
                 Storage<ItemVariant> destinationStorage = destinationNode.getConnectedStorage();
@@ -83,13 +88,13 @@ public class PastelTransmission implements SchedulerMap.Callback {
         }
     }
 
-    public NbtCompound toNbt() {
-        NbtCompound compound = new NbtCompound();
+    public CompoundTag toNbt() {
+        CompoundTag compound = new CompoundTag();
         compound.put("Variant", this.variant.toNbt());
         compound.putLong("Amount", this.amount);
-        NbtList posList = new NbtList();
+        ListTag posList = new ListTag();
         for (BlockPos pos : nodePositions) {
-            NbtCompound posCompound = new NbtCompound();
+            CompoundTag posCompound = new CompoundTag();
             posCompound.putInt("X", pos.getX());
             posCompound.putInt("Y", pos.getY());
             posCompound.putInt("Z", pos.getZ());
@@ -99,13 +104,13 @@ public class PastelTransmission implements SchedulerMap.Callback {
         return compound;
     }
 
-    public static PastelTransmission fromNbt(NbtCompound nbt) {
+    public static PastelTransmission fromNbt(CompoundTag nbt) {
         ItemVariant variant = ItemVariant.fromNbt(nbt.getCompound("Variant"));
         long amount = nbt.getLong("Amount");
 
         List<BlockPos> posList = new ArrayList<>();
-        for (NbtElement e : nbt.getList("NodePositions", NbtElement.COMPOUND_TYPE)) {
-            NbtCompound compound = (NbtCompound) e;
+        for (Tag e : nbt.getList("NodePositions", Tag.TAG_COMPOUND)) {
+            CompoundTag compound = (CompoundTag) e;
             BlockPos blockPos = new BlockPos(compound.getInt("X"), compound.getInt("Y"), compound.getInt("Z"));
             posList.add(blockPos);
         }
@@ -113,7 +118,7 @@ public class PastelTransmission implements SchedulerMap.Callback {
         return new PastelTransmission(posList, variant, amount);
     }
 
-    public static void writeToBuf(PacketByteBuf buf, PastelTransmission transfer) {
+    public static void writeToBuf(FriendlyByteBuf buf, PastelTransmission transfer) {
         buf.writeInt(transfer.nodePositions.size());
         for (BlockPos pos : transfer.nodePositions) {
             buf.writeBlockPos(pos);
@@ -122,7 +127,7 @@ public class PastelTransmission implements SchedulerMap.Callback {
         buf.writeLong(transfer.amount);
     }
 
-    public static PastelTransmission fromPacket(PacketByteBuf buf) {
+    public static PastelTransmission fromPacket(FriendlyByteBuf buf) {
         int posCount = buf.readInt();
         List<BlockPos> posList = new ArrayList<>();
         for (int i = 0; i < posCount; i++) {

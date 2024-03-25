@@ -1,49 +1,50 @@
 package de.dafuqs.spectrum.items.food.beverages.properties;
 
-import com.google.common.collect.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.potion.*;
-import net.minecraft.text.*;
+import com.google.common.collect.Lists;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.alchemy.PotionUtils;
 
-import java.util.*;
+import java.util.List;
 
 public class StatusEffectBeverageProperties extends BeverageProperties {
 	
-	public List<StatusEffectInstance> statusEffects;
+	public List<MobEffectInstance> statusEffects;
 	
-	public StatusEffectBeverageProperties(long ageDays, int alcPercent, float thickness, List<StatusEffectInstance> statusEffects) {
+	public StatusEffectBeverageProperties(long ageDays, int alcPercent, float thickness, List<MobEffectInstance> statusEffects) {
 		super(ageDays, alcPercent, thickness);
 		this.statusEffects = statusEffects;
 	}
 	
-	public StatusEffectBeverageProperties(NbtCompound nbtCompound) {
+	public StatusEffectBeverageProperties(CompoundTag nbtCompound) {
 		super(nbtCompound);
 		
 		this.statusEffects = Lists.newArrayList();
 		if (nbtCompound != null) {
-			PotionUtil.getCustomPotionEffects(nbtCompound, statusEffects);
+			PotionUtils.getCustomEffects(nbtCompound, statusEffects);
 		}
 	}
 	
 	public static StatusEffectBeverageProperties getFromStack(ItemStack itemStack) {
-		return new StatusEffectBeverageProperties(itemStack.getNbt());
+		return new StatusEffectBeverageProperties(itemStack.getTag());
 	}
 	
 	@Override
-	public void addTooltip(ItemStack itemStack, List<Text> tooltip) {
+	public void addTooltip(ItemStack itemStack, List<Component> tooltip) {
 		super.addTooltip(itemStack, tooltip);
-		PotionUtil.buildTooltip(itemStack, tooltip, 1.0F);
+		PotionUtils.addPotionTooltip(itemStack, tooltip, 1.0F);
 	}
 	
 	@Override
-	public void toNbt(NbtCompound nbtCompound) {
+	public void toNbt(CompoundTag nbtCompound) {
 		super.toNbt(nbtCompound);
 		
-		NbtList nbtList = nbtCompound.getList("CustomPotionEffects", 9);
-		for (StatusEffectInstance statusEffectInstance : this.statusEffects) {
-			nbtList.add(statusEffectInstance.writeNbt(new NbtCompound()));
+		ListTag nbtList = nbtCompound.getList("CustomPotionEffects", 9);
+		for (MobEffectInstance statusEffectInstance : this.statusEffects) {
+			nbtList.add(statusEffectInstance.save(new CompoundTag()));
 		}
 		nbtCompound.put("CustomPotionEffects", nbtList);
 		

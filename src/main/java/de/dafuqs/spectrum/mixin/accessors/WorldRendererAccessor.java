@@ -1,16 +1,17 @@
 package de.dafuqs.spectrum.mixin.accessors;
 
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.util.shape.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.gen.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
-@Mixin(WorldRenderer.class)
+@Mixin(LevelRenderer.class)
 public interface WorldRendererAccessor {
 	
 	@Invoker("drawCuboidShapeOutline")
-	static void invokeDrawCuboidShapeOutline(MatrixStack matrices, VertexConsumer vertexConsumer, VoxelShape shape, double offsetX, double offsetY, double offsetZ, float red, float green, float blue, float alpha) {
+	static void invokeDrawCuboidShapeOutline(PoseStack matrices, VertexConsumer vertexConsumer, VoxelShape shape, double offsetX, double offsetY, double offsetZ, float red, float green, float blue, float alpha) {
 		throw new AssertionError();
 	}
 }

@@ -1,27 +1,28 @@
 package de.dafuqs.spectrum.items.trinkets;
 
-import de.dafuqs.spectrum.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class TotemPendantItem extends SpectrumTrinketItem {
 	
-	public TotemPendantItem(Settings settings) {
+	public TotemPendantItem(Properties settings) {
 		super(settings, SpectrumCommon.locate("unlocks/trinkets/totem_pendant"));
 	}
 	
 	@Environment(EnvType.CLIENT)
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
-		tooltip.add(Text.translatable("item.spectrum.totem_pendant.tooltip").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
+		tooltip.add(Component.translatable("item.spectrum.totem_pendant.tooltip").withStyle(ChatFormatting.GRAY));
 	}
 	
 	

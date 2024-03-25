@@ -1,22 +1,22 @@
 package de.dafuqs.spectrum.items.food;
 
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.world.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.List;
 
 public class FreigeistItem extends DrinkItem {
 	
-	public FreigeistItem(Settings settings) {
+	public FreigeistItem(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
-		tooltip.add(Text.translatable("item.spectrum.freigeist.tooltip"));
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
+		tooltip.add(Component.translatable("item.spectrum.freigeist.tooltip"));
 	}
 	
 }

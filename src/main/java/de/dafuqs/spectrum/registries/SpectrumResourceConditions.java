@@ -1,17 +1,21 @@
 package de.dafuqs.spectrum.registries;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.compat.*;
-import net.fabricmc.fabric.api.resource.conditions.v1.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.compat.SpectrumIntegrationPacks;
+import net.fabricmc.fabric.api.resource.conditions.v1.ResourceConditions;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.enchantment.Enchantment;
 
 public class SpectrumResourceConditions {
 	
-	public static final Identifier ENCHANTMENTS_EXIST = SpectrumCommon.locate("enchantments_exist");
-	public static final Identifier INTEGRATION_PACK_ACTIVE = SpectrumCommon.locate("integration_pack_active");
+	public static final ResourceLocation ENCHANTMENTS_EXIST = SpectrumCommon.locate("enchantments_exist");
+	public static final ResourceLocation INTEGRATION_PACK_ACTIVE = SpectrumCommon.locate("integration_pack_active");
 	
 	public static void register() {
 		ResourceConditions.register(ENCHANTMENTS_EXIST, SpectrumResourceConditions::enchantmentExistsMatch);
@@ -19,12 +23,12 @@ public class SpectrumResourceConditions {
 	}
 	
 	private static boolean enchantmentExistsMatch(JsonObject object) {
-		JsonArray array = JsonHelper.getArray(object, "values");
+		JsonArray array = GsonHelper.getAsJsonArray(object, "values");
 		
 		for (JsonElement element : array) {
 			if (element.isJsonPrimitive()) {
-				Identifier identifier = Identifier.tryParse(element.getAsString());
-				Enchantment enchantment = Registries.ENCHANTMENT.get(identifier);
+				ResourceLocation identifier = ResourceLocation.tryParse(element.getAsString());
+				Enchantment enchantment = BuiltInRegistries.ENCHANTMENT.get(identifier);
 				
 				return enchantment != null;
 			} else {

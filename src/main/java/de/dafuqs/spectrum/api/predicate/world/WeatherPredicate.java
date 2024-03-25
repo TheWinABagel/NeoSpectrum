@@ -1,10 +1,10 @@
 package de.dafuqs.spectrum.api.predicate.world;
 
-import com.google.gson.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
+import com.google.gson.JsonObject;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
-import java.util.*;
+import java.util.Locale;
 
 public class WeatherPredicate implements WorldConditionPredicate {
 	public static final WeatherPredicate ANY = new WeatherPredicate(null);
@@ -29,7 +29,7 @@ public class WeatherPredicate implements WorldConditionPredicate {
 	}
 	
 	@Override
-	public boolean test(ServerWorld world, BlockPos pos) {
+	public boolean test(ServerLevel world, BlockPos pos) {
 		if (this == ANY) return true;
 		switch (this.weatherCondition) {
 			case CLEAR_SKY -> {

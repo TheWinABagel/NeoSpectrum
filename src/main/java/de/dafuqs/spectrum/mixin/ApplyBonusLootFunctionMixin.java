@@ -1,16 +1,22 @@
 package de.dafuqs.spectrum.mixin;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.item.*;
-import net.minecraft.loot.context.*;
-import net.minecraft.loot.function.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
+import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(ApplyBonusLootFunction.class)
+@Mixin(ApplyBonusCount.class)
 public abstract class ApplyBonusLootFunctionMixin {
 	
 	@Shadow
@@ -18,7 +24,7 @@ public abstract class ApplyBonusLootFunctionMixin {
 	Enchantment enchantment;
 	@Shadow
 	@Final
-	ApplyBonusLootFunction.Formula formula;
+	ApplyBonusCount.Formula formula;
 	
 	@ModifyVariable(
 			method = "process(Lnet/minecraft/item/ItemStack;Lnet/minecraft/loot/context/LootContext;)Lnet/minecraft/item/ItemStack;",
@@ -27,17 +33,17 @@ public abstract class ApplyBonusLootFunctionMixin {
 	public int spectrum$rerollBonusLoot(int oldValue, ItemStack stack, LootContext context) {
 		// if the player has the ANOTHER_DRAW effect the bonus loot of
 		// this function gets rerolled potency+1 times and the best one taken
-		ItemStack itemStack = context.get(LootContextParameters.TOOL);
-		Entity entity = context.get(LootContextParameters.THIS_ENTITY);
+		ItemStack itemStack = context.getParamOrNull(LootContextParams.TOOL);
+		Entity entity = context.getParamOrNull(LootContextParams.THIS_ENTITY);
 		if (itemStack != null && entity instanceof LivingEntity livingEntity) {
-			int enchantmentLevel = EnchantmentHelper.getLevel(this.enchantment, itemStack);
+			int enchantmentLevel = EnchantmentHelper.getItemEnchantmentLevel(this.enchantment, itemStack);
 			if (enchantmentLevel > 0) {
-				StatusEffectInstance effect = livingEntity.getStatusEffect(SpectrumStatusEffects.ANOTHER_ROLL);
+				MobEffectInstance effect = livingEntity.getEffect(SpectrumStatusEffects.ANOTHER_ROLL);
 				if (effect != null) {
 					int rollCount = effect.getAmplifier() + 1;
 					int highestRoll = oldValue;
 					for (int i = 0; i < rollCount; i++) {
-						int thisRoll = this.formula.getValue(context.getRandom(), stack.getCount(), enchantmentLevel);
+						int thisRoll = this.formula.calculateNewCount(context.getRandom(), stack.getCount(), enchantmentLevel);
 						highestRoll = Math.max(highestRoll, thisRoll);
 					}
 					return highestRoll;

@@ -1,23 +1,26 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.registries.*;
-import me.shedaniel.math.*;
-import me.shedaniel.rei.api.client.gui.*;
-import me.shedaniel.rei.api.client.gui.widgets.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.fabricmc.api.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import me.shedaniel.math.Point;
+import me.shedaniel.math.Rectangle;
+import me.shedaniel.rei.api.client.gui.Renderer;
+import me.shedaniel.rei.api.client.gui.widgets.Widget;
+import me.shedaniel.rei.api.client.gui.widgets.Widgets;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryStacks;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public abstract class PotionWorkshopCategory<T extends PotionWorkshopRecipeDisplay> extends GatedDisplayCategory<T> {
 	
-	public final static Identifier BACKGROUND_TEXTURE = SpectrumCommon.locate("textures/gui/container/potion_workshop_3_slots.png");
+	public final static ResourceLocation BACKGROUND_TEXTURE = SpectrumCommon.locate("textures/gui/container/potion_workshop_3_slots.png");
 	
 	@Override
 	public Renderer getIcon() {
@@ -45,7 +48,7 @@ public abstract class PotionWorkshopCategory<T extends PotionWorkshopRecipeDispl
 		widgets.add(Widgets.createSlot(new Point(startPoint.x + 95, startPoint.y + 1 + 19)).entries(result).markOutput());
 		
 		// description text
-		Text text = Text.translatable("container.spectrum.rei.potion_workshop.crafting_time", (display.craftingTime / 20));
+		Component text = Component.translatable("container.spectrum.rei.potion_workshop.crafting_time", (display.craftingTime / 20));
 		widgets.add(Widgets.createLabel(new Point(startPoint.x + 40, startPoint.y + 1 + 54), text).leftAligned().color(0x3f3f3f).noShadow());
 	}
 	

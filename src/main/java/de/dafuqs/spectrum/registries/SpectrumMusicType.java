@@ -1,17 +1,17 @@
 package de.dafuqs.spectrum.registries;
 
-import net.minecraft.client.sound.*;
-import net.minecraft.registry.*;
-import net.minecraft.sound.*;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.sounds.Music;
+import net.minecraft.sounds.Musics;
 
-public class SpectrumMusicType extends MusicType {
+public class SpectrumMusicType extends Musics {
 	
-	public static MusicSound SPECTRUM_THEME;
-	public static MusicSound DEEPER_DOWN_THEME;
+	public static Music SPECTRUM_THEME;
+	public static Music DEEPER_DOWN_THEME;
 	
 	public static void register() {
-		SPECTRUM_THEME = new MusicSound(Registries.SOUND_EVENT.getEntry(SpectrumSoundEvents.SPECTRUM_THEME), 6000, 24000, false);
-		DEEPER_DOWN_THEME = new MusicSound(Registries.SOUND_EVENT.getEntry(SpectrumSoundEvents.DEEPER_DOWN_THEME), 6000, 24000, false);
+		SPECTRUM_THEME = new Music(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SpectrumSoundEvents.SPECTRUM_THEME), 6000, 24000, false);
+		DEEPER_DOWN_THEME = new Music(BuiltInRegistries.SOUND_EVENT.wrapAsHolder(SpectrumSoundEvents.DEEPER_DOWN_THEME), 6000, 24000, false);
 	}
 	
 }

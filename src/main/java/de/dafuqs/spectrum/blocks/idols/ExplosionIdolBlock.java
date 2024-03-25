@@ -1,26 +1,29 @@
 package de.dafuqs.spectrum.blocks.idols;
 
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.explosion.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.ExplosionDamageCalculator;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class ExplosionIdolBlock extends IdolBlock {
 	
 	protected final float power;
 	protected final boolean createFire;
-	protected final Explosion.DestructionType destructionType;
+	protected final Explosion.BlockInteraction destructionType;
 	
-	public ExplosionIdolBlock(Settings settings, ParticleEffect particleEffect, float power, boolean createFire, Explosion.DestructionType destructionType) {
+	public ExplosionIdolBlock(Properties settings, ParticleOptions particleEffect, float power, boolean createFire, Explosion.BlockInteraction destructionType) {
 		super(settings, particleEffect);
 		this.power = power;
 		this.createFire = createFire;
@@ -28,16 +31,16 @@ public class ExplosionIdolBlock extends IdolBlock {
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("block.spectrum.explosion_idol.tooltip", power));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("block.spectrum.explosion_idol.tooltip", power));
 	}
 	
 	@Override
-	public boolean trigger(ServerWorld world, final BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
+	public boolean trigger(ServerLevel world, final BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side) {
 		// why power + 1 you ask? Since the explosion happens inside the block, some explosion power
 		// is blocked by this block itself, weakening it. So to better match the original value we have to make it a tad stronger
-		world.createExplosion(null, world.getDamageSources().explosion(entity, null), new SpareBlockExplosionBehavior(blockPos), blockPos.getX() + 0.5, blockPos.getY() + 0.5, blockPos.getZ() + 0.5, this.power + 1, this.createFire, World.ExplosionSourceType.BLOCK);
+		world.explode(null, world.damageSources().explosion(entity, null), new SpareBlockExplosionBehavior(blockPos), blockPos.getX() + 0.5, blockPos.getY() + 0.5, blockPos.getZ() + 0.5, this.power + 1, this.createFire, Level.ExplosionInteraction.BLOCK);
 		return true;
 	}
 	
@@ -46,7 +49,7 @@ public class ExplosionIdolBlock extends IdolBlock {
 	 * Increasing its hardness would make the block immune to other explosions, too
 	 * and would not let explosions happen from the center of it
 	 */
-	private static class SpareBlockExplosionBehavior extends ExplosionBehavior {
+	private static class SpareBlockExplosionBehavior extends ExplosionDamageCalculator {
 		
 		public final BlockPos sparedPos;
 		
@@ -55,8 +58,8 @@ public class ExplosionIdolBlock extends IdolBlock {
 		}
 		
 		@Override
-		public boolean canDestroyBlock(Explosion explosion, BlockView world, BlockPos pos, BlockState state, float power) {
-			return !pos.equals(sparedPos) && super.canDestroyBlock(explosion, world, pos, state, power);
+		public boolean shouldBlockExplode(Explosion explosion, BlockGetter world, BlockPos pos, BlockState state, float power) {
+			return !pos.equals(sparedPos) && super.shouldBlockExplode(explosion, world, pos, state, power);
 		}
 	}
 	

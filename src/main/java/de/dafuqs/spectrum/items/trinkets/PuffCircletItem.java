@@ -1,27 +1,27 @@
 package de.dafuqs.spectrum.items.trinkets;
 
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class PuffCircletItem extends AzureDikeTrinketItem {
 
 	public static final float PROJECTILE_DEFLECTION_COST = 2;
 	public static final float FALL_DAMAGE_NEGATING_COST = 2;
 
-	public PuffCircletItem(Settings settings) {
+	public PuffCircletItem(Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
-		tooltip.add(Text.translatable("item.spectrum.puff_circlet.tooltip"));
-		tooltip.add(Text.translatable("item.spectrum.puff_circlet.tooltip2"));
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
+		tooltip.add(Component.translatable("item.spectrum.puff_circlet.tooltip"));
+		tooltip.add(Component.translatable("item.spectrum.puff_circlet.tooltip2"));
 	}
 
 	@Override

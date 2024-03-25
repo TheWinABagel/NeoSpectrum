@@ -1,45 +1,48 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.compat.*;
-import de.dafuqs.spectrum.recipe.pedestal.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
-import vazkii.patchouli.api.*;
-import vazkii.patchouli.common.multiblock.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.compat.SpectrumIntegrationPacks;
+import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipeTier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import vazkii.patchouli.api.IMultiblock;
+import vazkii.patchouli.api.PatchouliAPI;
+import vazkii.patchouli.common.multiblock.StateMatcher;
 
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SpectrumMultiblocks {
 	
-	public static final Map<Identifier, IMultiblock> MULTIBLOCKS = new ConcurrentHashMap<>();
+	public static final Map<ResourceLocation, IMultiblock> MULTIBLOCKS = new ConcurrentHashMap<>();
 	
-	public static final Identifier PEDESTAL_SIMPLE_STRUCTURE_IDENTIFIER_CHECK = SpectrumCommon.locate("pedestal_simple_structure_check");
-	public static final Identifier PEDESTAL_SIMPLE_STRUCTURE_IDENTIFIER_PLACE = SpectrumCommon.locate("pedestal_simple_structure_place");
-	public static final Identifier PEDESTAL_ADVANCED_STRUCTURE_IDENTIFIER_CHECK = SpectrumCommon.locate("pedestal_advanced_structure_check");
-	public static final Identifier PEDESTAL_ADVANCED_STRUCTURE_IDENTIFIER_PLACE = SpectrumCommon.locate("pedestal_advanced_structure_place");
-	public static final Identifier PEDESTAL_COMPLEX_STRUCTURE_IDENTIFIER_CHECK = SpectrumCommon.locate("pedestal_complex_structure_check");
-	public static final Identifier PEDESTAL_COMPLEX_STRUCTURE_IDENTIFIER_PLACE = SpectrumCommon.locate("pedestal_complex_structure_place");
-	public static final Identifier PEDESTAL_COMPLEX_STRUCTURE_WITHOUT_MOONSTONE_IDENTIFIER_CHECK = SpectrumCommon.locate("pedestal_complex_structure_without_moonstone_check");
-	public static final Identifier PEDESTAL_COMPLEX_STRUCTURE_WITHOUT_MOONSTONE_IDENTIFIER_PLACE = SpectrumCommon.locate("pedestal_complex_structure_without_moonstone_place");
+	public static final ResourceLocation PEDESTAL_SIMPLE_STRUCTURE_IDENTIFIER_CHECK = SpectrumCommon.locate("pedestal_simple_structure_check");
+	public static final ResourceLocation PEDESTAL_SIMPLE_STRUCTURE_IDENTIFIER_PLACE = SpectrumCommon.locate("pedestal_simple_structure_place");
+	public static final ResourceLocation PEDESTAL_ADVANCED_STRUCTURE_IDENTIFIER_CHECK = SpectrumCommon.locate("pedestal_advanced_structure_check");
+	public static final ResourceLocation PEDESTAL_ADVANCED_STRUCTURE_IDENTIFIER_PLACE = SpectrumCommon.locate("pedestal_advanced_structure_place");
+	public static final ResourceLocation PEDESTAL_COMPLEX_STRUCTURE_IDENTIFIER_CHECK = SpectrumCommon.locate("pedestal_complex_structure_check");
+	public static final ResourceLocation PEDESTAL_COMPLEX_STRUCTURE_IDENTIFIER_PLACE = SpectrumCommon.locate("pedestal_complex_structure_place");
+	public static final ResourceLocation PEDESTAL_COMPLEX_STRUCTURE_WITHOUT_MOONSTONE_IDENTIFIER_CHECK = SpectrumCommon.locate("pedestal_complex_structure_without_moonstone_check");
+	public static final ResourceLocation PEDESTAL_COMPLEX_STRUCTURE_WITHOUT_MOONSTONE_IDENTIFIER_PLACE = SpectrumCommon.locate("pedestal_complex_structure_without_moonstone_place");
 	
-	public static final Identifier FUSION_SHRINE_IDENTIFIER = SpectrumCommon.locate("fusion_shrine_structure");
-	public static final Identifier ENCHANTER_IDENTIFIER = SpectrumCommon.locate("enchanter_structure");
-	public static final Identifier SPIRIT_INSTILLER_IDENTIFIER = SpectrumCommon.locate("spirit_instiller_structure");
-	public static final Identifier CINDERHEARTH_IDENTIFIER = SpectrumCommon.locate("cinderhearth_structure");
-	public static final Identifier CINDERHEARTH_WITHOUT_LAVA_IDENTIFIER = SpectrumCommon.locate("cinderhearth_without_lava_structure");
+	public static final ResourceLocation FUSION_SHRINE_IDENTIFIER = SpectrumCommon.locate("fusion_shrine_structure");
+	public static final ResourceLocation ENCHANTER_IDENTIFIER = SpectrumCommon.locate("enchanter_structure");
+	public static final ResourceLocation SPIRIT_INSTILLER_IDENTIFIER = SpectrumCommon.locate("spirit_instiller_structure");
+	public static final ResourceLocation CINDERHEARTH_IDENTIFIER = SpectrumCommon.locate("cinderhearth_structure");
+	public static final ResourceLocation CINDERHEARTH_WITHOUT_LAVA_IDENTIFIER = SpectrumCommon.locate("cinderhearth_without_lava_structure");
 	
-	public static final Identifier PEDESTAL_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("pedestal_structure_with_upgrades");
-	public static final Identifier FUSION_SHRINE_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("fusion_shrine_structure_with_upgrades");
-	public static final Identifier ENCHANTER_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("enchanter_structure_with_upgrades");
-	public static final Identifier CINDERHEARTH_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("cinderhearth_structure_with_upgrades");
-	public static final Identifier SPIRIT_INSTILLER_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("spirit_instiller_structure_with_upgrades");
+	public static final ResourceLocation PEDESTAL_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("pedestal_structure_with_upgrades");
+	public static final ResourceLocation FUSION_SHRINE_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("fusion_shrine_structure_with_upgrades");
+	public static final ResourceLocation ENCHANTER_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("enchanter_structure_with_upgrades");
+	public static final ResourceLocation CINDERHEARTH_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("cinderhearth_structure_with_upgrades");
+	public static final ResourceLocation SPIRIT_INSTILLER_IDENTIFIER_WITH_UPGRADES = SpectrumCommon.locate("spirit_instiller_structure_with_upgrades");
 	
-	public static void registerMultiBlock(Identifier identifier, String[][] structure, Object[] targetBlocks) {
+	public static void registerMultiBlock(ResourceLocation identifier, String[][] structure, Object[] targetBlocks) {
 		IMultiblock multiblock = PatchouliAPI.get().makeMultiblock(structure, targetBlocks);
 		MULTIBLOCKS.put(identifier, PatchouliAPI.get().registerMultiblock(identifier, multiblock));
 	}
@@ -305,7 +308,7 @@ public class SpectrumMultiblocks {
 	}
 	
 	@Contract(pure = true)
-	public static @Nullable Identifier getDisplayStructureIdentifierForTier(@NotNull PedestalRecipeTier pedestalRecipeTier, PlayerEntity player) {
+	public static @Nullable ResourceLocation getDisplayStructureIdentifierForTier(@NotNull PedestalRecipeTier pedestalRecipeTier, Player player) {
 		switch (pedestalRecipeTier) {
 			case COMPLEX -> {
 				if (AdvancementHelper.hasAdvancement(player, SpectrumCommon.locate("lategame/build_complex_pedestal_structure_without_moonstone"))) {
@@ -326,16 +329,16 @@ public class SpectrumMultiblocks {
 		}
 	}
 	
-	public static @Nullable Text getPedestalStructureText(@NotNull PedestalRecipeTier pedestalRecipeTier) {
+	public static @Nullable Component getPedestalStructureText(@NotNull PedestalRecipeTier pedestalRecipeTier) {
 		switch (pedestalRecipeTier) {
 			case COMPLEX -> {
-				return Text.translatable("multiblock.spectrum.pedestal.complex_structure");
+				return Component.translatable("multiblock.spectrum.pedestal.complex_structure");
 			}
 			case ADVANCED -> {
-				return Text.translatable("multiblock.spectrum.pedestal.advanced_structure");
+				return Component.translatable("multiblock.spectrum.pedestal.advanced_structure");
 			}
 			case SIMPLE -> {
-				return Text.translatable("multiblock.spectrum.pedestal.simple_structure");
+				return Component.translatable("multiblock.spectrum.pedestal.simple_structure");
 			}
 			default -> {
 				return null;

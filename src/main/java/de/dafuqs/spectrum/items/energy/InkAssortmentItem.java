@@ -1,22 +1,25 @@
 package de.dafuqs.spectrum.items.energy;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.storage.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.InkStorageItem;
+import de.dafuqs.spectrum.api.energy.storage.IndividualCappedInkStorage;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class InkAssortmentItem extends Item implements InkStorageItem<IndividualCappedInkStorage> {
 	
 	private final long maxEnergy;
 	
-	public InkAssortmentItem(Settings settings, long maxEnergy) {
+	public InkAssortmentItem(Properties settings, long maxEnergy) {
 		super(settings);
 		this.maxEnergy = maxEnergy;
 	}
@@ -28,7 +31,7 @@ public class InkAssortmentItem extends Item implements InkStorageItem<Individual
 	
 	@Override
 	public IndividualCappedInkStorage getEnergyStorage(ItemStack itemStack) {
-		NbtCompound compound = itemStack.getNbt();
+		CompoundTag compound = itemStack.getTag();
 		if (compound != null && compound.contains("EnergyStore")) {
 			return IndividualCappedInkStorage.fromNbt(compound.getCompound("EnergyStore"));
 		}
@@ -37,22 +40,22 @@ public class InkAssortmentItem extends Item implements InkStorageItem<Individual
 	
 	// Omitting this would crash outside the dev env o.O
 	@Override
-	public ItemStack getDefaultStack() {
-		return super.getDefaultStack();
+	public ItemStack getDefaultInstance() {
+		return super.getDefaultInstance();
 	}
 	
 	@Override
 	public void setEnergyStorage(ItemStack itemStack, InkStorage storage) {
 		if (storage instanceof IndividualCappedInkStorage individualCappedInkStorage) {
-			NbtCompound compound = itemStack.getOrCreateNbt();
+			CompoundTag compound = itemStack.getOrCreateTag();
 			compound.put("EnergyStore", individualCappedInkStorage.toNbt());
 		}
 	}
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		getEnergyStorage(stack).addTooltip(tooltip, true);
 	}
 	

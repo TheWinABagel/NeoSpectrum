@@ -1,8 +1,11 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.spectrum.blocks.conditional.colored_tree.*;
-import net.fabricmc.fabric.api.registry.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.blocks.conditional.colored_tree.ColoredLogBlock;
+import de.dafuqs.spectrum.blocks.conditional.colored_tree.ColoredStrippedLogBlock;
+import de.dafuqs.spectrum.blocks.conditional.colored_tree.ColoredStrippedWoodBlock;
+import de.dafuqs.spectrum.blocks.conditional.colored_tree.ColoredWoodBlock;
+import net.fabricmc.fabric.api.registry.StrippableBlockRegistry;
+import net.minecraft.world.item.DyeColor;
 
 public class SpectrumStrippableBlocks {
 	

@@ -1,15 +1,18 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import me.shedaniel.clothconfig2.*;
-import me.shedaniel.clothconfig2.api.*;
+import me.shedaniel.clothconfig2.ClothConfigInitializer;
+import me.shedaniel.clothconfig2.api.ScissorsHandler;
 import me.shedaniel.clothconfig2.api.scroll.ScrollingContainer;
-import me.shedaniel.math.*;
-import me.shedaniel.rei.api.client.*;
-import me.shedaniel.rei.api.client.gui.widgets.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.text.*;
+import me.shedaniel.math.Rectangle;
+import me.shedaniel.rei.api.client.REIRuntime;
+import me.shedaniel.rei.api.client.gui.widgets.WidgetWithBounds;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.util.FormattedCharSequence;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Mostly a copy of REIs ScrollableTextWidget
@@ -18,7 +21,7 @@ import java.util.*;
  */
 public class ScrollableTextWidget extends WidgetWithBounds {
 	private final Rectangle bounds;
-	private final List<OrderedText> texts;
+	private final List<FormattedCharSequence> texts;
 	
 	private final ScrollingContainer scrolling = new ScrollingContainer() {
 		@Override
@@ -30,14 +33,14 @@ public class ScrollableTextWidget extends WidgetWithBounds {
 		@Override
 		public int getMaxScrollHeight() {
 			int i = 2;
-			for (OrderedText entry : texts) {
-				i += entry == null ? 4 : font.fontHeight;
+			for (FormattedCharSequence entry : texts) {
+				i += entry == null ? 4 : font.lineHeight;
 			}
 			return i;
 		}
 	};
 	
-	public ScrollableTextWidget(Rectangle bounds, List<OrderedText> texts) {
+	public ScrollableTextWidget(Rectangle bounds, List<FormattedCharSequence> texts) {
 		this.bounds = Objects.requireNonNull(bounds);
 		this.texts = texts;
 	}
@@ -52,7 +55,7 @@ public class ScrollableTextWidget extends WidgetWithBounds {
 	}
 	
 	@Override
-	public List<? extends Element> children() {
+	public List<? extends GuiEventListener> children() {
 		return Collections.emptyList();
 	}
 	
@@ -76,17 +79,17 @@ public class ScrollableTextWidget extends WidgetWithBounds {
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float delta) {
 		scrolling.updatePosition(delta);
 		Rectangle innerBounds = scrolling.getScissorBounds();
 		ScissorsHandler.INSTANCE.scissor(innerBounds);
 		int currentY = -scrolling.scrollAmountInt() + innerBounds.y;
-		for (OrderedText text : texts) {
-			if (text != null && currentY + font.fontHeight >= innerBounds.y && currentY <= innerBounds.getMaxY()) {
+		for (FormattedCharSequence text : texts) {
+			if (text != null && currentY + font.lineHeight >= innerBounds.y && currentY <= innerBounds.getMaxY()) {
 
-				drawContext.drawText(font, text, innerBounds.x + 2, currentY + 2, REIRuntime.getInstance().isDarkThemeEnabled() ? 0xFFBBBBBB : 0xFF090909, false);
+				drawContext.drawString(font, text, innerBounds.x + 2, currentY + 2, REIRuntime.getInstance().isDarkThemeEnabled() ? 0xFFBBBBBB : 0xFF090909, false);
 			}
-			currentY += text == null ? 4 : font.fontHeight;
+			currentY += text == null ? 4 : font.lineHeight;
 		}
 		ScissorsHandler.INSTANCE.removeLastScissor();
 		ScissorsHandler.INSTANCE.scissor(scrolling.getBounds());

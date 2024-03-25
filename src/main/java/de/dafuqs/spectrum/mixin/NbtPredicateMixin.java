@@ -1,18 +1,16 @@
 package de.dafuqs.spectrum.mixin;
 
-import java.util.Optional;
-
+import com.google.gson.JsonElement;
+import de.dafuqs.spectrum.helpers.NbtHelper;
+import net.minecraft.advancements.critereon.NbtPredicate;
+import net.minecraft.nbt.CompoundTag;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.google.gson.JsonElement;
-
-import de.dafuqs.spectrum.helpers.NbtHelper;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.predicate.NbtPredicate;
+import java.util.Optional;
 
 @Mixin(NbtPredicate.class)
 public class NbtPredicateMixin {
@@ -24,7 +22,7 @@ public class NbtPredicateMixin {
 			ordinal = 0),
 		cancellable = true)
 	private static void fromJson(@Nullable JsonElement json, CallbackInfoReturnable<NbtPredicate> info) {
-		Optional<NbtCompound> nbt = NbtHelper.getNbtCompound(json);
+		Optional<CompoundTag> nbt = NbtHelper.getNbtCompound(json);
 		info.setReturnValue(new NbtPredicate(nbt.isPresent() ? nbt.get() : null));
 	}
 }

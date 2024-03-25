@@ -1,44 +1,53 @@
 package de.dafuqs.spectrum.compat.REI;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.blocks.idols.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.blocks.idols.FirestarterIdolBlock;
+import de.dafuqs.spectrum.blocks.idols.FreezingIdolBlock;
 import de.dafuqs.spectrum.compat.REI.plugins.*;
-import de.dafuqs.spectrum.data_loaders.*;
+import de.dafuqs.spectrum.data_loaders.NaturesStaffConversionDataLoader;
 import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.recipe.anvil_crushing.*;
-import de.dafuqs.spectrum.recipe.cinderhearth.*;
-import de.dafuqs.spectrum.recipe.crystallarieum.*;
-import de.dafuqs.spectrum.recipe.enchanter.*;
-import de.dafuqs.spectrum.recipe.enchantment_upgrade.*;
-import de.dafuqs.spectrum.recipe.fluid_converting.*;
-import de.dafuqs.spectrum.recipe.fusion_shrine.*;
-import de.dafuqs.spectrum.recipe.ink_converting.*;
-import de.dafuqs.spectrum.recipe.pedestal.*;
-import de.dafuqs.spectrum.recipe.potion_workshop.*;
-import de.dafuqs.spectrum.recipe.primordial_fire_burning.*;
-import de.dafuqs.spectrum.recipe.spirit_instiller.*;
-import de.dafuqs.spectrum.recipe.titration_barrel.*;
-import de.dafuqs.spectrum.registries.*;
-import dev.architectury.event.*;
-import me.shedaniel.math.*;
-import me.shedaniel.rei.api.client.plugins.*;
-import me.shedaniel.rei.api.client.registry.category.*;
-import me.shedaniel.rei.api.client.registry.display.*;
-import me.shedaniel.rei.api.client.registry.screen.*;
-import me.shedaniel.rei.api.client.registry.transfer.*;
-import me.shedaniel.rei.api.client.registry.transfer.simple.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.display.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.transfer.info.stack.*;
-import me.shedaniel.rei.api.common.util.*;
-import me.shedaniel.rei.plugin.common.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.screen.*;
+import de.dafuqs.spectrum.recipe.anvil_crushing.AnvilCrushingRecipe;
+import de.dafuqs.spectrum.recipe.cinderhearth.CinderhearthRecipe;
+import de.dafuqs.spectrum.recipe.crystallarieum.CrystallarieumRecipe;
+import de.dafuqs.spectrum.recipe.enchanter.EnchanterRecipe;
+import de.dafuqs.spectrum.recipe.enchantment_upgrade.EnchantmentUpgradeRecipe;
+import de.dafuqs.spectrum.recipe.fluid_converting.DragonrotConvertingRecipe;
+import de.dafuqs.spectrum.recipe.fluid_converting.LiquidCrystalConvertingRecipe;
+import de.dafuqs.spectrum.recipe.fluid_converting.MidnightSolutionConvertingRecipe;
+import de.dafuqs.spectrum.recipe.fluid_converting.MudConvertingRecipe;
+import de.dafuqs.spectrum.recipe.fusion_shrine.FusionShrineRecipe;
+import de.dafuqs.spectrum.recipe.ink_converting.InkConvertingRecipe;
+import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipe;
+import de.dafuqs.spectrum.recipe.potion_workshop.PotionWorkshopBrewingRecipe;
+import de.dafuqs.spectrum.recipe.potion_workshop.PotionWorkshopCraftingRecipe;
+import de.dafuqs.spectrum.recipe.potion_workshop.PotionWorkshopReactingRecipe;
+import de.dafuqs.spectrum.recipe.primordial_fire_burning.PrimordialFireBurningRecipe;
+import de.dafuqs.spectrum.recipe.spirit_instiller.SpiritInstillerRecipe;
+import de.dafuqs.spectrum.recipe.titration_barrel.ITitrationBarrelRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import dev.architectury.event.EventResult;
+import me.shedaniel.math.Rectangle;
+import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
+import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
+import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
+import me.shedaniel.rei.api.client.registry.screen.ScreenRegistry;
+import me.shedaniel.rei.api.client.registry.transfer.TransferHandlerRegistry;
+import me.shedaniel.rei.api.client.registry.transfer.simple.SimpleTransferHandler;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.transfer.info.stack.SlotAccessor;
+import me.shedaniel.rei.api.common.util.EntryStacks;
+import me.shedaniel.rei.plugin.common.BuiltinPlugin;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.level.block.Blocks;
 
-import java.util.*;
-import java.util.stream.*;
+import java.util.List;
+import java.util.stream.Stream;
 
 @Environment(EnvType.CLIENT)
 public class REIClientIntegration implements REIClientPlugin {
@@ -128,9 +137,9 @@ public class REIClientIntegration implements REIClientPlugin {
 		registry.registerRecipeFiller(PrimordialFireBurningRecipe.class, SpectrumRecipeTypes.PRIMORDIAL_FIRE_BURNING, PrimordialFireBurningDisplay::new);
 		
 		NaturesStaffConversionDataLoader.CONVERSIONS.forEach((key, value) -> registry.add(new NaturesStaffConversionsDisplay(EntryStacks.of(key), EntryStacks.of(value.getBlock()), NaturesStaffConversionDataLoader.UNLOCK_IDENTIFIERS.getOrDefault(key, null))));
-		FreezingIdolBlock.FREEZING_STATE_MAP.forEach((key, value) -> registry.add(new FreezingDisplay(BlockToBlockWithChanceDisplay.blockToEntryStack(key.getBlock()), BlockToBlockWithChanceDisplay.blockToEntryStack(value.getLeft().getBlock()), value.getRight())));
-		FreezingIdolBlock.FREEZING_MAP.forEach((key, value) -> registry.add(new FreezingDisplay(BlockToBlockWithChanceDisplay.blockToEntryStack(key), BlockToBlockWithChanceDisplay.blockToEntryStack(value.getLeft().getBlock()), value.getRight())));
-		FirestarterIdolBlock.BURNING_MAP.forEach((key, value) -> registry.add(new HeatingDisplay(BlockToBlockWithChanceDisplay.blockToEntryStack(key), BlockToBlockWithChanceDisplay.blockToEntryStack(value.getLeft().getBlock()), value.getRight())));
+		FreezingIdolBlock.FREEZING_STATE_MAP.forEach((key, value) -> registry.add(new FreezingDisplay(BlockToBlockWithChanceDisplay.blockToEntryStack(key.getBlock()), BlockToBlockWithChanceDisplay.blockToEntryStack(value.getA().getBlock()), value.getB())));
+		FreezingIdolBlock.FREEZING_MAP.forEach((key, value) -> registry.add(new FreezingDisplay(BlockToBlockWithChanceDisplay.blockToEntryStack(key), BlockToBlockWithChanceDisplay.blockToEntryStack(value.getA().getBlock()), value.getB())));
+		FirestarterIdolBlock.BURNING_MAP.forEach((key, value) -> registry.add(new HeatingDisplay(BlockToBlockWithChanceDisplay.blockToEntryStack(key), BlockToBlockWithChanceDisplay.blockToEntryStack(value.getA().getBlock()), value.getB())));
 		
 		
 		registry.registerVisibilityPredicate((category, display) -> {
@@ -195,7 +204,7 @@ public class REIClientIntegration implements REIClientPlugin {
 	interface SimpleTransferHandlerExtension extends SimpleTransferHandler {
 		// Because REI decided to give the create method with the inventory slots argument a different container class type.
 		// Pretty much identical to the original otherwise (except with slot handling changed to resemble the EMI counterpart)
-		static <C extends ScreenHandler, D extends Display> SimpleTransferHandler create(Class<? extends C> containerClass,
+		static <C extends AbstractContainerMenu, D extends Display> SimpleTransferHandler create(Class<? extends C> containerClass,
 																								 CategoryIdentifier<D> categoryIdentifier,
 																								 SimpleTransferHandler.IntRange inputSlots,
 																								 SimpleTransferHandler.IntRange inventorySlots) {
@@ -226,7 +235,7 @@ public class REIClientIntegration implements REIClientPlugin {
 				}
 			};
 		}
-		static <C extends ScreenHandler, D extends Display> SimpleTransferHandler create(Class<? extends C> containerClass,
+		static <C extends AbstractContainerMenu, D extends Display> SimpleTransferHandler create(Class<? extends C> containerClass,
 																						 CategoryIdentifier<D> categoryIdentifier,
 																						 SimpleTransferHandler.IntRange inputSlots,
 																						 List<IntRange> inventorySlotsRanges) {

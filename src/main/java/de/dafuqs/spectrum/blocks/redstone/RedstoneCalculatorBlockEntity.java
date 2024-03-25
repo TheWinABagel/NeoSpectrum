@@ -1,10 +1,10 @@
 package de.dafuqs.spectrum.blocks.redstone;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.math.*;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class RedstoneCalculatorBlockEntity extends BlockEntity {
 	
@@ -15,14 +15,14 @@ public class RedstoneCalculatorBlockEntity extends BlockEntity {
 	}
 	
 	@Override
-	public void writeNbt(NbtCompound nbt) {
-		super.writeNbt(nbt);
+	public void saveAdditional(CompoundTag nbt) {
+		super.saveAdditional(nbt);
 		nbt.putInt("output_signal", this.outputSignal);
 	}
 	
 	@Override
-	public void readNbt(NbtCompound nbt) {
-		super.readNbt(nbt);
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
 		this.outputSignal = nbt.getInt("output_signal");
 	}
 	

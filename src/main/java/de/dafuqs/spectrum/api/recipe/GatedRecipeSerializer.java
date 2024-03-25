@@ -1,55 +1,58 @@
 package de.dafuqs.spectrum.api.recipe;
 
-import com.google.gson.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonObject;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Objects;
 
 public interface GatedRecipeSerializer<T extends Recipe<?>> extends RecipeSerializer<T> {
 	
 	default String readGroup(JsonObject jsonObject) {
-		return JsonHelper.getString(jsonObject, "group", "");
+		return GsonHelper.getAsString(jsonObject, "group", "");
 	}
 	
 	default boolean readSecret(JsonObject jsonObject) {
-		return JsonHelper.getBoolean(jsonObject, "secret", false);
+		return GsonHelper.getAsBoolean(jsonObject, "secret", false);
 	}
 	
-	default Identifier readRequiredAdvancementIdentifier(JsonObject jsonObject) {
-		if (JsonHelper.hasString(jsonObject, "required_advancement")) {
-			return new Identifier(JsonHelper.getString(jsonObject, "required_advancement"));
+	default ResourceLocation readRequiredAdvancementIdentifier(JsonObject jsonObject) {
+		if (GsonHelper.isStringValue(jsonObject, "required_advancement")) {
+			return new ResourceLocation(GsonHelper.getAsString(jsonObject, "required_advancement"));
 		}
 		return null;
 	}
 
 	// NOTE: All 4 of these methods could be static, as they are not overridden, nor does it make sense to override them.
-	default void writeNullableIdentifier(PacketByteBuf buf, @Nullable Identifier identifier) {
+	default void writeNullableIdentifier(FriendlyByteBuf buf, @Nullable ResourceLocation identifier) {
 		if (identifier == null) {
 			buf.writeBoolean(false);
 		} else {
 			buf.writeBoolean(true);
-			buf.writeIdentifier(identifier);
+			buf.writeResourceLocation(identifier);
 		}
 	}
 	
-	default @Nullable Identifier readNullableIdentifier(PacketByteBuf buf) {
+	default @Nullable ResourceLocation readNullableIdentifier(FriendlyByteBuf buf) {
 		boolean notNull = buf.readBoolean();
 		if (notNull) {
-			return buf.readIdentifier();
+			return buf.readResourceLocation();
 		}
 		return null;
 	}
 
-	default @NotNull FluidIngredient readFluidIngredient(PacketByteBuf buf) {
+	default @NotNull FluidIngredient readFluidIngredient(FriendlyByteBuf buf) {
 		boolean isTag = buf.readBoolean();
-		Identifier id = readNullableIdentifier(buf);
+		ResourceLocation id = readNullableIdentifier(buf);
 		return FluidIngredient.fromIdentifier(id, isTag);
 	}
 
-	default void writeFluidIngredient(PacketByteBuf buf, @NotNull FluidIngredient ingredient) {
+	default void writeFluidIngredient(FriendlyByteBuf buf, @NotNull FluidIngredient ingredient) {
 		Objects.requireNonNull(ingredient);
 		buf.writeBoolean(ingredient.isTag());
 		writeNullableIdentifier(buf, ingredient.id());

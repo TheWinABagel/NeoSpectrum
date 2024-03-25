@@ -1,11 +1,14 @@
 package de.dafuqs.spectrum.entity.models;
 
-import de.dafuqs.spectrum.entity.entity.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.model.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.model.*;
-import net.minecraft.client.util.math.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import de.dafuqs.spectrum.entity.entity.MonstrosityEntity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.*;
 
 @Environment(EnvType.CLIENT)
 public class MonstrosityEntityModel extends EntityModel<MonstrosityEntity> {
@@ -16,13 +19,13 @@ public class MonstrosityEntityModel extends EntityModel<MonstrosityEntity> {
 		this.torso = root.getChild("torso");
 	}
 	
-	public static TexturedModelData getTexturedModelData() {
-		ModelData modelData = new ModelData();
+	public static LayerDefinition getTexturedModelData() {
+		MeshDefinition modelData = new MeshDefinition();
 		
-		ModelPartData modelPartData = modelData.getRoot();
-		modelPartData.addChild("torso", ModelPartBuilder.create().uv(0, 0).cuboid(-10.0F, -12.0F, -10.0F, 20.0F, 12.0F, 20.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 24.0F, 0.0F));
+		PartDefinition modelPartData = modelData.getRoot();
+		modelPartData.addOrReplaceChild("torso", CubeListBuilder.create().texOffs(0, 0).addBox(-10.0F, -12.0F, -10.0F, 20.0F, 12.0F, 20.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 24.0F, 0.0F));
 		
-		return TexturedModelData.of(modelData, 128, 128);
+		return LayerDefinition.create(modelData, 128, 128);
 	}
 	
 	@Override
@@ -31,7 +34,7 @@ public class MonstrosityEntityModel extends EntityModel<MonstrosityEntity> {
 	}
 	
 	@Override
-	public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
+	public void renderToBuffer(PoseStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
 		torso.render(matrices, vertexConsumer, light, overlay, red, green, blue, alpha);
 	}
 	

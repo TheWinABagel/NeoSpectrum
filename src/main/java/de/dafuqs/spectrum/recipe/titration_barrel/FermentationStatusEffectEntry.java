@@ -1,15 +1,19 @@
 package de.dafuqs.spectrum.recipe.titration_barrel;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.network.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffects;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public record FermentationStatusEffectEntry(StatusEffect statusEffect, int baseDuration,
+public record FermentationStatusEffectEntry(MobEffect statusEffect, int baseDuration,
 											List<StatusEffectPotencyEntry> potencyEntries) {
 	
 	public record StatusEffectPotencyEntry(int minAlcPercent, int minThickness, int potency) {
@@ -19,9 +23,9 @@ public record FermentationStatusEffectEntry(StatusEffect statusEffect, int baseD
 		private static final String MIN_POTENCY_STRING = "potency";
 		
 		public static StatusEffectPotencyEntry fromJson(JsonObject jsonObject) {
-			int minAlcPercent = JsonHelper.getInt(jsonObject, MIN_ALC_STRING, 0);
-			int minThickness = JsonHelper.getInt(jsonObject, MIN_THICKNESS_STRING, 0);
-			int potency = JsonHelper.getInt(jsonObject, MIN_POTENCY_STRING, 0);
+			int minAlcPercent = GsonHelper.getAsInt(jsonObject, MIN_ALC_STRING, 0);
+			int minThickness = GsonHelper.getAsInt(jsonObject, MIN_THICKNESS_STRING, 0);
+			int potency = GsonHelper.getAsInt(jsonObject, MIN_POTENCY_STRING, 0);
 			return new StatusEffectPotencyEntry(minAlcPercent, minThickness, potency);
 		}
 		
@@ -33,13 +37,13 @@ public record FermentationStatusEffectEntry(StatusEffect statusEffect, int baseD
 			return json;
 		}
 		
-		public void write(PacketByteBuf packetByteBuf) {
+		public void write(FriendlyByteBuf packetByteBuf) {
 			packetByteBuf.writeInt(this.minAlcPercent);
 			packetByteBuf.writeInt(this.minThickness);
 			packetByteBuf.writeInt(this.potency);
 		}
 		
-		public static StatusEffectPotencyEntry read(PacketByteBuf packetByteBuf) {
+		public static StatusEffectPotencyEntry read(FriendlyByteBuf packetByteBuf) {
 			return new StatusEffectPotencyEntry(packetByteBuf.readInt(), packetByteBuf.readInt(), packetByteBuf.readInt());
 		}
 	}
@@ -49,17 +53,17 @@ public record FermentationStatusEffectEntry(StatusEffect statusEffect, int baseD
 	private static final String POTENCY_STRING = "potency";
 	
 	public static FermentationStatusEffectEntry fromJson(JsonObject jsonObject) {
-		Identifier statusEffectIdentifier = Identifier.tryParse(JsonHelper.getString(jsonObject, EFFECT_ID_STRING));
-		StatusEffect statusEffect = Registries.STATUS_EFFECT.get(statusEffectIdentifier);
+		ResourceLocation statusEffectIdentifier = ResourceLocation.tryParse(GsonHelper.getAsString(jsonObject, EFFECT_ID_STRING));
+		MobEffect statusEffect = BuiltInRegistries.MOB_EFFECT.get(statusEffectIdentifier);
 		if (statusEffect == null) {
 			SpectrumCommon.logError("Status effect " + statusEffectIdentifier + " does not exist in the status effect registry. Falling back to WEAKNESS");
-			statusEffect = StatusEffects.WEAKNESS;
+			statusEffect = MobEffects.WEAKNESS;
 		}
-		int baseDuration = JsonHelper.getInt(jsonObject, BASE_DURATION_STRING, 1200);
+		int baseDuration = GsonHelper.getAsInt(jsonObject, BASE_DURATION_STRING, 1200);
 		
 		List<StatusEffectPotencyEntry> potencyEntries = new ArrayList<>();
-		if (JsonHelper.hasArray(jsonObject, POTENCY_STRING)) {
-			JsonArray potencyArray = JsonHelper.getArray(jsonObject, POTENCY_STRING);
+		if (GsonHelper.isArrayNode(jsonObject, POTENCY_STRING)) {
+			JsonArray potencyArray = GsonHelper.getAsJsonArray(jsonObject, POTENCY_STRING);
 			for (int i = 0; i < potencyArray.size(); i++) {
 				JsonObject object = potencyArray.get(i).getAsJsonObject();
 				potencyEntries.add(StatusEffectPotencyEntry.fromJson(object));
@@ -73,7 +77,7 @@ public record FermentationStatusEffectEntry(StatusEffect statusEffect, int baseD
 	public JsonObject toJson() {
 		JsonObject json = new JsonObject();
 		
-		json.addProperty(EFFECT_ID_STRING, Registries.STATUS_EFFECT.getId(this.statusEffect).toString());
+		json.addProperty(EFFECT_ID_STRING, BuiltInRegistries.MOB_EFFECT.getKey(this.statusEffect).toString());
 		json.addProperty(BASE_DURATION_STRING, this.baseDuration);
 		JsonArray effects = new JsonArray();
 		for (StatusEffectPotencyEntry entry : this.potencyEntries) {
@@ -84,8 +88,8 @@ public record FermentationStatusEffectEntry(StatusEffect statusEffect, int baseD
 		return json;
 	}
 	
-	public void write(PacketByteBuf packetByteBuf) {
-		packetByteBuf.writeString(Registries.STATUS_EFFECT.getId(this.statusEffect).toString());
+	public void write(FriendlyByteBuf packetByteBuf) {
+		packetByteBuf.writeUtf(BuiltInRegistries.MOB_EFFECT.getKey(this.statusEffect).toString());
 		packetByteBuf.writeInt(baseDuration);
 		packetByteBuf.writeInt(this.potencyEntries.size());
 		for (StatusEffectPotencyEntry potencyEntry : this.potencyEntries) {
@@ -93,9 +97,9 @@ public record FermentationStatusEffectEntry(StatusEffect statusEffect, int baseD
 		}
 	}
 	
-	public static FermentationStatusEffectEntry read(PacketByteBuf packetByteBuf) {
-		Identifier statusEffectIdentifier = Identifier.tryParse(packetByteBuf.readString());
-		StatusEffect statusEffect = Registries.STATUS_EFFECT.get(statusEffectIdentifier);
+	public static FermentationStatusEffectEntry read(FriendlyByteBuf packetByteBuf) {
+		ResourceLocation statusEffectIdentifier = ResourceLocation.tryParse(packetByteBuf.readUtf());
+		MobEffect statusEffect = BuiltInRegistries.MOB_EFFECT.get(statusEffectIdentifier);
 		int baseDuration = packetByteBuf.readInt();
 		int potencyEntryCount = packetByteBuf.readInt();
 		List<StatusEffectPotencyEntry> potencyEntries = new ArrayList<>(potencyEntryCount);

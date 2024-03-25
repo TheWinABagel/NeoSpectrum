@@ -1,35 +1,41 @@
 package de.dafuqs.spectrum.api.energy;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.helpers.*;
-import dev.emi.trinkets.api.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.helpers.Support;
+import dev.emi.trinkets.api.SlotReference;
+import dev.emi.trinkets.api.TrinketComponent;
+import dev.emi.trinkets.api.TrinketsApi;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public interface InkPowered {
 	
 	/**
 	 * The advancement the player needs to have in order to use ink powered tools
 	 */
-	Identifier REQUIRED_ADVANCEMENT = SpectrumCommon.locate("milestones/unlock_ink_use");
+	ResourceLocation REQUIRED_ADVANCEMENT = SpectrumCommon.locate("milestones/unlock_ink_use");
 	
 	@Environment(EnvType.CLIENT)
     static boolean canUseClient() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return canUse(client.player);
 	}
 	
-	static boolean canUse(PlayerEntity playerEntity) {
+	static boolean canUse(Player playerEntity) {
 		return AdvancementHelper.hasAdvancement(playerEntity, InkPowered.REQUIRED_ADVANCEMENT);
 	}
 	
@@ -44,15 +50,15 @@ public interface InkPowered {
 	 * These are added as the player facing tooltip
 	 **/
 	@Environment(EnvType.CLIENT)
-	default void addInkPoweredTooltip(List<Text> tooltip) {
+	default void addInkPoweredTooltip(List<Component> tooltip) {
 		if (canUseClient()) {
 			if (getUsedColors().size() > 1) {
-				tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.prefix").formatted(Formatting.GRAY));
+				tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.prefix").withStyle(ChatFormatting.GRAY));
 				for (InkColor color : getUsedColors()) {
-					tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.bullet." + color.toString()));
+					tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.bullet." + color.toString()));
 				}
 			} else {
-				tooltip.add(Text.translatable("spectrum.tooltip.ink_powered." + getUsedColors().get(0).toString()).formatted(Formatting.GRAY));
+				tooltip.add(Component.translatable("spectrum.tooltip.ink_powered." + getUsedColors().get(0).toString()).withStyle(ChatFormatting.GRAY));
 			}
 		}
 	}
@@ -89,9 +95,9 @@ public interface InkPowered {
 	 * If not enough energy is available it will be drained as much as is available
 	 * but return will still be false
 	 **/
-	static boolean tryDrainEnergy(@NotNull Inventory inventory, InkColor color, long amount) {
-		for (int i = 0; i < inventory.size(); i++) {
-			ItemStack currentStack = inventory.getStack(i);
+	static boolean tryDrainEnergy(@NotNull Container inventory, InkColor color, long amount) {
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			ItemStack currentStack = inventory.getItem(i);
 			if (!currentStack.isEmpty()) { // fast fail
 				amount -= tryDrainEnergy(currentStack, color, amount, false);
 				if (amount <= 0) {
@@ -102,11 +108,11 @@ public interface InkPowered {
 		return false;
 	}
 	
-	static boolean tryDrainEnergy(@NotNull PlayerEntity player, @NotNull InkCost inkCost) {
+	static boolean tryDrainEnergy(@NotNull Player player, @NotNull InkCost inkCost) {
 		return tryDrainEnergy(player, inkCost.getColor(), inkCost.getCost());
 	}
 	
-	static boolean tryDrainEnergy(@NotNull PlayerEntity player, @NotNull InkCost inkCost, float costModifier) {
+	static boolean tryDrainEnergy(@NotNull Player player, @NotNull InkCost inkCost, float costModifier) {
 		return tryDrainEnergy(player, inkCost.getColor(), Support.getIntFromDecimalWithChance(inkCost.getCost() * costModifier, player.getRandom()));
 	}
 	
@@ -122,7 +128,7 @@ public interface InkPowered {
 	 * - Trinket Slots
 	 * - Inventory
 	 **/
-	static boolean tryDrainEnergy(@NotNull PlayerEntity player, @NotNull InkColor color, long amount) {
+	static boolean tryDrainEnergy(@NotNull Player player, @NotNull InkColor color, long amount) {
 		if (player.isCreative()) {
 			return true;
 		}
@@ -131,7 +137,7 @@ public interface InkPowered {
 		}
 		
 		// hands (main hand, too, if someone uses the staff from the offhand)
-		for (ItemStack itemStack : player.getHandItems()) {
+		for (ItemStack itemStack : player.getHandSlots()) {
 			amount -= tryDrainEnergy(itemStack, color, amount, true);
 			if (amount <= 0) {
 				return true;
@@ -141,9 +147,9 @@ public interface InkPowered {
 		// trinket slots
 		Optional<TrinketComponent> optionalTrinketComponent = TrinketsApi.getTrinketComponent(player);
 		if (optionalTrinketComponent.isPresent()) {
-			List<Pair<SlotReference, ItemStack>> trinketInkStorages = optionalTrinketComponent.get().getEquipped(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
-			for (Pair<SlotReference, ItemStack> trinketEnergyStorageStack : trinketInkStorages) {
-				amount -= tryDrainEnergy(trinketEnergyStorageStack.getRight(), color, amount, true);
+			List<Tuple<SlotReference, ItemStack>> trinketInkStorages = optionalTrinketComponent.get().getEquipped(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
+			for (Tuple<SlotReference, ItemStack> trinketEnergyStorageStack : trinketInkStorages) {
+				amount -= tryDrainEnergy(trinketEnergyStorageStack.getB(), color, amount, true);
 				if (amount <= 0) {
 					return true;
 				}
@@ -151,7 +157,7 @@ public interface InkPowered {
 		}
 		
 		// inventory
-		for (ItemStack itemStack : player.getInventory().main) {
+		for (ItemStack itemStack : player.getInventory().items) {
 			amount -= tryDrainEnergy(itemStack, color, amount, true);
 			if (amount <= 0) {
 				return true;
@@ -161,7 +167,7 @@ public interface InkPowered {
 		return false;
 	}
 	
-	static long getAvailableInk(@NotNull PlayerEntity player, InkColor color) {
+	static long getAvailableInk(@NotNull Player player, InkColor color) {
 		if (player.isCreative()) {
 			return Long.MAX_VALUE;
 		}
@@ -171,37 +177,37 @@ public interface InkPowered {
 		
 		long available = 0;
 		// offhand
-		for (ItemStack itemStack : player.getHandItems()) {
+		for (ItemStack itemStack : player.getHandSlots()) {
 			available += tryGetEnergy(itemStack, color);
 		}
 		
 		// trinket slot
 		Optional<TrinketComponent> optionalTrinketComponent = TrinketsApi.getTrinketComponent(player);
 		if (optionalTrinketComponent.isPresent()) {
-			List<Pair<SlotReference, ItemStack>> trinketInkStorages = optionalTrinketComponent.get().getEquipped(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
-			for (Pair<SlotReference, ItemStack> trinketEnergyStorageStack : trinketInkStorages) {
-				available += tryGetEnergy(trinketEnergyStorageStack.getRight(), color);
+			List<Tuple<SlotReference, ItemStack>> trinketInkStorages = optionalTrinketComponent.get().getEquipped(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
+			for (Tuple<SlotReference, ItemStack> trinketEnergyStorageStack : trinketInkStorages) {
+				available += tryGetEnergy(trinketEnergyStorageStack.getB(), color);
 			}
 		}
 		
 		// inventory
-		for (ItemStack itemStack : player.getInventory().main) {
+		for (ItemStack itemStack : player.getInventory().items) {
 			available += tryGetEnergy(itemStack, color);
 		}
 		return available;
 	}
 	
-	static boolean hasAvailableInk(PlayerEntity player, InkCost inkCost) {
+	static boolean hasAvailableInk(Player player, InkCost inkCost) {
 		return hasAvailableInk(player, inkCost.getColor(), inkCost.getCost());
 	}
 	
-	static boolean hasAvailableInk(PlayerEntity player, InkColor color, long amount) {
+	static boolean hasAvailableInk(Player player, InkColor color, long amount) {
 		if (!canUse(player)) {
 			return false;
 		}
 		
 		// offhand
-		for (ItemStack itemStack : player.getInventory().offHand) {
+		for (ItemStack itemStack : player.getInventory().offhand) {
 			amount -= tryGetEnergy(itemStack, color);
 			if (amount <= 0) {
 				return true;
@@ -211,9 +217,9 @@ public interface InkPowered {
 		// trinket slot
 		Optional<TrinketComponent> optionalTrinketComponent = TrinketsApi.getTrinketComponent(player);
 		if (optionalTrinketComponent.isPresent()) {
-			List<Pair<SlotReference, ItemStack>> trinketInkStorages = optionalTrinketComponent.get().getEquipped(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
-			for (Pair<SlotReference, ItemStack> trinketEnergyStorageStack : trinketInkStorages) {
-				amount -= tryGetEnergy(trinketEnergyStorageStack.getRight(), color);
+			List<Tuple<SlotReference, ItemStack>> trinketInkStorages = optionalTrinketComponent.get().getEquipped(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
+			for (Tuple<SlotReference, ItemStack> trinketEnergyStorageStack : trinketInkStorages) {
+				amount -= tryGetEnergy(trinketEnergyStorageStack.getB(), color);
 				if (amount <= 0) {
 					return true;
 				}
@@ -221,7 +227,7 @@ public interface InkPowered {
 		}
 		
 		// inventory
-		for (ItemStack itemStack : player.getInventory().main) {
+		for (ItemStack itemStack : player.getInventory().items) {
 			amount -= tryGetEnergy(itemStack, color);
 			if (amount <= 0) {
 				return true;

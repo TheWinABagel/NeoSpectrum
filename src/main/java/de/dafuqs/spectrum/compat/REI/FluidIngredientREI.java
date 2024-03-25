@@ -1,14 +1,15 @@
 package de.dafuqs.spectrum.compat.REI;
 
-import de.dafuqs.spectrum.api.recipe.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.minecraft.fluid.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.recipe.FluidIngredient;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import me.shedaniel.rei.api.common.util.EntryStacks;
+import net.minecraft.world.level.material.Fluid;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Objects;
 
-import static net.minecraft.fluid.Fluids.*;
+import static net.minecraft.world.level.material.Fluids.EMPTY;
 
 public class FluidIngredientREI {
     // ALWAYS pass FluidIngredient.EMPTY INSTEAD OF null
@@ -28,7 +29,7 @@ public class FluidIngredientREI {
             return EntryIngredients.ofTag(ingredient.tag().get(),
                     (entry) -> {
                         Fluid fluid = entry.value();
-                        if (!fluid.getDefaultState().isStill())
+                        if (!fluid.defaultFluidState().isSource())
                             return EntryStacks.of(EMPTY);
                         return EntryStacks.of(fluid);
                     });

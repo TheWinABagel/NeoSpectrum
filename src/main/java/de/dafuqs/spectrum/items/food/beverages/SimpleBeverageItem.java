@@ -1,11 +1,12 @@
 package de.dafuqs.spectrum.items.food.beverages;
 
-import de.dafuqs.spectrum.items.food.beverages.properties.*;
-import net.minecraft.item.*;
+import de.dafuqs.spectrum.items.food.beverages.properties.BeverageProperties;
+import de.dafuqs.spectrum.items.food.beverages.properties.StatusEffectBeverageProperties;
+import net.minecraft.world.item.ItemStack;
 
 public class SimpleBeverageItem extends BeverageItem {
 	
-	public SimpleBeverageItem(Settings settings) {
+	public SimpleBeverageItem(Properties settings) {
 		super(settings);
 	}
 	

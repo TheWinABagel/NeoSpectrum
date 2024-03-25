@@ -1,38 +1,43 @@
 package de.dafuqs.spectrum.items.energy;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.storage.*;
-import de.dafuqs.spectrum.api.item.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.InkStorageBlockEntity;
+import de.dafuqs.spectrum.api.energy.InkStorageItem;
+import de.dafuqs.spectrum.api.energy.storage.CreativeInkStorage;
+import de.dafuqs.spectrum.api.item.CreativeOnlyItem;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class CreativeInkAssortmentItem extends Item implements InkStorageItem<CreativeInkStorage>, CreativeOnlyItem {
 	
-	public CreativeInkAssortmentItem(Settings settings) {
+	public CreativeInkAssortmentItem(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public ActionResult useOnBlock(ItemUsageContext context) {
-		World world = context.getWorld();
-		if (!world.isClient) {
-			BlockEntity blockEntity = world.getBlockEntity(context.getBlockPos());
+	public InteractionResult useOn(UseOnContext context) {
+		Level world = context.getLevel();
+		if (!world.isClientSide) {
+			BlockEntity blockEntity = world.getBlockEntity(context.getClickedPos());
 			if (blockEntity instanceof InkStorageBlockEntity<?> inkStorageBlockEntity) {
 				inkStorageBlockEntity.getEnergyStorage().fillCompletely();
 				inkStorageBlockEntity.setInkDirty();
-				blockEntity.markDirty();
+				blockEntity.setChanged();
 			}
 		}
-		return super.useOnBlock(context);
+		return super.useOn(context);
 	}
 	
 	@Override
@@ -42,7 +47,7 @@ public class CreativeInkAssortmentItem extends Item implements InkStorageItem<Cr
 	
 	@Override
 	public CreativeInkStorage getEnergyStorage(ItemStack itemStack) {
-		NbtCompound compound = itemStack.getNbt();
+		CompoundTag compound = itemStack.getTag();
 		if (compound != null && compound.contains("EnergyStore")) {
 			return CreativeInkStorage.fromNbt(compound.getCompound("EnergyStore"));
 		}
@@ -51,8 +56,8 @@ public class CreativeInkAssortmentItem extends Item implements InkStorageItem<Cr
 	
 	// Omitting this would crash outside the dev env o.O
 	@Override
-	public ItemStack getDefaultStack() {
-		return super.getDefaultStack();
+	public ItemStack getDefaultInstance() {
+		return super.getDefaultInstance();
 	}
 	
 	@Override
@@ -61,8 +66,8 @@ public class CreativeInkAssortmentItem extends Item implements InkStorageItem<Cr
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		CreativeOnlyItem.appendTooltip(tooltip);
 		getEnergyStorage(stack).addTooltip(tooltip, true);
 	}

@@ -1,28 +1,37 @@
 package de.dafuqs.spectrum.recipe.titration_barrel;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.api.recipe.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.api.item.FermentedItem;
+import de.dafuqs.spectrum.api.recipe.FluidIngredient;
+import de.dafuqs.spectrum.helpers.InventoryHelper;
+import de.dafuqs.spectrum.helpers.Support;
 import de.dafuqs.spectrum.helpers.TimeHelper;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.items.food.beverages.properties.*;
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.items.food.beverages.properties.BeverageProperties;
+import de.dafuqs.spectrum.items.food.beverages.properties.StatusEffectBeverageProperties;
+import de.dafuqs.spectrum.items.food.beverages.properties.VariantBeverageProperties;
+import de.dafuqs.spectrum.recipe.GatedStackSpectrumRecipe;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements ITitrationBarrelRecipe {
 	
-	public static final ItemStack NOT_FERMENTED_LONG_ENOUGH_OUTPUT_STACK = Items.POTION.getDefaultStack();
+	public static final ItemStack NOT_FERMENTED_LONG_ENOUGH_OUTPUT_STACK = Items.POTION.getDefaultInstance();
 	public static final List<Integer> FERMENTATION_DURATION_DISPLAY_TIME_MULTIPLIERS = new ArrayList<>() {{
 		add(1);
 		add(10);
@@ -37,7 +46,7 @@ public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements I
 	protected final int minFermentationTimeHours;
 	protected final FermentationData fermentationData;
 	
-	public TitrationBarrelRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, List<IngredientStack> inputStacks, FluidIngredient fluid, ItemStack outputItemStack, Item tappingItem, int minFermentationTimeHours, FermentationData fermentationData) {
+	public TitrationBarrelRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, List<IngredientStack> inputStacks, FluidIngredient fluid, ItemStack outputItemStack, Item tappingItem, int minFermentationTimeHours, FermentationData fermentationData) {
 		super(id, group, secret, requiredAdvancementIdentifier);
 		
 		this.inputStacks = inputStacks;
@@ -51,7 +60,7 @@ public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements I
 	}
 	
 	@Override
-	public boolean matches(Inventory inventory, World world) {
+	public boolean matches(Container inventory, Level world) {
 		return matchIngredientStacksExclusively(inventory, getIngredientStacks());
 	}
 	
@@ -76,7 +85,7 @@ public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements I
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inventory, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inventory, RegistryAccess drm) {
 		return ItemStack.EMPTY;
 	}
 	
@@ -92,7 +101,7 @@ public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements I
 	}
 	
 	@Override
-	public ItemStack getOutput(DynamicRegistryManager registryManager) {
+	public ItemStack getResultItem(RegistryAccess registryManager) {
 		return getDefaultTap(1);
 	}
 	
@@ -119,7 +128,7 @@ public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements I
 	}
 	
 	@Override
-	public ItemStack tap(Inventory inventory, long secondsFermented, float downfall) {
+	public ItemStack tap(Container inventory, long secondsFermented, float downfall) {
 		int contentCount = InventoryHelper.countItemsInInventory(inventory);
 		float thickness = getThickness(contentCount);
 		return tapWith(thickness, secondsFermented, downfall);
@@ -149,7 +158,7 @@ public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements I
 		}
 		
 		if (alcPercent >= 100) {
-			return SpectrumItems.PURE_ALCOHOL.getDefaultStack();
+			return SpectrumItems.PURE_ALCOHOL.getDefaultInstance();
 		}
 		
 		BeverageProperties properties;
@@ -163,7 +172,7 @@ public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements I
 		if (properties instanceof StatusEffectBeverageProperties statusEffectBeverageProperties) {
 			float durationMultiplier = (float) (Support.logBase(1 + thickness, 2));
 			
-			List<StatusEffectInstance> effects = new ArrayList<>();
+			List<MobEffectInstance> effects = new ArrayList<>();
 			for (FermentationStatusEffectEntry entry : fermentationData.statusEffectEntries()) {
 				int potency = -1;
 				int durationTicks = entry.baseDuration();
@@ -173,7 +182,7 @@ public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements I
 					}
 				}
 				if (potency > -1) {
-					effects.add(new StatusEffectInstance(entry.statusEffect(), (int) (durationTicks * durationMultiplier), potency));
+					effects.add(new MobEffectInstance(entry.statusEffect(), (int) (durationTicks * durationMultiplier), potency));
 				}
 			}
 			
@@ -205,34 +214,34 @@ public class TitrationBarrelRecipe extends GatedStackSpectrumRecipe implements I
 	
 	// sadly we cannot use text.append() here, since patchouli does not support it
 	// but this way it might be easier for translations either way
-	public static MutableText getDurationText(int minFermentationTimeHours, FermentationData fermentationData) {
-		MutableText text;
+	public static MutableComponent getDurationText(int minFermentationTimeHours, FermentationData fermentationData) {
+		MutableComponent text;
 		if (fermentationData == null) {
 			if (minFermentationTimeHours == 1) {
-				text = Text.translatable("container.spectrum.rei.titration_barrel.time_hour");
+				text = Component.translatable("container.spectrum.rei.titration_barrel.time_hour");
 			} else if (minFermentationTimeHours == 24) {
-				text = Text.translatable("container.spectrum.rei.titration_barrel.time_day");
+				text = Component.translatable("container.spectrum.rei.titration_barrel.time_day");
 			} else if (minFermentationTimeHours >= 72) {
-				text = Text.translatable("container.spectrum.rei.titration_barrel.time_days", Support.getWithOneDecimalAfterComma(minFermentationTimeHours / 24F));
+				text = Component.translatable("container.spectrum.rei.titration_barrel.time_days", Support.getWithOneDecimalAfterComma(minFermentationTimeHours / 24F));
 			} else {
-				text = Text.translatable("container.spectrum.rei.titration_barrel.time_hours", minFermentationTimeHours);
+				text = Component.translatable("container.spectrum.rei.titration_barrel.time_hours", minFermentationTimeHours);
 			}
 		} else {
 			if (minFermentationTimeHours == 1) {
-				text = Text.translatable("container.spectrum.rei.titration_barrel.at_least_time_hour");
+				text = Component.translatable("container.spectrum.rei.titration_barrel.at_least_time_hour");
 			} else if (minFermentationTimeHours == 24) {
-				text = Text.translatable("container.spectrum.rei.titration_barrel.at_least_time_day");
+				text = Component.translatable("container.spectrum.rei.titration_barrel.at_least_time_day");
 			} else if (minFermentationTimeHours > 72) {
-				text = Text.translatable("container.spectrum.rei.titration_barrel.at_least_time_days", Support.getWithOneDecimalAfterComma(minFermentationTimeHours / 24F));
+				text = Component.translatable("container.spectrum.rei.titration_barrel.at_least_time_days", Support.getWithOneDecimalAfterComma(minFermentationTimeHours / 24F));
 			} else {
-				text = Text.translatable("container.spectrum.rei.titration_barrel.at_least_time_hours", minFermentationTimeHours);
+				text = Component.translatable("container.spectrum.rei.titration_barrel.at_least_time_hours", minFermentationTimeHours);
 			}
 		}
 		return text;
 	}
 	
 	@Override
-	public Identifier getRecipeTypeUnlockIdentifier() {
+	public ResourceLocation getRecipeTypeUnlockIdentifier() {
 		return ITitrationBarrelRecipe.UNLOCK_ADVANCEMENT_IDENTIFIER;
 	}
 	

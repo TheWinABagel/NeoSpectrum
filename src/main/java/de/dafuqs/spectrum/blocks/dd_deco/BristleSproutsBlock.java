@@ -1,62 +1,73 @@
 package de.dafuqs.spectrum.blocks.dd_deco;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.registries.SpectrumConfiguredFeatures;
+import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
+import de.dafuqs.spectrum.registries.SpectrumEntityTypeTags;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class BristleSproutsBlock extends PlantBlock implements Fertilizable {
+public class BristleSproutsBlock extends BushBlock implements BonemealableBlock {
 	
-	protected static final VoxelShape SHAPE = Block.createCuboidShape(2.0, 0.0, 2.0, 14.0, 3.0, 14.0);
+	protected static final VoxelShape SHAPE = Block.box(2.0, 0.0, 2.0, 14.0, 3.0, 14.0);
 	
-	public BristleSproutsBlock(AbstractBlock.Settings settings) {
+	public BristleSproutsBlock(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return SHAPE;
 	}
 	
 	@Override
-	public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
-		if (entity instanceof LivingEntity && !entity.getType().isIn(SpectrumEntityTypeTags.POKING_DAMAGE_IMMUNE)) {
-			entity.slowMovement(state, new Vec3d(0.8, 0.75, 0.8));
-			if (!world.isClient && (entity.lastRenderX != entity.getX() || entity.lastRenderZ != entity.getZ())) {
-				double difX = Math.abs(entity.getX() - entity.lastRenderX);
-				double difZ = Math.abs(entity.getZ() - entity.lastRenderZ);
+	public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
+		if (entity instanceof LivingEntity && !entity.getType().is(SpectrumEntityTypeTags.POKING_DAMAGE_IMMUNE)) {
+			entity.makeStuckInBlock(state, new Vec3(0.8, 0.75, 0.8));
+			if (!world.isClientSide && (entity.xOld != entity.getX() || entity.zOld != entity.getZ())) {
+				double difX = Math.abs(entity.getX() - entity.xOld);
+				double difZ = Math.abs(entity.getZ() - entity.zOld);
 				if (difX >= 0.003 || difZ >= 0.003) {
-					entity.damage(SpectrumDamageTypes.bristeSprouts(world), 1.0F);
+					entity.hurt(SpectrumDamageTypes.bristeSprouts(world), 1.0F);
 				}
 			}
 		}
     }
 
 	@Override
-	public boolean isFertilizable(WorldView world, BlockPos pos, BlockState state, boolean isClient) {
+	public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
 		return true;
 	}
 
     @Override
-    public boolean canGrow(World world, Random random, BlockPos pos, BlockState state) {
+    public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
         return true;
     }
 
     @Override
-    public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
-		world.getRegistryManager()
-				.get(RegistryKeys.CONFIGURED_FEATURE)
+    public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+		world.registryAccess()
+				.registryOrThrow(Registries.CONFIGURED_FEATURE)
 				.get(SpectrumConfiguredFeatures.BRISTLE_SPROUT_PATCH)
-				.generate(world, world.getChunkManager().getChunkGenerator(), random, pos);
+				.place(world, world.getChunkSource().getGenerator(), random, pos);
     }
 
     @Override
-    public float getMaxHorizontalModelOffset() {
+    public float getMaxHorizontalOffset() {
         return 0.265F;
     }
 }

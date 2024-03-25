@@ -1,54 +1,64 @@
 package de.dafuqs.spectrum.blocks.structure;
 
-import de.dafuqs.spectrum.cca.azure_dike.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.AbstractGlassBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.EntityCollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.*;
+import java.util.Iterator;
 
 public class DikeGateBlock extends AbstractGlassBlock {
 	
-	public DikeGateBlock(Settings settings) {
+	public DikeGateBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
 	@Deprecated
-	public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		if (context instanceof EntityShapeContext entityShapeContext) {
+	public VoxelShape getCollisionShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		if (context instanceof EntityCollisionContext entityShapeContext) {
 			Entity entity = entityShapeContext.getEntity();
 			if (entity instanceof LivingEntity livingEntity) {
 				
-				if (entity instanceof PlayerEntity player && player.isCreative()) {
-					return VoxelShapes.empty();
+				if (entity instanceof Player player && player.isCreative()) {
+					return Shapes.empty();
 				}
 				
 				int charges = AzureDikeProvider.getAzureDikeCharges(livingEntity);
 				if (charges > 0) {
-					return VoxelShapes.empty();
+					return Shapes.empty();
 				}
 			}
 		}
-		return VoxelShapes.fullCube();
+		return Shapes.block();
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		if (context.isHolding(this.asItem())) {
-			return VoxelShapes.fullCube();
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		if (context.isHoldingItem(this.asItem())) {
+			return Shapes.block();
 		} else {
 			return getCollisionShape(state, world, pos, context);
 		}
@@ -56,49 +66,49 @@ public class DikeGateBlock extends AbstractGlassBlock {
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
 		punishEntityWithoutAzureDike(world, pos, player, false);
-		return super.onUse(state, world, pos, player, hand, hit);
+		return super.use(state, world, pos, player, hand, hit);
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public float calcBlockBreakingDelta(BlockState state, PlayerEntity player, BlockView world, BlockPos pos) {
+	public float getDestroyProgress(BlockState state, Player player, BlockGetter world, BlockPos pos) {
 		punishEntityWithoutAzureDike(world, pos, player, true);
-		return super.calcBlockBreakingDelta(state, player, world, pos);
+		return super.getDestroyProgress(state, player, world, pos);
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
+	public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
 		punishEntityWithoutAzureDike(world, pos, entity, true);
-		super.onEntityCollision(state, world, pos, entity);
+		super.entityInside(state, world, pos, entity);
 	}
 	
 	@Override
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-		Iterator<Direction> directions = Util.copyShuffled(Direction.values(), random).iterator();
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
+		Iterator<Direction> directions = Util.shuffledCopy(Direction.values(), random).iterator();
 		for (int i = 0; i < 2; i++) {
 			Direction direction = directions.next();
-			BlockPos blockPos = pos.offset(direction);
+			BlockPos blockPos = pos.relative(direction);
 			BlockState blockState = world.getBlockState(blockPos);
-			if (!state.isOpaque() || !blockState.isSideSolidFullSquare(world, blockPos, direction.getOpposite())) {
-				double d = direction.getOffsetX() == 0 ? random.nextDouble() : 0.5 + direction.getOffsetX() * 0.6;
-				double e = direction.getOffsetY() == 0 ? random.nextDouble() : 0.5 + direction.getOffsetY() * 0.6;
-				double f = direction.getOffsetZ() == 0 ? random.nextDouble() : 0.5 + direction.getOffsetZ() * 0.6;
+			if (!state.canOcclude() || !blockState.isFaceSturdy(world, blockPos, direction.getOpposite())) {
+				double d = direction.getStepX() == 0 ? random.nextDouble() : 0.5 + direction.getStepX() * 0.6;
+				double e = direction.getStepY() == 0 ? random.nextDouble() : 0.5 + direction.getStepY() * 0.6;
+				double f = direction.getStepZ() == 0 ? random.nextDouble() : 0.5 + direction.getStepZ() * 0.6;
 				world.addParticle(SpectrumParticleTypes.AZURE_DIKE_RUNES, pos.getX() + d, pos.getY() + e, pos.getZ() + f, 0.0, 0.025, 0.0);
 			}
 		}
 	}
 	
-	public void punishEntityWithoutAzureDike(BlockView world, BlockPos pos, Entity entity, boolean decreasedSounds) {
-		if (world instanceof ServerWorld serverWorld && entity instanceof LivingEntity livingEntity) {
+	public void punishEntityWithoutAzureDike(BlockGetter world, BlockPos pos, Entity entity, boolean decreasedSounds) {
+		if (world instanceof ServerLevel serverWorld && entity instanceof LivingEntity livingEntity) {
 			int charges = AzureDikeProvider.getAzureDikeCharges(livingEntity);
 			if (charges == 0) {
-				entity.damage(SpectrumDamageTypes.dike(serverWorld), 1);
+				entity.hurt(SpectrumDamageTypes.dike(serverWorld), 1);
 				SpectrumS2CPacketSender.playParticles(serverWorld, pos, SpectrumParticleTypes.AZURE_DIKE_RUNES, 10);
-				if (entity instanceof ServerPlayerEntity serverPlayerEntity && (!decreasedSounds || ((ServerWorld) world).getTime() % 10 == 0)) {
-					serverPlayerEntity.playSound(SpectrumSoundEvents.USE_FAIL, SoundCategory.PLAYERS, 0.75F, 1.0F);
+				if (entity instanceof ServerPlayer serverPlayerEntity && (!decreasedSounds || ((ServerLevel) world).getGameTime() % 10 == 0)) {
+					serverPlayerEntity.playNotifySound(SpectrumSoundEvents.USE_FAIL, SoundSource.PLAYERS, 0.75F, 1.0F);
 				}
 			}
 		}

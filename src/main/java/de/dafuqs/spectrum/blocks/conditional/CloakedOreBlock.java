@@ -1,24 +1,28 @@
 package de.dafuqs.spectrum.blocks.conditional;
 
-import de.dafuqs.revelationary.api.revelations.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.loot.context.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.intprovider.*;
+import de.dafuqs.revelationary.api.revelations.RevelationAware;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Tuple;
+import net.minecraft.util.valueproviders.UniformInt;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.DropExperienceBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.loot.LootParams;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
-public class CloakedOreBlock extends ExperienceDroppingBlock implements RevelationAware {
+public class CloakedOreBlock extends DropExperienceBlock implements RevelationAware {
 	
 	protected static boolean dropXP;
-	protected final Identifier cloakAdvancementIdentifier;
+	protected final ResourceLocation cloakAdvancementIdentifier;
 	protected final BlockState cloakBlockState;
 	
-	public CloakedOreBlock(Settings settings, UniformIntProvider uniformIntProvider, Identifier cloakAdvancementIdentifier, BlockState cloakBlockState) {
+	public CloakedOreBlock(Properties settings, UniformInt uniformIntProvider, ResourceLocation cloakAdvancementIdentifier, BlockState cloakBlockState) {
 		super(settings, uniformIntProvider);
 		this.cloakAdvancementIdentifier = cloakAdvancementIdentifier;
 		this.cloakBlockState = cloakBlockState;
@@ -27,35 +31,35 @@ public class CloakedOreBlock extends ExperienceDroppingBlock implements Revelati
 	
 	@Override
 	public Map<BlockState, BlockState> getBlockStateCloaks() {
-		return Map.of(this.getDefaultState(), cloakBlockState);
+		return Map.of(this.defaultBlockState(), cloakBlockState);
 	}
 	
 	@Override
-	public Identifier getCloakAdvancementIdentifier() {
+	public ResourceLocation getCloakAdvancementIdentifier() {
 		return cloakAdvancementIdentifier;
 	}
 	
 	@Override
-	public Pair<Item, Item> getItemCloak() {
-		return new Pair<>(this.asItem(), cloakBlockState.getBlock().asItem());
+	public Tuple<Item, Item> getItemCloak() {
+		return new Tuple<>(this.asItem(), cloakBlockState.getBlock().asItem());
 	}
 
 	@Override
 	@SuppressWarnings("deprecation")
-	public List<ItemStack> getDroppedStacks(BlockState state, LootContextParameterSet.Builder builder) {
+	public List<ItemStack> getDrops(BlockState state, LootParams.Builder builder) {
 		// workaround: since onStacksDropped() has no way of checking if it was
 		// triggered by a player we have to cache that information here
-		PlayerEntity lootPlayerEntity = RevelationAware.getLootPlayerEntity(builder);
+		Player lootPlayerEntity = RevelationAware.getLootPlayerEntity(builder);
 		dropXP = lootPlayerEntity != null && isVisibleTo(lootPlayerEntity);
 		
-		return super.getDroppedStacks(state, builder);
+		return super.getDrops(state, builder);
 	}
 
 
 	
 	@Override
-	public void onStacksDropped(BlockState state, ServerWorld world, BlockPos pos, ItemStack stack, boolean dropExperience) {
-		super.onStacksDropped(state, world, pos, stack, dropExperience && dropXP);
+	public void spawnAfterBreak(BlockState state, ServerLevel world, BlockPos pos, ItemStack stack, boolean dropExperience) {
+		super.spawnAfterBreak(state, world, pos, stack, dropExperience && dropXP);
 	}
 	
 }

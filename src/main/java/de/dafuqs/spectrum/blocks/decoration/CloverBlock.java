@@ -1,38 +1,42 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.registries.SpectrumConfiguredFeatures;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.TallGrassBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
-public class CloverBlock extends FernBlock {
+public class CloverBlock extends TallGrassBlock {
 
-	protected static final VoxelShape SHAPE = Block.createCuboidShape(2.0D, 0.0D, 1.0D, 14.0D, 2.0D, 14.0D);
+	protected static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 1.0D, 14.0D, 2.0D, 14.0D);
 
-	public CloverBlock(Settings settings) {
+	public CloverBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return SHAPE;
 	}
 
 	@Override
-	public boolean canGrow(World world, Random random, BlockPos pos, BlockState state) {
+	public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
 		return true;
 	}
 
 	@Override
-	public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
-		world.getRegistryManager()
-				.get(RegistryKeys.CONFIGURED_FEATURE)
+	public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+		world.registryAccess()
+				.registryOrThrow(Registries.CONFIGURED_FEATURE)
 				.get(SpectrumConfiguredFeatures.CLOVER_PATCH)
-				.generate(world, world.getChunkManager().getChunkGenerator(), random, pos);
+				.place(world, world.getChunkSource().getGenerator(), random, pos);
 	}
 
 }

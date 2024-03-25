@@ -1,118 +1,125 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.registries.*;
-import de.dafuqs.spectrum.sound.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.client.item.*;
-import net.minecraft.client.world.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.explosion.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.item.DamageAwareItem;
+import de.dafuqs.spectrum.api.item.TickAwareItem;
+import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import de.dafuqs.spectrum.sound.PipeBombChargingSoundInstance;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.*;
+import net.minecraft.world.level.ExplosionDamageCalculator;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public class PipeBombItem extends Item implements DamageAwareItem, TickAwareItem {
 
-    public PipeBombItem(Settings settings) {
+    public PipeBombItem(Properties settings) {
         super(settings);
     }
 
     @Override
-    public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        if (world.isClient) {
+    public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+        if (world.isClientSide) {
             startSoundInstance(user);
         }
-        return ItemUsage.consumeHeldItem(world, user, hand);
+        return ItemUtils.startUsingInstantly(world, user, hand);
     }
 
     @Environment(EnvType.CLIENT)
-    public void startSoundInstance(PlayerEntity user) {
-        MinecraftClient.getInstance().getSoundManager().play(new PipeBombChargingSoundInstance(user));
+    public void startSoundInstance(Player user) {
+        Minecraft.getInstance().getSoundManager().play(new PipeBombChargingSoundInstance(user));
     }
 
     @Override
-    public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
-        var nbt = stack.getOrCreateNbt();
+    public ItemStack finishUsingItem(ItemStack stack, Level world, LivingEntity user) {
+        var nbt = stack.getOrCreateTag();
 
         nbt.putBoolean("armed", true);
-        nbt.putLong("timestamp", world.getTime());
-        nbt.putUuid("owner", user.getUuid());
+        nbt.putLong("timestamp", world.getGameTime());
+        nbt.putUUID("owner", user.getUUID());
         user.playSound(SpectrumSoundEvents.INCANDESCENT_ARM, 2F, 0.9F);
         return stack;
     }
 
     @Override
-    public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
-        if (world.isClient())
+    public void inventoryTick(ItemStack stack, Level world, Entity entity, int slot, boolean selected) {
+        if (world.isClientSide())
             return;
 
-        var nbt = stack.getOrCreateNbt();
+        var nbt = stack.getOrCreateTag();
         if (!nbt.contains("armed"))
             return;
 
-        if (tryGetOwner(stack, (ServerWorld) world) == entity && world.getTime() - nbt.getLong("timestamp") < 100)
+        if (tryGetOwner(stack, (ServerLevel) world) == entity && world.getGameTime() - nbt.getLong("timestamp") < 100)
             return;
 
-        explode(stack, (ServerWorld) world, entity.getPos(), Optional.of(entity));
+        explode(stack, (ServerLevel) world, entity.position(), Optional.of(entity));
     }
 
     @Override
     public void onItemEntityTicked(ItemEntity itemEntity) {
-        var world = itemEntity.getWorld();
-        var stack = itemEntity.getStack();
-        var nbt = stack.getOrCreateNbt();
+        var world = itemEntity.level();
+        var stack = itemEntity.getItem();
+        var nbt = stack.getOrCreateTag();
 
-        if (world.isClient() || !nbt.contains("armed"))
+        if (world.isClientSide() || !nbt.contains("armed"))
             return;
 
-        if (world.getTime() - nbt.getLong("timestamp") > 100)
-            explode(stack, (ServerWorld) world, itemEntity.getEyePos(), Optional.empty());
+        if (world.getGameTime() - nbt.getLong("timestamp") > 100)
+            explode(stack, (ServerLevel) world, itemEntity.getEyePosition(), Optional.empty());
     }
 
     @Override
     public void onItemEntityDamaged(DamageSource source, float amount, ItemEntity itemEntity) {
-        if ((source.isIn(DamageTypeTags.IS_FIRE) || source.isIn(DamageTypeTags.IS_EXPLOSION)) && !itemEntity.getWorld().isClient()) {
-            explode(itemEntity.getStack(), (ServerWorld) itemEntity.getWorld(), itemEntity.getPos(), Optional.empty());
+        if ((source.is(DamageTypeTags.IS_FIRE) || source.is(DamageTypeTags.IS_EXPLOSION)) && !itemEntity.level().isClientSide()) {
+            explode(itemEntity.getItem(), (ServerLevel) itemEntity.level(), itemEntity.position(), Optional.empty());
         }
     }
 
-    private void explode(ItemStack stack, ServerWorld world, Vec3d pos, Optional<Entity> target) {
-        stack.decrement(1);
+    private void explode(ItemStack stack, ServerLevel world, Vec3 pos, Optional<Entity> target) {
+        stack.shrink(1);
 		Entity owner = tryGetOwner(stack, world);
 
-        target.ifPresent(entity -> entity.damage(SpectrumDamageTypes.incandescence(world, owner instanceof LivingEntity living ? living : null), 200F));
-        world.createExplosion(null, SpectrumDamageTypes.incandescence(world), new ExplosionBehavior(), pos.getX(), pos.getY(), pos.getZ(), 7.5F, true, World.ExplosionSourceType.NONE);
+        target.ifPresent(entity -> entity.hurt(SpectrumDamageTypes.incandescence(world, owner instanceof LivingEntity living ? living : null), 200F));
+        world.explode(null, SpectrumDamageTypes.incandescence(world), new ExplosionDamageCalculator(), pos.x(), pos.y(), pos.z(), 7.5F, true, Level.ExplosionInteraction.NONE);
     }
 
-    public Entity tryGetOwner(ItemStack stack, ServerWorld world) {
-        NbtCompound nbt = stack.getNbt();
+    public Entity tryGetOwner(ItemStack stack, ServerLevel world) {
+        CompoundTag nbt = stack.getTag();
 
         if(nbt == null || !nbt.contains("owner")) {
             return null;
         }
 
-        return world.getEntity(nbt.getUuid("owner"));
+        return world.getEntity(nbt.getUUID("owner"));
     }
 
     @Override
-    public int getMaxUseTime(ItemStack stack) {
+    public int getUseDuration(ItemStack stack) {
         return 55;
     }
     
-    public static float isArmed(ItemStack stack, @Nullable ClientWorld world, @Nullable LivingEntity entity, int seed) {
-        var nbt = stack.getOrCreateNbt();
+    public static float isArmed(ItemStack stack, @Nullable ClientLevel world, @Nullable LivingEntity entity, int seed) {
+        var nbt = stack.getOrCreateTag();
         if (!nbt.contains("armed"))
             return 0F;
 
@@ -120,15 +127,15 @@ public class PipeBombItem extends Item implements DamageAwareItem, TickAwareItem
     }
 
     @Override
-    public UseAction getUseAction(ItemStack stack) {
-        return UseAction.BOW;
+    public UseAnim getUseAnimation(ItemStack stack) {
+        return UseAnim.BOW;
     }
 @Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        super.appendTooltip(stack, world, tooltip, context);
-        tooltip.add(Text.translatable("item.spectrum.pipe_bomb.tooltip").formatted(Formatting.GRAY));
-        tooltip.add(Text.translatable("item.spectrum.pipe_bomb.tooltip2").formatted(Formatting.GRAY));
-    tooltip.add(Text.translatable("item.spectrum.pipe_bomb.tooltip3").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+        super.appendHoverText(stack, world, tooltip, context);
+        tooltip.add(Component.translatable("item.spectrum.pipe_bomb.tooltip").withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.spectrum.pipe_bomb.tooltip2").withStyle(ChatFormatting.GRAY));
+    tooltip.add(Component.translatable("item.spectrum.pipe_bomb.tooltip3").withStyle(ChatFormatting.GRAY));
     }
 
 }

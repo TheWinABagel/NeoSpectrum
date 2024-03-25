@@ -1,12 +1,12 @@
 package de.dafuqs.spectrum.cca.azure_dike;
 
-import de.dafuqs.spectrum.progression.*;
-import dev.onyxstudios.cca.api.v3.component.sync.*;
-import dev.onyxstudios.cca.api.v3.entity.*;
-import net.minecraft.entity.*;
-import net.minecraft.nbt.*;
-import net.minecraft.server.network.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
+import dev.onyxstudios.cca.api.v3.component.sync.AutoSyncedComponent;
+import dev.onyxstudios.cca.api.v3.entity.PlayerCopyCallback;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.NotNull;
 
 public class DefaultAzureDikeComponent implements AzureDikeComponent, AutoSyncedComponent, PlayerCopyCallback {
 	
@@ -60,7 +60,7 @@ public class DefaultAzureDikeComponent implements AzureDikeComponent, AutoSynced
 			
 			if (usedProtection > 0) {
 				AzureDikeProvider.AZURE_DIKE_COMPONENT.sync(provider);
-				if (provider instanceof ServerPlayerEntity serverPlayerEntity) {
+				if (provider instanceof ServerPlayer serverPlayerEntity) {
 					SpectrumAdvancementCriteria.AZURE_DIKE_CHARGE.trigger(serverPlayerEntity, this.protection, this.rechargeDelayDefault, -usedProtection);
 				}
 			}
@@ -87,7 +87,7 @@ public class DefaultAzureDikeComponent implements AzureDikeComponent, AutoSynced
 	}
 	
 	@Override
-	public void readFromNbt(NbtCompound tag) {
+	public void readFromNbt(CompoundTag tag) {
 		this.protection = tag.getInt("protection");
 		this.currentRechargeDelay = tag.getInt("current_recharge_delay");
 		
@@ -97,7 +97,7 @@ public class DefaultAzureDikeComponent implements AzureDikeComponent, AutoSynced
 	}
 	
 	@Override
-	public void writeToNbt(NbtCompound tag) {
+	public void writeToNbt(CompoundTag tag) {
 		tag.putInt("protection", this.protection);
 		tag.putInt("current_recharge_delay", this.currentRechargeDelay);
 		
@@ -114,14 +114,14 @@ public class DefaultAzureDikeComponent implements AzureDikeComponent, AutoSynced
 			this.protection++;
 			this.currentRechargeDelay = this.rechargeDelayDefault;
 			AzureDikeProvider.AZURE_DIKE_COMPONENT.sync(provider);
-			if (provider instanceof ServerPlayerEntity serverPlayerEntity) {
+			if (provider instanceof ServerPlayer serverPlayerEntity) {
 				SpectrumAdvancementCriteria.AZURE_DIKE_CHARGE.trigger(serverPlayerEntity, this.protection, this.rechargeDelayDefault, 1);
 			}
 		}
 	}
 	
 	@Override
-	public void copyData(@NotNull ServerPlayerEntity original, @NotNull ServerPlayerEntity clone, boolean lossless) {
+	public void copyData(@NotNull ServerPlayer original, @NotNull ServerPlayer clone, boolean lossless) {
 		AzureDikeComponent o = AzureDikeProvider.AZURE_DIKE_COMPONENT.get(original);
 		AzureDikeComponent c = AzureDikeProvider.AZURE_DIKE_COMPONENT.get(clone);
 		c.set(o.getMaxProtection(), o.getRechargeDelayDefault(), o.getRechargeDelayTicksAfterDamage(), lossless);

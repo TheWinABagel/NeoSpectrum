@@ -1,19 +1,27 @@
 package de.dafuqs.spectrum.recipe.enchantment_upgrade;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.recipe.enchanter.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.api.item.ExperienceStorageItem;
+import de.dafuqs.spectrum.recipe.GatedSpectrumRecipe;
+import de.dafuqs.spectrum.recipe.enchanter.EnchanterRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.EnchantedBookItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.EnchantmentInstance;
+import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.Map;
 
 public class EnchantmentUpgradeRecipe extends GatedSpectrumRecipe {
 	
@@ -23,10 +31,10 @@ public class EnchantmentUpgradeRecipe extends GatedSpectrumRecipe {
 	protected final Item requiredItem;
 	protected final int requiredItemCount;
 	
-	protected final DefaultedList<Ingredient> inputs;
+	protected final NonNullList<Ingredient> inputs;
 	protected final ItemStack output;
 	
-	public EnchantmentUpgradeRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, Enchantment enchantment, int enchantmentDestinationLevel, int requiredExperience, Item requiredItem, int requiredItemCount) {
+	public EnchantmentUpgradeRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, Enchantment enchantment, int enchantmentDestinationLevel, int requiredExperience, Item requiredItem, int requiredItemCount) {
 		super(id, group, secret, requiredAdvancementIdentifier);
 		
 		this.enchantment = enchantment;
@@ -35,42 +43,42 @@ public class EnchantmentUpgradeRecipe extends GatedSpectrumRecipe {
 		this.requiredItem = requiredItem;
 		this.requiredItemCount = requiredItemCount;
 		
-		DefaultedList<Ingredient> inputs = DefaultedList.ofSize(2, Ingredient.EMPTY);
+		NonNullList<Ingredient> inputs = NonNullList.withSize(2, Ingredient.EMPTY);
 		
 		ItemStack ingredientStack = new ItemStack(Items.ENCHANTED_BOOK);
-		EnchantedBookItem.addEnchantment(ingredientStack, new EnchantmentLevelEntry(enchantment, enchantmentDestinationLevel - 1));
-		inputs.set(0, Ingredient.ofStacks(ingredientStack));
-		inputs.set(1, Ingredient.ofStacks(new ItemStack(requiredItem)));
+		EnchantedBookItem.addEnchantment(ingredientStack, new EnchantmentInstance(enchantment, enchantmentDestinationLevel - 1));
+		inputs.set(0, Ingredient.of(ingredientStack));
+		inputs.set(1, Ingredient.of(new ItemStack(requiredItem)));
 		this.inputs = inputs;
 		
 		ItemStack outputStack = new ItemStack(Items.ENCHANTED_BOOK);
-		EnchantedBookItem.addEnchantment(outputStack, new EnchantmentLevelEntry(enchantment, enchantmentDestinationLevel));
+		EnchantedBookItem.addEnchantment(outputStack, new EnchantmentInstance(enchantment, enchantmentDestinationLevel));
 		this.output = outputStack;
 	}
 	
 	@Override
-	public boolean matches(Inventory inv, World world) {
-		if (inv.size() > 9) {
-			if (!inputs.get(0).test(inv.getStack(0))) {
+	public boolean matches(Container inv, Level world) {
+		if (inv.getContainerSize() > 9) {
+			if (!inputs.get(0).test(inv.getItem(0))) {
 				return false;
 			}
-			Map<Enchantment, Integer> enchantments = EnchantmentHelper.get(inv.getStack(0));
+			Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(inv.getItem(0));
 			if (!enchantments.containsKey(enchantment) || enchantments.get(enchantment) != enchantmentDestinationLevel - 1) {
 				return false;
 			}
 			if (this.getRequiredExperience() > 0
-					&& (!(inv.getStack(1).getItem() instanceof ExperienceStorageItem)
-					|| !(ExperienceStorageItem.getStoredExperience(inv.getStack(1)) >= this.getRequiredExperience()))) {
+					&& (!(inv.getItem(1).getItem() instanceof ExperienceStorageItem)
+					|| !(ExperienceStorageItem.getStoredExperience(inv.getItem(1)) >= this.getRequiredExperience()))) {
 				return false;
 			}
 			
 			Ingredient inputIngredient = inputs.get(1);
 			int ingredientsFound = 0;
 			for (int i = 1; i < 9; i++) {
-				ItemStack currentStack = inv.getStack(i + 1);
+				ItemStack currentStack = inv.getItem(i + 1);
 				
 				if (!currentStack.isEmpty()) {
-					ItemStack slotStack = inv.getStack(i + 1);
+					ItemStack slotStack = inv.getItem(i + 1);
 					if (inputIngredient.test(slotStack)) {
 						ingredientsFound += slotStack.getCount();
 					} else {
@@ -85,22 +93,22 @@ public class EnchantmentUpgradeRecipe extends GatedSpectrumRecipe {
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inv, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inv, RegistryAccess drm) {
 		return null;
 	}
 	
 	@Override
-	public boolean fits(int width, int height) {
+	public boolean canCraftInDimensions(int width, int height) {
 		return true;
 	}
 	
 	@Override
-	public ItemStack getOutput(DynamicRegistryManager registryManager) {
+	public ItemStack getResultItem(RegistryAccess registryManager) {
 		return output;
 	}
 	
 	@Override
-	public ItemStack createIcon() {
+	public ItemStack getToastSymbol() {
 		return new ItemStack(SpectrumBlocks.ENCHANTER);
 	}
 	
@@ -115,7 +123,7 @@ public class EnchantmentUpgradeRecipe extends GatedSpectrumRecipe {
 	}
 	
 	@Override
-	public Identifier getRecipeTypeUnlockIdentifier() {
+	public ResourceLocation getRecipeTypeUnlockIdentifier() {
 		return EnchanterRecipe.UNLOCK_IDENTIFIER;
 	}
 	
@@ -125,7 +133,7 @@ public class EnchantmentUpgradeRecipe extends GatedSpectrumRecipe {
 	}
 	
 	@Override
-	public DefaultedList<Ingredient> getIngredients() {
+	public NonNullList<Ingredient> getIngredients() {
 		return inputs;
 	}
 	

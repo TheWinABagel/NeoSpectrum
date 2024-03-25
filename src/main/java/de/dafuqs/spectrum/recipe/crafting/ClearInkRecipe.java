@@ -1,22 +1,23 @@
 package de.dafuqs.spectrum.recipe.crafting;
 
-import de.dafuqs.spectrum.api.energy.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.recipe.book.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.api.energy.InkStorageItem;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer;
+import net.minecraft.world.level.Level;
 
 public class ClearInkRecipe extends SingleItemCraftingRecipe {
 	
-	public static final RecipeSerializer<ClearInkRecipe> SERIALIZER = new SpecialRecipeSerializer<>(ClearInkRecipe::new);
+	public static final RecipeSerializer<ClearInkRecipe> SERIALIZER = new SimpleCraftingRecipeSerializer<>(ClearInkRecipe::new);
 	
-	public ClearInkRecipe(Identifier identifier, CraftingRecipeCategory category) {
+	public ClearInkRecipe(ResourceLocation identifier, CraftingBookCategory category) {
 		super(identifier, category);
 	}
 	
 	@Override
-	public boolean matches(World world, ItemStack stack) {
+	public boolean matches(Level world, ItemStack stack) {
 		return stack.getItem() instanceof InkStorageItem;
 	}
 	

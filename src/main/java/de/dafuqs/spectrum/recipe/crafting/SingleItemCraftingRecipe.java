@@ -1,29 +1,29 @@
 package de.dafuqs.spectrum.recipe.crafting;
 
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.recipe.book.CraftingRecipeCategory;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.level.Level;
 
-public abstract class SingleItemCraftingRecipe extends SpecialCraftingRecipe {
+public abstract class SingleItemCraftingRecipe extends CustomRecipe {
 	
-	public SingleItemCraftingRecipe(Identifier identifier) {
-		super(identifier, CraftingRecipeCategory.MISC);
+	public SingleItemCraftingRecipe(ResourceLocation identifier) {
+		super(identifier, CraftingBookCategory.MISC);
 	}
 
-	public SingleItemCraftingRecipe(Identifier identifier, CraftingRecipeCategory category) {
+	public SingleItemCraftingRecipe(ResourceLocation identifier, CraftingBookCategory category) {
 		super(identifier, category);
 	}
 	
 	@Override
-	public boolean matches(RecipeInputInventory craftingInventory, World world) {
+	public boolean matches(CraftingContainer craftingInventory, Level world) {
 		boolean matchingItemFound = false;
 		
-		for (int slot = 0; slot < craftingInventory.size(); ++slot) {
-			ItemStack itemStack = craftingInventory.getStack(slot);
+		for (int slot = 0; slot < craftingInventory.getContainerSize(); ++slot) {
+			ItemStack itemStack = craftingInventory.getItem(slot);
 			if (itemStack.isEmpty()) {
 				continue;
 			}
@@ -39,10 +39,10 @@ public abstract class SingleItemCraftingRecipe extends SpecialCraftingRecipe {
 	}
 	
 	@Override
-	public ItemStack craft(RecipeInputInventory craftingInventory, DynamicRegistryManager drm) {
+	public ItemStack craft(CraftingContainer craftingInventory, RegistryAccess drm) {
 		ItemStack stack;
-		for (int slot = 0; slot < craftingInventory.size(); ++slot) {
-			stack = craftingInventory.getStack(slot);
+		for (int slot = 0; slot < craftingInventory.getContainerSize(); ++slot) {
+			stack = craftingInventory.getItem(slot);
 			if (!stack.isEmpty()) {
 				return craft(stack.copy());
 			}
@@ -52,11 +52,11 @@ public abstract class SingleItemCraftingRecipe extends SpecialCraftingRecipe {
 	}
 	
 	@Override
-	public boolean fits(int width, int height) {
+	public boolean canCraftInDimensions(int width, int height) {
 		return width * height > 0;
 	}
 	
-	public abstract boolean matches(World world, ItemStack stack);
+	public abstract boolean matches(Level world, ItemStack stack);
 	
 	public abstract ItemStack craft(ItemStack stack);
 	

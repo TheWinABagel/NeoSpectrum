@@ -1,16 +1,24 @@
 package de.dafuqs.spectrum.mixin.compat.connectormod.absent;
 
-import de.dafuqs.spectrum.api.entity.*;
-import de.dafuqs.spectrum.blocks.fluid.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.*;
-import net.minecraft.fluid.*;
-import net.minecraft.particle.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.util.math.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import de.dafuqs.spectrum.api.entity.TouchingWaterAware;
+import de.dafuqs.spectrum.blocks.fluid.SpectrumFluid;
+import de.dafuqs.spectrum.registries.SpectrumFluidTags;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 @Mixin(Entity.class)
 public class EntityApplyFluidsMixinNoSinytra {
@@ -22,15 +30,15 @@ public class EntityApplyFluidsMixinNoSinytra {
     @Redirect(method = "updateMovementInFluid", at = @At(value = "INVOKE", target = "Lnet/minecraft/fluid/FluidState;isIn(Lnet/minecraft/registry/tag/TagKey;)Z"))
     public boolean spectrum$updateMovementInFluid(FluidState fluidState, TagKey<Fluid> tag) {
         if (tag == FluidTags.WATER) {
-            return (fluidState.isIn(FluidTags.WATER) || fluidState.isIn(SpectrumFluidTags.SWIMMABLE_FLUID));
+            return (fluidState.is(FluidTags.WATER) || fluidState.is(SpectrumFluidTags.SWIMMABLE_FLUID));
         } else {
-            return fluidState.isIn(tag);
+            return fluidState.is(tag);
         }
     }
 
     @ModifyArg(method = "onSwimmingStart()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;addParticle(Lnet/minecraft/particle/ParticleEffect;DDDDDD)V"), index = 0)
-    private ParticleEffect spectrum$modifySwimmingStartParticles(ParticleEffect particleEffect) {
-        Fluid fluid = ((Entity) (Object) this).getWorld().getFluidState(((Entity) (Object) this).getBlockPos()).getFluid();
+    private ParticleOptions spectrum$modifySwimmingStartParticles(ParticleOptions particleEffect) {
+        Fluid fluid = ((Entity) (Object) this).level().getFluidState(((Entity) (Object) this).blockPosition()).getType();
         if (fluid instanceof SpectrumFluid spectrumFluid) {
             return spectrumFluid.getSplashParticle();
         }
@@ -38,7 +46,7 @@ public class EntityApplyFluidsMixinNoSinytra {
     }
 
     @Inject(method = "updateMovementInFluid", at = @At(value = "INVOKE", target = "Ljava/lang/Math;max(DD)D"), locals = LocalCapture.CAPTURE_FAILHARD)
-    public void spectrum$updateMovementInFluid(TagKey<Fluid> tag, double speed, CallbackInfoReturnable<Boolean> info, Box box, int i, int j, int k, int l, int m, int n, double d, boolean bl, boolean bl2, Vec3d vec3d, int o, BlockPos.Mutable mutable, int p, int q, int r, FluidState fluidState) {
-        ((TouchingWaterAware) this).spectrum$setActuallyTouchingWater(fluidState.isIn(FluidTags.WATER));
+    public void spectrum$updateMovementInFluid(TagKey<Fluid> tag, double speed, CallbackInfoReturnable<Boolean> info, AABB box, int i, int j, int k, int l, int m, int n, double d, boolean bl, boolean bl2, Vec3 vec3d, int o, BlockPos.MutableBlockPos mutable, int p, int q, int r, FluidState fluidState) {
+        ((TouchingWaterAware) this).spectrum$setActuallyTouchingWater(fluidState.is(FluidTags.WATER));
     }
 }

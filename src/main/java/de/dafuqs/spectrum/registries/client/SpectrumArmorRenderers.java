@@ -1,11 +1,11 @@
 package de.dafuqs.spectrum.registries.client;
 
-import de.dafuqs.spectrum.items.armor.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.client.rendering.v1.*;
-import net.minecraft.item.*;
+import de.dafuqs.spectrum.items.armor.BedrockArmorItem;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.fabricmc.fabric.api.client.rendering.v1.ArmorRenderer;
+import net.minecraft.world.item.Item;
 
-import java.util.*;
+import java.util.List;
 
 public class SpectrumArmorRenderers {
 	
@@ -23,7 +23,7 @@ public class SpectrumArmorRenderers {
 			BedrockArmorItem armor = (BedrockArmorItem) stack.getItem();
 			var model = armor.getArmorModel();
 			var texture = armor.getArmorTexture(stack, slot);
-			contextModel.copyBipedStateTo(model);
+			contextModel.copyPropertiesTo(model);
 			
 			ArmorRenderer.renderPart(matrices, vertexConsumers, light, stack, model, texture);
 			

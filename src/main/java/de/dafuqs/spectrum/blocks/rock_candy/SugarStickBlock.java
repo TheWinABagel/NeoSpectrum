@@ -1,29 +1,46 @@
 package de.dafuqs.spectrum.blocks.rock_candy;
 
-import de.dafuqs.spectrum.blocks.*;
+import de.dafuqs.spectrum.blocks.FluidLogging;
 import de.dafuqs.spectrum.helpers.ColorHelper;
-import de.dafuqs.spectrum.particle.effect.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.fluid.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.Properties;
-import net.minecraft.state.property.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.particle.effect.DynamicParticleEffect;
+import de.dafuqs.spectrum.registries.SpectrumFluidTags;
+import de.dafuqs.spectrum.registries.SpectrumFluids;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 public class SugarStickBlock extends Block implements RockCandy {
 	
@@ -35,15 +52,15 @@ public class SugarStickBlock extends Block implements RockCandy {
 	public static final int REQUIRED_ITEM_COUNT_PER_STAGE = 4;
 	
 	public static final EnumProperty<FluidLogging.State> LOGGED = FluidLogging.NONE_AND_CRYSTAL;
-	public static final IntProperty AGE = Properties.AGE_2;
+	public static final IntegerProperty AGE = BlockStateProperties.AGE_2;
 	
-	protected static final VoxelShape SHAPE = Block.createCuboidShape(5.0D, 3.0D, 5.0D, 11.0D, 16.0D, 11.0D);
+	protected static final VoxelShape SHAPE = Block.box(5.0D, 3.0D, 5.0D, 11.0D, 16.0D, 11.0D);
 	
-	public SugarStickBlock(Settings settings, RockCandyVariant rockCandyVariant) {
+	public SugarStickBlock(Properties settings, RockCandyVariant rockCandyVariant) {
 		super(settings);
 		this.rockCandyVariant = rockCandyVariant;
 		SUGAR_STICK_BLOCKS.put(this.rockCandyVariant, this);
-		this.setDefaultState(this.stateManager.getDefaultState().with(AGE, 0).with(LOGGED, FluidLogging.State.NOT_LOGGED));
+		this.registerDefaultState(this.stateDefinition.any().setValue(AGE, 0).setValue(LOGGED, FluidLogging.State.NOT_LOGGED));
 	}
 	
 	@Override
@@ -53,36 +70,36 @@ public class SugarStickBlock extends Block implements RockCandy {
 	
 	@Override
 	@Nullable
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		FluidState fluidState = ctx.getWorld().getFluidState(ctx.getBlockPos());
-		if (fluidState.getFluid() == SpectrumFluids.LIQUID_CRYSTAL) {
-			return super.getPlacementState(ctx).with(LOGGED, FluidLogging.State.LIQUID_CRYSTAL);
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		FluidState fluidState = ctx.getLevel().getFluidState(ctx.getClickedPos());
+		if (fluidState.getType() == SpectrumFluids.LIQUID_CRYSTAL) {
+			return super.getStateForPlacement(ctx).setValue(LOGGED, FluidLogging.State.LIQUID_CRYSTAL);
 		} else {
-			return super.getPlacementState(ctx);
+			return super.getStateForPlacement(ctx);
 		}
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
 	public FluidState getFluidState(BlockState state) {
-		return state.get(LOGGED).isOf(SpectrumFluids.LIQUID_CRYSTAL) ? SpectrumFluids.LIQUID_CRYSTAL.getStill(false) : super.getFluidState(state);
+		return state.getValue(LOGGED).isOf(SpectrumFluids.LIQUID_CRYSTAL) ? SpectrumFluids.LIQUID_CRYSTAL.getSource(false) : super.getFluidState(state);
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(AGE, LOGGED);
 	}
 	
 	@Override
-	public boolean hasRandomTicks(BlockState state) {
-		return state.get(LOGGED).isOf(SpectrumFluids.LIQUID_CRYSTAL) && state.get(AGE) < Properties.AGE_2_MAX;
+	public boolean isRandomlyTicking(BlockState state) {
+		return state.getValue(LOGGED).isOf(SpectrumFluids.LIQUID_CRYSTAL) && state.getValue(AGE) < BlockStateProperties.MAX_AGE_2;
 	}
 	
 	@Override
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-		super.randomDisplayTick(state, world, pos, random);
-		if (state.get(LOGGED).isOf(Fluids.EMPTY)) {
-			int age = state.get(AGE);
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
+		super.animateTick(state, world, pos, random);
+		if (state.getValue(LOGGED).isOf(Fluids.EMPTY)) {
+			int age = state.getValue(AGE);
 			
 			if (age == 2 || (age == 1 ? random.nextBoolean() : random.nextFloat() < 0.25)) {
 				world.addParticle(new DynamicParticleEffect(0.1F, ColorHelper.getRGBVec(rockCandyVariant.getDyeColor()), 0.5F, 120, true, true),
@@ -99,22 +116,22 @@ public class SugarStickBlock extends Block implements RockCandy {
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		super.randomTick(state, world, pos, random);
 		
-		if (state.get(LOGGED).isOf(SpectrumFluids.LIQUID_CRYSTAL)) {
-			int age = state.get(AGE);
-			if (age < Properties.AGE_2_MAX) {
-				List<ItemEntity> itemEntities = world.getNonSpectatingEntities(ItemEntity.class, Box.of(Vec3d.ofCenter(pos), ITEM_SEARCH_RANGE, ITEM_SEARCH_RANGE, ITEM_SEARCH_RANGE));
+		if (state.getValue(LOGGED).isOf(SpectrumFluids.LIQUID_CRYSTAL)) {
+			int age = state.getValue(AGE);
+			if (age < BlockStateProperties.MAX_AGE_2) {
+				List<ItemEntity> itemEntities = world.getEntitiesOfClass(ItemEntity.class, AABB.ofSize(Vec3.atCenterOf(pos), ITEM_SEARCH_RANGE, ITEM_SEARCH_RANGE, ITEM_SEARCH_RANGE));
 				Collections.shuffle(itemEntities);
 				for (ItemEntity itemEntity : itemEntities) {
 					// is the item also submerged?
 					// lazy, but mostly accurate and performant way to check if it's the same liquid pool
-					if (!itemEntity.isSubmergedIn(SpectrumFluidTags.LIQUID_CRYSTAL)) {
+					if (!itemEntity.isEyeInFluid(SpectrumFluidTags.LIQUID_CRYSTAL)) {
 						continue;
 					}
 					
-					ItemStack stack = itemEntity.getStack();
+					ItemStack stack = itemEntity.getItem();
 					if (stack.getCount() >= REQUIRED_ITEM_COUNT_PER_STAGE) {
 						@Nullable RockCandyVariant itemVariant = RockCandyVariant.getFor(stack);
 						if (itemVariant != null) {
@@ -122,12 +139,12 @@ public class SugarStickBlock extends Block implements RockCandy {
 							if (rockCandyVariant != RockCandyVariant.SUGAR) {
 								newState = state;
 							} else {
-								newState = SUGAR_STICK_BLOCKS.get(itemVariant).getDefaultState();
+								newState = SUGAR_STICK_BLOCKS.get(itemVariant).defaultBlockState();
 							}
 							
-							stack.decrement(REQUIRED_ITEM_COUNT_PER_STAGE);
-							world.setBlockState(pos, newState.with(AGE, age + 1).with(LOGGED, state.get(LOGGED)));
-							world.playSound(null, pos, newState.getSoundGroup().getHitSound(), SoundCategory.BLOCKS, 0.5F, 1.0F);
+							stack.shrink(REQUIRED_ITEM_COUNT_PER_STAGE);
+							world.setBlockAndUpdate(pos, newState.setValue(AGE, age + 1).setValue(LOGGED, state.getValue(LOGGED)));
+							world.playSound(null, pos, newState.getSoundType().getHitSound(), SoundSource.BLOCKS, 0.5F, 1.0F);
 							break;
 						}
 					}
@@ -137,39 +154,39 @@ public class SugarStickBlock extends Block implements RockCandy {
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return SHAPE;
 	}
 	
 	@Override
-	public boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
+	public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
 		Direction direction = Direction.UP;
-		return Block.sideCoversSmallSquare(world, pos.offset(direction), direction.getOpposite());
+		return Block.canSupportCenter(world, pos.relative(direction), direction.getOpposite());
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighborState, WorldAccess world, BlockPos pos, BlockPos neighborPos) {
-		return direction == Direction.UP && !state.canPlaceAt(world, pos) ? Blocks.AIR.getDefaultState() : super.getStateForNeighborUpdate(state, direction, neighborState, world, pos, neighborPos);
+	public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+		return direction == Direction.UP && !state.canSurvive(world, pos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, direction, neighborState, world, pos, neighborPos);
 	}
 	
 	@Override
-	public boolean canPathfindThrough(BlockState state, BlockView world, BlockPos pos, NavigationType type) {
+	public boolean isPathfindable(BlockState state, BlockGetter world, BlockPos pos, PathComputationType type) {
 		return false;
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		NbtCompound nbt = stack.getNbt();
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		CompoundTag nbt = stack.getTag();
 		if (nbt != null && nbt.contains("BlockStateTag")) {
-			NbtCompound blockStateTag = nbt.getCompound("BlockStateTag");
-			if (blockStateTag.contains("age", NbtElement.STRING_TYPE)) {
+			CompoundTag blockStateTag = nbt.getCompound("BlockStateTag");
+			if (blockStateTag.contains("age", Tag.TAG_STRING)) {
 				String age = blockStateTag.getString("age");
 				if ("1".equals(age)) {
-					tooltip.add(Text.translatable("block.spectrum.sugar_stick.tooltip.medium"));
+					tooltip.add(Component.translatable("block.spectrum.sugar_stick.tooltip.medium"));
 				} else if ("2".equals(age)) {
-					tooltip.add(Text.translatable("block.spectrum.sugar_stick.tooltip.large"));
+					tooltip.add(Component.translatable("block.spectrum.sugar_stick.tooltip.large"));
 				}
 				
 			}

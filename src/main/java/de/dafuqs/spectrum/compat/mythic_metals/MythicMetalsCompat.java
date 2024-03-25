@@ -1,13 +1,17 @@
 package de.dafuqs.spectrum.compat.mythic_metals;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.compat.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.biome.v1.*;
-import net.minecraft.registry.*;
-import net.minecraft.world.gen.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.compat.SpectrumIntegrationPacks;
+import de.dafuqs.spectrum.registries.SpectrumBiomeTags;
+import de.dafuqs.spectrum.registries.SpectrumBiomes;
+import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectionContext;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.levelgen.GenerationStep;
 
-import java.util.function.*;
+import java.util.function.Predicate;
 
 public class MythicMetalsCompat extends SpectrumIntegrationPacks.ModIntegrationPack {
 	
@@ -23,7 +27,7 @@ public class MythicMetalsCompat extends SpectrumIntegrationPacks.ModIntegrationP
 	}
 	
 	private void addOre(Predicate<BiomeSelectionContext> biomeSelector, String placedFeatureName) {
-		BiomeModifications.addFeature(biomeSelector, GenerationStep.Feature.UNDERGROUND_ORES, RegistryKey.of(RegistryKeys.PLACED_FEATURE, SpectrumCommon.locate(placedFeatureName)));
+		BiomeModifications.addFeature(biomeSelector, GenerationStep.Decoration.UNDERGROUND_ORES, ResourceKey.create(Registries.PLACED_FEATURE, SpectrumCommon.locate(placedFeatureName)));
 	}
 	
 	@Override

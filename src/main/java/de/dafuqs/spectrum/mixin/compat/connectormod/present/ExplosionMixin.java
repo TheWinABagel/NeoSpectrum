@@ -1,21 +1,26 @@
 package de.dafuqs.spectrum.mixin.compat.connectormod.present;
 
 
-import de.dafuqs.spectrum.api.block.*;
-import net.minecraft.block.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.explosion.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import de.dafuqs.spectrum.api.block.ExplosionAware;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Explosion.class)
 public class ExplosionMixin {
 
     @Shadow
     @Final
-    private World world;
+    private Level world;
 
     @Unique
     private BlockState blockState;
@@ -37,7 +42,7 @@ public class ExplosionMixin {
     public void applyExplosionEffects(boolean particles, CallbackInfo ci){
         if(blockState.getBlock() instanceof ExplosionAware explosionAware) {
             explosionAware.beforeDestroyedByExplosion(world, blockPos, blockState, (Explosion) (Object) this);
-            this.world.setBlockState(blockPos, explosionAware.getStateForExplosion(this.world, blockPos, blockState), 3);
+            this.world.setBlock(blockPos, explosionAware.getStateForExplosion(this.world, blockPos, blockState), 3);
         }
     }
 

@@ -1,60 +1,66 @@
 package de.dafuqs.spectrum.blocks.jade_vines;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.registries.SpectrumBlockTags;
+import de.dafuqs.spectrum.registries.SpectrumConfiguredFeatures;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.BonemealableBlock;
+import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-public class JadeiteLotusBulbBlock extends PlantBlock implements Fertilizable {
+public class JadeiteLotusBulbBlock extends BushBlock implements BonemealableBlock {
 
-    public JadeiteLotusBulbBlock(Settings settings) {
+    public JadeiteLotusBulbBlock(Properties settings) {
         super(settings);
     }
 
     @Override
-    public boolean canPlaceAt(BlockState state, WorldView world, BlockPos pos) {
-        return canPlantOnTop(world.getBlockState(pos.up()), world, pos.up());
+    public boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
+        return mayPlaceOn(world.getBlockState(pos.above()), world, pos.above());
     }
 
     @Override
-	public boolean hasRandomTicks(BlockState state) {
+	public boolean isRandomlyTicking(BlockState state) {
 		return true;
 	}
 	
 	@Override
-	public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		if (random.nextFloat() < 0.025) {
-			grow(world, random, pos, state);
+			performBonemeal(world, random, pos, state);
 		}
 	}
 	
 	@Override
-	public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
-		return SpectrumItems.JADEITE_LOTUS_BULB.getDefaultStack();
+	public ItemStack getCloneItemStack(BlockGetter world, BlockPos pos, BlockState state) {
+		return SpectrumItems.JADEITE_LOTUS_BULB.getDefaultInstance();
 	}
 	
 	@Override
-	public boolean isFertilizable(WorldView world, BlockPos pos, BlockState state, boolean isClient) {
+	public boolean isValidBonemealTarget(LevelReader world, BlockPos pos, BlockState state, boolean isClient) {
 		return true;
 	}
 	
 	@Override
-	public boolean canGrow(World world, Random random, BlockPos pos, BlockState state) {
+	public boolean isBonemealSuccess(Level world, RandomSource random, BlockPos pos, BlockState state) {
 		return true;
 	}
 
     @Override
-    protected boolean canPlantOnTop(BlockState floor, BlockView world, BlockPos pos) {
-        return super.canPlantOnTop(floor, world, pos) || floor.isIn(SpectrumBlockTags.BASE_STONE_DEEPER_DOWN);
+    protected boolean mayPlaceOn(BlockState floor, BlockGetter world, BlockPos pos) {
+        return super.mayPlaceOn(floor, world, pos) || floor.is(SpectrumBlockTags.BASE_STONE_DEEPER_DOWN);
     }
 
     @Override
-    public void grow(ServerWorld world, Random random, BlockPos pos, BlockState state) {
-		world.getRegistryManager().get(RegistryKeys.CONFIGURED_FEATURE).get(SpectrumConfiguredFeatures.JADEITE_LOTUS).generate(world, world.getChunkManager().getChunkGenerator(), random, pos);
+    public void performBonemeal(ServerLevel world, RandomSource random, BlockPos pos, BlockState state) {
+		world.registryAccess().registryOrThrow(Registries.CONFIGURED_FEATURE).get(SpectrumConfiguredFeatures.JADEITE_LOTUS).place(world, world.getChunkSource().getGenerator(), random, pos);
     }
 	
 }

@@ -1,15 +1,18 @@
 package de.dafuqs.spectrum.api.predicate.block;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.*;
-import net.minecraft.block.*;
-import net.minecraft.predicate.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.advancements.critereon.StatePropertiesPredicate;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Set;
 
 /**
  * Since BlockPredicate requires world and pos as input we can not use that in BrokenBlockCriterion
@@ -20,15 +23,15 @@ import java.util.*;
  */
 public class BrokenBlockPredicate {
 	
-	public static final BrokenBlockPredicate ANY = new BrokenBlockPredicate(null, null, StatePredicate.ANY);
+	public static final BrokenBlockPredicate ANY = new BrokenBlockPredicate(null, null, StatePropertiesPredicate.ANY);
 	
 	@Nullable
 	private final TagKey<Block> tag;
 	@Nullable
 	private final Set<Block> blocks;
-	private final StatePredicate state;
+	private final StatePropertiesPredicate state;
 	
-	public BrokenBlockPredicate(@Nullable TagKey<Block> tag, @Nullable Set<Block> blocks, StatePredicate state) {
+	public BrokenBlockPredicate(@Nullable TagKey<Block> tag, @Nullable Set<Block> blocks, StatePropertiesPredicate state) {
 		this.tag = tag;
 		this.blocks = blocks;
 		this.state = state;
@@ -36,15 +39,15 @@ public class BrokenBlockPredicate {
 	
 	public static BrokenBlockPredicate fromJson(@Nullable JsonElement json) {
 		if (json != null && !json.isJsonNull()) {
-			JsonObject jsonObject = JsonHelper.asObject(json, "block");
+			JsonObject jsonObject = GsonHelper.convertToJsonObject(json, "block");
 			Set<Block> set = null;
-			JsonArray jsonArray = JsonHelper.getArray(jsonObject, "blocks", null);
+			JsonArray jsonArray = GsonHelper.getAsJsonArray(jsonObject, "blocks", null);
 			if (jsonArray != null) {
 				com.google.common.collect.ImmutableSet.Builder<Block> builder = ImmutableSet.builder();
 				
 				for (JsonElement jsonElement : jsonArray) {
-					Identifier identifier = new Identifier(JsonHelper.asString(jsonElement, "block"));
-					builder.add(Registries.BLOCK.getOrEmpty(identifier).orElseThrow(() ->
+					ResourceLocation identifier = new ResourceLocation(GsonHelper.convertToString(jsonElement, "block"));
+					builder.add(BuiltInRegistries.BLOCK.getOptional(identifier).orElseThrow(() ->
 						new JsonSyntaxException("Unknown block id '" + identifier + "'")
 					));
 				}
@@ -54,11 +57,11 @@ public class BrokenBlockPredicate {
 			
 			TagKey<Block> tag = null;
 			if (jsonObject.has("tag")) {
-				Identifier identifier2 = new Identifier(JsonHelper.getString(jsonObject, "tag"));
-				tag = TagKey.of(RegistryKeys.BLOCK, identifier2);
+				ResourceLocation identifier2 = new ResourceLocation(GsonHelper.getAsString(jsonObject, "tag"));
+				tag = TagKey.create(Registries.BLOCK, identifier2);
 			}
 			
-			StatePredicate statePredicate = StatePredicate.fromJson(jsonObject.get("state"));
+			StatePropertiesPredicate statePredicate = StatePropertiesPredicate.fromJson(jsonObject.get("state"));
 			return new BrokenBlockPredicate(tag, set, statePredicate);
 		} else {
 			return ANY;
@@ -69,12 +72,12 @@ public class BrokenBlockPredicate {
 		if (this == ANY) {
 			return true;
 		} else {
-			if (this.tag != null && !blockState.isIn(this.tag)) {
+			if (this.tag != null && !blockState.is(this.tag)) {
 				return false;
 			} else if (this.blocks != null && !this.blocks.contains(blockState.getBlock())) {
 				return false;
 			} else {
-				return this.state.test(blockState);
+				return this.state.matches(blockState);
 			}
 		}
 	}
@@ -88,17 +91,17 @@ public class BrokenBlockPredicate {
 				JsonArray jsonArray = new JsonArray();
 				
 				for (Block block : this.blocks) {
-					jsonArray.add(Registries.BLOCK.getId(block).toString());
+					jsonArray.add(BuiltInRegistries.BLOCK.getKey(block).toString());
 				}
 				
 				jsonObject.add("blocks", jsonArray);
 			}
 			
 			if (this.tag != null) {
-				jsonObject.addProperty("tag", this.tag.id().toString());
+				jsonObject.addProperty("tag", this.tag.location().toString());
 			}
 			
-			jsonObject.add("state", this.state.toJson());
+			jsonObject.add("state", this.state.serializeToJson());
 			return jsonObject;
 		}
 	}
@@ -106,10 +109,10 @@ public class BrokenBlockPredicate {
 	public static class Builder {
 		private @Nullable Set<Block> blocks;
 		private @Nullable TagKey<Block> tag;
-		private StatePredicate state;
+		private StatePropertiesPredicate state;
 		
 		private Builder() {
-			this.state = StatePredicate.ANY;
+			this.state = StatePropertiesPredicate.ANY;
 		}
 		
 		public static BrokenBlockPredicate.Builder create() {
@@ -131,7 +134,7 @@ public class BrokenBlockPredicate {
 			return this;
 		}
 		
-		public BrokenBlockPredicate.Builder state(StatePredicate state) {
+		public BrokenBlockPredicate.Builder state(StatePropertiesPredicate state) {
 			this.state = state;
 			return this;
 		}

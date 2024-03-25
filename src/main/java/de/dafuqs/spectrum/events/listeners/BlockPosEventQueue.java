@@ -1,11 +1,14 @@
 package de.dafuqs.spectrum.events.listeners;
 
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.effect.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.effect.TypedTransmission;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.gameevent.PositionSource;
+import net.minecraft.world.phys.Vec3;
 
 public class BlockPosEventQueue extends EventQueue<BlockPosEventQueue.EventEntry> {
 	
@@ -14,13 +17,13 @@ public class BlockPosEventQueue extends EventQueue<BlockPosEventQueue.EventEntry
 	}
 	
 	@Override
-	public void acceptEvent(World world, GameEvent.Message event, Vec3d sourcePos) {
-		if (world instanceof ServerWorld) {
-			Vec3d emitterPos = event.getEmitterPos();
-			EventEntry eventEntry = new EventEntry(event.getEvent(), BlockPos.ofFloored(emitterPos.x, emitterPos.y, emitterPos.z), MathHelper.floor(event.getEmitterPos().distanceTo(sourcePos)));
+	public void acceptEvent(Level world, GameEvent.ListenerInfo event, Vec3 sourcePos) {
+		if (world instanceof ServerLevel) {
+			Vec3 emitterPos = event.source();
+			EventEntry eventEntry = new EventEntry(event.gameEvent(), BlockPos.containing(emitterPos.x, emitterPos.y, emitterPos.z), Mth.floor(event.source().distanceTo(sourcePos)));
 			int delay = eventEntry.distance * 2;
 			this.schedule(eventEntry, delay);
-			SpectrumS2CPacketSender.playTransmissionParticle((ServerWorld) world, new TypedTransmission(emitterPos, this.positionSource, delay, TypedTransmission.Variant.BLOCK_POS));
+			SpectrumS2CPacketSender.playTransmissionParticle((ServerLevel) world, new TypedTransmission(emitterPos, this.positionSource, delay, TypedTransmission.Variant.BLOCK_POS));
 		}
 	}
 	

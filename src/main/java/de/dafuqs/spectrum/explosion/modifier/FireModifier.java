@@ -1,27 +1,29 @@
 package de.dafuqs.spectrum.explosion.modifier;
 
-import de.dafuqs.spectrum.explosion.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.particle.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.explosion.ExplosionModifierType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.FireBlock;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Optional;
 
 public class FireModifier extends DamageChangingModifier {
 	
-	public FireModifier(ExplosionModifierType type, ParticleEffect effect, int displayColor) {
+	public FireModifier(ExplosionModifierType type, ParticleOptions effect, int displayColor) {
 		super(type, effect, displayColor);
 	}
 	
 	@Override
-	public void applyToBlocks(@NotNull World world, @NotNull Iterable<BlockPos> blocks) {
+	public void applyToBlocks(@NotNull Level world, @NotNull Iterable<BlockPos> blocks) {
 		for (BlockPos pos : blocks) {
-			if (world.getRandom().nextInt(3) == 0 && world.getBlockState(pos).isAir() && world.getBlockState(pos.down()).isOpaqueFullCube(world, pos.down())) {
-				world.setBlockState(pos, FireBlock.getState(world, pos));
+			if (world.getRandom().nextInt(3) == 0 && world.getBlockState(pos).isAir() && world.getBlockState(pos.below()).isSolidRender(world, pos.below())) {
+				world.setBlockAndUpdate(pos, FireBlock.getState(world, pos));
 			}
 		}
 		super.applyToBlocks(world, blocks);
@@ -32,13 +34,13 @@ public class FireModifier extends DamageChangingModifier {
 		if (owner == null) {
 			return Optional.empty();
 		} else {
-			return Optional.of(owner.getDamageSources().inFire());
+			return Optional.of(owner.damageSources().inFire());
 		}
 	}
 
 	@Override
 	public void applyToEntity(@NotNull Entity entity, double distance) {
-		entity.setFireTicks(20);
+		entity.setRemainingFireTicks(20);
 	}
 	
 }

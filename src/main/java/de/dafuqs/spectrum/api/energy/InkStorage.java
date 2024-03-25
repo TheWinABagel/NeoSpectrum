@@ -1,11 +1,12 @@
 package de.dafuqs.spectrum.api.energy;
 
-import de.dafuqs.spectrum.api.energy.color.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.MathHelper;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This interface defines that an object can
@@ -144,12 +145,12 @@ public interface InkStorage {
 
 	// Returns how full the storage is, as a float.
 	default float getFillPercent(InkColor color) {
-		return MathHelper.clamp((float) getEnergy(color) / getMaxPerColor(), 0, 1);
+		return Mth.clamp((float) getEnergy(color) / getMaxPerColor(), 0, 1);
 	}
 
 	// Same as above, but in total.
 	default float getTotalFillPercent() {
-		return MathHelper.clamp((float) getCurrentTotal() / getMaxTotal(), 0, 1);
+		return Mth.clamp((float) getCurrentTotal() / getMaxTotal(), 0, 1);
 	}
 	
 	// returns true if all energy could be drained successfully
@@ -158,7 +159,7 @@ public interface InkStorage {
 	// returns all stored energy with amounts
 	//Map<ICMYKColor, Integer> getEnergy();
 	
-	void addTooltip(List<Text> tooltip, boolean includeHeader);
+	void addTooltip(List<Component> tooltip, boolean includeHeader);
 	
 	long getRoom(InkColor color);
 	

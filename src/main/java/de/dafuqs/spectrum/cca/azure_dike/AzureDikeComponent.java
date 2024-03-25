@@ -1,12 +1,12 @@
 package de.dafuqs.spectrum.cca.azure_dike;
 
-import de.dafuqs.spectrum.*;
-import dev.onyxstudios.cca.api.v3.component.tick.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import dev.onyxstudios.cca.api.v3.component.tick.ServerTickingComponent;
+import net.minecraft.resources.ResourceLocation;
 
 public interface AzureDikeComponent extends ServerTickingComponent {
 	
-	Identifier AZURE_DIKE_BAR_TEXTURE = SpectrumCommon.locate("textures/gui/azure_dike_overlay.png");
+	ResourceLocation AZURE_DIKE_BAR_TEXTURE = SpectrumCommon.locate("textures/gui/azure_dike_overlay.png");
 	
 	int getProtection();
 	

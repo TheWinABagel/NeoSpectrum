@@ -1,16 +1,16 @@
 package de.dafuqs.spectrum.mixin.accessors;
 
-import it.unimi.dsi.fastutil.objects.*;
-import net.minecraft.client.render.*;
-import net.minecraft.util.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.gen.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.resources.ResourceLocation;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(DimensionEffects.class)
+@Mixin(DimensionSpecialEffects.class)
 public interface DimensionEffectsAccessor {
 
     @Accessor(value = "BY_IDENTIFIER")
-    static Object2ObjectMap<Identifier, DimensionEffects> getEffects() {
+    static Object2ObjectMap<ResourceLocation, DimensionSpecialEffects> getEffects() {
         throw new AssertionError();
     }
 

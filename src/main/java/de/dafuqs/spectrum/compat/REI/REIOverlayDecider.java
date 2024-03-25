@@ -1,10 +1,11 @@
 package de.dafuqs.spectrum.compat.REI;
 
-import de.dafuqs.spectrum.inventories.*;
-import me.shedaniel.rei.api.client.registry.screen.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.gui.screen.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.inventories.QuickNavigationGridScreen;
+import me.shedaniel.rei.api.client.registry.screen.OverlayDecider;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.InteractionResult;
 
 @Environment(EnvType.CLIENT)
 public class REIOverlayDecider implements OverlayDecider {
@@ -17,11 +18,11 @@ public class REIOverlayDecider implements OverlayDecider {
 	}
 	
 	@Override
-	public <R extends Screen> ActionResult shouldScreenBeOverlaid(R screen) {
+	public <R extends Screen> InteractionResult shouldScreenBeOverlaid(R screen) {
 		if (screen instanceof QuickNavigationGridScreen) {
-			return ActionResult.FAIL;
+			return InteractionResult.FAIL;
 		}
-		return ActionResult.PASS;
+		return InteractionResult.PASS;
 	}
 	
 }

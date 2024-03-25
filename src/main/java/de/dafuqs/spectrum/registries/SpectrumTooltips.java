@@ -1,83 +1,87 @@
 package de.dafuqs.spectrum.registries;
 
-import com.mojang.serialization.*;
-import de.dafuqs.spectrum.compat.biome_makeover.*;
-import net.fabricmc.fabric.api.client.item.v1.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
+import com.mojang.serialization.DataResult;
+import de.dafuqs.spectrum.compat.biome_makeover.BiomeMakeoverCompat;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.SignText;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public class SpectrumTooltips {
 	
 	public static void register() {
 		ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
-			NbtCompound nbt = stack.getNbt();
+			CompoundTag nbt = stack.getTag();
 			if (nbt != null) {
 				
-				if (stack.isOf(Blocks.SCULK_SHRIEKER.asItem())) {
+				if (stack.is(Blocks.SCULK_SHRIEKER.asItem())) {
 					addSculkShriekerTooltips(lines, nbt);
-				} else if (stack.isIn(ItemTags.SIGNS)) {
+				} else if (stack.is(ItemTags.SIGNS)) {
 					addSignTooltips(lines, nbt);
-				} else if (stack.isOf(Items.SPAWNER)) {
+				} else if (stack.is(Items.SPAWNER)) {
 					addSpawnerTooltips(lines, nbt);
 				}
 				
 				if (nbt.getBoolean(BiomeMakeoverCompat.CURSED_TAG)) {
-					lines.add(Text.translatable("spectrum.tooltip.biomemakeover_cursed").formatted(Formatting.GRAY));
+					lines.add(Component.translatable("spectrum.tooltip.biomemakeover_cursed").withStyle(ChatFormatting.GRAY));
 				}
 			}
 		});
 	}
 	
-	private static void addSculkShriekerTooltips(List<Text> lines, NbtCompound nbt) {
-		if (!nbt.contains("BlockStateTag", NbtElement.COMPOUND_TYPE)) {
+	private static void addSculkShriekerTooltips(List<Component> lines, CompoundTag nbt) {
+		if (!nbt.contains("BlockStateTag", Tag.TAG_COMPOUND)) {
 			return;
 		}
-		NbtCompound blockStateTag = nbt.getCompound("BlockStateTag");
+		CompoundTag blockStateTag = nbt.getCompound("BlockStateTag");
 		if (Boolean.parseBoolean(blockStateTag.getString("can_summon"))) {
-			lines.add(Text.translatable("spectrum.tooltip.able_to_summon_warden").formatted(Formatting.GRAY));
+			lines.add(Component.translatable("spectrum.tooltip.able_to_summon_warden").withStyle(ChatFormatting.GRAY));
 		}
 	}
 	
-	private static void addSignTooltips(List<Text> lines, NbtCompound nbt) {
-		if (!nbt.contains("BlockEntityTag", NbtElement.COMPOUND_TYPE)) {
+	private static void addSignTooltips(List<Component> lines, CompoundTag nbt) {
+		if (!nbt.contains("BlockEntityTag", Tag.TAG_COMPOUND)) {
 			return;
 		}
-		NbtCompound blockEntityTag = nbt.getCompound("BlockEntityTag");
-		addSignText(lines, SignText.CODEC.parse(NbtOps.INSTANCE, blockEntityTag.getCompound("front_text")));
-		addSignText(lines, SignText.CODEC.parse(NbtOps.INSTANCE, blockEntityTag.getCompound("back_text")));
+		CompoundTag blockEntityTag = nbt.getCompound("BlockEntityTag");
+		addSignText(lines, SignText.DIRECT_CODEC.parse(NbtOps.INSTANCE, blockEntityTag.getCompound("front_text")));
+		addSignText(lines, SignText.DIRECT_CODEC.parse(NbtOps.INSTANCE, blockEntityTag.getCompound("back_text")));
 	}
 
-	private static void addSignText(List<Text> lines, DataResult<SignText> signText) {
+	private static void addSignText(List<Component> lines, DataResult<SignText> signText) {
 		if(signText.result().isPresent()) {
 			SignText st = signText.result().get();
-			Style style = Style.EMPTY.withColor(st.getColor().getSignColor());
-			for (Text text : st.getMessages(false)) {
-				lines.addAll(text.getWithStyle(style));
+			Style style = Style.EMPTY.withColor(st.getColor().getTextColor());
+			for (Component text : st.getMessages(false)) {
+				lines.addAll(text.toFlatList(style));
 			}
 		}
 	}
 
-	public static void addSpawnerTooltips(List<Text> lines, NbtCompound nbt) {
-		if (!nbt.contains("BlockEntityTag", NbtElement.COMPOUND_TYPE)) {
+	public static void addSpawnerTooltips(List<Component> lines, CompoundTag nbt) {
+		if (!nbt.contains("BlockEntityTag", Tag.TAG_COMPOUND)) {
 			return;
 		}
 		
 		Optional<EntityType<?>> entityType = Optional.empty();
-		NbtCompound blockEntityTag = nbt.getCompound("BlockEntityTag");
+		CompoundTag blockEntityTag = nbt.getCompound("BlockEntityTag");
 		
-		if (blockEntityTag.contains("SpawnData", NbtElement.COMPOUND_TYPE)
-				&& blockEntityTag.getCompound("SpawnData").contains("entity", NbtElement.COMPOUND_TYPE)
-				&& blockEntityTag.getCompound("SpawnData").getCompound("entity").contains("id", NbtElement.STRING_TYPE)) {
+		if (blockEntityTag.contains("SpawnData", Tag.TAG_COMPOUND)
+				&& blockEntityTag.getCompound("SpawnData").contains("entity", Tag.TAG_COMPOUND)
+				&& blockEntityTag.getCompound("SpawnData").getCompound("entity").contains("id", Tag.TAG_STRING)) {
 			String spawningEntityType = blockEntityTag.getCompound("SpawnData").getCompound("entity").getString("id");
-			entityType = EntityType.get(spawningEntityType);
+			entityType = EntityType.byString(spawningEntityType);
 		}
 		
 		try {
@@ -88,27 +92,27 @@ public class SpectrumTooltips {
 			short requiredPlayerRange = blockEntityTag.getShort("RequiredPlayerRange");
 			
 			if (entityType.isPresent()) {
-				lines.add(Text.translatable(entityType.get().getTranslationKey()));
+				lines.add(Component.translatable(entityType.get().getDescriptionId()));
 			} else {
-				lines.add(Text.translatable("item.spectrum.spawner.tooltip.unknown_mob"));
+				lines.add(Component.translatable("item.spectrum.spawner.tooltip.unknown_mob"));
 			}
 			if (spawnCount > 0) {
-				lines.add(Text.translatable("item.spectrum.spawner.tooltip.spawn_count", spawnCount).formatted(Formatting.GRAY));
+				lines.add(Component.translatable("item.spectrum.spawner.tooltip.spawn_count", spawnCount).withStyle(ChatFormatting.GRAY));
 			}
 			if (minSpawnDelay > 0) {
-				lines.add(Text.translatable("item.spectrum.spawner.tooltip.min_spawn_delay", minSpawnDelay).formatted(Formatting.GRAY));
+				lines.add(Component.translatable("item.spectrum.spawner.tooltip.min_spawn_delay", minSpawnDelay).withStyle(ChatFormatting.GRAY));
 			}
 			if (maxSpawnDelay > 0) {
-				lines.add(Text.translatable("item.spectrum.spawner.tooltip.max_spawn_delay", maxSpawnDelay).formatted(Formatting.GRAY));
+				lines.add(Component.translatable("item.spectrum.spawner.tooltip.max_spawn_delay", maxSpawnDelay).withStyle(ChatFormatting.GRAY));
 			}
 			if (spawnRange > 0) {
-				lines.add(Text.translatable("item.spectrum.spawner.tooltip.spawn_range", spawnRange).formatted(Formatting.GRAY));
+				lines.add(Component.translatable("item.spectrum.spawner.tooltip.spawn_range", spawnRange).withStyle(ChatFormatting.GRAY));
 			}
 			if (requiredPlayerRange > 0) {
-				lines.add(Text.translatable("item.spectrum.spawner.tooltip.required_player_range", requiredPlayerRange).formatted(Formatting.GRAY));
+				lines.add(Component.translatable("item.spectrum.spawner.tooltip.required_player_range", requiredPlayerRange).withStyle(ChatFormatting.GRAY));
 			}
 		} catch (Exception e) {
-			lines.add(Text.translatable("item.spectrum.spawner.tooltip.unknown_mob"));
+			lines.add(Component.translatable("item.spectrum.spawner.tooltip.unknown_mob"));
 		}
 	}
 	

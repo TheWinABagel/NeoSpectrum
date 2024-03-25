@@ -1,14 +1,20 @@
 package de.dafuqs.spectrum.mixin.client;
 
-import de.dafuqs.spectrum.particle.render.*;
-import net.minecraft.client.particle.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import de.dafuqs.spectrum.particle.render.EarlyRenderingParticleContainer;
+import de.dafuqs.spectrum.particle.render.ExtendedParticleManager;
+import net.minecraft.client.Camera;
+import net.minecraft.client.particle.Particle;
+import net.minecraft.client.particle.ParticleEngine;
+import net.minecraft.client.renderer.MultiBufferSource;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-@Mixin(ParticleManager.class)
+@Mixin(ParticleEngine.class)
 public class MixinParticleManager implements ExtendedParticleManager {
 
     @Unique
@@ -25,7 +31,7 @@ public class MixinParticleManager implements ExtendedParticleManager {
     }
 
     @Override
-    public void render(final MatrixStack matrices, final VertexConsumerProvider vertexConsumers, final Camera camera, final float tickDelta) {
+    public void render(final PoseStack matrices, final MultiBufferSource vertexConsumers, final Camera camera, final float tickDelta) {
         spectrum$earlyRenderingParticleContainer.render(matrices, vertexConsumers, camera, tickDelta);
     }
 

@@ -1,18 +1,25 @@
 package de.dafuqs.spectrum.mixin;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.entity.entity.*;
-import de.dafuqs.spectrum.recipe.primordial_fire_burning.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.item.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.world.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import de.dafuqs.spectrum.api.item.DamageAwareItem;
+import de.dafuqs.spectrum.api.item.GravitableItem;
+import de.dafuqs.spectrum.api.item.ItemDamageImmunity;
+import de.dafuqs.spectrum.api.item.TickAwareItem;
+import de.dafuqs.spectrum.recipe.primordial_fire_burning.PrimordialFireBurningRecipe;
+import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ItemEntity.class)
 public abstract class ItemEntityMixin {
@@ -27,9 +34,9 @@ public abstract class ItemEntityMixin {
 	public abstract boolean damage(DamageSource source, float amount);
 	
 	@Inject(at = @At("TAIL"), method = "<init>(Lnet/minecraft/world/World;DDDLnet/minecraft/item/ItemStack;DDD)V")
-	public void ItemEntity(World world, double x, double y, double z, ItemStack stack, double velocityX, double velocityY, double velocityZ, CallbackInfo ci) {
+	public void ItemEntity(Level world, double x, double y, double z, ItemStack stack, double velocityX, double velocityY, double velocityZ, CallbackInfo ci) {
 		// item stacks that are enchanted with damage proof should never despawn
-		if (EnchantmentHelper.getLevel(SpectrumEnchantments.STEADFAST, stack) > 0) {
+		if (EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.STEADFAST, stack) > 0) {
 			setNeverDespawn();
 		}
 	}
@@ -38,22 +45,22 @@ public abstract class ItemEntityMixin {
 	public void tick(CallbackInfo ci) {
 		// protect steadfast enchanted item stacks from the void by letting them float above it
 		ItemEntity thisItemEntity = ((ItemEntity) (Object) this);
-		if (!thisItemEntity.hasNoGravity() && thisItemEntity.getWorld().getTime() % 8 == 0) {
-			int worldMinY = thisItemEntity.getWorld().getBottomY();
-			if (!thisItemEntity.isOnGround()
-					&& thisItemEntity.getPos().getY() < worldMinY + 2
-					&& EnchantmentHelper.getLevel(SpectrumEnchantments.STEADFAST, thisItemEntity.getStack()) > 0) {
+		if (!thisItemEntity.isNoGravity() && thisItemEntity.level().getGameTime() % 8 == 0) {
+			int worldMinY = thisItemEntity.level().getMinBuildHeight();
+			if (!thisItemEntity.onGround()
+					&& thisItemEntity.position().y() < worldMinY + 2
+					&& EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.STEADFAST, thisItemEntity.getItem()) > 0) {
 				
-				if (thisItemEntity.getPos().getY() < worldMinY + 1) {
-					thisItemEntity.setPosition(thisItemEntity.getPos().x, worldMinY + 1, thisItemEntity.getPos().z);
+				if (thisItemEntity.position().y() < worldMinY + 1) {
+					thisItemEntity.setPos(thisItemEntity.position().x, worldMinY + 1, thisItemEntity.position().z);
 				}
 				
-				thisItemEntity.setVelocity(0, 0, 0);
+				thisItemEntity.setDeltaMovement(0, 0, 0);
 				thisItemEntity.setNoGravity(true);
 			}
 		}
 		
-		if (thisItemEntity.getStack().getItem() instanceof TickAwareItem tickingItem) {
+		if (thisItemEntity.getItem().getItem() instanceof TickAwareItem tickingItem) {
 			tickingItem.onItemEntityTicked(thisItemEntity);
 		}
 	}
@@ -67,12 +74,12 @@ public abstract class ItemEntityMixin {
 	
 	@Inject(method = "damage(Lnet/minecraft/entity/damage/DamageSource;F)Z", at = @At("HEAD"), cancellable = true)
 	private void isDamageProof(DamageSource source, float amount, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-		if (ItemDamageImmunity.isImmuneTo(((ItemEntity) (Object) this).getStack(), source)) {
+		if (ItemDamageImmunity.isImmuneTo(((ItemEntity) (Object) this).getItem(), source)) {
 			callbackInfoReturnable.setReturnValue(true);
 		}
-		if(source.isOf(SpectrumDamageTypes.PRIMORDIAL_FIRE)) {
+		if(source.is(SpectrumDamageTypes.PRIMORDIAL_FIRE)) {
 			ItemEntity thisItemEntity = ((ItemEntity) (Object) this);
-			World world = thisItemEntity.getWorld();
+			Level world = thisItemEntity.level();
 
 			if(PrimordialFireBurningRecipe.processItemEntity(world, thisItemEntity)) {
 				callbackInfoReturnable.setReturnValue(true);
@@ -82,7 +89,7 @@ public abstract class ItemEntityMixin {
 	
 	@Inject(method = "isFireImmune()Z", at = @At("HEAD"), cancellable = true)
 	private void isFireProof(CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-		if (ItemDamageImmunity.isImmuneTo(((ItemEntity) (Object) this).getStack(), DamageTypeTags.IS_FIRE)) {
+		if (ItemDamageImmunity.isImmuneTo(((ItemEntity) (Object) this).getItem(), DamageTypeTags.IS_FIRE)) {
 			callbackInfoReturnable.setReturnValue(true);
 		}
 	}
@@ -91,16 +98,16 @@ public abstract class ItemEntityMixin {
 	public void doGravityEffects(CallbackInfo ci) {
 		ItemEntity itemEntity = ((ItemEntity) (Object) this);
 		
-		if (itemEntity.hasNoGravity()) {
+		if (itemEntity.isNoGravity()) {
 			return;
 		}
 		
-		ItemStack stack = itemEntity.getStack();
+		ItemStack stack = itemEntity.getItem();
 		Item item = stack.getItem();
 		
 		if (item instanceof GravitableItem gravitableItem) {
 			// if the stack is floating really high => delete it
-			gravitableItem.applyGravity(stack, itemEntity.getWorld(), itemEntity);
+			gravitableItem.applyGravity(stack, itemEntity.level(), itemEntity);
 		}
 		
 	}

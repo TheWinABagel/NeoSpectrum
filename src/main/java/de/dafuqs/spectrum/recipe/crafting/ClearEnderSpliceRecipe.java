@@ -1,22 +1,22 @@
 package de.dafuqs.spectrum.recipe.crafting;
 
-import de.dafuqs.spectrum.items.magic_items.*;
+import de.dafuqs.spectrum.items.magic_items.EnderSpliceItem;
 import de.dafuqs.spectrum.recipe.EmptyRecipeSerializer;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.Level;
 
 public class ClearEnderSpliceRecipe extends SingleItemCraftingRecipe {
 	
 	public static final RecipeSerializer<ClearEnderSpliceRecipe> SERIALIZER = new EmptyRecipeSerializer<>(ClearEnderSpliceRecipe::new);
 	
-	public ClearEnderSpliceRecipe(Identifier identifier) {
+	public ClearEnderSpliceRecipe(ResourceLocation identifier) {
 		super(identifier);
 	}
 	
 	@Override
-	public boolean matches(World world, ItemStack stack) {
+	public boolean matches(Level world, ItemStack stack) {
 		return stack.getItem() instanceof EnderSpliceItem && EnderSpliceItem.hasTeleportTarget(stack);
 	}
 	

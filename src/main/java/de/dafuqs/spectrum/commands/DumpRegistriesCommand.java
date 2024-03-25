@@ -1,31 +1,34 @@
 package de.dafuqs.spectrum.commands;
 
-import com.mojang.brigadier.*;
-import net.fabricmc.loader.api.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.command.*;
-import net.minecraft.text.*;
+import com.mojang.brigadier.CommandDispatcher;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 
 
 public class DumpRegistriesCommand {
 
-	public static void register(CommandDispatcher<ServerCommandSource> dispatcher) {
-		dispatcher.register(CommandManager.literal("spectrum_dump_registries").executes((context) -> execute(context.getSource())));
+	public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+		dispatcher.register(Commands.literal("spectrum_dump_registries").executes((context) -> execute(context.getSource())));
 	}
 
-	private static int execute(ServerCommandSource source) {
+	private static int execute(CommandSourceStack source) {
 		File directory = FabricLoader.getInstance().getGameDir().resolve("registry_dump").toFile();
 
-		source.getRegistryManager().streamAllRegistries().forEach(entry -> {
-			File file = new File(directory, entry.key().getValue().toString().replace(":", "-") + ".txt");
+		source.registryAccess().registries().forEach(entry -> {
+			File file = new File(directory, entry.key().location().toString().replace(":", "-") + ".txt");
 			file.getParentFile().mkdirs();
 			try {
 				file.createNewFile();
 				FileWriter writer = new FileWriter(file);
-				for (RegistryKey<?> e : entry.value().getKeys()) {
-					writer.write(e.getValue().toString());
+				for (ResourceKey<?> e : entry.value().registryKeySet()) {
+					writer.write(e.location().toString());
 					writer.write(System.lineSeparator());
 				}
 				writer.close();
@@ -34,7 +37,7 @@ public class DumpRegistriesCommand {
 			}
 		});
 
-		source.sendMessage(Text.literal("Registries exported to directory 'registry_dump'"));
+		source.sendSystemMessage(Component.literal("Registries exported to directory 'registry_dump'"));
 
 		return 0;
 	}

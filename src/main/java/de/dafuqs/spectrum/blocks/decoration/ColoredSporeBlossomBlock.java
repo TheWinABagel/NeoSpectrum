@@ -1,26 +1,28 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import com.google.common.collect.*;
-import de.dafuqs.spectrum.particle.*;
-import net.minecraft.block.*;
-import net.minecraft.particle.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import com.google.common.collect.Maps;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.SporeBlossomBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Map;
 
 public class ColoredSporeBlossomBlock extends SporeBlossomBlock {
 	
 	private static final Map<DyeColor, ColoredSporeBlossomBlock> BLOSSOMS = Maps.newEnumMap(DyeColor.class);
 	protected final DyeColor color;
 	
-	protected final ParticleEffect fallingParticleType;
-	protected final ParticleEffect airParticleType;
+	protected final ParticleOptions fallingParticleType;
+	protected final ParticleOptions airParticleType;
 	
-	public ColoredSporeBlossomBlock(Settings settings, DyeColor color) {
+	public ColoredSporeBlossomBlock(Properties settings, DyeColor color) {
 		super(settings);
 		this.color = color;
 		BLOSSOMS.put(color, this);
@@ -36,7 +38,7 @@ public class ColoredSporeBlossomBlock extends SporeBlossomBlock {
 		return BLOSSOMS.get(color);
 	}
 	
-	public static ParticleEffect getFallingParticleType(@NotNull DyeColor dyeColor) {
+	public static ParticleOptions getFallingParticleType(@NotNull DyeColor dyeColor) {
 		switch (dyeColor) {
 			case BLACK -> {
 				return SpectrumParticleTypes.BLACK_FALLING_SPORE_BLOSSOM;
@@ -89,7 +91,7 @@ public class ColoredSporeBlossomBlock extends SporeBlossomBlock {
 		}
 	}
 	
-	public static ParticleEffect getAirParticleType(@NotNull DyeColor dyeColor) {
+	public static ParticleOptions getAirParticleType(@NotNull DyeColor dyeColor) {
 		switch (dyeColor) {
 			case BLACK -> {
 				return SpectrumParticleTypes.BLACK_SPORE_BLOSSOM_AIR;
@@ -143,7 +145,7 @@ public class ColoredSporeBlossomBlock extends SporeBlossomBlock {
 	}
 	
 	@Override
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
 		int i = pos.getX();
 		int j = pos.getY();
 		int k = pos.getZ();
@@ -151,12 +153,12 @@ public class ColoredSporeBlossomBlock extends SporeBlossomBlock {
 		double e = (double) j + 0.7D;
 		double f = (double) k + random.nextDouble();
 		world.addParticle(this.fallingParticleType, d, e, f, 0.0D, 0.0D, 0.0D);
-		BlockPos.Mutable mutable = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
 		
 		for (int l = 0; l < 14; ++l) {
-			mutable.set(i + MathHelper.nextInt(random, -10, 10), j - random.nextInt(10), k + MathHelper.nextInt(random, -10, 10));
+			mutable.set(i + Mth.nextInt(random, -10, 10), j - random.nextInt(10), k + Mth.nextInt(random, -10, 10));
 			BlockState blockState = world.getBlockState(mutable);
-			if (!blockState.isFullCube(world, mutable)) {
+			if (!blockState.isCollisionShapeFullBlock(world, mutable)) {
 				world.addParticle(this.airParticleType, (double) mutable.getX() + random.nextDouble(), (double) mutable.getY() + random.nextDouble(), (double) mutable.getZ() + random.nextDouble(), 0.0D, 0.0D, 0.0D);
 			}
 		}

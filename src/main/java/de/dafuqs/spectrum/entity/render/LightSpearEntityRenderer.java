@@ -1,52 +1,58 @@
 package de.dafuqs.spectrum.entity.render;
 
-import de.dafuqs.spectrum.entity.entity.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import de.dafuqs.spectrum.entity.entity.LightShardBaseEntity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 
 @Environment(EnvType.CLIENT)
 public class LightSpearEntityRenderer extends EntityRenderer<LightShardBaseEntity> {
     
-    public LightSpearEntityRenderer(EntityRendererFactory.Context ctx) {
+    public LightSpearEntityRenderer(EntityRendererProvider.Context ctx) {
         super(ctx);
     }
     
     @Override
-    public void render(LightShardBaseEntity shard, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
-		matrices.push();
+    public void render(LightShardBaseEntity shard, float yaw, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light) {
+		matrices.pushPose();
 	
-		var age = shard.age;
-		var alpha = MathHelper.clamp(1 - MathHelper.lerp(tickDelta, shard.getVanishingProgress(age - 1), shard.getVanishingProgress(age)), 0F, 1F);
-		var scaleFactor = MathHelper.sin((age + tickDelta) / 8F) / 6F + shard.getScaleOffset();
+		var age = shard.tickCount;
+		var alpha = Mth.clamp(1 - Mth.lerp(tickDelta, shard.getVanishingProgress(age - 1), shard.getVanishingProgress(age)), 0F, 1F);
+		var scaleFactor = Mth.sin((age + tickDelta) / 8F) / 6F + shard.getScaleOffset();
 	
-		matrices.multiply(this.dispatcher.getRotation());
-		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(MathHelper.lerp(tickDelta, shard.prevYaw, shard.getYaw()) - 45.0F));
-		matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(0 + MathHelper.lerp(tickDelta, shard.prevPitch, shard.getPitch())));
+		matrices.mulPose(this.entityRenderDispatcher.cameraOrientation());
+		matrices.mulPose(Axis.YP.rotationDegrees(Mth.lerp(tickDelta, shard.yRotO, shard.getYRot()) - 45.0F));
+		matrices.mulPose(Axis.ZP.rotationDegrees(0 + Mth.lerp(tickDelta, shard.xRotO, shard.getXRot())));
 	
 		matrices.scale(scaleFactor, scaleFactor, 1);
 		matrices.translate(-0.5F, -0.5F, 0);
 	
-		var consumer = vertexConsumers.getBuffer(RenderLayer.getEntityTranslucentCull(getTexture(shard)));
-		var matrix = matrices.peek();
-		var positions = matrix.getPositionMatrix();
-		var normals = matrix.getNormalMatrix();
+		var consumer = vertexConsumers.getBuffer(RenderType.entityTranslucentCull(getTexture(shard)));
+		var matrix = matrices.last();
+		var positions = matrix.pose();
+		var normals = matrix.normal();
 	
-		consumer.vertex(positions, 0, 0, 0).color(1f, 1f, 1f, alpha).texture(0, 1).overlay(OverlayTexture.DEFAULT_UV).light(LightmapTextureManager.MAX_LIGHT_COORDINATE).normal(normals, 0, 1, 0).next();
-        consumer.vertex(positions, 1, 0, 0).color(1f, 1f, 1f, alpha).texture(1, 1).overlay(OverlayTexture.DEFAULT_UV).light(LightmapTextureManager.MAX_LIGHT_COORDINATE).normal(normals, 0, 1, 0).next();
-        consumer.vertex(positions, 1, 1, 0).color(1f, 1f, 1f, alpha).texture(1, 0).overlay(OverlayTexture.DEFAULT_UV).light(LightmapTextureManager.MAX_LIGHT_COORDINATE).normal(normals, 0, 1, 0).next();
-        consumer.vertex(positions, 0, 1, 0).color(1f, 1f, 1f, alpha).texture(0, 0).overlay(OverlayTexture.DEFAULT_UV).light(LightmapTextureManager.MAX_LIGHT_COORDINATE).normal(normals, 0, 1, 0).next();
+		consumer.vertex(positions, 0, 0, 0).color(1f, 1f, 1f, alpha).uv(0, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normals, 0, 1, 0).endVertex();
+        consumer.vertex(positions, 1, 0, 0).color(1f, 1f, 1f, alpha).uv(1, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normals, 0, 1, 0).endVertex();
+        consumer.vertex(positions, 1, 1, 0).color(1f, 1f, 1f, alpha).uv(1, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normals, 0, 1, 0).endVertex();
+        consumer.vertex(positions, 0, 1, 0).color(1f, 1f, 1f, alpha).uv(0, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normals, 0, 1, 0).endVertex();
         
-        matrices.pop();
+        matrices.popPose();
         
         super.render(shard, yaw, tickDelta, matrices, vertexConsumers, light);
     }
     
     @Override
-    public Identifier getTexture(LightShardBaseEntity entity) {
+    public ResourceLocation getTexture(LightShardBaseEntity entity) {
         return entity.getTexture();
     }
 }

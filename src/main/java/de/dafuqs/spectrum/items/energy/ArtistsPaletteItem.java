@@ -1,32 +1,36 @@
 package de.dafuqs.spectrum.items.energy;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.energy.storage.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.items.trinkets.*;
-import de.dafuqs.spectrum.progression.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.entry.*;
-import net.minecraft.server.network.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.InkStorageItem;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.storage.TotalCappedElementalInkStorage;
+import de.dafuqs.spectrum.api.item.LoomPatternProvider;
+import de.dafuqs.spectrum.items.trinkets.SpectrumTrinketItem;
+import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
+import de.dafuqs.spectrum.registries.SpectrumBannerPatterns;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BannerPattern;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class ArtistsPaletteItem extends SpectrumTrinketItem implements InkStorageItem<ArtistsPaletteItem.ArtistsPaletteInkStorage>, LoomPatternProvider {
 	
 	private final long maxEnergyTotal;
 	
-	public ArtistsPaletteItem(Settings settings, long maxEnergyTotal) {
+	public ArtistsPaletteItem(Properties settings, long maxEnergyTotal) {
 		super(settings, SpectrumCommon.locate("unlocks/trinkets/artists_palette"));
 		this.maxEnergyTotal = maxEnergyTotal;
 	}
@@ -38,7 +42,7 @@ public class ArtistsPaletteItem extends SpectrumTrinketItem implements InkStorag
 	
 	@Override
 	public ArtistsPaletteInkStorage getEnergyStorage(ItemStack itemStack) {
-		NbtCompound compound = itemStack.getNbt();
+		CompoundTag compound = itemStack.getTag();
 		if (compound != null && compound.contains("EnergyStore")) {
 			return ArtistsPaletteInkStorage.fromNbt(compound.getCompound("EnergyStore"));
 		}
@@ -47,29 +51,29 @@ public class ArtistsPaletteItem extends SpectrumTrinketItem implements InkStorag
 	
 	// Omitting this would crash outside the dev env o.O
 	@Override
-	public ItemStack getDefaultStack() {
-		return super.getDefaultStack();
+	public ItemStack getDefaultInstance() {
+		return super.getDefaultInstance();
 	}
 	
 	@Override
 	public void setEnergyStorage(ItemStack itemStack, InkStorage storage) {
 		if (storage instanceof ArtistsPaletteInkStorage artistsPaletteInkStorage) {
-			NbtCompound compound = itemStack.getOrCreateNbt();
+			CompoundTag compound = itemStack.getOrCreateTag();
 			compound.put("EnergyStore", artistsPaletteInkStorage.toNbt());
 		}
 	}
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
-		tooltip.add(Text.translatable("item.spectrum.pigment_palette.tooltip.target").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
+		tooltip.add(Component.translatable("item.spectrum.pigment_palette.tooltip.target").withStyle(ChatFormatting.GRAY));
 		getEnergyStorage(stack).addTooltip(tooltip, true);
 		addBannerPatternProviderTooltip(tooltip);
 	}
 	
 	@Override
-	public RegistryEntry<BannerPattern> getPattern() {
+	public Holder<BannerPattern> getPattern() {
 		return SpectrumBannerPatterns.PALETTE;
 	}
 
@@ -83,8 +87,8 @@ public class ArtistsPaletteItem extends SpectrumTrinketItem implements InkStorag
 			super(maxEnergyTotal, cyan, magenta, yellow, black, white);
 		}
 
-		public static @Nullable ArtistsPaletteItem.ArtistsPaletteInkStorage fromNbt(@NotNull NbtCompound compound) {
-			if (compound.contains("MaxEnergyTotal", NbtElement.LONG_TYPE)) {
+		public static @Nullable ArtistsPaletteItem.ArtistsPaletteInkStorage fromNbt(@NotNull CompoundTag compound) {
+			if (compound.contains("MaxEnergyTotal", Tag.TAG_LONG)) {
 				long maxEnergyTotal = compound.getLong("MaxEnergyTotal");
 				long cyan = compound.getLong("Cyan");
 				long magenta = compound.getLong("Magenta");
@@ -96,7 +100,7 @@ public class ArtistsPaletteItem extends SpectrumTrinketItem implements InkStorag
 			return null;
 		}
 
-		public long addEnergy(InkColor color, long amount, ItemStack stack, ServerPlayerEntity serverPlayerEntity) {
+		public long addEnergy(InkColor color, long amount, ItemStack stack, ServerPlayer serverPlayerEntity) {
 			long leftoverEnergy = super.addEnergy(color, amount);
 			if (leftoverEnergy != amount) {
 				SpectrumAdvancementCriteria.INK_CONTAINER_INTERACTION.trigger(serverPlayerEntity, stack, this, color, amount - leftoverEnergy);
@@ -104,7 +108,7 @@ public class ArtistsPaletteItem extends SpectrumTrinketItem implements InkStorag
 			return leftoverEnergy;
 		}
 
-		public boolean requestEnergy(InkColor color, long amount, ItemStack stack, ServerPlayerEntity serverPlayerEntity) {
+		public boolean requestEnergy(InkColor color, long amount, ItemStack stack, ServerPlayer serverPlayerEntity) {
 			boolean success = super.requestEnergy(color, amount);
 			if (success) {
 				SpectrumAdvancementCriteria.INK_CONTAINER_INTERACTION.trigger(serverPlayerEntity, stack, this, color, -amount);
@@ -112,7 +116,7 @@ public class ArtistsPaletteItem extends SpectrumTrinketItem implements InkStorag
 			return success;
 		}
 
-		public long drainEnergy(InkColor color, long amount, ItemStack stack, ServerPlayerEntity serverPlayerEntity) {
+		public long drainEnergy(InkColor color, long amount, ItemStack stack, ServerPlayer serverPlayerEntity) {
 			long drainedAmount = super.drainEnergy(color, amount);
 			if (drainedAmount != 0) {
 				SpectrumAdvancementCriteria.INK_CONTAINER_INTERACTION.trigger(serverPlayerEntity, stack, this, color, -drainedAmount);

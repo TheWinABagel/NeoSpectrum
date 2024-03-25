@@ -1,14 +1,16 @@
 package de.dafuqs.spectrum.particle.effect;
 
-import com.mojang.brigadier.*;
-import com.mojang.brigadier.exceptions.*;
-import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.*;
-import de.dafuqs.spectrum.particle.*;
-import net.minecraft.network.*;
-import net.minecraft.particle.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.event.*;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.gameevent.BlockPositionSource;
+import net.minecraft.world.level.gameevent.PositionSource;
+import net.minecraft.world.level.gameevent.PositionSourceType;
 
 public class ItemTransmissionParticleEffect extends SimpleTransmissionParticleEffect {
 	
@@ -19,9 +21,9 @@ public class ItemTransmissionParticleEffect extends SimpleTransmissionParticleEf
 			).apply(instance, ItemTransmissionParticleEffect::new));
 	
 	@SuppressWarnings("deprecation")
-	public static final Factory<ItemTransmissionParticleEffect> FACTORY = new Factory<>() {
+	public static final Deserializer<ItemTransmissionParticleEffect> FACTORY = new Deserializer<>() {
 		@Override
-		public ItemTransmissionParticleEffect read(ParticleType<ItemTransmissionParticleEffect> particleType, StringReader stringReader) throws CommandSyntaxException {
+		public ItemTransmissionParticleEffect fromCommand(ParticleType<ItemTransmissionParticleEffect> particleType, StringReader stringReader) throws CommandSyntaxException {
 			stringReader.expect(' ');
 			float f = (float) stringReader.readDouble();
 			stringReader.expect(' ');
@@ -30,13 +32,13 @@ public class ItemTransmissionParticleEffect extends SimpleTransmissionParticleEf
 			float h = (float) stringReader.readDouble();
 			stringReader.expect(' ');
 			int i = stringReader.readInt();
-			BlockPos blockPos = BlockPos.ofFloored(f, g, h);
+			BlockPos blockPos = BlockPos.containing(f, g, h);
 			return new ItemTransmissionParticleEffect(new BlockPositionSource(blockPos), i);
 		}
 		
 		@Override
-		public ItemTransmissionParticleEffect read(ParticleType<ItemTransmissionParticleEffect> particleType, PacketByteBuf packetByteBuf) {
-			PositionSource positionSource = PositionSourceType.read(packetByteBuf);
+		public ItemTransmissionParticleEffect fromNetwork(ParticleType<ItemTransmissionParticleEffect> particleType, FriendlyByteBuf packetByteBuf) {
+			PositionSource positionSource = PositionSourceType.fromNetwork(packetByteBuf);
 			int i = packetByteBuf.readVarInt();
 			return new ItemTransmissionParticleEffect(positionSource, i);
 		}

@@ -1,10 +1,11 @@
 package de.dafuqs.spectrum.api.energy.color;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.registry.entry.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.joml.*;
+import de.dafuqs.spectrum.registries.SpectrumRegistries;
+import net.minecraft.core.Holder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
+import org.joml.Vector3f;
 
 import java.util.*;
 
@@ -17,9 +18,9 @@ public abstract class InkColor {
 	protected final DyeColor dyeColor;
 	protected final Vector3f color;
 	
-	protected final Identifier requiredAdvancement;
+	protected final ResourceLocation requiredAdvancement;
 	
-	protected InkColor(DyeColor dyeColor, Vector3f color, Identifier requiredAdvancement) {
+	protected InkColor(DyeColor dyeColor, Vector3f color, ResourceLocation requiredAdvancement) {
 		this.dyeColor = dyeColor;
 		this.color = color;
 		this.requiredAdvancement = requiredAdvancement;
@@ -67,26 +68,26 @@ public abstract class InkColor {
 		return dyeColor.getId();
 	}
 	
-	public Text getName() {
-		return Text.translatable("spectrum.ink.color." + this);
+	public Component getName() {
+		return Component.translatable("spectrum.ink.color." + this);
 	}
 	
 	public Vector3f getColor() {
 		return this.color;
 	}
 	
-	public Identifier getRequiredAdvancement() {
+	public ResourceLocation getRequiredAdvancement() {
 		return requiredAdvancement;
 	}
 	
-	public static InkColor getRandomMixedColor(InkColor color1, InkColor color2, net.minecraft.util.math.random.Random random) {
+	public static InkColor getRandomMixedColor(InkColor color1, InkColor color2, net.minecraft.util.RandomSource random) {
 		boolean color1Elemental = color1 instanceof ElementalColor;
 		boolean color2Elemental = color2 instanceof ElementalColor;
 
 		if (color1Elemental && color2Elemental) {
 			List<InkColor> possibleOutcomes = new ArrayList<>();
 
-			for (RegistryEntry<InkColor> c : SpectrumRegistries.getEntries(SpectrumRegistries.INK_COLORS, InkColorTags.COMPOUND_COLORS)) {
+			for (Holder<InkColor> c : SpectrumRegistries.getEntries(SpectrumRegistries.INK_COLORS, InkColorTags.COMPOUND_COLORS)) {
 				if (((CompoundColor) c.value()).isMixedUsing((ElementalColor) color1) && ((CompoundColor) c.value()).isMixedUsing((ElementalColor) color2)) {
 					possibleOutcomes.add(c.value());
 				}

@@ -1,13 +1,20 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.GlassBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.EntityCollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class AlternatePlayerOnlyGlassBlock extends GlassBlock {
 	
@@ -16,52 +23,52 @@ public class AlternatePlayerOnlyGlassBlock extends GlassBlock {
 	// used for tinted glass to make light not shine through
 	private final boolean tinted;
 	
-	public AlternatePlayerOnlyGlassBlock(Settings settings, Block block, boolean tinted) {
+	public AlternatePlayerOnlyGlassBlock(Properties settings, Block block, boolean tinted) {
 		super(settings);
 		this.alternateBlock = block;
 		this.tinted = tinted;
 	}
 	
 	@Override
-	public boolean canPathfindThrough(BlockState state, BlockView world, BlockPos pos, NavigationType type) {
+	public boolean isPathfindable(BlockState state, BlockGetter world, BlockPos pos, PathComputationType type) {
 		return false;
 	}
 	
 	@Override
 	@Deprecated
-	public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		if (context instanceof EntityShapeContext entityShapeContext) {
+	public VoxelShape getCollisionShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		if (context instanceof EntityCollisionContext entityShapeContext) {
 			Entity entity = entityShapeContext.getEntity();
-			if (entity instanceof PlayerEntity) {
-				return VoxelShapes.empty();
+			if (entity instanceof Player) {
+				return Shapes.empty();
 			}
 		}
-		return state.getOutlineShape(world, pos);
+		return state.getShape(world, pos);
 	}
 	
 	@Override
-	public boolean isTransparent(BlockState state, BlockView world, BlockPos pos) {
+	public boolean propagatesSkylightDown(BlockState state, BlockGetter world, BlockPos pos) {
 		return !tinted;
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public int getOpacity(BlockState state, BlockView world, BlockPos pos) {
+	public int getLightBlock(BlockState state, BlockGetter world, BlockPos pos) {
 		if (tinted) {
 			return world.getMaxLightLevel();
 		} else {
-			return super.getOpacity(state, world, pos);
+			return super.getLightBlock(state, world, pos);
 		}
 	}
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public boolean isSideInvisible(BlockState state, BlockState stateFrom, Direction direction) {
-		if (stateFrom.isOf(this) || stateFrom.getBlock() == alternateBlock) {
+	public boolean skipRendering(BlockState state, BlockState stateFrom, Direction direction) {
+		if (stateFrom.is(this) || stateFrom.getBlock() == alternateBlock) {
 			return true;
 		}
 		
-		return super.isSideInvisible(state, stateFrom, direction);
+		return super.skipRendering(state, stateFrom, direction);
 	}
 	
 }

@@ -1,12 +1,13 @@
 package de.dafuqs.spectrum.compat.patchouli.pages;
 
-import com.mojang.blaze3d.systems.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import vazkii.patchouli.client.book.*;
-import vazkii.patchouli.client.book.gui.*;
-import vazkii.patchouli.client.book.page.abstr.*;
+import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.Level;
+import vazkii.patchouli.client.book.BookContentsBuilder;
+import vazkii.patchouli.client.book.BookEntry;
+import vazkii.patchouli.client.book.gui.GuiBook;
+import vazkii.patchouli.client.book.page.abstr.PageWithText;
 
 public class PageSnippet extends PageWithText {
 	
@@ -20,19 +21,19 @@ public class PageSnippet extends PageWithText {
 	int texture_height;
 	
 	@Override
-	public void build(World world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
+	public void build(Level world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
 		super.build(world, entry, builder, pageNum);
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float pticks) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float pticks) {
 		super.render(drawContext, mouseX, mouseY, pticks);
 		
 		parent.drawCenteredStringNoShadow(drawContext, title == null ? "" : i18n(title), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
 		GuiBook.drawSeparator(drawContext, book, 0, 12 + texture_height);
 		
 		RenderSystem.enableBlend();
-		drawContext.drawTexture(new Identifier(resource_path), 58 - texture_width / 2, 10, texture_x, texture_y, texture_width, texture_height, resource_width, resource_height);
+		drawContext.blit(new ResourceLocation(resource_path), 58 - texture_width / 2, 10, texture_x, texture_y, texture_width, texture_height, resource_width, resource_height);
 	}
 	
 	@Override

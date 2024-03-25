@@ -1,47 +1,50 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.items.trinkets.*;
-import dev.emi.trinkets.api.*;
-import it.unimi.dsi.fastutil.objects.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.item.*;
-import net.minecraft.predicate.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.predicate.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.items.trinkets.SpectrumTrinketItem;
+import dev.emi.trinkets.api.SlotReference;
+import dev.emi.trinkets.api.TrinketComponent;
+import dev.emi.trinkets.api.TrinketsApi;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-public class TrinketChangeCriterion extends AbstractCriterion<TrinketChangeCriterion.Conditions> {
+public class TrinketChangeCriterion extends SimpleCriterionTrigger<TrinketChangeCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("trinket_change");
+	static final ResourceLocation ID = SpectrumCommon.locate("trinket_change");
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 
 	@Override
-	protected Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate playerPredicate, AdvancementEntityPredicateDeserializer predicateDeserializer) {
-		ItemPredicate[] itemPredicates = ItemPredicate.deserializeAll(jsonObject.get("items"));
-		NumberRange.IntRange totalCountRange = NumberRange.IntRange.fromJson(jsonObject.get("total_count"));
-		NumberRange.IntRange spectrumCountRange = NumberRange.IntRange.fromJson(jsonObject.get("spectrum_count"));
+	protected Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate playerPredicate, DeserializationContext predicateDeserializer) {
+		ItemPredicate[] itemPredicates = ItemPredicate.fromJsonArray(jsonObject.get("items"));
+		MinMaxBounds.Ints totalCountRange = MinMaxBounds.Ints.fromJson(jsonObject.get("total_count"));
+		MinMaxBounds.Ints spectrumCountRange = MinMaxBounds.Ints.fromJson(jsonObject.get("spectrum_count"));
 
 		return new TrinketChangeCriterion.Conditions(playerPredicate, itemPredicates, totalCountRange, spectrumCountRange);
 	}
 
-	public void trigger(ServerPlayerEntity player) {
+	public void trigger(ServerPlayer player) {
 		this.trigger(player, (conditions) -> {
 			Optional<TrinketComponent> trinketComponent = TrinketsApi.getTrinketComponent(player);
 			if (trinketComponent.isPresent()) {
 				List<ItemStack> equippedStacks = new ArrayList<>();
 				int spectrumStacks = 0;
-				for (Pair<SlotReference, ItemStack> t : trinketComponent.get().getAllEquipped()) {
-					equippedStacks.add(t.getRight());
-					if (t.getRight().getItem() instanceof SpectrumTrinketItem) {
+				for (Tuple<SlotReference, ItemStack> t : trinketComponent.get().getAllEquipped()) {
+					equippedStacks.add(t.getB());
+					if (t.getB().getItem() instanceof SpectrumTrinketItem) {
 						spectrumStacks++;
 					}
 				}
@@ -51,13 +54,13 @@ public class TrinketChangeCriterion extends AbstractCriterion<TrinketChangeCrite
 		});
 	}
 	
-	public static class Conditions extends AbstractCriterionConditions {
+	public static class Conditions extends AbstractCriterionTriggerInstance {
 		
 		private final ItemPredicate[] itemPredicates;
-		private final NumberRange.IntRange totalCountRange;
-		private final NumberRange.IntRange spectrumCountRange;
+		private final MinMaxBounds.Ints totalCountRange;
+		private final MinMaxBounds.Ints spectrumCountRange;
 		
-		public Conditions(LootContextPredicate playerPredicate, ItemPredicate[] itemPredicates, NumberRange.IntRange totalCountRange, NumberRange.IntRange spectrumCountRange) {
+		public Conditions(ContextAwarePredicate playerPredicate, ItemPredicate[] itemPredicates, MinMaxBounds.Ints totalCountRange, MinMaxBounds.Ints spectrumCountRange) {
 			super(TrinketChangeCriterion.ID, playerPredicate);
 			this.itemPredicates = itemPredicates;
 			this.totalCountRange = totalCountRange;
@@ -65,24 +68,24 @@ public class TrinketChangeCriterion extends AbstractCriterion<TrinketChangeCrite
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
 			
 			if (this.itemPredicates.length > 0) {
 				JsonArray jsonObject2 = new JsonArray();
 				for (ItemPredicate itemPredicate : this.itemPredicates) {
-					jsonObject2.add(itemPredicate.toJson());
+					jsonObject2.add(itemPredicate.serializeToJson());
 				}
 				
 				jsonObject.add("items", jsonObject2);
 			}
-			jsonObject.add("total_count", this.totalCountRange.toJson());
-			jsonObject.add("spectrum_count", this.spectrumCountRange.toJson());
+			jsonObject.add("total_count", this.totalCountRange.serializeToJson());
+			jsonObject.add("spectrum_count", this.spectrumCountRange.serializeToJson());
 			return jsonObject;
 		}
 		
 		public boolean matches(List<ItemStack> trinketStacks, int totalCount, int spectrumCount) {
-			if (this.totalCountRange.test(totalCount) && this.spectrumCountRange.test(spectrumCount)) {
+			if (this.totalCountRange.matches(totalCount) && this.spectrumCountRange.matches(spectrumCount)) {
 				int i = this.itemPredicates.length;
 				if (i == 0) {
 					return true;
@@ -93,7 +96,7 @@ public class TrinketChangeCriterion extends AbstractCriterion<TrinketChangeCrite
 							return true;
 						}
 						if (!trinketStack.isEmpty()) {
-							requiredTrinkets.removeIf((item) -> item.test(trinketStack));
+							requiredTrinkets.removeIf((item) -> item.matches(trinketStack));
 						}
 					}
 					

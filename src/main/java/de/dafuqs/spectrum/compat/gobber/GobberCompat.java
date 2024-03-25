@@ -1,18 +1,19 @@
 package de.dafuqs.spectrum.compat.gobber;
 
-import de.dafuqs.spectrum.blocks.crystallarieum.*;
-import de.dafuqs.spectrum.compat.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.blockrenderlayer.v1.*;
-import net.fabricmc.fabric.api.item.v1.*;
-import net.fabricmc.fabric.api.object.builder.v1.block.*;
-import net.minecraft.block.*;
-import net.minecraft.block.piston.PistonBehavior;
-import net.minecraft.client.render.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.blocks.crystallarieum.CrystallarieumGrowableBlock;
+import de.dafuqs.spectrum.compat.SpectrumIntegrationPacks;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.PushReaction;
 
-import static de.dafuqs.spectrum.registries.SpectrumBlocks.*;
+import static de.dafuqs.spectrum.registries.SpectrumBlocks.registerBlockWithItem;
 
 public class GobberCompat extends SpectrumIntegrationPacks.ModIntegrationPack {
 	
@@ -37,13 +38,13 @@ public class GobberCompat extends SpectrumIntegrationPacks.ModIntegrationPack {
 	@Override
 	public void register() {
 		// BLOCKS
-		SMALL_GLOBETTE_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.create().pistonBehavior(PistonBehavior.DESTROY).hardness(1.0f).mapColor(Blocks.BLUE_CONCRETE.getDefaultMapColor()).requiresTool().nonOpaque(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
+		SMALL_GLOBETTE_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.of().pushReaction(PushReaction.DESTROY).destroyTime(1.0f).mapColor(Blocks.BLUE_CONCRETE.defaultMapColor()).requiresCorrectToolForDrops().noOcclusion(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
 		LARGE_GLOBETTE_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_GLOBETTE_BUD), CrystallarieumGrowableBlock.GrowthStage.LARGE);
 		GLOBETTE_CLUSTER = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_GLOBETTE_BUD), CrystallarieumGrowableBlock.GrowthStage.CLUSTER);
-		SMALL_GLOBETTE_NETHER_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.create().pistonBehavior(PistonBehavior.DESTROY).hardness(1.0f).mapColor(Blocks.RED_CONCRETE.getDefaultMapColor()).requiresTool().nonOpaque(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
+		SMALL_GLOBETTE_NETHER_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.of().pushReaction(PushReaction.DESTROY).destroyTime(1.0f).mapColor(Blocks.RED_CONCRETE.defaultMapColor()).requiresCorrectToolForDrops().noOcclusion(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
 		LARGE_GLOBETTE_NETHER_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_GLOBETTE_NETHER_BUD), CrystallarieumGrowableBlock.GrowthStage.LARGE);
 		GLOBETTE_NETHER_CLUSTER = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_GLOBETTE_NETHER_BUD), CrystallarieumGrowableBlock.GrowthStage.CLUSTER);
-		SMALL_GLOBETTE_END_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.create().pistonBehavior(PistonBehavior.DESTROY).hardness(1.0f).mapColor(Blocks.GREEN_CONCRETE.getDefaultMapColor()).requiresTool().nonOpaque(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
+		SMALL_GLOBETTE_END_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.of().pushReaction(PushReaction.DESTROY).destroyTime(1.0f).mapColor(Blocks.GREEN_CONCRETE.defaultMapColor()).requiresCorrectToolForDrops().noOcclusion(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
 		LARGE_GLOBETTE_END_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_GLOBETTE_END_BUD), CrystallarieumGrowableBlock.GrowthStage.LARGE);
 		GLOBETTE_END_CLUSTER = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_GLOBETTE_END_BUD), CrystallarieumGrowableBlock.GrowthStage.CLUSTER);
 		
@@ -80,14 +81,14 @@ public class GobberCompat extends SpectrumIntegrationPacks.ModIntegrationPack {
 	
 	@Override
 	public void registerClient() {
-		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_GLOBETTE_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_GLOBETTE_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(GLOBETTE_CLUSTER, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_GLOBETTE_END_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_GLOBETTE_END_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(GLOBETTE_END_CLUSTER, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_GLOBETTE_NETHER_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_GLOBETTE_NETHER_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(GLOBETTE_NETHER_CLUSTER, RenderLayer.getCutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_GLOBETTE_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_GLOBETTE_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(GLOBETTE_CLUSTER, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_GLOBETTE_END_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_GLOBETTE_END_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(GLOBETTE_END_CLUSTER, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_GLOBETTE_NETHER_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_GLOBETTE_NETHER_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(GLOBETTE_NETHER_CLUSTER, RenderType.cutout());
 	}
 }

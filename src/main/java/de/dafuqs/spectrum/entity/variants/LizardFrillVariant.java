@@ -1,12 +1,12 @@
 package de.dafuqs.spectrum.entity.variants;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.registries.SpectrumRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 
-public record LizardFrillVariant(Identifier texture) {
+public record LizardFrillVariant(ResourceLocation texture) {
 	
 	public static final LizardFrillVariant SIMPLE = register("simple", "textures/entity/lizard/frills_simple.png");
 	public static final LizardFrillVariant FANCY = register("fancy", "textures/entity/lizard/frills_fancy.png");
@@ -21,7 +21,7 @@ public record LizardFrillVariant(Identifier texture) {
 	}
 
 	private static TagKey<LizardFrillVariant> getReference(String name) {
-		return TagKey.of(SpectrumRegistries.LIZARD_FRILL_VARIANT_KEY, SpectrumCommon.locate(name));
+		return TagKey.create(SpectrumRegistries.LIZARD_FRILL_VARIANT_KEY, SpectrumCommon.locate(name));
 	}
 	
 	public static void init() {

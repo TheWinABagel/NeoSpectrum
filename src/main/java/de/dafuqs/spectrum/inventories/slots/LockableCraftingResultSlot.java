@@ -1,21 +1,22 @@
 package de.dafuqs.spectrum.inventories.slots;
 
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.screen.slot.*;
-import net.minecraft.util.collection.*;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ResultSlot;
+import net.minecraft.world.inventory.TransientCraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
 
-public class LockableCraftingResultSlot extends CraftingResultSlot {
+public class LockableCraftingResultSlot extends ResultSlot {
 	
-	private final PlayerEntity player;
-	protected final CraftingInventory input;
+	private final Player player;
+	protected final TransientCraftingContainer input;
 	protected final int craftingGridStartIndex;
 	protected final int craftingGridEndIndex;
 	boolean locked;
 	
-	public LockableCraftingResultSlot(Inventory craftingResultInventory, int index, int x, int y, PlayerEntity player, CraftingInventory input, int craftingGridStartIndex, int craftingGridEndIndex) {
+	public LockableCraftingResultSlot(Container craftingResultInventory, int index, int x, int y, Player player, TransientCraftingContainer input, int craftingGridStartIndex, int craftingGridEndIndex) {
 		super(player, input, craftingResultInventory, index, x, y);
 		this.player = player;
 		this.input = input;
@@ -26,7 +27,7 @@ public class LockableCraftingResultSlot extends CraftingResultSlot {
 	}
 	
 	@Override
-	public boolean canTakeItems(PlayerEntity playerEntity) {
+	public boolean mayPickup(Player playerEntity) {
 		return !locked;
 	}
 	
@@ -39,26 +40,26 @@ public class LockableCraftingResultSlot extends CraftingResultSlot {
 	}
 	
 	@Override
-	public void onTakeItem(PlayerEntity player, ItemStack stack) {
-		this.onCrafted(stack);
-		DefaultedList<ItemStack> defaultedList = player.getWorld().getRecipeManager().getRemainingStacks(RecipeType.CRAFTING, this.input, player.getWorld());
+	public void onTake(Player player, ItemStack stack) {
+		this.checkTakeAchievements(stack);
+		NonNullList<ItemStack> defaultedList = player.level().getRecipeManager().getRemainingItemsFor(RecipeType.CRAFTING, this.input, player.level());
 		
 		for (int i = craftingGridStartIndex; i < craftingGridEndIndex + 1; ++i) {
-			ItemStack slotStack = this.input.getStack(i);
+			ItemStack slotStack = this.input.getItem(i);
 			ItemStack remainingStacks = defaultedList.get(i);
 			if (!slotStack.isEmpty()) {
-				this.input.removeStack(i, 1);
-				slotStack = this.input.getStack(i);
+				this.input.removeItem(i, 1);
+				slotStack = this.input.getItem(i);
 			}
 			
 			if (!remainingStacks.isEmpty()) {
 				if (slotStack.isEmpty()) {
-					this.input.setStack(i, remainingStacks);
-				} else if (ItemStack.canCombine(slotStack, remainingStacks)) {
-					remainingStacks.increment(slotStack.getCount());
-					this.input.setStack(i, remainingStacks);
-				} else if (!this.player.getInventory().insertStack(remainingStacks)) {
-					this.player.dropItem(remainingStacks, false);
+					this.input.setItem(i, remainingStacks);
+				} else if (ItemStack.isSameItemSameTags(slotStack, remainingStacks)) {
+					remainingStacks.grow(slotStack.getCount());
+					this.input.setItem(i, remainingStacks);
+				} else if (!this.player.getInventory().add(remainingStacks)) {
+					this.player.drop(remainingStacks, false);
 				}
 			}
 		}

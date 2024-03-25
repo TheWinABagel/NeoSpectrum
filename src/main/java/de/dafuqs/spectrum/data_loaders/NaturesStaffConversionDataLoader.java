@@ -1,37 +1,45 @@
 package de.dafuqs.spectrum.data_loaders;
 
-import com.google.gson.*;
-import com.mojang.brigadier.exceptions.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.recipe.*;
-import net.fabricmc.fabric.api.resource.*;
-import net.minecraft.block.*;
-import net.minecraft.registry.*;
-import net.minecraft.resource.*;
-import net.minecraft.util.*;
-import net.minecraft.util.profiler.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.recipe.RecipeUtils;
+import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-public class NaturesStaffConversionDataLoader extends JsonDataLoader implements IdentifiableResourceReloadListener {
+public class NaturesStaffConversionDataLoader extends SimpleJsonResourceReloadListener implements IdentifiableResourceReloadListener {
 	
 	public static final String ID = "natures_staff_conversions";
 	public static final NaturesStaffConversionDataLoader INSTANCE = new NaturesStaffConversionDataLoader();
 	
 	public static final HashMap<Block, BlockState> CONVERSIONS = new HashMap<>();
-	public static final HashMap<Block, Identifier> UNLOCK_IDENTIFIERS = new HashMap<>();
+	public static final HashMap<Block, ResourceLocation> UNLOCK_IDENTIFIERS = new HashMap<>();
 	
 	private NaturesStaffConversionDataLoader() {
 		super(new Gson(), ID);
 	}
 	
 	@Override
-	protected void apply(Map<Identifier, JsonElement> prepared, ResourceManager manager, Profiler profiler) {
+	protected void apply(Map<ResourceLocation, JsonElement> prepared, ResourceManager manager, ProfilerFiller profiler) {
 		CONVERSIONS.clear();
 		prepared.forEach((identifier, jsonElement) -> {
 			JsonObject jsonObject = jsonElement.getAsJsonObject();
-			Block input = Registries.BLOCK.get(Identifier.tryParse(JsonHelper.getString(jsonObject, "input_block")));
+			Block input = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse(GsonHelper.getAsString(jsonObject, "input_block")));
 			
 			BlockState output;
 			try {
@@ -42,15 +50,15 @@ public class NaturesStaffConversionDataLoader extends JsonDataLoader implements 
 			
 			if (input != Blocks.AIR && !output.isAir()) {
 				CONVERSIONS.put(input, output);
-				if (JsonHelper.hasString(jsonObject, "unlock_identifier")) {
-					UNLOCK_IDENTIFIERS.put(input, Identifier.tryParse(JsonHelper.getString(jsonObject, "unlock_identifier")));
+				if (GsonHelper.isStringValue(jsonObject, "unlock_identifier")) {
+					UNLOCK_IDENTIFIERS.put(input, ResourceLocation.tryParse(GsonHelper.getAsString(jsonObject, "unlock_identifier")));
 				}
 			}
 		});
 	}
 	
 	@Override
-	public Identifier getFabricId() {
+	public ResourceLocation getFabricId() {
 		return SpectrumCommon.locate(ID);
 	}
 	

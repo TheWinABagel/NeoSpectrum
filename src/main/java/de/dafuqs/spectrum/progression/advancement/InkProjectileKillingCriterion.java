@@ -1,54 +1,58 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.common.collect.*;
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.entity.*;
-import net.minecraft.loot.context.*;
-import net.minecraft.predicate.NumberRange.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.advancements.critereon.MinMaxBounds.Ints;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.storage.loot.LootContext;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
-public class InkProjectileKillingCriterion extends AbstractCriterion<InkProjectileKillingCriterion.Conditions> {
+public class InkProjectileKillingCriterion extends SimpleCriterionTrigger<InkProjectileKillingCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("ink_projectile_killing");
+	static final ResourceLocation ID = SpectrumCommon.locate("ink_projectile_killing");
 	
 	public InkProjectileKillingCriterion() {
 	}
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
 	@Override
-	public InkProjectileKillingCriterion.Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate extended, AdvancementEntityPredicateDeserializer advancementEntityPredicateDeserializer) {
-		LootContextPredicate[] victims = EntityPredicate.contextPredicateArrayFromJson(jsonObject, "victims", advancementEntityPredicateDeserializer);
-		IntRange intRange = IntRange.fromJson(jsonObject.get("unique_entity_types"));
+	public InkProjectileKillingCriterion.Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate extended, DeserializationContext advancementEntityPredicateDeserializer) {
+		ContextAwarePredicate[] victims = EntityPredicate.fromJsonArray(jsonObject, "victims", advancementEntityPredicateDeserializer);
+		Ints intRange = Ints.fromJson(jsonObject.get("unique_entity_types"));
 		return new InkProjectileKillingCriterion.Conditions(extended, victims, intRange);
 	}
 	
-	public void trigger(ServerPlayerEntity player, Collection<Entity> piercingKilledEntities) {
+	public void trigger(ServerPlayer player, Collection<Entity> piercingKilledEntities) {
 		List<LootContext> list = Lists.newArrayList();
 		Set<EntityType<?>> set = Sets.newHashSet();
 		
 		for (Entity entity : piercingKilledEntities) {
 			set.add(entity.getType());
-			list.add(EntityPredicate.createAdvancementEntityLootContext(player, entity));
+			list.add(EntityPredicate.createContext(player, entity));
 		}
 		
 		this.trigger(player, (conditions) -> conditions.matches(list, set.size()));
 	}
 	
-	public static class Conditions extends AbstractCriterionConditions {
-		private final LootContextPredicate[] victims;
-		private final IntRange uniqueEntityTypes;
+	public static class Conditions extends AbstractCriterionTriggerInstance {
+		private final ContextAwarePredicate[] victims;
+		private final Ints uniqueEntityTypes;
 		
-		public Conditions(LootContextPredicate player, LootContextPredicate[] victims, IntRange uniqueEntityTypes) {
+		public Conditions(ContextAwarePredicate player, ContextAwarePredicate[] victims, Ints uniqueEntityTypes) {
 			super(InkProjectileKillingCriterion.ID, player);
 			this.victims = victims;
 			this.uniqueEntityTypes = uniqueEntityTypes;
@@ -56,31 +60,31 @@ public class InkProjectileKillingCriterion extends AbstractCriterion<InkProjecti
 		
 		public static InkProjectileKillingCriterion.Conditions create(EntityPredicate.Builder... victimPredicates) {
 
-			LootContextPredicate[] extendeds = new LootContextPredicate[victimPredicates.length];
+			ContextAwarePredicate[] extendeds = new ContextAwarePredicate[victimPredicates.length];
 			for (int i = 0; i < victimPredicates.length; i++) {
-				var predicate = EntityPredicate.asLootContextPredicate(victimPredicates[i].build());
+				var predicate = EntityPredicate.wrap(victimPredicates[i].build());
 				extendeds[i] = predicate;
 			}
 
-			return new InkProjectileKillingCriterion.Conditions(LootContextPredicate.EMPTY, extendeds, IntRange.ANY);
+			return new InkProjectileKillingCriterion.Conditions(ContextAwarePredicate.ANY, extendeds, Ints.ANY);
 		}
 		
-		public static InkProjectileKillingCriterion.Conditions create(IntRange uniqueEntityTypes) {
-			LootContextPredicate[] extendeds = new LootContextPredicate[0];
-			return new InkProjectileKillingCriterion.Conditions(LootContextPredicate.EMPTY, extendeds, uniqueEntityTypes);
+		public static InkProjectileKillingCriterion.Conditions create(Ints uniqueEntityTypes) {
+			ContextAwarePredicate[] extendeds = new ContextAwarePredicate[0];
+			return new InkProjectileKillingCriterion.Conditions(ContextAwarePredicate.ANY, extendeds, uniqueEntityTypes);
 		}
 		
 		public boolean matches(Collection<LootContext> victimContexts, int uniqueEntityTypeCount) {
 			if (this.victims.length > 0) {
 				List<LootContext> list = Lists.newArrayList(victimContexts);
 				
-				for (LootContextPredicate extended : this.victims) {
+				for (ContextAwarePredicate extended : this.victims) {
 					boolean bl = false;
 					
 					Iterator<LootContext> iterator = list.iterator();
 					while (iterator.hasNext()) {
 						LootContext lootContext = iterator.next();
-						if (extended.test(lootContext)) {
+						if (extended.matches(lootContext)) {
 							iterator.remove();
 							bl = true;
 							break;
@@ -93,14 +97,14 @@ public class InkProjectileKillingCriterion extends AbstractCriterion<InkProjecti
 				}
 			}
 			
-			return this.uniqueEntityTypes.test(uniqueEntityTypeCount);
+			return this.uniqueEntityTypes.matches(uniqueEntityTypeCount);
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
-			jsonObject.add("victims", LootContextPredicate.toPredicatesJsonArray(this.victims, predicateSerializer));
-			jsonObject.add("unique_entity_types", this.uniqueEntityTypes.toJson());
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
+			jsonObject.add("victims", ContextAwarePredicate.toJson(this.victims, predicateSerializer));
+			jsonObject.add("unique_entity_types", this.uniqueEntityTypes.serializeToJson());
 			return jsonObject;
 		}
 	}

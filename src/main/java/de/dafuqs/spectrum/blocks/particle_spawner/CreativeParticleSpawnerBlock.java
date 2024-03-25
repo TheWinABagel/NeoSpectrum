@@ -1,31 +1,32 @@
 package de.dafuqs.spectrum.blocks.particle_spawner;
 
-import de.dafuqs.spectrum.api.item.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.item.CreativeOnlyItem;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class CreativeParticleSpawnerBlock extends AbstractParticleSpawnerBlock implements CreativeOnlyItem {
 	
-	public CreativeParticleSpawnerBlock(Settings settings) {
+	public CreativeParticleSpawnerBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("block.spectrum.creative_particle_spawner.tooltip").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("block.spectrum.creative_particle_spawner.tooltip").withStyle(ChatFormatting.GRAY));
 		CreativeOnlyItem.appendTooltip(tooltip);
 	}
 	
 	@Override
-	public boolean shouldSpawnParticles(World world, BlockPos pos) {
+	public boolean shouldSpawnParticles(Level world, BlockPos pos) {
 		return true;
 	}
 	

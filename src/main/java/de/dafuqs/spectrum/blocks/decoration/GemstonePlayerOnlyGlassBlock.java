@@ -1,35 +1,38 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import de.dafuqs.spectrum.api.item.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.api.item.GemstoneColor;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.EntityCollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class GemstonePlayerOnlyGlassBlock extends GemstoneGlassBlock {
 	
-	public GemstonePlayerOnlyGlassBlock(Settings settings, GemstoneColor gemstoneColor) {
+	public GemstonePlayerOnlyGlassBlock(Properties settings, GemstoneColor gemstoneColor) {
 		super(settings, gemstoneColor);
 	}
 	
 	@Override
-	public boolean canPathfindThrough(BlockState state, BlockView world, BlockPos pos, NavigationType type) {
+	public boolean isPathfindable(BlockState state, BlockGetter world, BlockPos pos, PathComputationType type) {
 		return false;
 	}
 	
 	@Override
 	@Deprecated
-	public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		if (context instanceof EntityShapeContext entityShapeContext) {
+	public VoxelShape getCollisionShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		if (context instanceof EntityCollisionContext entityShapeContext) {
 			Entity entity = entityShapeContext.getEntity();
-			if (entity instanceof PlayerEntity) {
-				return VoxelShapes.empty();
+			if (entity instanceof Player) {
+				return Shapes.empty();
 			}
 		}
-		return state.getOutlineShape(world, pos);
+		return state.getShape(world, pos);
 	}
 	
 }

@@ -1,12 +1,13 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public interface SplitDamageItem {
 
@@ -14,25 +15,25 @@ public interface SplitDamageItem {
 
     class DamageComposition {
 
-        private final List<Pair<DamageSource, Float>> damageSourcesWithPercentage = new ArrayList<>();
+        private final List<Tuple<DamageSource, Float>> damageSourcesWithPercentage = new ArrayList<>();
 
         public DamageComposition() {
 
         }
 
         public void addPlayerOrEntity(LivingEntity entity, float ratio) {
-            if (entity instanceof PlayerEntity player) {
-                this.damageSourcesWithPercentage.add(new Pair<>(player.getDamageSources().playerAttack(player), ratio));
+            if (entity instanceof Player player) {
+                this.damageSourcesWithPercentage.add(new Tuple<>(player.damageSources().playerAttack(player), ratio));
             } else {
-				this.damageSourcesWithPercentage.add(new Pair<>(entity.getDamageSources().mobAttack(entity), ratio));
+				this.damageSourcesWithPercentage.add(new Tuple<>(entity.damageSources().mobAttack(entity), ratio));
             }
         }
 
         public void add(DamageSource damageSource, float ratio) {
-            this.damageSourcesWithPercentage.add(new Pair<>(damageSource, ratio));
+            this.damageSourcesWithPercentage.add(new Tuple<>(damageSource, ratio));
         }
 
-        public List<Pair<DamageSource, Float>> get() {
+        public List<Tuple<DamageSource, Float>> get() {
             return damageSourcesWithPercentage;
         }
 

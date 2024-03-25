@@ -1,24 +1,32 @@
 package de.dafuqs.spectrum.blocks.fluid;
 
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.fluid.*;
-import net.minecraft.particle.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.FluidState;
 
-import java.util.*;
+import java.util.Optional;
 
-public abstract class SpectrumFluid extends FlowableFluid {
+public abstract class SpectrumFluid extends FlowingFluid {
 	
 	@Override
-	public boolean matchesType(Fluid fluid) {
-		return fluid == getStill() || fluid == getFlowing();
+	public boolean isSame(Fluid fluid) {
+		return fluid == getSource() || fluid == getFlowing();
 	}
 	
 	@Override
-	protected boolean isInfinite(World world) {
+	protected boolean canConvertToSource(Level world) {
 		return false;
 	}
 	
@@ -27,9 +35,9 @@ public abstract class SpectrumFluid extends FlowableFluid {
 	 * => Drop the block
 	 */
 	@Override
-	protected void beforeBreakingBlock(WorldAccess world, BlockPos pos, BlockState state) {
+	protected void beforeDestroyingBlock(LevelAccessor world, BlockPos pos, BlockState state) {
 		final BlockEntity blockEntity = state.hasBlockEntity() ? world.getBlockEntity(pos) : null;
-		Block.dropStacks(state, world, pos, blockEntity);
+		Block.dropResources(state, world, pos, blockEntity);
 	}
 	
 	/**
@@ -38,7 +46,7 @@ public abstract class SpectrumFluid extends FlowableFluid {
 	 * @return if the given Fluid can flow into this FluidState?
 	 */
 	@Override
-	protected boolean canBeReplacedWith(FluidState fluidState, BlockView blockView, BlockPos blockPos, Fluid fluid, Direction direction) {
+	protected boolean canBeReplacedWith(FluidState fluidState, BlockGetter blockView, BlockPos blockPos, Fluid fluid, Direction direction) {
 		return false;
 	}
 	
@@ -47,7 +55,7 @@ public abstract class SpectrumFluid extends FlowableFluid {
 	 * Water returns 4. Lava returns 2 in the Overworld and 4 in the Nether.
 	 */
 	@Override
-	protected int getFlowSpeed(WorldView worldView) {
+	protected int getSlopeFindDistance(LevelReader worldView) {
 		return 3;
 	}
 	
@@ -55,7 +63,7 @@ public abstract class SpectrumFluid extends FlowableFluid {
 	 * Water returns 1. Lava returns 2 in the Overworld and 1 in the Nether.
 	 */
 	@Override
-	protected int getLevelDecreasePerBlock(WorldView worldView) {
+	protected int getDropOff(LevelReader worldView) {
 		return 1;
 	}
 	
@@ -63,7 +71,7 @@ public abstract class SpectrumFluid extends FlowableFluid {
 	 * Water returns 5. Lava returns 30 in the Overworld and 10 in the Nether.
 	 */
 	@Override
-	public int getTickRate(WorldView worldView) {
+	public int getTickDelay(LevelReader worldView) {
 		return 20;
 	}
 	
@@ -71,15 +79,15 @@ public abstract class SpectrumFluid extends FlowableFluid {
 	 * Water and Lava both return 100.0F.
 	 */
 	@Override
-	protected float getBlastResistance() {
+	protected float getExplosionResistance() {
 		return 100.0F;
 	}
 	
 	@Override
-	public Optional<SoundEvent> getBucketFillSound() {
-		return Optional.of(SoundEvents.ITEM_BUCKET_FILL);
+	public Optional<SoundEvent> getPickupSound() {
+		return Optional.of(SoundEvents.BUCKET_FILL);
 	}
 	
-	public abstract ParticleEffect getSplashParticle();
+	public abstract ParticleOptions getSplashParticle();
 
 }

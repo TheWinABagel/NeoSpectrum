@@ -1,15 +1,18 @@
 package de.dafuqs.spectrum.helpers;
 
-import com.google.gson.*;
-import com.mojang.brigadier.exceptions.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.nbt.*;
-import org.apache.commons.lang3.math.*;
+import org.apache.commons.lang3.math.NumberUtils;
 
-import java.math.*;
-import java.util.*;
+import java.math.BigDecimal;
+import java.util.Optional;
 
 public class NbtHelper {
-	public static Optional<NbtCompound> getNbtCompound(JsonElement json) {
+	public static Optional<CompoundTag> getNbtCompound(JsonElement json) {
 		if (json == null || json.isJsonNull()) {
 			return Optional.empty();
 		}
@@ -20,7 +23,7 @@ public class NbtHelper {
 		
 		if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isString()) {
 			try {
-				return Optional.of(StringNbtReader.parse(json.getAsString()));
+				return Optional.of(TagParser.parseTag(json.getAsString()));
 			} catch (CommandSyntaxException exception) {
 				exception.printStackTrace();
 			}
@@ -33,7 +36,7 @@ public class NbtHelper {
 		if (element == null)
 			throw new UnsupportedOperationException("Null JSON NBT element");
 		if (element.isJsonObject())
-			return NbtElement.COMPOUND_TYPE;
+			return Tag.TAG_COMPOUND;
 		if (element.isJsonArray())
 			return getJsonArrayType(element.getAsJsonArray());
 		if (element.isJsonPrimitive())
@@ -51,22 +54,22 @@ public class NbtHelper {
 			JsonElement first = array.get(0);
 			byte type = getJsonElementType(first);
 			
-			if (type == NbtElement.STRING_TYPE) {
+			if (type == Tag.TAG_STRING) {
 				switch (first.getAsString()) {
 					case "B;" -> {
-						return NbtElement.BYTE_ARRAY_TYPE;
+						return Tag.TAG_BYTE_ARRAY;
 					}
 					case "I;" -> {
-						return NbtElement.INT_ARRAY_TYPE;
+						return Tag.TAG_INT_ARRAY;
 					}
 					case "L;" -> {
-						return NbtElement.LONG_ARRAY_TYPE;
+						return Tag.TAG_LONG_ARRAY;
 					}
 				}
 			}
 		}
 		
-		return NbtElement.LIST_TYPE;
+		return Tag.TAG_LIST;
 	}
 	
 	public static byte getJsonPrimitiveType(JsonPrimitive primitive) {
@@ -75,7 +78,7 @@ public class NbtHelper {
 		}
 		
 		if (primitive.isBoolean()) {
-			return NbtElement.BYTE_TYPE;
+			return Tag.TAG_BYTE;
 		}
 		
 		if (primitive.isNumber()) {
@@ -87,9 +90,9 @@ public class NbtHelper {
 			BigDecimal bigDecimal = primitive.getAsBigDecimal();
 			try {
 				bigDecimal.intValueExact();
-				return NbtElement.INT_TYPE;
+				return Tag.TAG_INT;
 			} catch (ArithmeticException exception) {
-				return NbtElement.DOUBLE_TYPE;
+				return Tag.TAG_DOUBLE;
 			}
 		}
 		
@@ -100,34 +103,34 @@ public class NbtHelper {
 				if (NumberUtils.isParsable(numStr)) {
 					switch (string.charAt(string.length() - 1)) {
 						case 'b', 'B' -> {
-							return NbtElement.BYTE_TYPE;
+							return Tag.TAG_BYTE;
 						}
 						case 's', 'S' -> {
-							return NbtElement.SHORT_TYPE;
+							return Tag.TAG_SHORT;
 						}
 						case 'i', 'I' -> {
-							return NbtElement.INT_TYPE;
+							return Tag.TAG_INT;
 						}
 						case 'l', 'L' -> {
-							return NbtElement.LONG_TYPE;
+							return Tag.TAG_LONG;
 						}
 						case 'f', 'F' -> {
-							return NbtElement.FLOAT_TYPE;
+							return Tag.TAG_FLOAT;
 						}
 						case 'd', 'D' -> {
-							return NbtElement.DOUBLE_TYPE;
+							return Tag.TAG_DOUBLE;
 						}
 					}
 				}
 			}
 			
-			return NbtElement.STRING_TYPE;
+			return Tag.TAG_STRING;
 		}
 		
 		throw new UnsupportedOperationException("Unknown JSON NBT primitive type");
 	}
 	
-	public static NbtElement fromJson(JsonElement element) {
+	public static Tag fromJson(JsonElement element) {
 		if (element == null)
 			throw new UnsupportedOperationException("Null JSON NBT element");
 		if (element.isJsonObject())
@@ -140,12 +143,12 @@ public class NbtHelper {
 		throw new UnsupportedOperationException("Unknown JSON NBT element type");
 	}
 	
-	public static NbtCompound fromJsonObject(JsonObject object) {
+	public static CompoundTag fromJsonObject(JsonObject object) {
 		if (object == null) {
 			throw new UnsupportedOperationException("Null JSON NBT element");
 		}
 		
-		NbtCompound result = new NbtCompound();
+		CompoundTag result = new CompoundTag();
 		
 		object.entrySet().forEach(entry -> {
 			String name = entry.getKey();
@@ -158,45 +161,45 @@ public class NbtHelper {
 		return result;
 	}
 	
-	public static AbstractNbtList<?> fromJsonArray(JsonArray array) {
+	public static CollectionTag<?> fromJsonArray(JsonArray array) {
 		byte type = getJsonArrayType(array);
 		
-		if (type == NbtElement.LIST_TYPE) {
-			NbtList list = new NbtList();
+		if (type == Tag.TAG_LIST) {
+			ListTag list = new ListTag();
 			for (int i = 0; i < array.size(); i++) {
 				list.add(i, fromJson(array.get(i)));
 			}
 			return list;
 		}
 		
-		AbstractNbtList<?> nbtArray = switch (type) {
-			case NbtElement.BYTE_ARRAY_TYPE -> new NbtByteArray(new byte[0]);
-			case NbtElement.INT_ARRAY_TYPE -> new NbtIntArray(new int[0]);
-			case NbtElement.LONG_ARRAY_TYPE -> new NbtLongArray(new long[0]);
+		CollectionTag<?> nbtArray = switch (type) {
+			case Tag.TAG_BYTE_ARRAY -> new ByteArrayTag(new byte[0]);
+			case Tag.TAG_INT_ARRAY -> new IntArrayTag(new int[0]);
+			case Tag.TAG_LONG_ARRAY -> new LongArrayTag(new long[0]);
 			default -> throw new UnsupportedOperationException("Unknown JSON NBT list type");
 		};
 		
 		for (int i = 1; i < array.size(); i++) {
-			nbtArray.addElement(i - 1, fromJson(array.get(i)));
+			nbtArray.addTag(i - 1, fromJson(array.get(i)));
 		}
 		
 		return nbtArray;
 	}
 	
-	public static NbtElement fromJsonPrimitive(JsonPrimitive primitive) {
+	public static Tag fromJsonPrimitive(JsonPrimitive primitive) {
 		byte type = getJsonPrimitiveType(primitive);
 		
 		if (primitive.isBoolean()) {
-			return NbtByte.of((byte)(primitive.getAsBoolean() ? 1 : 0));
+			return ByteTag.valueOf((byte)(primitive.getAsBoolean() ? 1 : 0));
 		}
 		
 		if (primitive.isNumber()) {
 			switch (type) {
-				case NbtElement.INT_TYPE -> {
-					return NbtInt.of(primitive.getAsInt());
+				case Tag.TAG_INT -> {
+					return IntTag.valueOf(primitive.getAsInt());
 				}
-				case NbtElement.DOUBLE_TYPE -> {
-					return NbtDouble.of(primitive.getAsDouble());
+				case Tag.TAG_DOUBLE -> {
+					return DoubleTag.valueOf(primitive.getAsDouble());
 				}
 			}
 		}
@@ -206,28 +209,28 @@ public class NbtHelper {
 			if (string.length() > 1) {
 				String numStr = string.substring(0, string.length()-1);
 				switch (type) {
-					case NbtElement.BYTE_TYPE -> {
-						return NbtByte.of(Byte.parseByte(numStr));
+					case Tag.TAG_BYTE -> {
+						return ByteTag.valueOf(Byte.parseByte(numStr));
 					}
-					case NbtElement.SHORT_TYPE -> {
-						return NbtShort.of(Short.parseShort(numStr));
+					case Tag.TAG_SHORT -> {
+						return ShortTag.valueOf(Short.parseShort(numStr));
 					}
-					case NbtElement.INT_TYPE -> {
-						return NbtInt.of(Integer.parseInt(numStr));
+					case Tag.TAG_INT -> {
+						return IntTag.valueOf(Integer.parseInt(numStr));
 					}
-					case NbtElement.LONG_TYPE -> {
-						return NbtLong.of(Long.parseLong(numStr));
+					case Tag.TAG_LONG -> {
+						return LongTag.valueOf(Long.parseLong(numStr));
 					}
-					case NbtElement.FLOAT_TYPE -> {
-						return NbtFloat.of(Float.parseFloat(numStr));
+					case Tag.TAG_FLOAT -> {
+						return FloatTag.valueOf(Float.parseFloat(numStr));
 					}
-					case NbtElement.DOUBLE_TYPE -> {
-						return NbtDouble.of(Double.parseDouble(numStr));
+					case Tag.TAG_DOUBLE -> {
+						return DoubleTag.valueOf(Double.parseDouble(numStr));
 					}
 				}
 			}
 			
-			return NbtString.of(string);
+			return StringTag.valueOf(string);
 		}
 		
 		throw new UnsupportedOperationException("Unknown JSON NBT primitive type");
@@ -243,22 +246,22 @@ public class NbtHelper {
 	 * keys will be merged.
 	 * Otherwise, the original will be returned.
 	 */
-	public static void mergeNbt(NbtElement original, NbtElement delta) {
-		if (original.getType() != delta.getType()) {
+	public static void mergeNbt(Tag original, Tag delta) {
+		if (original.getId() != delta.getId()) {
 			return;
 		}
 		
-		switch (original.getType()) {
-			case NbtElement.BYTE_TYPE, NbtElement.SHORT_TYPE, NbtElement.NUMBER_TYPE, NbtElement.LONG_TYPE, NbtElement.FLOAT_TYPE, NbtElement.DOUBLE_TYPE, NbtElement.STRING_TYPE, NbtElement.END_TYPE,
-					NbtElement.BYTE_ARRAY_TYPE, NbtElement.INT_ARRAY_TYPE, NbtElement.LONG_ARRAY_TYPE, NbtElement.LIST_TYPE -> {
+		switch (original.getId()) {
+			case Tag.TAG_BYTE, Tag.TAG_SHORT, Tag.TAG_ANY_NUMERIC, Tag.TAG_LONG, Tag.TAG_FLOAT, Tag.TAG_DOUBLE, Tag.TAG_STRING, Tag.TAG_END,
+					Tag.TAG_BYTE_ARRAY, Tag.TAG_INT_ARRAY, Tag.TAG_LONG_ARRAY, Tag.TAG_LIST -> {
 				
 			}
-			case NbtElement.COMPOUND_TYPE -> {
-				NbtCompound originalCompound = (NbtCompound) original;
-				NbtCompound deltaCompound = (NbtCompound) delta;
+			case Tag.TAG_COMPOUND -> {
+				CompoundTag originalCompound = (CompoundTag) original;
+				CompoundTag deltaCompound = (CompoundTag) delta;
 				
-				deltaCompound.getKeys().forEach(key -> {
-					NbtElement value = deltaCompound.get(key);
+				deltaCompound.getAllKeys().forEach(key -> {
+					Tag value = deltaCompound.get(key);
 					
 					if (originalCompound.contains(key)) {
 						mergeNbt(originalCompound.get(key), value);

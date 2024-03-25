@@ -1,15 +1,16 @@
 package de.dafuqs.spectrum.api.energy.color;
 
-import net.minecraft.util.*;
-import org.joml.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
+import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.Map;
 
 public class CompoundColor extends InkColor {
 	
 	protected final Map<ElementalColor, Float> compoundColors; // colors used to directly mix this
 	
-	public CompoundColor(DyeColor dyeColor, Vector3f color, Identifier requiredAdvancement, Map<ElementalColor, Float> compoundColors) {
+	public CompoundColor(DyeColor dyeColor, Vector3f color, ResourceLocation requiredAdvancement, Map<ElementalColor, Float> compoundColors) {
 		super(dyeColor, color, requiredAdvancement);
 		this.compoundColors = compoundColors;
 		

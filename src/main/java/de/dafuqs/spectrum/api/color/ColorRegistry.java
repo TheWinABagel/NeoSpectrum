@@ -1,8 +1,8 @@
 package de.dafuqs.spectrum.api.color;
 
-import net.minecraft.util.*;
+import net.minecraft.world.item.DyeColor;
 
-import java.util.*;
+import java.util.Optional;
 
 public abstract class ColorRegistry<T> {
 	

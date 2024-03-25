@@ -1,48 +1,55 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.compat.claims.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import oshi.util.tuples.*;
+import de.dafuqs.spectrum.api.energy.InkPowered;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.api.item.PrioritizedBlockInteraction;
+import de.dafuqs.spectrum.compat.claims.GenericClaimModsCompat;
+import de.dafuqs.spectrum.helpers.BuildingHelper;
+import de.dafuqs.spectrum.registries.SpectrumBlockTags;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import oshi.util.tuples.Triplet;
 
 public abstract class BuildingStaffItem extends Item implements PrioritizedBlockInteraction, InkPowered {
 	
 	public static final InkColor USED_COLOR = InkColors.CYAN;
 	
-	public BuildingStaffItem(Settings settings) {
+	public BuildingStaffItem(Properties settings) {
 		super(settings);
 	}
 	
-	public boolean canInteractWith(BlockState state, BlockView world, BlockPos pos, PlayerEntity player) {
+	public boolean canInteractWith(BlockState state, BlockGetter world, BlockPos pos, Player player) {
 		if (state.getBlock().asItem() == Items.AIR) {
 			return false;
 		}
-		if (player == null || world.getBlockEntity(pos) != null || state.isIn(SpectrumBlockTags.BUILDING_STAFFS_BLACKLISTED)) {
+		if (player == null || world.getBlockEntity(pos) != null || state.is(SpectrumBlockTags.BUILDING_STAFFS_BLACKLISTED)) {
 			return false;
 		}
 		if (player.isCreative()) {
 			return true;
 		}
 		
-		float hardness = state.getHardness(world, pos);
-		return hardness >= 0 && GenericClaimModsCompat.canInteract(player.getWorld(), pos, player);
+		float hardness = state.getDestroySpeed(world, pos);
+		return hardness >= 0 && GenericClaimModsCompat.canInteract(player.level(), pos, player);
 	}
 	
 	/**
 	 * @return The block to place, the blockItem to consume, the amount
 	 */
-	protected static Triplet<Block, Item, Integer> countSuitableReplacementItems(@NotNull PlayerEntity player, @NotNull Block targetBlock, boolean single, int inkCostPerBlock) {
+	protected static Triplet<Block, Item, Integer> countSuitableReplacementItems(@NotNull Player player, @NotNull Block targetBlock, boolean single, int inkCostPerBlock) {
 		if (player.isCreative()) {
 			return new Triplet<>(targetBlock, targetBlock.asItem(), single ? 1 : Integer.MAX_VALUE);
 		}
@@ -58,10 +65,10 @@ public abstract class BuildingStaffItem extends Item implements PrioritizedBlock
 		return BuildingHelper.getBuildingItemCountInInventoryIncludingSimilars(player, targetBlock, blocksToPlace);
 	}
 	
-	public static class BuildingStaffPlacementContext extends ItemPlacementContext {
+	public static class BuildingStaffPlacementContext extends BlockPlaceContext {
 		
-		public BuildingStaffPlacementContext(World world, @Nullable PlayerEntity playerEntity, BlockHitResult blockHitResult) {
-			super(world, playerEntity, Hand.MAIN_HAND, ItemStack.EMPTY, blockHitResult);
+		public BuildingStaffPlacementContext(Level world, @Nullable Player playerEntity, BlockHitResult blockHitResult) {
+			super(world, playerEntity, InteractionHand.MAIN_HAND, ItemStack.EMPTY, blockHitResult);
 		}
 		
 	}

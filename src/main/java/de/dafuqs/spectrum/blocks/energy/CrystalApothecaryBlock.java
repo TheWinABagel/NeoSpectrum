@@ -1,114 +1,122 @@
 package de.dafuqs.spectrum.blocks.energy;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.screen.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.listener.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.GameEventListener;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
-public class CrystalApothecaryBlock extends BlockWithEntity {
+public class CrystalApothecaryBlock extends BaseEntityBlock {
 	
-	public CrystalApothecaryBlock(Settings settings) {
+	public CrystalApothecaryBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new CrystalApothecaryBlockEntity(pos, state);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("block.spectrum.crystal_apothecary.tooltip").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("block.spectrum.crystal_apothecary.tooltip").withStyle(ChatFormatting.GRAY));
 	}
 	
 	@Override
-	public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
+	public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity instanceof CrystalApothecaryBlockEntity crystalApothecaryBlockEntity) {
-			if (placer instanceof ServerPlayerEntity serverPlayerEntity) {
+			if (placer instanceof ServerPlayer serverPlayerEntity) {
 				crystalApothecaryBlockEntity.setOwner(serverPlayerEntity);
 			}
-			if (itemStack.hasCustomName()) {
-				crystalApothecaryBlockEntity.setCustomName(itemStack.getName());
+			if (itemStack.hasCustomHoverName()) {
+				crystalApothecaryBlockEntity.setCustomName(itemStack.getHoverName());
 			}
 			crystalApothecaryBlockEntity.harvestExistingClusters();
 		}
 	}
 	
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		if (world.isClient) {
-			return ActionResult.SUCCESS;
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		if (world.isClientSide) {
+			return InteractionResult.SUCCESS;
 		} else {
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			if (blockEntity instanceof CrystalApothecaryBlockEntity crystalApothecaryBlockEntity) {
-				player.openHandledScreen(crystalApothecaryBlockEntity);
+				player.openMenu(crystalApothecaryBlockEntity);
 			}
-			return ActionResult.CONSUME;
+			return InteractionResult.CONSUME;
 		}
 	}
 	
 	@Override
-    public boolean hasComparatorOutput(BlockState state) {
+    public boolean hasAnalogOutputSignal(BlockState state) {
         return true;
     }
 	
 	@Override
-    public int getComparatorOutput(BlockState state, World world, BlockPos pos) {
-		return ScreenHandler.calculateComparatorOutput(world.getBlockEntity(pos));
+    public int getAnalogOutputSignal(BlockState state, Level world, BlockPos pos) {
+		return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(world.getBlockEntity(pos));
     }
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
-		if (!state.isOf(newState.getBlock())) {
+	public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
+		if (!state.is(newState.getBlock())) {
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			if (blockEntity instanceof CrystalApothecaryBlockEntity crystalApothecaryBlockEntity) {
-				ItemScatterer.spawn(world, pos, crystalApothecaryBlockEntity);
-				world.updateComparators(pos, this);
+				Containers.dropContents(world, pos, crystalApothecaryBlockEntity);
+				world.updateNeighbourForOutputSignal(pos, this);
 			}
 			
-			super.onStateReplaced(state, world, pos, newState, moved);
+			super.onRemove(state, world, pos, newState, moved);
 		}
 	}
 	
 	@Override
-	public BlockRenderType getRenderType(BlockState state) {
-		return BlockRenderType.MODEL;
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 	
 	@Override
-	public boolean canPathfindThrough(BlockState state, BlockView world, BlockPos pos, NavigationType type) {
+	public boolean isPathfindable(BlockState state, BlockGetter world, BlockPos pos, PathComputationType type) {
 		return false;
 	}
 	
 	@Override
 	@Nullable
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		return checkType(type, SpectrumBlockEntities.CRYSTAL_APOTHECARY, CrystalApothecaryBlockEntity::tick);
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		return createTickerHelper(type, SpectrumBlockEntities.CRYSTAL_APOTHECARY, CrystalApothecaryBlockEntity::tick);
 	}
 	
 	@Override
 	@Nullable
-	public <T extends BlockEntity> GameEventListener getGameEventListener(ServerWorld world, T blockEntity) {
+	public <T extends BlockEntity> GameEventListener getListener(ServerLevel world, T blockEntity) {
 		return blockEntity instanceof CrystalApothecaryBlockEntity crystalApothecaryBlockEntity ? crystalApothecaryBlockEntity.getEventListener() : null;
 	}
 	

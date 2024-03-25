@@ -1,13 +1,16 @@
 package de.dafuqs.spectrum.mixin;
 
-import com.google.common.collect.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.item.*;
-import net.minecraft.predicate.item.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
+import com.google.common.collect.ImmutableSet;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.advancements.critereon.ItemPredicate;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Mixin(ItemPredicate.class)
 public abstract class ItemPredicateMixin {

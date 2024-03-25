@@ -1,17 +1,18 @@
 package de.dafuqs.spectrum.compat.emi.recipes;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.compat.emi.*;
-import de.dafuqs.spectrum.compat.emi.widgets.*;
-import de.dafuqs.spectrum.recipe.primordial_fire_burning.*;
-import dev.emi.emi.api.render.*;
-import dev.emi.emi.api.stack.*;
-import dev.emi.emi.api.widget.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.compat.emi.GatedSpectrumEmiRecipe;
+import de.dafuqs.spectrum.compat.emi.SpectrumEmiRecipeCategories;
+import de.dafuqs.spectrum.compat.emi.widgets.AnimatedTexturedWidget;
+import de.dafuqs.spectrum.recipe.primordial_fire_burning.PrimordialFireBurningRecipe;
+import dev.emi.emi.api.render.EmiTexture;
+import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.api.widget.WidgetHolder;
+import net.minecraft.resources.ResourceLocation;
 
 public class PrimordialFireBurningEmiRecipeGated extends GatedSpectrumEmiRecipe<PrimordialFireBurningRecipe> {
 	
-	private final static Identifier FIRE_TEXTURE = SpectrumCommon.locate("textures/block/primordial_fire_0.png");
+	private final static ResourceLocation FIRE_TEXTURE = SpectrumCommon.locate("textures/block/primordial_fire_0.png");
 	
 	public PrimordialFireBurningEmiRecipeGated(PrimordialFireBurningRecipe recipe) {
 		super(SpectrumEmiRecipeCategories.PRIMORDIAL_FIRE_BURNING, recipe, 80, 35);

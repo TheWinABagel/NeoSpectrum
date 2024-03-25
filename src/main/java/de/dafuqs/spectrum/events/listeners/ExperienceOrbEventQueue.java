@@ -1,12 +1,14 @@
 package de.dafuqs.spectrum.events.listeners;
 
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.effect.*;
-import net.minecraft.entity.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.effect.TypedTransmission;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ExperienceOrb;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.gameevent.PositionSource;
+import net.minecraft.world.phys.Vec3;
 
 public class ExperienceOrbEventQueue extends EventQueue<ExperienceOrbEventQueue.EventEntry> {
 	
@@ -15,22 +17,22 @@ public class ExperienceOrbEventQueue extends EventQueue<ExperienceOrbEventQueue.
 	}
 	
 	@Override
-	public void acceptEvent(World world, GameEvent.Message event, Vec3d sourcePos) {
-		if (world instanceof ServerWorld && event.getEmitter().sourceEntity() instanceof ExperienceOrbEntity experienceOrbEntity) {
-			Vec3d pos = event.getEmitterPos();
-			EventEntry eventEntry = new EventEntry(event.getEvent(), experienceOrbEntity, MathHelper.floor(pos.distanceTo(sourcePos)));
+	public void acceptEvent(Level world, GameEvent.ListenerInfo event, Vec3 sourcePos) {
+		if (world instanceof ServerLevel && event.context().sourceEntity() instanceof ExperienceOrb experienceOrbEntity) {
+			Vec3 pos = event.source();
+			EventEntry eventEntry = new EventEntry(event.gameEvent(), experienceOrbEntity, Mth.floor(pos.distanceTo(sourcePos)));
 			int delay = eventEntry.distance * 2;
 			this.schedule(eventEntry, delay);
-			SpectrumS2CPacketSender.playTransmissionParticle((ServerWorld) world, new TypedTransmission(pos, this.positionSource, delay, TypedTransmission.Variant.EXPERIENCE));
+			SpectrumS2CPacketSender.playTransmissionParticle((ServerLevel) world, new TypedTransmission(pos, this.positionSource, delay, TypedTransmission.Variant.EXPERIENCE));
 		}
 	}
 	
 	public static class EventEntry {
 		public final GameEvent gameEvent;
-		public final ExperienceOrbEntity experienceOrbEntity;
+		public final ExperienceOrb experienceOrbEntity;
 		public final int distance;
 		
-		public EventEntry(GameEvent gameEvent, ExperienceOrbEntity experienceOrbEntity, int distance) {
+		public EventEntry(GameEvent gameEvent, ExperienceOrb experienceOrbEntity, int distance) {
 			this.gameEvent = gameEvent;
 			this.experienceOrbEntity = experienceOrbEntity;
 			this.distance = distance;

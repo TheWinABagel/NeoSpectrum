@@ -1,13 +1,15 @@
 package de.dafuqs.spectrum.spells;
 
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.networking.*;
-import net.minecraft.entity.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.List;
 
 public abstract class InkSpellEffect {
 	
@@ -17,25 +19,25 @@ public abstract class InkSpellEffect {
 		this.color = color;
 	}
 	
-	public abstract void playEffects(World world, Vec3d origin, float potency);
+	public abstract void playEffects(Level world, Vec3 origin, float potency);
 	
-	abstract void affectEntity(Entity entity, Vec3d origin, float potency);
+	abstract void affectEntity(Entity entity, Vec3 origin, float potency);
 	
-	abstract void affectArea(World world, BlockPos origin, float potency);
+	abstract void affectArea(Level world, BlockPos origin, float potency);
 	
-	public static void trigger(InkColor inkColor, World world, Vec3d position, float potency) {
+	public static void trigger(InkColor inkColor, Level world, Vec3 position, float potency) {
 		InkSpellEffect effect = InkSpellEffects.getEffect(inkColor);
 		if (effect != null) {
-			if (world instanceof ServerWorld) {
-				SpectrumS2CPacketSender.playInkEffectParticles((ServerWorld) world, inkColor, position, potency);
+			if (world instanceof ServerLevel) {
+				SpectrumS2CPacketSender.playInkEffectParticles((ServerLevel) world, inkColor, position, potency);
 			} else {
 				effect.playEffects(world, position, potency);
 			}
-			List<Entity> entities = world.getNonSpectatingEntities(Entity.class, Box.of(position, potency / 2, potency / 2, potency / 2));
+			List<Entity> entities = world.getEntitiesOfClass(Entity.class, AABB.ofSize(position, potency / 2, potency / 2, potency / 2));
 			for (Entity entity : entities) {
 				effect.affectEntity(entity, position, potency);
 			}
-			effect.affectArea(world, BlockPos.ofFloored(position.x, position.y, position.z), potency);
+			effect.affectArea(world, BlockPos.containing(position.x, position.y, position.z), potency);
 		}
 	}
 	

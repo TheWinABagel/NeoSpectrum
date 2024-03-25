@@ -1,19 +1,23 @@
 package de.dafuqs.spectrum.blocks.memory;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.recipe.spirit_instiller.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.item.ItemGroup.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.recipe.spirit_instiller.SpiritInstillerRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.*;
+import net.minecraft.world.item.CreativeModeTab.Output;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -21,22 +25,22 @@ public class MemoryItem extends BlockItem {
 	
 	// There are a few entities in vanilla that do not have a corresponding spawn egg
 	// therefore to make it nicer we specify custom colors for them here
-	private static final HashMap<EntityType<?>, Pair<Integer, Integer>> customColors = new HashMap<>() {{
-		put(EntityType.BAT, new Pair<>(0x463d2b, 0x191307));
-		put(EntityType.SNOW_GOLEM, new Pair<>(0xc9cbcf, 0xa26e28));
-		put(EntityType.WITHER, new Pair<>(0x101211, 0x3e4140));
-		put(EntityType.ILLUSIONER, new Pair<>(0x29578d, 0x4b4e4f));
-		put(EntityType.ENDER_DRAGON, new Pair<>(0x111111, 0x856c8f));
-		put(EntityType.IRON_GOLEM, new Pair<>(0x9a9a9a, 0x8b7464));
+	private static final HashMap<EntityType<?>, Tuple<Integer, Integer>> customColors = new HashMap<>() {{
+		put(EntityType.BAT, new Tuple<>(0x463d2b, 0x191307));
+		put(EntityType.SNOW_GOLEM, new Tuple<>(0xc9cbcf, 0xa26e28));
+		put(EntityType.WITHER, new Tuple<>(0x101211, 0x3e4140));
+		put(EntityType.ILLUSIONER, new Tuple<>(0x29578d, 0x4b4e4f));
+		put(EntityType.ENDER_DRAGON, new Tuple<>(0x111111, 0x856c8f));
+		put(EntityType.IRON_GOLEM, new Tuple<>(0x9a9a9a, 0x8b7464));
 	}};
 	
-	public MemoryItem(Block block, Settings settings) {
+	public MemoryItem(Block block, Properties settings) {
 		super(block, settings);
 	}
 	
 	public static ItemStack getMemoryForEntity(LivingEntity entity) {
-		NbtCompound tag = new NbtCompound();
-		entity.saveSelfNbt(tag);
+		CompoundTag tag = new CompoundTag();
+		entity.saveAsPassenger(tag);
 		tag.remove("Pos"); // yeet everything that we don't need and could interfere when spawning
 		tag.remove("OnGround");
 		tag.remove("Rotation");
@@ -54,87 +58,87 @@ public class MemoryItem extends BlockItem {
 		tag.remove("PortalCooldown");
 		tag.remove("HurtTime");
 		
-		ItemStack stack = SpectrumBlocks.MEMORY.asItem().getDefaultStack();
-		NbtCompound stackNbt = stack.getOrCreateNbt();
+		ItemStack stack = SpectrumBlocks.MEMORY.asItem().getDefaultInstance();
+		CompoundTag stackNbt = stack.getOrCreateTag();
 		stackNbt.put("EntityTag", tag);
-		stack.setNbt(stackNbt);
+		stack.setTag(stackNbt);
 		
 		return stack;
 	}
 	
 	public static ItemStack getForEntityType(EntityType<?> entityType, int ticksToManifest) {
-		ItemStack stack = SpectrumBlocks.MEMORY.asItem().getDefaultStack();
+		ItemStack stack = SpectrumBlocks.MEMORY.asItem().getDefaultInstance();
 		
-		NbtCompound stackNbt = stack.getOrCreateNbt();
+		CompoundTag stackNbt = stack.getOrCreateTag();
 		stackNbt.putInt("TicksToManifest", ticksToManifest);
 		
-		NbtCompound entityCompound = new NbtCompound();
-		entityCompound.putString("id", Registries.ENTITY_TYPE.getId(entityType).toString());
+		CompoundTag entityCompound = new CompoundTag();
+		entityCompound.putString("id", BuiltInRegistries.ENTITY_TYPE.getKey(entityType).toString());
 		stackNbt.put("EntityTag", entityCompound);
 
 		return stack;
 	}
 	
-	public static Optional<EntityType<?>> getEntityType(@Nullable NbtCompound nbt) {
-		if (nbt != null && nbt.contains("EntityTag", NbtElement.COMPOUND_TYPE)) {
-			NbtCompound nbtCompound = nbt.getCompound("EntityTag");
-			if (nbtCompound.contains("id", NbtElement.STRING_TYPE)) {
-				return EntityType.get(nbtCompound.getString("id"));
+	public static Optional<EntityType<?>> getEntityType(@Nullable CompoundTag nbt) {
+		if (nbt != null && nbt.contains("EntityTag", Tag.TAG_COMPOUND)) {
+			CompoundTag nbtCompound = nbt.getCompound("EntityTag");
+			if (nbtCompound.contains("id", Tag.TAG_STRING)) {
+				return EntityType.byString(nbtCompound.getString("id"));
 			}
 		}
 		return Optional.empty();
 	}
 	
-	public static @Nullable Text getMemoryEntityCustomName(@Nullable NbtCompound nbt) {
-		if (nbt != null && nbt.contains("EntityTag", NbtElement.COMPOUND_TYPE)) {
-			NbtCompound nbtCompound = nbt.getCompound("EntityTag");
-			if (nbtCompound.contains("CustomName", NbtElement.STRING_TYPE)) {
-				return Text.Serializer.fromJson(nbtCompound.getString("CustomName"));
+	public static @Nullable Component getMemoryEntityCustomName(@Nullable CompoundTag nbt) {
+		if (nbt != null && nbt.contains("EntityTag", Tag.TAG_COMPOUND)) {
+			CompoundTag nbtCompound = nbt.getCompound("EntityTag");
+			if (nbtCompound.contains("CustomName", Tag.TAG_STRING)) {
+				return Component.Serializer.fromJson(nbtCompound.getString("CustomName"));
 			}
 		}
 		return null;
 	}
 	
-	public static boolean isBrokenPromise(@Nullable NbtCompound nbt) {
+	public static boolean isBrokenPromise(@Nullable CompoundTag nbt) {
 		return nbt != null && nbt.getBoolean("BrokenPromise");
 	}
 	
 	// Same nbt format as SpawnEggs
 	// That way we can reuse entityType.spawnFromItemStack()
-	public static int getTicksToManifest(@Nullable NbtCompound nbtCompound) {
-		if (nbtCompound != null && nbtCompound.contains("TicksToManifest", NbtElement.NUMBER_TYPE)) {
+	public static int getTicksToManifest(@Nullable CompoundTag nbtCompound) {
+		if (nbtCompound != null && nbtCompound.contains("TicksToManifest", Tag.TAG_ANY_NUMERIC)) {
 			return nbtCompound.getInt("TicksToManifest");
 		}
 		return -1;
 	}
 	
 	public static void setTicksToManifest(@NotNull ItemStack itemStack, int newTicksToManifest) {
-		NbtCompound nbtCompound = itemStack.getOrCreateNbt();
+		CompoundTag nbtCompound = itemStack.getOrCreateTag();
 		nbtCompound.putInt("TicksToManifest", newTicksToManifest);
-		itemStack.setNbt(nbtCompound);
+		itemStack.setTag(nbtCompound);
 	}
 	
 	public static void setSpawnAsAdult(@NotNull ItemStack itemStack, boolean spawnAsAdult) {
-		NbtCompound nbtCompound = itemStack.getOrCreateNbt();
+		CompoundTag nbtCompound = itemStack.getOrCreateTag();
 		if (spawnAsAdult) {
 			nbtCompound.putBoolean("SpawnAsAdult", true);
 		} else {
 			nbtCompound.remove("SpawnAsAdult");
 		}
-		itemStack.setNbt(nbtCompound);
+		itemStack.setTag(nbtCompound);
 	}
 	
 	public static void markAsBrokenPromise(ItemStack itemStack, boolean isBrokenPromise) {
-		NbtCompound nbtCompound = itemStack.getOrCreateNbt();
+		CompoundTag nbtCompound = itemStack.getOrCreateTag();
 		if (isBrokenPromise) {
 			nbtCompound.putBoolean("BrokenPromise", true);
 		} else {
 			nbtCompound.remove("BrokenPromise");
 		}
-		itemStack.setNbt(nbtCompound);
+		itemStack.setTag(nbtCompound);
 	}
 	
-	public static int getEggColor(NbtCompound nbtCompound, int tintIndex) {
+	public static int getEggColor(CompoundTag nbtCompound, int tintIndex) {
 		if (nbtCompound == null || isEntityTypeUnrecognizable(nbtCompound)) {
 			if (tintIndex == 0) {
 				return 0x222222;
@@ -148,10 +152,10 @@ public class MemoryItem extends BlockItem {
 			EntityType<?> type = entityType.get();
 			if (customColors.containsKey(type)) {
 				// statically defined: fetch from map
-				return tintIndex == 0 ? customColors.get(type).getLeft() : customColors.get(type).getRight();
+				return tintIndex == 0 ? customColors.get(type).getA() : customColors.get(type).getB();
 			} else {
 				// dynamically defined: fetch from spawn egg
-				SpawnEggItem spawnEggItem = SpawnEggItem.forEntity(entityType.get());
+				SpawnEggItem spawnEggItem = SpawnEggItem.byId(entityType.get());
 				if (spawnEggItem != null) {
 					return spawnEggItem.getColor(tintIndex);
 				}
@@ -165,7 +169,7 @@ public class MemoryItem extends BlockItem {
 		}
 	}
 	
-	public static boolean isEntityTypeUnrecognizable(@Nullable NbtCompound nbtCompound) {
+	public static boolean isEntityTypeUnrecognizable(@Nullable CompoundTag nbtCompound) {
 		if (nbtCompound != null && nbtCompound.contains("Unrecognizable")) {
 			return nbtCompound.getBoolean("Unrecognizable");
 		}
@@ -173,67 +177,67 @@ public class MemoryItem extends BlockItem {
 	}
 	
 	public static void makeUnrecognizable(@NotNull ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getOrCreateNbt();
+		CompoundTag nbtCompound = itemStack.getOrCreateTag();
 		nbtCompound.putBoolean("Unrecognizable", true);
-		itemStack.setNbt(nbtCompound);
+		itemStack.setTag(nbtCompound);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		
-		NbtCompound nbt = stack.getNbt();
+		CompoundTag nbt = stack.getTag();
 		Optional<EntityType<?>> entityType = getEntityType(nbt);
 		int ticksToHatch = getTicksToManifest(nbt);
 		
 		if (entityType.isPresent()) {
 			if (isEntityTypeUnrecognizable(nbt)) {
-				tooltip.add(Text.translatable("item.spectrum.memory.tooltip.unrecognizable_entity_type").formatted(Formatting.GRAY));
+				tooltip.add(Component.translatable("item.spectrum.memory.tooltip.unrecognizable_entity_type").withStyle(ChatFormatting.GRAY));
 			} else {
 				boolean isBrokenPromise = isBrokenPromise(nbt);
-				Text customName = getMemoryEntityCustomName(nbt);
+				Component customName = getMemoryEntityCustomName(nbt);
 				if (isBrokenPromise) {
 					if (customName == null) {
-						tooltip.add(Text.translatable("item.spectrum.memory.tooltip.entity_type_broken_promise", entityType.get().getName()));
+						tooltip.add(Component.translatable("item.spectrum.memory.tooltip.entity_type_broken_promise", entityType.get().getDescription()));
 					} else {
-						tooltip.add(Text.translatable("item.spectrum.memory.tooltip.named_broken_promise").append(customName).formatted(Formatting.WHITE, Formatting.ITALIC));
+						tooltip.add(Component.translatable("item.spectrum.memory.tooltip.named_broken_promise").append(customName).withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC));
 					}
 				} else {
 					if (customName == null) {
-						tooltip.add(Text.translatable("item.spectrum.memory.tooltip.entity_type", entityType.get().getName()));
+						tooltip.add(Component.translatable("item.spectrum.memory.tooltip.entity_type", entityType.get().getDescription()));
 					} else {
-						tooltip.add(Text.translatable("item.spectrum.memory.tooltip.named").append(customName).formatted(Formatting.WHITE, Formatting.ITALIC));
+						tooltip.add(Component.translatable("item.spectrum.memory.tooltip.named").append(customName).withStyle(ChatFormatting.WHITE, ChatFormatting.ITALIC));
 					}
 				}
 			}
 		} else {
-			tooltip.add(Text.translatable("item.spectrum.memory.tooltip.unset_entity_type").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.memory.tooltip.unset_entity_type").withStyle(ChatFormatting.GRAY));
 			return;
 		}
 		
 		if (ticksToHatch <= 0) {
-			tooltip.add(Text.translatable("item.spectrum.memory.tooltip.does_not_manifest").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.memory.tooltip.does_not_manifest").withStyle(ChatFormatting.GRAY));
 		} else if (ticksToHatch > 100) {
-			tooltip.add(Text.translatable("item.spectrum.memory.tooltip.extra_long_time_to_manifest").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.memory.tooltip.extra_long_time_to_manifest").withStyle(ChatFormatting.GRAY));
 		} else if (ticksToHatch > 20) {
-			tooltip.add(Text.translatable("item.spectrum.memory.tooltip.long_time_to_manifest").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.memory.tooltip.long_time_to_manifest").withStyle(ChatFormatting.GRAY));
 		} else if (ticksToHatch > 5) {
-			tooltip.add(Text.translatable("item.spectrum.memory.tooltip.medium_time_to_manifest").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.memory.tooltip.medium_time_to_manifest").withStyle(ChatFormatting.GRAY));
 		} else {
-			tooltip.add(Text.translatable("item.spectrum.memory.tooltip.short_time_to_manifest").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.memory.tooltip.short_time_to_manifest").withStyle(ChatFormatting.GRAY));
 		}
 	}
 	
-	public static void appendEntries(Entries entries) {
+	public static void appendEntries(Output entries) {
 		// adding all memories that have spirit instiller recipes
-		Set<NbtCompound> encountered = new HashSet<>();
+		Set<CompoundTag> encountered = new HashSet<>();
 		if (SpectrumCommon.minecraftServer != null) {
 			Item memoryItem = SpectrumBlocks.MEMORY.asItem();
-			for (SpiritInstillerRecipe recipe : SpectrumCommon.minecraftServer.getRecipeManager().listAllOfType(SpectrumRecipeTypes.SPIRIT_INSTILLING)) {
-				ItemStack output = recipe.getOutput(SpectrumCommon.minecraftServer.getRegistryManager());
-				if (output.isOf(memoryItem) && !encountered.contains(output.getNbt())) {
-					entries.add(output);
-					encountered.add(output.getNbt());
+			for (SpiritInstillerRecipe recipe : SpectrumCommon.minecraftServer.getRecipeManager().getAllRecipesFor(SpectrumRecipeTypes.SPIRIT_INSTILLING)) {
+				ItemStack output = recipe.getResultItem(SpectrumCommon.minecraftServer.registryAccess());
+				if (output.is(memoryItem) && !encountered.contains(output.getTag())) {
+					entries.accept(output);
+					encountered.add(output.getTag());
 				}
 			}
 		}

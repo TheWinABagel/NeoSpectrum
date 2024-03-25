@@ -1,37 +1,47 @@
 package de.dafuqs.spectrum.blocks.fluid;
 
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.recipe.fluid_converting.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.fluid.*;
-import net.minecraft.particle.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.recipe.fluid_converting.FluidConvertingRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumFluidTags;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.tags.FluidTags;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LevelEvent;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FlowingFluid;
+import net.minecraft.world.level.pathfinder.PathComputationType;
 
 public class LiquidCrystalFluidBlock extends SpectrumFluidBlock {
 	
 	public static final int LUMINANCE = 11;
 	
-	public LiquidCrystalFluidBlock(FlowableFluid fluid, Settings settings) {
+	public LiquidCrystalFluidBlock(FlowingFluid fluid, Properties settings) {
 		super(fluid, settings);
 	}
 	
 	@Override
-	public DefaultParticleType getSplashParticle() {
+	public SimpleParticleType getSplashParticle() {
 		return SpectrumParticleTypes.LIQUID_CRYSTAL_FISHING;
 	}
 	
 	@Override
-	public Pair<DefaultParticleType, DefaultParticleType> getFishingParticles() {
-		return new Pair<>(SpectrumParticleTypes.LIQUID_CRYSTAL_SPARKLE, SpectrumParticleTypes.LIQUID_CRYSTAL_FISHING);
+	public Tuple<SimpleParticleType, SimpleParticleType> getFishingParticles() {
+		return new Tuple<>(SpectrumParticleTypes.LIQUID_CRYSTAL_SPARKLE, SpectrumParticleTypes.LIQUID_CRYSTAL_FISHING);
 	}
 	
 	@Override
@@ -40,21 +50,21 @@ public class LiquidCrystalFluidBlock extends SpectrumFluidBlock {
 	}
 
 	@Override
-	public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
-		if (this.receiveNeighborFluids(world, pos, state)) {
-			world.scheduleFluidTick(pos, state.getFluidState().getFluid(), this.fluid.getTickRate(world));
+	public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify) {
+		if (this.shouldSpreadLiquid(world, pos, state)) {
+			world.scheduleTick(pos, state.getFluidState().getType(), this.fluid.getTickDelay(world));
 		}
 	}
 	
 	@Override
-	public void neighborUpdate(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
-		if (this.receiveNeighborFluids(world, pos, state)) {
-			world.scheduleFluidTick(pos, state.getFluidState().getFluid(), this.fluid.getTickRate(world));
+	public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
+		if (this.shouldSpreadLiquid(world, pos, state)) {
+			world.scheduleTick(pos, state.getFluidState().getType(), this.fluid.getTickDelay(world));
 		}
 	}
 	
 	@Override
-	public boolean canPathfindThrough(BlockState state, BlockView world, BlockPos pos, NavigationType type) {
+	public boolean isPathfindable(BlockState state, BlockGetter world, BlockPos pos, PathComputationType type) {
 		return true;
 	}
 	
@@ -62,24 +72,24 @@ public class LiquidCrystalFluidBlock extends SpectrumFluidBlock {
 	 * Entities colliding with liquid crystal will get a slight regeneration effect
 	 */
 	@Override
-	public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
-		super.onEntityCollision(state, world, pos, entity);
+	public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
+		super.entityInside(state, world, pos, entity);
 		
-		if (!world.isClient && entity instanceof LivingEntity livingEntity) {
+		if (!world.isClientSide && entity instanceof LivingEntity livingEntity) {
 			// just check every x ticks for performance and slow healing
-			if (world.getTime() % 200 == 0) {
-				StatusEffectInstance regenerationInstance = livingEntity.getStatusEffect(StatusEffects.REGENERATION);
+			if (world.getGameTime() % 200 == 0) {
+				MobEffectInstance regenerationInstance = livingEntity.getEffect(MobEffects.REGENERATION);
 				if (regenerationInstance == null) {
-					StatusEffectInstance newRegenerationInstance = new StatusEffectInstance(StatusEffects.REGENERATION, 80);
-					livingEntity.addStatusEffect(newRegenerationInstance);
+					MobEffectInstance newRegenerationInstance = new MobEffectInstance(MobEffects.REGENERATION, 80);
+					livingEntity.addEffect(newRegenerationInstance);
 				}
 			}
 		}
 	}
 	
 	@Override
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-		super.randomDisplayTick(state, world, pos, random);
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
+		super.animateTick(state, world, pos, random);
 		if (random.nextFloat() < 0.10F) {
 			world.addParticle(SpectrumParticleTypes.LIQUID_CRYSTAL_SPARKLE, pos.getX() + random.nextDouble(), pos.getY() + random.nextDouble(), pos.getZ() + random.nextDouble(), 0, random.nextDouble() * 0.1, 0);
 		}
@@ -91,37 +101,37 @@ public class LiquidCrystalFluidBlock extends SpectrumFluidBlock {
 	 * @param state BlockState of the liquid crystal. Included the height/fluid level
 	 * @return Dunno, actually. I just mod things.
 	 */
-	private boolean receiveNeighborFluids(World world, BlockPos pos, BlockState state) {
+	private boolean shouldSpreadLiquid(Level world, BlockPos pos, BlockState state) {
 		for (Direction direction : Direction.values()) {
-			BlockPos blockPos = pos.offset(direction);
-			if (world.getFluidState(blockPos).isIn(FluidTags.WATER)) {
-				Block block = world.getFluidState(pos).isStill() ? SpectrumBlocks.FROSTBITE_CRYSTAL : Blocks.CALCITE;
-				world.setBlockState(pos, block.getDefaultState());
-				this.playExtinguishSound(world, pos);
+			BlockPos blockPos = pos.relative(direction);
+			if (world.getFluidState(blockPos).is(FluidTags.WATER)) {
+				Block block = world.getFluidState(pos).isSource() ? SpectrumBlocks.FROSTBITE_CRYSTAL : Blocks.CALCITE;
+				world.setBlockAndUpdate(pos, block.defaultBlockState());
+				this.fizz(world, pos);
 				return false;
 			}
-			if (world.getFluidState(blockPos).isIn(FluidTags.LAVA)) {
+			if (world.getFluidState(blockPos).is(FluidTags.LAVA)) {
 				Block block;
-				if (world.getFluidState(pos).isStill()) {
+				if (world.getFluidState(pos).isSource()) {
 					block = SpectrumBlocks.BLAZING_CRYSTAL;
 				} else {
 					block = Blocks.COBBLED_DEEPSLATE;
 				}
-				world.setBlockState(pos, block.getDefaultState());
-				this.playExtinguishSound(world, pos);
+				world.setBlockAndUpdate(pos, block.defaultBlockState());
+				this.fizz(world, pos);
 				return false;
 			}
-			if (world.getFluidState(blockPos).isIn(SpectrumFluidTags.MUD)) {
-				world.setBlockState(pos, Blocks.CLAY.getDefaultState());
-				this.playExtinguishSound(world, pos);
+			if (world.getFluidState(blockPos).is(SpectrumFluidTags.MUD)) {
+				world.setBlockAndUpdate(pos, Blocks.CLAY.defaultBlockState());
+				this.fizz(world, pos);
 				return false;
 			}
 		}
 		return true;
 	}
 	
-	private void playExtinguishSound(WorldAccess world, BlockPos pos) {
-		world.syncWorldEvent(WorldEvents.LAVA_EXTINGUISHED, pos, 0);
+	private void fizz(LevelAccessor world, BlockPos pos) {
+		world.levelEvent(LevelEvent.LAVA_FIZZ, pos, 0);
 	}
 	
 }

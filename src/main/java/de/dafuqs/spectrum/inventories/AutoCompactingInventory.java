@@ -1,7 +1,7 @@
 package de.dafuqs.spectrum.inventories;
 
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
 public class AutoCompactingInventory extends AutoInventory {
 	
@@ -20,7 +20,7 @@ public class AutoCompactingInventory extends AutoInventory {
 	}
 	
 	@Override
-	public int size() {
+	public int getContainerSize() {
 		return getSize() * getSize();
 	}
 	
@@ -30,22 +30,22 @@ public class AutoCompactingInventory extends AutoInventory {
 	}
 	
 	@Override
-	public ItemStack getStack(int slot) {
+	public ItemStack getItem(int slot) {
 		return inputItemStack;
 	}
 	
 	@Override
-	public ItemStack removeStack(int slot) {
+	public ItemStack removeItemNoUpdate(int slot) {
 		return ItemStack.EMPTY;
 	}
 	
 	@Override
-	public boolean canPlayerUse(PlayerEntity player) {
+	public boolean stillValid(Player player) {
 		return false;
 	}
 	
 	@Override
-	public void clear() {
+	public void clearContent() {
 	}
 	
 	@Override

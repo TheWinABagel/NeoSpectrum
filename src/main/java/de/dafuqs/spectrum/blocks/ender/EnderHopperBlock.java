@@ -1,112 +1,122 @@
 package de.dafuqs.spectrum.blocks.ender;
 
-import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.entity.mob.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.screen.*;
-import net.minecraft.server.network.*;
-import net.minecraft.stat.*;
-import net.minecraft.state.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.function.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.inventories.GenericSpectrumContainerScreenHandler;
+import de.dafuqs.spectrum.inventories.ScreenBackgroundVariant;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.Containers;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.piglin.PiglinAi;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.PlayerEnderChestContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.BooleanOp;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
-import static net.minecraft.block.HopperBlock.*;
+import static net.minecraft.world.level.block.HopperBlock.ENABLED;
 
-public class EnderHopperBlock extends BlockWithEntity {
+public class EnderHopperBlock extends BaseEntityBlock {
 	
-	private final VoxelShape TOP_SHAPE = Block.createCuboidShape(0.0D, 10.0D, 0.0D, 16.0D, 16.0D, 16.0D);
-	private final VoxelShape MIDDLE_SHAPE = Block.createCuboidShape(4.0D, 4.0D, 4.0D, 12.0D, 10.0D, 12.0D);
-	private final VoxelShape OUTSIDE_SHAPE = VoxelShapes.union(MIDDLE_SHAPE, TOP_SHAPE);
-	private final VoxelShape DEFAULT_SHAPE = VoxelShapes.combineAndSimplify(OUTSIDE_SHAPE, Hopper.INSIDE_SHAPE, BooleanBiFunction.ONLY_FIRST);
-	private final VoxelShape DOWN_SHAPE = VoxelShapes.union(DEFAULT_SHAPE, Block.createCuboidShape(6.0D, 0.0D, 6.0D, 10.0D, 4.0D, 10.0D));
-	private final VoxelShape DOWN_RAYCAST_SHAPE = Hopper.INSIDE_SHAPE;
+	private final VoxelShape TOP_SHAPE = Block.box(0.0D, 10.0D, 0.0D, 16.0D, 16.0D, 16.0D);
+	private final VoxelShape MIDDLE_SHAPE = Block.box(4.0D, 4.0D, 4.0D, 12.0D, 10.0D, 12.0D);
+	private final VoxelShape OUTSIDE_SHAPE = Shapes.or(MIDDLE_SHAPE, TOP_SHAPE);
+	private final VoxelShape DEFAULT_SHAPE = Shapes.join(OUTSIDE_SHAPE, Hopper.INSIDE, BooleanOp.ONLY_FIRST);
+	private final VoxelShape DOWN_SHAPE = Shapes.or(DEFAULT_SHAPE, Block.box(6.0D, 0.0D, 6.0D, 10.0D, 4.0D, 10.0D));
+	private final VoxelShape DOWN_RAYCAST_SHAPE = Hopper.INSIDE;
 	
-	public EnderHopperBlock(Settings settings) {
+	public EnderHopperBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new EnderHopperBlockEntity(pos, state);
 	}
 	
 	@Override
-	public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-		if (placer instanceof ServerPlayerEntity) {
+	public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+		if (placer instanceof ServerPlayer) {
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			if (blockEntity instanceof EnderHopperBlockEntity) {
-				((EnderHopperBlockEntity) blockEntity).setOwner((ServerPlayerEntity) placer);
-				blockEntity.markDirty();
+				((EnderHopperBlockEntity) blockEntity).setOwner((ServerPlayer) placer);
+				blockEntity.setChanged();
 			}
 		}
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return DOWN_SHAPE;
 	}
 	
 	@Override
-	public VoxelShape getRaycastShape(BlockState state, BlockView world, BlockPos pos) {
+	public VoxelShape getInteractionShape(BlockState state, BlockGetter world, BlockPos pos) {
 		return DOWN_RAYCAST_SHAPE;
 	}
 	
 	@Override
 	@Nullable
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		if (world.isClient) {
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		if (world.isClientSide) {
 			return null;
 		} else {
-			return checkType(type, SpectrumBlockEntities.ENDER_HOPPER, EnderHopperBlockEntity::serverTick);
+			return createTickerHelper(type, SpectrumBlockEntities.ENDER_HOPPER, EnderHopperBlockEntity::serverTick);
 		}
 	}
 	
 	@Override
-	public void neighborUpdate(BlockState state, World world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
+	public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
 		this.updateEnabled(world, pos, state);
 	}
 	
-	private void updateEnabled(World world, BlockPos pos, BlockState state) {
-		boolean bl = !world.isReceivingRedstonePower(pos);
-		if (bl != state.get(ENABLED)) {
-			world.setBlockState(pos, state.with(ENABLED, bl), 4);
+	private void updateEnabled(Level world, BlockPos pos, BlockState state) {
+		boolean bl = !world.hasNeighborSignal(pos);
+		if (bl != state.getValue(ENABLED)) {
+			world.setBlock(pos, state.setValue(ENABLED, bl), 4);
 		}
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
-		if (!state.isOf(newState.getBlock())) {
+	public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
+		if (!state.is(newState.getBlock())) {
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			if (blockEntity instanceof HopperBlockEntity hopperBlockEntity) {
-				ItemScatterer.spawn(world, pos, hopperBlockEntity);
-				world.updateComparators(pos, this);
+				Containers.dropContents(world, pos, hopperBlockEntity);
+				world.updateNeighbourForOutputSignal(pos, this);
 			}
 			
-			super.onStateReplaced(state, world, pos, newState, moved);
+			super.onRemove(state, world, pos, newState, moved);
 		}
 	}
 	
 	@Override
-	public BlockRenderType getRenderType(BlockState state) {
-		return BlockRenderType.MODEL;
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 	
 	@Override
-	public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
+	public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity instanceof EnderHopperBlockEntity) {
 			EnderHopperBlockEntity.onEntityCollided(world, pos, state, entity, (EnderHopperBlockEntity) blockEntity);
@@ -114,19 +124,19 @@ public class EnderHopperBlock extends BlockWithEntity {
 	}
 	
 	@Override
-	public boolean canPathfindThrough(BlockState state, BlockView world, BlockPos pos, NavigationType type) {
+	public boolean isPathfindable(BlockState state, BlockGetter world, BlockPos pos, PathComputationType type) {
 		return false;
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(ENABLED);
 	}
 	
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		if (world.isClient) {
-			return ActionResult.SUCCESS;
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		if (world.isClientSide) {
+			return InteractionResult.SUCCESS;
 		} else {
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			if (blockEntity instanceof EnderHopperBlockEntity enderHopperBlockEntity) {
@@ -136,18 +146,18 @@ public class EnderHopperBlock extends BlockWithEntity {
 				}
 				
 				if (enderHopperBlockEntity.isOwner(player)) {
-					EnderChestInventory enderChestInventory = player.getEnderChestInventory();
+					PlayerEnderChestContainer enderChestInventory = player.getEnderChestInventory();
 					
-					player.openHandledScreen(new SimpleNamedScreenHandlerFactory((i, playerInventory, playerEntity) -> GenericSpectrumContainerScreenHandler.createGeneric9x3(i, playerInventory, enderChestInventory, ScreenBackgroundVariant.EARLYGAME), enderHopperBlockEntity.getContainerName()));
-					player.incrementStat(Stats.OPEN_ENDERCHEST);
-					PiglinBrain.onGuardedBlockInteracted(player, true);
+					player.openMenu(new SimpleMenuProvider((i, playerInventory, playerEntity) -> GenericSpectrumContainerScreenHandler.createGeneric9x3(i, playerInventory, enderChestInventory, ScreenBackgroundVariant.EARLYGAME), enderHopperBlockEntity.getContainerName()));
+					player.awardStat(Stats.OPEN_ENDERCHEST);
+					PiglinAi.angerNearbyPiglins(player, true);
 				} else {
-					player.sendMessage(Text.translatable("block.spectrum.ender_hopper_with_owner", enderHopperBlockEntity.getOwnerName()), true);
+					player.displayClientMessage(Component.translatable("block.spectrum.ender_hopper_with_owner", enderHopperBlockEntity.getOwnerName()), true);
 				}
 				
 				
 			}
-			return ActionResult.CONSUME;
+			return InteractionResult.CONSUME;
 		}
 	}
 	

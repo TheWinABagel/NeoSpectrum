@@ -1,52 +1,73 @@
 package de.dafuqs.spectrum.blocks.fusion_shrine;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.blocks.*;
-import de.dafuqs.spectrum.inventories.storage.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.blocks.InWorldInteractionBlock;
+import de.dafuqs.spectrum.inventories.storage.DroppedItemStorage;
 import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.progression.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.transfer.v1.fluid.*;
-import net.fabricmc.fabric.api.transfer.v1.item.*;
-import net.fabricmc.fabric.api.transfer.v1.storage.*;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.*;
-import net.fabricmc.fabric.api.transfer.v1.transaction.*;
-import net.fabricmc.fabric.impl.transfer.context.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import vazkii.patchouli.api.*;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import de.dafuqs.spectrum.registries.SpectrumMultiblocks;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorageUtil;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
+import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
+import net.fabricmc.fabric.api.transfer.v1.storage.StorageView;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleSlotStorage;
+import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
+import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
+import net.fabricmc.fabric.impl.transfer.context.SingleSlotContainerItemContext;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
+import vazkii.patchouli.api.IMultiblock;
+import vazkii.patchouli.api.PatchouliAPI;
 
 @SuppressWarnings("UnstableApiUsage")
 public class FusionShrineBlock extends InWorldInteractionBlock {
 	
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("collect_all_basic_pigments_besides_brown");
-	public static final IntProperty LIGHT_LEVEL = IntProperty.of("light_level", 0, 15);
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("collect_all_basic_pigments_besides_brown");
+	public static final IntegerProperty LIGHT_LEVEL = IntegerProperty.create("light_level", 0, 15);
 	protected static final VoxelShape SHAPE;
 	
-	public FusionShrineBlock(Settings settings) {
+	public FusionShrineBlock(Properties settings) {
 		super(settings);
-		setDefaultState(getStateManager().getDefaultState().with(LIGHT_LEVEL, 0));
+		registerDefaultState(getStateDefinition().any().setValue(LIGHT_LEVEL, 0));
 	}
 	
-	public static void clearCurrentlyRenderedMultiBlock(World world) {
-		if (world.isClient) {
+	public static void clearCurrentlyRenderedMultiBlock(Level world) {
+		if (world.isClientSide) {
 			IMultiblock currentlyRenderedMultiBlock = PatchouliAPI.get().getCurrentMultiblock();
 			if (currentlyRenderedMultiBlock != null && currentlyRenderedMultiBlock.getID().equals(SpectrumMultiblocks.FUSION_SHRINE_IDENTIFIER)) {
 				PatchouliAPI.get().clearMultiblock();
@@ -54,34 +75,34 @@ public class FusionShrineBlock extends InWorldInteractionBlock {
 		}
 	}
 	
-	public static boolean verifySkyAccess(ServerWorld world, BlockPos blockPos) {
-		if (!world.getBlockState(blockPos.up()).isAir()) {
-			world.playSound(null, blockPos, SpectrumSoundEvents.USE_FAIL, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+	public static boolean verifySkyAccess(ServerLevel world, BlockPos blockPos) {
+		if (!world.getBlockState(blockPos.above()).isAir()) {
+			world.playSound(null, blockPos, SpectrumSoundEvents.USE_FAIL, SoundSource.NEUTRAL, 1.0F, 1.0F);
 			return false;
 		}
-		if (!world.isSkyVisible(blockPos)) {
-			SpectrumS2CPacketSender.playParticleWithExactVelocity(world, new Vec3d(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5), SpectrumParticleTypes.RED_SPARKLE_RISING, 1, new Vec3d(0, 0.5, 0));
-			world.playSound(null, blockPos, SpectrumSoundEvents.USE_FAIL, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+		if (!world.canSeeSky(blockPos)) {
+			SpectrumS2CPacketSender.playParticleWithExactVelocity(world, new Vec3(blockPos.getX() + 0.5, blockPos.getY() + 1, blockPos.getZ() + 0.5), SpectrumParticleTypes.RED_SPARKLE_RISING, 1, new Vec3(0, 0.5, 0));
+			world.playSound(null, blockPos, SpectrumSoundEvents.USE_FAIL, SoundSource.NEUTRAL, 1.0F, 1.0F);
 			return false;
 		}
 		return true;
 	}
 	
-	public static boolean verifyStructure(World world, BlockPos blockPos, @Nullable ServerPlayerEntity serverPlayerEntity) {
+	public static boolean verifyStructure(Level world, BlockPos blockPos, @Nullable ServerPlayer serverPlayerEntity) {
 		IMultiblock multiblock = SpectrumMultiblocks.MULTIBLOCKS.get(SpectrumMultiblocks.FUSION_SHRINE_IDENTIFIER);
-		boolean valid = multiblock.validate(world, blockPos.down(), BlockRotation.NONE);
+		boolean valid = multiblock.validate(world, blockPos.below(), Rotation.NONE);
 		
 		if (valid) {
 			if (serverPlayerEntity != null) {
 				SpectrumAdvancementCriteria.COMPLETED_MULTIBLOCK.trigger(serverPlayerEntity, multiblock);
 			}
 		} else {
-			if (world.isClient) {
+			if (world.isClientSide) {
 				IMultiblock currentMultiBlock = PatchouliAPI.get().getCurrentMultiblock();
 				if (currentMultiBlock == multiblock) {
 					PatchouliAPI.get().clearMultiblock();
 				} else {
-					PatchouliAPI.get().showMultiblock(multiblock, Text.translatable("multiblock.spectrum.fusion_shrine.structure"), blockPos.down(2), BlockRotation.NONE);
+					PatchouliAPI.get().showMultiblock(multiblock, Component.translatable("multiblock.spectrum.fusion_shrine.structure"), blockPos.below(2), Rotation.NONE);
 				}
 			} else if (world.getBlockEntity(blockPos) instanceof FusionShrineBlockEntity fusionShrineBlockEntity) {
 				fusionShrineBlockEntity.scatterContents(world);
@@ -92,27 +113,27 @@ public class FusionShrineBlock extends InWorldInteractionBlock {
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(LIGHT_LEVEL);
 	}
 	
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new FusionShrineBlockEntity(pos, state);
 	}
 	
 	@Override
-    public int getComparatorOutput(BlockState state, World world, BlockPos pos) {
+    public int getAnalogOutputSignal(BlockState state, Level world, BlockPos pos) {
 		if(world.getBlockEntity(pos) instanceof FusionShrineBlockEntity blockEntity) {
-			DefaultedList<ItemStack> inventory = blockEntity.getItems();
+			NonNullList<ItemStack> inventory = blockEntity.getItems();
 			
 			int i = 0;
 	        float f = 0.0f;
 	        for (int j = 0; j < inventory.size(); ++j) {
-	            ItemStack itemStack = blockEntity.getStack(j);
+	            ItemStack itemStack = blockEntity.getItem(j);
 	            if (itemStack.isEmpty()) continue;
-	            f += (float)itemStack.getCount() / (float)Math.min(blockEntity.getMaxCountPerStack(), itemStack.getMaxCount());
+	            f += (float)itemStack.getCount() / (float)Math.min(blockEntity.getMaxStackSize(), itemStack.getMaxStackSize());
 	            ++i;
 	        }
 			
@@ -121,32 +142,32 @@ public class FusionShrineBlock extends InWorldInteractionBlock {
 				++i;
 			}
 			
-	        return MathHelper.floor(f / ((float) inventory.size() + 1) * 14.0f) + (i > 0 ? 1 : 0);
+	        return Mth.floor(f / ((float) inventory.size() + 1) * 14.0f) + (i > 0 ? 1 : 0);
 		}
 		
 		return 0;
     }
 	
 	@Override
-	public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
-		if (world.isClient()) {
-			clearCurrentlyRenderedMultiBlock((World) world);
+	public void destroy(LevelAccessor world, BlockPos pos, BlockState state) {
+		if (world.isClientSide()) {
+			clearCurrentlyRenderedMultiBlock((Level) world);
 		}
 	}
 	
 	@Override
-	public void onLandedUpon(World world, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
-		if(!world.isClient) {
+	public void fallOn(Level world, BlockState state, BlockPos pos, Entity entity, float fallDistance) {
+		if(!world.isClientSide) {
 			// Specially handle fluid items
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			if(entity instanceof ItemEntity itemEntity && blockEntity instanceof FusionShrineBlockEntity fusionShrineBlockEntity) {
 				SingleVariantStorage<FluidVariant> storage = fusionShrineBlockEntity.fluidStorage;
-				ItemStack itemStack = itemEntity.getStack();
+				ItemStack itemStack = itemEntity.getItem();
 
 				// We're not considering stacked fluid storages for the time being
 				if(itemStack.getCount() == 1) {
 					Item item = itemStack.getItem();
-					SingleSlotStorage<ItemVariant> slot = new DroppedItemStorage(item, itemStack.getNbt());
+					SingleSlotStorage<ItemVariant> slot = new DroppedItemStorage(item, itemStack.getTag());
 					SingleSlotContainerItemContext ctx = new SingleSlotContainerItemContext(slot);
 					Storage<FluidVariant> fluidStorage = FluidStorage.ITEM.find(itemStack, ctx);
 
@@ -174,65 +195,65 @@ public class FusionShrineBlock extends InWorldInteractionBlock {
 							}
 						}
 
-						itemEntity.setStack(slot.getResource().toStack(itemStack.getCount()));
+						itemEntity.setItem(slot.getResource().toStack(itemStack.getCount()));
 						return;
 					}
 				}
 			}
 
 			// do not pick up items that were results of crafting
-			if(entity.getPos().x % 0.5 != 0 && entity.getPos().z % 0.5 != 0) {
-				super.onLandedUpon(world, state, pos, entity, fallDistance);
+			if(entity.position().x % 0.5 != 0 && entity.position().z % 0.5 != 0) {
+				super.fallOn(world, state, pos, entity, fallDistance);
 			}
 		}
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		if (world.isClient) {
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		if (world.isClientSide) {
 			verifyStructure(world, pos, null);
-			return ActionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		} else {
-			verifySkyAccess((ServerWorld) world, pos);
+			verifySkyAccess((ServerLevel) world, pos);
 			BlockEntity blockEntity = world.getBlockEntity(pos);
 			// if the structure is valid the player can put / retrieve items and fluids into the shrine
-			if (blockEntity instanceof FusionShrineBlockEntity fusionShrineBlockEntity && verifyStructure(world, pos, (ServerPlayerEntity) player)) {
+			if (blockEntity instanceof FusionShrineBlockEntity fusionShrineBlockEntity && verifyStructure(world, pos, (ServerPlayer) player)) {
 				fusionShrineBlockEntity.setOwner(player);
 
-				ItemStack handStack = player.getStackInHand(hand);
+				ItemStack handStack = player.getItemInHand(hand);
 				if (FluidStorageUtil.interactWithFluidStorage(fusionShrineBlockEntity.fluidStorage, player, hand)
-				|| (player.isSneaking() || handStack.isEmpty()) && retrieveLastStack(world, pos, player, hand, handStack, fusionShrineBlockEntity)
+				|| (player.isShiftKeyDown() || handStack.isEmpty()) && retrieveLastStack(world, pos, player, hand, handStack, fusionShrineBlockEntity)
 				|| !handStack.isEmpty() && inputHandStack(world, player, hand, handStack, fusionShrineBlockEntity)) {
 					fusionShrineBlockEntity.updateInClientWorld();
 				}
 			}
 
-			return ActionResult.CONSUME;
+			return InteractionResult.CONSUME;
 		}
 	}
 
 	@Override
 	@SuppressWarnings("deprecation")
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return SHAPE;
 	}
 	
 	@Nullable
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		if (world.isClient) {
-			return checkType(type, SpectrumBlockEntities.FUSION_SHRINE, FusionShrineBlockEntity::clientTick);
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		if (world.isClientSide) {
+			return createTickerHelper(type, SpectrumBlockEntities.FUSION_SHRINE, FusionShrineBlockEntity::clientTick);
 		} else {
-			return checkType(type, SpectrumBlockEntities.FUSION_SHRINE, FusionShrineBlockEntity::serverTick);
+			return createTickerHelper(type, SpectrumBlockEntities.FUSION_SHRINE, FusionShrineBlockEntity::serverTick);
 		}
 	}
 	
 	static {
-		VoxelShape neck = Block.createCuboidShape(2, 0, 2, 14, 12, 14);
-		VoxelShape head = Block.createCuboidShape(1, 12, 1, 15, 15, 15);
-		VoxelShape crystal = Block.createCuboidShape(6.5, 13, 6.5, 9.5, 23, 9.5);
-		neck = VoxelShapes.union(neck, head);
-		SHAPE = VoxelShapes.union(neck, crystal);
+		VoxelShape neck = Block.box(2, 0, 2, 14, 12, 14);
+		VoxelShape head = Block.box(1, 12, 1, 15, 15, 15);
+		VoxelShape crystal = Block.box(6.5, 13, 6.5, 9.5, 23, 9.5);
+		neck = Shapes.or(neck, head);
+		SHAPE = Shapes.or(neck, crystal);
 	}
 }

@@ -1,19 +1,24 @@
 package de.dafuqs.spectrum.api.recipe;
 
-import com.google.gson.*;
-import de.dafuqs.matchbooks.recipe.*;
-import net.fabricmc.fabric.api.transfer.v1.fluid.*;
-import net.minecraft.fluid.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.entry.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.matchbooks.recipe.RegistryHelper;
+import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
+import net.minecraft.core.HolderSet;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.stream.*;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Stream;
 
 public class FluidIngredient {
     private final @Nullable Fluid fluid;
@@ -66,31 +71,31 @@ public class FluidIngredient {
         return this.tag != null;
     }
 
-    public Identifier id() {
-        return fluid != null ? Registries.FLUID.getId(fluid)
-                             : tag != null ? tag.id() : null;
+    public ResourceLocation id() {
+        return fluid != null ? BuiltInRegistries.FLUID.getKey(fluid)
+                             : tag != null ? tag.location() : null;
     }
 
     // Vanilla-friendly compatibility method.
     // Represents this FluidIngredient as bucket stack(s).
     public @NotNull Ingredient into() {
-        if (this == EMPTY) return Ingredient.empty();
+        if (this == EMPTY) return Ingredient.of();
         if (this.fluid != null)
-            return Ingredient.ofStacks(this.fluid.getBucketItem()
-                                                 .getDefaultStack());
+            return Ingredient.of(this.fluid.getBucket()
+                                                 .getDefaultInstance());
         if (this.tag != null) {
             // Handle custom fluid registries
             // in the case of FluidIngredient objects created by other mods.
             Registry<Fluid> registry = RegistryHelper.getRegistryOf(this.tag);
-            if(registry == null) return Ingredient.empty();
-            Optional<RegistryEntryList.Named<Fluid>> optional =
-                    registry.getEntryList(this.tag);
-            if(optional.isEmpty()) return Ingredient.empty();
-            RegistryEntryList.Named<Fluid> list = optional.get();
+            if(registry == null) return Ingredient.of();
+            Optional<HolderSet.Named<Fluid>> optional =
+                    registry.getTag(this.tag);
+            if(optional.isEmpty()) return Ingredient.of();
+            HolderSet.Named<Fluid> list = optional.get();
             Stream<ItemStack> stacks = list.stream().map(
-                    (entry) -> entry.value().getBucketItem().getDefaultStack()
+                    (entry) -> entry.value().getBucket().getDefaultInstance()
             );
-            return Ingredient.ofStacks(stacks);
+            return Ingredient.of(stacks);
         }
 
         // UNREACHABLE under normal circumstances!
@@ -101,7 +106,7 @@ public class FluidIngredient {
         Objects.requireNonNull(fluid);
         if (this == EMPTY) return fluid == Fluids.EMPTY;
         if (this.fluid != null) return this.fluid == fluid;
-        if (this.tag != null) return fluid.getDefaultState().isIn(this.tag);
+        if (this.tag != null) return fluid.defaultFluidState().is(this.tag);
 
         // UNREACHABLE under normal circumstances!
         throw new AssertionError("Invalid FluidIngredient object");
@@ -113,14 +118,14 @@ public class FluidIngredient {
         return test(variant.getFluid());
     }
 
-    public static @NotNull FluidIngredient fromIdentifier(@Nullable Identifier id, boolean isTag) {
+    public static @NotNull FluidIngredient fromIdentifier(@Nullable ResourceLocation id, boolean isTag) {
         if (isTag) {
-            Optional<TagKey<Fluid>> tag = RegistryHelper.tryGetTagKey(Registries.FLUID, id);
+            Optional<TagKey<Fluid>> tag = RegistryHelper.tryGetTagKey(BuiltInRegistries.FLUID, id);
             if (tag.isEmpty()) return FluidIngredient.EMPTY;
             else return FluidIngredient.of(tag.get());
         } else {
-            Fluid fluid = Registries.FLUID.get(id);
-            if (fluid.getDefaultState().isEmpty()) return FluidIngredient.EMPTY;
+            Fluid fluid = BuiltInRegistries.FLUID.get(id);
+            if (fluid.defaultFluidState().isEmpty()) return FluidIngredient.EMPTY;
             else return FluidIngredient.of(fluid);
         }
     }
@@ -130,17 +135,17 @@ public class FluidIngredient {
             @NotNull FluidIngredient result,
             boolean malformed,
             boolean isTag,
-            @Nullable Identifier id
+            @Nullable ResourceLocation id
     ) {}
 
     public static @NotNull JsonParseResult fromJson(JsonObject fluidObject) {
-        boolean hasFluid = JsonHelper.hasString(fluidObject, "fluid");
-        boolean isTag = JsonHelper.hasString(fluidObject, "tag");
+        boolean hasFluid = GsonHelper.isStringValue(fluidObject, "fluid");
+        boolean isTag = GsonHelper.isStringValue(fluidObject, "tag");
 
         if ((hasFluid && isTag) || !(hasFluid || isTag)) {
             return new JsonParseResult(FluidIngredient.EMPTY, true, isTag, null);
         } else {
-            Identifier id = Identifier.tryParse(JsonHelper.getString(fluidObject, isTag ? "tag" : "fluid"));
+            ResourceLocation id = ResourceLocation.tryParse(GsonHelper.getAsString(fluidObject, isTag ? "tag" : "fluid"));
             return new JsonParseResult(fromIdentifier(id, isTag), false, isTag, id);
         }
     }

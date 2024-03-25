@@ -1,25 +1,24 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.predicate.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 
-public class DivinityTickCriterion extends AbstractCriterion<DivinityTickCriterion.Conditions> {
+public class DivinityTickCriterion extends SimpleCriterionTrigger<DivinityTickCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("divinity_tick");
+	static final ResourceLocation ID = SpectrumCommon.locate("divinity_tick");
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
 	@Override
-	public DivinityTickCriterion.Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate predicate, AdvancementEntityPredicateDeserializer advancementEntityPredicateDeserializer) {
-		NumberRange.FloatRange healthRange = NumberRange.FloatRange.fromJson(jsonObject.get("health"));
+	public DivinityTickCriterion.Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate predicate, DeserializationContext advancementEntityPredicateDeserializer) {
+		MinMaxBounds.Doubles healthRange = MinMaxBounds.Doubles.fromJson(jsonObject.get("health"));
 
 		Boolean isAlive = null;
 		JsonElement isAliveElement = jsonObject.get("is_alive");
@@ -30,34 +29,34 @@ public class DivinityTickCriterion extends AbstractCriterion<DivinityTickCriteri
 		return new DivinityTickCriterion.Conditions(predicate, healthRange, isAlive);
 	}
 	
-	public void trigger(ServerPlayerEntity player) {
+	public void trigger(ServerPlayer player) {
 		this.trigger(player, (conditions) -> conditions.matches(player.isAlive(), player.getHealth()));
 	}
 	
-	public static class Conditions extends AbstractCriterionConditions {
+	public static class Conditions extends AbstractCriterionTriggerInstance {
 
 		private final Boolean isAlive;
-		private final NumberRange.FloatRange healthRange;
+		private final MinMaxBounds.Doubles healthRange;
 		
-		public Conditions(LootContextPredicate player, NumberRange.FloatRange healthRange, Boolean isAlive) {
+		public Conditions(ContextAwarePredicate player, MinMaxBounds.Doubles healthRange, Boolean isAlive) {
 			super(DivinityTickCriterion.ID, player);
 			this.isAlive = isAlive;
 			this.healthRange = healthRange;
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
 			if (this.isAlive != null) {
 				jsonObject.addProperty("is_alive", this.isAlive);
 			}
-			jsonObject.add("health", this.healthRange.toJson());
+			jsonObject.add("health", this.healthRange.serializeToJson());
 			return jsonObject;
 		}
 		
 		public boolean matches(boolean isPlayerAlive, float health) {
 			return (this.isAlive == null || this.isAlive == isPlayerAlive)
-					&& this.healthRange.test(health);
+					&& this.healthRange.matches(health);
 		}
 	}
 	

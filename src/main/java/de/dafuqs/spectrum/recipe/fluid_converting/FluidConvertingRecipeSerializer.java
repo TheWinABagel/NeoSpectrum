@@ -1,12 +1,14 @@
 package de.dafuqs.spectrum.recipe.fluid_converting;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.recipe.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.api.recipe.GatedRecipeSerializer;
+import de.dafuqs.spectrum.recipe.RecipeUtils;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class FluidConvertingRecipeSerializer<R extends FluidConvertingRecipe> implements GatedRecipeSerializer<R> {
 	
@@ -17,40 +19,40 @@ public class FluidConvertingRecipeSerializer<R extends FluidConvertingRecipe> im
 	}
 	
 	public interface RecipeFactory<R> {
-		R create(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, Ingredient inputIngredient, ItemStack outputItemStack);
+		R create(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, Ingredient inputIngredient, ItemStack outputItemStack);
 	}
 	
 	@Override
-	public R read(Identifier identifier, JsonObject jsonObject) {
+	public R fromJson(ResourceLocation identifier, JsonObject jsonObject) {
 		String group = readGroup(jsonObject);
 		boolean secret = readSecret(jsonObject);
-		Identifier requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
+		ResourceLocation requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
 		
-		JsonElement jsonElement = JsonHelper.getObject(jsonObject, "ingredient");
+		JsonElement jsonElement = GsonHelper.getAsJsonObject(jsonObject, "ingredient");
 		Ingredient ingredient = Ingredient.fromJson(jsonElement);
-		ItemStack outputItemStack = RecipeUtils.itemStackWithNbtFromJson(JsonHelper.getObject(jsonObject, "result"));
+		ItemStack outputItemStack = RecipeUtils.itemStackWithNbtFromJson(GsonHelper.getAsJsonObject(jsonObject, "result"));
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, ingredient, outputItemStack);
 	}
 	
 	@Override
-	public void write(PacketByteBuf packetByteBuf, R recipe) {
-		packetByteBuf.writeString(recipe.group);
+	public void write(FriendlyByteBuf packetByteBuf, R recipe) {
+		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);
 		
-		recipe.inputIngredient.write(packetByteBuf);
-		packetByteBuf.writeItemStack(recipe.outputItemStack);
+		recipe.inputIngredient.toNetwork(packetByteBuf);
+		packetByteBuf.writeItem(recipe.outputItemStack);
 	}
 	
 	@Override
-	public R read(Identifier identifier, PacketByteBuf packetByteBuf) {
-		String group = packetByteBuf.readString();
+	public R fromNetwork(ResourceLocation identifier, FriendlyByteBuf packetByteBuf) {
+		String group = packetByteBuf.readUtf();
 		boolean secret = packetByteBuf.readBoolean();
-		Identifier requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
+		ResourceLocation requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
 		
-		Ingredient ingredient = Ingredient.fromPacket(packetByteBuf);
-		ItemStack outputItemStack = packetByteBuf.readItemStack();
+		Ingredient ingredient = Ingredient.fromNetwork(packetByteBuf);
+		ItemStack outputItemStack = packetByteBuf.readItem();
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, ingredient, outputItemStack);
 	}
 	

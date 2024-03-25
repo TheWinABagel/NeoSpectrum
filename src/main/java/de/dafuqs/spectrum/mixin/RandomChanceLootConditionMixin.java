@@ -1,13 +1,17 @@
 package de.dafuqs.spectrum.mixin;
 
-import de.dafuqs.spectrum.enchantments.*;
-import net.minecraft.loot.condition.*;
-import net.minecraft.loot.context.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import de.dafuqs.spectrum.enchantments.CloversFavorEnchantment;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(RandomChanceLootCondition.class)
+@Mixin(LootItemRandomChanceCondition.class)
 public abstract class RandomChanceLootConditionMixin {
 	
 	@Shadow
@@ -19,7 +23,7 @@ public abstract class RandomChanceLootConditionMixin {
 		// if the result was to not drop a drop before reroll
 		// gets more probable with each additional level of Clovers Favor
 		if (!cir.getReturnValue() && this.chance < 1.0F) {
-			cir.setReturnValue(lootContext.getRandom().nextFloat() < CloversFavorEnchantment.rollChance(this.chance, lootContext.get(LootContextParameters.KILLER_ENTITY)));
+			cir.setReturnValue(lootContext.getRandom().nextFloat() < CloversFavorEnchantment.rollChance(this.chance, lootContext.getParamOrNull(LootContextParams.KILLER_ENTITY)));
 		}
 	}
 	

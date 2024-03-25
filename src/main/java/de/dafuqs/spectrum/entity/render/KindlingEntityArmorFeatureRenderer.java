@@ -1,39 +1,47 @@
 package de.dafuqs.spectrum.entity.render;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.entity.entity.*;
-import de.dafuqs.spectrum.entity.models.*;
-import de.dafuqs.spectrum.registries.client.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.feature.*;
-import net.minecraft.client.render.entity.model.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.entity.entity.KindlingEntity;
+import de.dafuqs.spectrum.entity.models.KindlingEntityModel;
+import de.dafuqs.spectrum.registries.client.SpectrumModelLayers;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeableHorseArmorItem;
+import net.minecraft.world.item.HorseArmorItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 @Environment(EnvType.CLIENT)
-public class KindlingEntityArmorFeatureRenderer extends FeatureRenderer<KindlingEntity, KindlingEntityModel> {
+public class KindlingEntityArmorFeatureRenderer extends RenderLayer<KindlingEntity, KindlingEntityModel> {
 	
-	public static final Identifier TEXTURE_DIAMOND = SpectrumCommon.locate("textures/entity/kindling/armor/diamond.png");
-	public static final Identifier TEXTURE_GOLD = SpectrumCommon.locate("textures/entity/kindling/armor/gold.png");
-	public static final Identifier TEXTURE_IRON = SpectrumCommon.locate("textures/entity/kindling/armor/iron.png");
-	public static final Identifier TEXTURE_LEATHER = SpectrumCommon.locate("textures/entity/kindling/armor/leather.png");
+	public static final ResourceLocation TEXTURE_DIAMOND = SpectrumCommon.locate("textures/entity/kindling/armor/diamond.png");
+	public static final ResourceLocation TEXTURE_GOLD = SpectrumCommon.locate("textures/entity/kindling/armor/gold.png");
+	public static final ResourceLocation TEXTURE_IRON = SpectrumCommon.locate("textures/entity/kindling/armor/iron.png");
+	public static final ResourceLocation TEXTURE_LEATHER = SpectrumCommon.locate("textures/entity/kindling/armor/leather.png");
 	
 	private final KindlingEntityModel model;
 	
-	public KindlingEntityArmorFeatureRenderer(FeatureRendererContext<KindlingEntity, KindlingEntityModel> context, EntityModelLoader loader) {
+	public KindlingEntityArmorFeatureRenderer(RenderLayerParent<KindlingEntity, KindlingEntityModel> context, EntityModelSet loader) {
 		super(context);
-		this.model = new KindlingEntityModel(loader.getModelPart(SpectrumModelLayers.KINDLING_ARMOR));
+		this.model = new KindlingEntityModel(loader.bakeLayer(SpectrumModelLayers.KINDLING_ARMOR));
 	}
 	
 	@Override
-	public void render(MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, KindlingEntity kindlingEntity, float f, float g, float h, float j, float k, float l) {
-		ItemStack itemStack = kindlingEntity.getArmorType();
+	public void render(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int i, KindlingEntity kindlingEntity, float f, float g, float h, float j, float k, float l) {
+		ItemStack itemStack = kindlingEntity.getArmor();
 		
 		if (itemStack.getItem() instanceof HorseArmorItem horseArmorItem) {
-			this.getContextModel().copyStateTo(this.model);
-			this.model.animateModel(kindlingEntity, f, g, h);
+			this.getParentModel().copyPropertiesTo(this.model);
+			this.model.prepareMobModel(kindlingEntity, f, g, h);
 			this.model.setAngles(kindlingEntity, f, g, j, k, l);
 			float red;
 			float green;
@@ -49,12 +57,12 @@ public class KindlingEntityArmorFeatureRenderer extends FeatureRenderer<Kindling
 				blue = 1.0F;
 			}
 			
-			VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityCutoutNoCull(getTextureForArmor(horseArmorItem)));
-			this.model.render(matrixStack, vertexConsumer, i, OverlayTexture.DEFAULT_UV, red, green, blue, 1.0F);
+			VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(RenderType.entityCutoutNoCull(getTextureForArmor(horseArmorItem)));
+			this.model.renderToBuffer(matrixStack, vertexConsumer, i, OverlayTexture.NO_OVERLAY, red, green, blue, 1.0F);
 		}
 	}
 	
-	public static Identifier getTextureForArmor(HorseArmorItem item) {
+	public static ResourceLocation getTextureForArmor(HorseArmorItem item) {
 		if (item == Items.DIAMOND_HORSE_ARMOR) {
 			return TEXTURE_DIAMOND;
 		}

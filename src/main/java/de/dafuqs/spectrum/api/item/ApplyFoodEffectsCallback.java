@@ -1,13 +1,14 @@
 package de.dafuqs.spectrum.api.item;
 
-import com.mojang.datafixers.util.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.world.*;
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.List;
 
 public interface ApplyFoodEffectsCallback {
 	
@@ -17,17 +18,17 @@ public interface ApplyFoodEffectsCallback {
 	 * @param stack  the stack that is consumed
 	 * @param entity the entity consuming the item
 	 */
-	void afterConsumption(World world, ItemStack stack, LivingEntity entity);
+	void afterConsumption(Level world, ItemStack stack, LivingEntity entity);
 	
-	static void applyFoodComponent(World world, LivingEntity entity, FoodComponent foodComponent) {
-		if (entity instanceof PlayerEntity player) {
-			player.getHungerManager().add(foodComponent.getHunger(), foodComponent.getSaturationModifier());
+	static void applyFoodComponent(Level world, LivingEntity entity, FoodProperties foodComponent) {
+		if (entity instanceof Player player) {
+			player.getFoodData().eat(foodComponent.getNutrition(), foodComponent.getSaturationModifier());
 		}
 		
-		List<Pair<StatusEffectInstance, Float>> list = foodComponent.getStatusEffects();
-		for (Pair<StatusEffectInstance, Float> statusEffectInstanceFloatPair : list) {
-			if (!world.isClient && statusEffectInstanceFloatPair.getFirst() != null && world.random.nextFloat() < statusEffectInstanceFloatPair.getSecond()) {
-				entity.addStatusEffect(new StatusEffectInstance(statusEffectInstanceFloatPair.getFirst()));
+		List<Pair<MobEffectInstance, Float>> list = foodComponent.getEffects();
+		for (Pair<MobEffectInstance, Float> statusEffectInstanceFloatPair : list) {
+			if (!world.isClientSide && statusEffectInstanceFloatPair.getFirst() != null && world.random.nextFloat() < statusEffectInstanceFloatPair.getSecond()) {
+				entity.addEffect(new MobEffectInstance(statusEffectInstanceFloatPair.getFirst()));
 			}
 		}
 	}

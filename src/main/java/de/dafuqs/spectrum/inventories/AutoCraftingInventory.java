@@ -1,11 +1,11 @@
 package de.dafuqs.spectrum.inventories;
 
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.util.collection.*;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.List;
 
 /**
  * Vanilla does autocrafting, too!
@@ -21,22 +21,22 @@ public class AutoCraftingInventory extends AutoInventory {
 	
 	public AutoCraftingInventory(int width, int height, int additionalSlots) {
 		super(width, height);
-		inputInventory = DefaultedList.ofSize(width * height + additionalSlots, ItemStack.EMPTY);
+		inputInventory = NonNullList.withSize(width * height + additionalSlots, ItemStack.EMPTY);
 	}
 	
 	public void setInputInventory(List<ItemStack> inputInventory) {
 		this.inputInventory = inputInventory;
 	}
 	
-	public void setInputInventory(Inventory inventory, int fromSlot, int toSlot) {
-		this.inputInventory = DefaultedList.ofSize(toSlot - fromSlot, ItemStack.EMPTY);
+	public void setInputInventory(Container inventory, int fromSlot, int toSlot) {
+		this.inputInventory = NonNullList.withSize(toSlot - fromSlot, ItemStack.EMPTY);
 		for (int i = fromSlot; i < toSlot; i++) {
-			this.inputInventory.set(i, inventory.getStack(i));
+			this.inputInventory.set(i, inventory.getItem(i));
 		}
 	}
 	
 	@Override
-	public int size() {
+	public int getContainerSize() {
 		return inputInventory.size();
 	}
 	
@@ -46,22 +46,22 @@ public class AutoCraftingInventory extends AutoInventory {
 	}
 	
 	@Override
-	public ItemStack getStack(int slot) {
+	public ItemStack getItem(int slot) {
 		return inputInventory.get(slot);
 	}
 	
 	@Override
-	public ItemStack removeStack(int slot) {
+	public ItemStack removeItemNoUpdate(int slot) {
 		return ItemStack.EMPTY;
 	}
 	
 	@Override
-	public boolean canPlayerUse(PlayerEntity player) {
+	public boolean stillValid(Player player) {
 		return false;
 	}
 	
 	@Override
-	public void clear() {
+	public void clearContent() {
 	}
 	
 	@Override

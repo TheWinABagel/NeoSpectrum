@@ -1,24 +1,26 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.state.*;
-import net.minecraft.util.math.*;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
 
-public class ShinglesBlock extends HorizontalFacingBlock {
+public class ShinglesBlock extends HorizontalDirectionalBlock {
 	
-	public ShinglesBlock(Settings settings) {
+	public ShinglesBlock(Properties settings) {
 		super(settings);
-		this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.NORTH));
+		this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
 	}
 	
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing());
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		return this.defaultBlockState().setValue(FACING, ctx.getHorizontalDirection());
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(FACING);
 	}
 	

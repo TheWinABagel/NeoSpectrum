@@ -1,12 +1,12 @@
 package de.dafuqs.spectrum.entity.variants;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.registries.SpectrumRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 
-public record LizardHornVariant(Identifier texture) {
+public record LizardHornVariant(ResourceLocation texture) {
 	
 	public static final LizardHornVariant HORNY = register("horny", "textures/entity/lizard/horns_horny.png");
 	public static final LizardHornVariant STRAIGHT = register("straight", "textures/entity/lizard/horns_straight.png");
@@ -22,7 +22,7 @@ public record LizardHornVariant(Identifier texture) {
 	public static final TagKey<LizardHornVariant> NATURAL_VARIANT = getReference("natural");
 
 	private static TagKey<LizardHornVariant> getReference(String name) {
-		return TagKey.of(SpectrumRegistries.LIZARD_HORN_VARIANT_KEY, SpectrumCommon.locate(name));
+		return TagKey.create(SpectrumRegistries.LIZARD_HORN_VARIANT_KEY, SpectrumCommon.locate(name));
 	}
 	
 	public static void init() {

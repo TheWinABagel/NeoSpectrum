@@ -1,25 +1,26 @@
 package de.dafuqs.spectrum.compat.emi.recipes;
 
-import com.google.common.collect.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.compat.emi.*;
-import de.dafuqs.spectrum.items.magic_items.*;
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.recipe.enchanter.*;
-import de.dafuqs.spectrum.recipe.enchantment_upgrade.*;
-import de.dafuqs.spectrum.registries.*;
-import dev.emi.emi.api.recipe.*;
-import dev.emi.emi.api.render.*;
-import dev.emi.emi.api.stack.*;
-import dev.emi.emi.api.widget.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
+import com.google.common.collect.Lists;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.compat.emi.GatedSpectrumEmiRecipe;
+import de.dafuqs.spectrum.items.magic_items.KnowledgeGemItem;
+import de.dafuqs.spectrum.recipe.GatedSpectrumRecipe;
+import de.dafuqs.spectrum.recipe.enchanter.EnchanterRecipe;
+import de.dafuqs.spectrum.recipe.enchantment_upgrade.EnchantmentUpgradeRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import dev.emi.emi.api.recipe.EmiRecipeCategory;
+import dev.emi.emi.api.render.EmiTexture;
+import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.widget.WidgetHolder;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 
-import java.util.stream.*;
+import java.util.stream.Stream;
 
 public class EnchanterEmiRecipeGated extends GatedSpectrumEmiRecipe<GatedSpectrumRecipe> {
-	private final static Identifier BACKGROUND_TEXTURE = SpectrumCommon.locate("textures/gui/container/enchanter.png");
-	private final Text description;
+	private final static ResourceLocation BACKGROUND_TEXTURE = SpectrumCommon.locate("textures/gui/container/enchanter.png");
+	private final Component description;
 	private final int craftingTime;
 	
 	public EnchanterEmiRecipeGated(EmiRecipeCategory category, EnchanterRecipe recipe) {
@@ -29,7 +30,7 @@ public class EnchanterEmiRecipeGated extends GatedSpectrumEmiRecipe<GatedSpectru
 	}
 	
 	public EnchanterEmiRecipeGated(EmiRecipeCategory category, EnchantmentUpgradeRecipe recipe) {
-		this(category, recipe, Text.translatable("container.spectrum.rei.enchantment_upgrade.required_item_count", recipe.getRequiredItemCount()), 0);
+		this(category, recipe, Component.translatable("container.spectrum.rei.enchantment_upgrade.required_item_count", recipe.getRequiredItemCount()), 0);
 		inputs = Lists.newArrayList();
 		inputs.add(EmiIngredient.of(recipe.getIngredients().get(0))); // the center stack
 		int requiredItemCountSplit = recipe.getRequiredItemCount() / 8;
@@ -41,7 +42,7 @@ public class EnchanterEmiRecipeGated extends GatedSpectrumEmiRecipe<GatedSpectru
 		inputs.add(EmiStack.of(KnowledgeGemItem.getKnowledgeDropStackWithXP(recipe.getRequiredExperience(), true)));
 	}
 	
-	private EnchanterEmiRecipeGated(EmiRecipeCategory category, GatedSpectrumRecipe recipe, Text description, int craftingTime) {
+	private EnchanterEmiRecipeGated(EmiRecipeCategory category, GatedSpectrumRecipe recipe, Component description, int craftingTime) {
 		super(category, recipe, 132, 80);
 		this.craftingTime = craftingTime;
 		this.description = description;

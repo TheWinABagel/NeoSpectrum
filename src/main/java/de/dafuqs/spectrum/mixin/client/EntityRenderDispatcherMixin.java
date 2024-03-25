@@ -1,18 +1,25 @@
 package de.dafuqs.spectrum.mixin.client;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.cca.*;
-import net.minecraft.client.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.*;
-import net.minecraft.client.texture.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.entity.*;
-import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.util.math.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.inventory.InventoryMenu;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityRenderDispatcher.class)
 public abstract class EntityRenderDispatcherMixin {
@@ -21,11 +28,11 @@ public abstract class EntityRenderDispatcherMixin {
 	public Camera camera;
 	
 	@Shadow
-	private static void drawFireVertex(MatrixStack.Entry entry, VertexConsumer vertices, float x, float y, float z, float u, float v) {
+	private static void drawFireVertex(PoseStack.Pose entry, VertexConsumer vertices, float x, float y, float z, float u, float v) {
 	}
 	
 	@Inject(method = "renderFire(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/entity/Entity;)V", at = @At(value = "HEAD"), cancellable = true)
-	public void spectrum$render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity, CallbackInfo ci) {
+	public void spectrum$render(PoseStack matrices, MultiBufferSource vertexConsumers, Entity entity, CallbackInfo ci) {
 		if (entity instanceof LivingEntity livingEntity && OnPrimordialFireComponent.isOnPrimordialFire(livingEntity)) {
 			ci.cancel();
 		}
@@ -33,34 +40,34 @@ public abstract class EntityRenderDispatcherMixin {
 	
 	
 	@Inject(method = "render(Lnet/minecraft/entity/Entity;DDDFFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/EntityRenderer;render(Lnet/minecraft/entity/Entity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", shift = At.Shift.AFTER))
-	public <E extends Entity> void spectrum$render(E entity, double x, double y, double z, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
+	public <E extends Entity> void spectrum$render(E entity, double x, double y, double z, float yaw, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, CallbackInfo ci) {
 		if (entity instanceof LivingEntity livingEntity && OnPrimordialFireComponent.isOnPrimordialFire(livingEntity)) {
 			spectrum$renderPrimordialFire(matrices, vertexConsumers, entity);
 		}
 	}
 	
 	@Unique
-	private void spectrum$renderPrimordialFire(MatrixStack matrices, VertexConsumerProvider vertexConsumers, Entity entity) {
-		Sprite sprite = MinecraftClient.getInstance().getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(SpectrumCommon.locate("block/primordial_fire_0"));
-		Sprite sprite2 = MinecraftClient.getInstance().getSpriteAtlas(PlayerScreenHandler.BLOCK_ATLAS_TEXTURE).apply(SpectrumCommon.locate("block/primordial_fire_1"));
-		matrices.push();
-		float f = entity.getWidth() * 1.4F;
+	private void spectrum$renderPrimordialFire(PoseStack matrices, MultiBufferSource vertexConsumers, Entity entity) {
+		TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(SpectrumCommon.locate("block/primordial_fire_0"));
+		TextureAtlasSprite sprite2 = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(SpectrumCommon.locate("block/primordial_fire_1"));
+		matrices.pushPose();
+		float f = entity.getBbWidth() * 1.4F;
 		matrices.scale(f, f, f);
 		float g = 0.5F;
-		float i = entity.getHeight() / f;
+		float i = entity.getBbHeight() / f;
 		float j = 0.0F;
-		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-this.camera.getYaw()));
+		matrices.mulPose(Axis.YP.rotationDegrees(-this.camera.getYRot()));
 		matrices.translate(0.0, 0.0, (-0.3F + (float) ((int) i) * 0.02F));
 		float k = 0.0F;
 		int l = 0;
-		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(TexturedRenderLayers.getEntityCutout());
+		VertexConsumer vertexConsumer = vertexConsumers.getBuffer(Sheets.cutoutBlockSheet());
 		
-		for (MatrixStack.Entry entry = matrices.peek(); i > 0.0F; ++l) {
-			Sprite sprite3 = l % 2 == 0 ? sprite : sprite2;
-			float m = sprite3.getMinU();
-			float n = sprite3.getMinV();
-			float o = sprite3.getMaxU();
-			float p = sprite3.getMaxV();
+		for (PoseStack.Pose entry = matrices.last(); i > 0.0F; ++l) {
+			TextureAtlasSprite sprite3 = l % 2 == 0 ? sprite : sprite2;
+			float m = sprite3.getU0();
+			float n = sprite3.getV0();
+			float o = sprite3.getU1();
+			float p = sprite3.getV1();
 			if (l / 2 % 2 == 0) {
 				float q = o;
 				o = m;
@@ -77,7 +84,7 @@ public abstract class EntityRenderDispatcherMixin {
 			k += 0.03F;
 		}
 		
-		matrices.pop();
+		matrices.popPose();
 	}
 	
 	

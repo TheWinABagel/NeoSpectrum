@@ -1,56 +1,60 @@
 package de.dafuqs.spectrum.inventories;
 
-import de.dafuqs.spectrum.blocks.cinderhearth.*;
-import de.dafuqs.spectrum.inventories.slots.*;
-import de.dafuqs.spectrum.networking.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.screen.*;
-import net.minecraft.screen.slot.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.blocks.cinderhearth.CinderhearthBlockEntity;
+import de.dafuqs.spectrum.inventories.slots.ExperienceStorageItemSlot;
+import de.dafuqs.spectrum.inventories.slots.InkInputSlot;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
-public class CinderhearthScreenHandler extends ScreenHandler {
+public class CinderhearthScreenHandler extends AbstractContainerMenu {
 	
 	public static final int PLAYER_INVENTORY_START_X = 8;
 	public static final int PLAYER_INVENTORY_START_Y = 84;
 	
-	protected final World world;
+	protected final Level world;
 	protected CinderhearthBlockEntity blockEntity;
-	private final PropertyDelegate propertyDelegate;
+	private final ContainerData propertyDelegate;
 	
-	public final ServerPlayerEntity player;
+	public final ServerPlayer player;
 	
 	@Override
-	public void sendContentUpdates() {
-		super.sendContentUpdates();
+	public void broadcastChanges() {
+		super.broadcastChanges();
 		
 		if (this.player != null && this.blockEntity.getInkDirty()) {
-			SpectrumS2CPacketSender.updateBlockEntityInk(blockEntity.getPos(), blockEntity.getEnergyStorage(), player);
+			SpectrumS2CPacketSender.updateBlockEntityInk(blockEntity.getBlockPos(), blockEntity.getEnergyStorage(), player);
 		}
 	}
 	
-	public CinderhearthScreenHandler(int syncId, PlayerInventory playerInventory, PacketByteBuf buf) {
-		this(syncId, playerInventory, buf.readBlockPos(), new ArrayPropertyDelegate(2));
+	public CinderhearthScreenHandler(int syncId, Inventory playerInventory, FriendlyByteBuf buf) {
+		this(syncId, playerInventory, buf.readBlockPos(), new SimpleContainerData(2));
 	}
 	
-	public CinderhearthScreenHandler(int syncId, PlayerInventory playerInventory, BlockPos readBlockPos, PropertyDelegate propertyDelegate) {
+	public CinderhearthScreenHandler(int syncId, Inventory playerInventory, BlockPos readBlockPos, ContainerData propertyDelegate) {
 		super(SpectrumScreenHandlerTypes.CINDERHEARTH, syncId);
-		this.player = playerInventory.player instanceof ServerPlayerEntity serverPlayerEntity ? serverPlayerEntity : null;
-		this.world = playerInventory.player.getWorld();
+		this.player = playerInventory.player instanceof ServerPlayer serverPlayerEntity ? serverPlayerEntity : null;
+		this.world = playerInventory.player.level();
 		this.propertyDelegate = propertyDelegate;
-		BlockEntity blockEntity = playerInventory.player.getWorld().getBlockEntity(readBlockPos);
+		BlockEntity blockEntity = playerInventory.player.level().getBlockEntity(readBlockPos);
 		if (blockEntity instanceof CinderhearthBlockEntity cinderhearthBlockEntity) {
 			this.blockEntity = cinderhearthBlockEntity;
 		} else {
 			throw new IllegalArgumentException("GUI called with a position where no valid BlockEntity exists");
 		}
 		
-		checkSize(cinderhearthBlockEntity, CinderhearthBlockEntity.INVENTORY_SIZE);
-		cinderhearthBlockEntity.onOpen(playerInventory.player);
+		checkContainerSize(cinderhearthBlockEntity, CinderhearthBlockEntity.INVENTORY_SIZE);
+		cinderhearthBlockEntity.startOpen(playerInventory.player);
 		
 		this.addSlot(new InkInputSlot(cinderhearthBlockEntity, CinderhearthBlockEntity.INK_PROVIDER_SLOT_ID, 146, 13));
 		this.addSlot(new ExperienceStorageItemSlot(cinderhearthBlockEntity, CinderhearthBlockEntity.EXPERIENCE_STORAGE_ITEM_SLOT_ID, 38, 52));
@@ -76,10 +80,10 @@ public class CinderhearthScreenHandler extends ScreenHandler {
 		}
 		
 		if (this.player != null) {
-			SpectrumS2CPacketSender.updateBlockEntityInk(blockEntity.getPos(), this.blockEntity.getEnergyStorage(), player);
+			SpectrumS2CPacketSender.updateBlockEntityInk(blockEntity.getBlockPos(), this.blockEntity.getEnergyStorage(), player);
 		}
 		
-		this.addProperties(propertyDelegate);
+		this.addDataSlots(propertyDelegate);
 	}
 	
 	public CinderhearthBlockEntity getBlockEntity() {
@@ -87,35 +91,35 @@ public class CinderhearthScreenHandler extends ScreenHandler {
 	}
 	
 	@Override
-	public boolean canUse(PlayerEntity player) {
-		return this.blockEntity.canPlayerUse(player);
+	public boolean stillValid(Player player) {
+		return this.blockEntity.stillValid(player);
 	}
 
 	@Override
-	public void onClosed(PlayerEntity player) {
-		super.onClosed(player);
-		this.blockEntity.onClose(player);
+	public void removed(Player player) {
+		super.removed(player);
+		this.blockEntity.stopOpen(player);
 	}
 	
 	@Override
-	public ItemStack quickMove(PlayerEntity player, int index) {
+	public ItemStack quickMoveStack(Player player, int index) {
 		ItemStack itemStack = ItemStack.EMPTY;
 		Slot slot = this.slots.get(index);
-		if (slot.hasStack()) {
-			ItemStack itemStack2 = slot.getStack();
+		if (slot.hasItem()) {
+			ItemStack itemStack2 = slot.getItem();
 			itemStack = itemStack2.copy();
 			if (index < CinderhearthBlockEntity.INVENTORY_SIZE) {
-				if (!this.insertItem(itemStack2, CinderhearthBlockEntity.INVENTORY_SIZE, this.slots.size(), true)) {
+				if (!this.moveItemStackTo(itemStack2, CinderhearthBlockEntity.INVENTORY_SIZE, this.slots.size(), true)) {
 					return ItemStack.EMPTY;
 				}
-			} else if (!this.insertItem(itemStack2, 0, CinderhearthBlockEntity.INVENTORY_SIZE, false)) {
+			} else if (!this.moveItemStackTo(itemStack2, 0, CinderhearthBlockEntity.INVENTORY_SIZE, false)) {
 				return ItemStack.EMPTY;
 			}
 			
 			if (itemStack2.isEmpty()) {
-				slot.setStack(ItemStack.EMPTY);
+				slot.setByPlayer(ItemStack.EMPTY);
 			} else {
-				slot.markDirty();
+				slot.setChanged();
 			}
 		}
 		

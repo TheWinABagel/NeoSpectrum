@@ -1,16 +1,16 @@
 package de.dafuqs.spectrum.inventories;
 
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.TransientCraftingContainer;
 
-public abstract class AutoInventory extends CraftingInventory {
+public abstract class AutoInventory extends TransientCraftingContainer {
 	
 	public AutoInventory(int width, int height) {
 		super(null, width, height);
 	}
 	
 	@Override
-	public boolean canPlayerUse(PlayerEntity player) {
+	public boolean stillValid(Player player) {
 		return false;
 	}
 	

@@ -1,10 +1,12 @@
 package de.dafuqs.spectrum.recipe.potion_workshop;
 
-import com.google.gson.*;
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import net.minecraft.network.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.matchbooks.recipe.RecipeParser;
+import de.dafuqs.spectrum.api.recipe.GatedRecipeSerializer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 
 public class PotionWorkshopBrewingRecipeSerializer implements GatedRecipeSerializer<PotionWorkshopBrewingRecipe> {
 	
@@ -15,30 +17,30 @@ public class PotionWorkshopBrewingRecipeSerializer implements GatedRecipeSeriali
 	}
 	
 	public interface RecipeFactory {
-		PotionWorkshopBrewingRecipe create(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, int craftingTime, IngredientStack ingredient1, IngredientStack ingredient2, IngredientStack ingredient3, PotionRecipeEffect recipeData);
+		PotionWorkshopBrewingRecipe create(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, int craftingTime, IngredientStack ingredient1, IngredientStack ingredient2, IngredientStack ingredient3, PotionRecipeEffect recipeData);
 	}
 	
 	@Override
-	public PotionWorkshopBrewingRecipe read(Identifier identifier, JsonObject jsonObject) {
+	public PotionWorkshopBrewingRecipe fromJson(ResourceLocation identifier, JsonObject jsonObject) {
 		String group = readGroup(jsonObject);
 		boolean secret = readSecret(jsonObject);
-		Identifier requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
+		ResourceLocation requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
 		
-		IngredientStack ingredient1 = RecipeParser.ingredientStackFromJson(JsonHelper.getObject(jsonObject, "ingredient1"));
+		IngredientStack ingredient1 = RecipeParser.ingredientStackFromJson(GsonHelper.getAsJsonObject(jsonObject, "ingredient1"));
 		IngredientStack ingredient2;
-		if (JsonHelper.hasJsonObject(jsonObject, "ingredient2")) {
-			ingredient2 = RecipeParser.ingredientStackFromJson(JsonHelper.getObject(jsonObject, "ingredient2"));
+		if (GsonHelper.isObjectNode(jsonObject, "ingredient2")) {
+			ingredient2 = RecipeParser.ingredientStackFromJson(GsonHelper.getAsJsonObject(jsonObject, "ingredient2"));
 		} else {
 			ingredient2 = IngredientStack.EMPTY;
 		}
 		IngredientStack ingredient3;
-		if (JsonHelper.hasJsonObject(jsonObject, "ingredient3")) {
-			ingredient3 = RecipeParser.ingredientStackFromJson(JsonHelper.getObject(jsonObject, "ingredient3"));
+		if (GsonHelper.isObjectNode(jsonObject, "ingredient3")) {
+			ingredient3 = RecipeParser.ingredientStackFromJson(GsonHelper.getAsJsonObject(jsonObject, "ingredient3"));
 		} else {
 			ingredient3 = IngredientStack.EMPTY;
 		}
 
-		int craftingTime = JsonHelper.getInt(jsonObject, "time", 200);
+		int craftingTime = GsonHelper.getAsInt(jsonObject, "time", 200);
 		
 		PotionRecipeEffect recipeData = PotionRecipeEffect.read(jsonObject);
 		
@@ -46,8 +48,8 @@ public class PotionWorkshopBrewingRecipeSerializer implements GatedRecipeSeriali
 	}
 	
 	@Override
-	public void write(PacketByteBuf packetByteBuf, PotionWorkshopBrewingRecipe recipe) {
-		packetByteBuf.writeString(recipe.group);
+	public void write(FriendlyByteBuf packetByteBuf, PotionWorkshopBrewingRecipe recipe) {
+		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);
 		
@@ -59,10 +61,10 @@ public class PotionWorkshopBrewingRecipeSerializer implements GatedRecipeSeriali
 	}
 	
 	@Override
-	public PotionWorkshopBrewingRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
-		String group = packetByteBuf.readString();
+	public PotionWorkshopBrewingRecipe fromNetwork(ResourceLocation identifier, FriendlyByteBuf packetByteBuf) {
+		String group = packetByteBuf.readUtf();
 		boolean secret = packetByteBuf.readBoolean();
-		Identifier requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
+		ResourceLocation requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
 		
 		int craftingTime = packetByteBuf.readInt();
 		IngredientStack ingredient1 = IngredientStack.fromByteBuf(packetByteBuf);

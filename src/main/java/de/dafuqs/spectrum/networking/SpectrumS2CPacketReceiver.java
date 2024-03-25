@@ -1,46 +1,64 @@
 package de.dafuqs.spectrum.networking;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.blocks.fusion_shrine.*;
-import de.dafuqs.spectrum.blocks.particle_spawner.*;
-import de.dafuqs.spectrum.blocks.pastel_network.network.*;
-import de.dafuqs.spectrum.blocks.pedestal.*;
-import de.dafuqs.spectrum.blocks.present.*;
-import de.dafuqs.spectrum.blocks.shooting_star.*;
-import de.dafuqs.spectrum.entity.entity.*;
+import de.dafuqs.spectrum.SpectrumClient;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.block.InkColorSelectedPacketReceiver;
+import de.dafuqs.spectrum.api.energy.InkStorageBlockEntity;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.blocks.fusion_shrine.FusionShrineBlockEntity;
+import de.dafuqs.spectrum.blocks.particle_spawner.ParticleSpawnerBlockEntity;
+import de.dafuqs.spectrum.blocks.particle_spawner.ParticleSpawnerConfiguration;
+import de.dafuqs.spectrum.blocks.pastel_network.network.PastelTransmission;
+import de.dafuqs.spectrum.blocks.pedestal.PedestalBlock;
+import de.dafuqs.spectrum.blocks.pedestal.PedestalBlockEntity;
+import de.dafuqs.spectrum.blocks.present.PresentBlock;
+import de.dafuqs.spectrum.blocks.shooting_star.ShootingStar;
+import de.dafuqs.spectrum.entity.entity.ShootingStarEntity;
 import de.dafuqs.spectrum.helpers.ColorHelper;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.items.map.*;
-import de.dafuqs.spectrum.particle.*;
+import de.dafuqs.spectrum.helpers.ParticleHelper;
+import de.dafuqs.spectrum.items.map.ArtisansAtlasState;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.particle.VectorPattern;
 import de.dafuqs.spectrum.particle.effect.*;
-import de.dafuqs.spectrum.recipe.pedestal.*;
-import de.dafuqs.spectrum.registries.*;
-import de.dafuqs.spectrum.sound.*;
-import de.dafuqs.spectrum.spells.*;
-import net.fabricmc.api.*;
-import net.fabricmc.fabric.api.client.networking.v1.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.client.network.*;
-import net.minecraft.client.render.*;
-import net.minecraft.item.*;
-import net.minecraft.item.map.*;
-import net.minecraft.network.*;
-import net.minecraft.network.packet.s2c.play.*;
-import net.minecraft.particle.*;
-import net.minecraft.registry.*;
-import net.minecraft.screen.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.dimension.*;
-import org.joml.*;
+import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipeTier;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import de.dafuqs.spectrum.sound.CraftingBlockSoundInstance;
+import de.dafuqs.spectrum.sound.DivinitySoundInstance;
+import de.dafuqs.spectrum.sound.TakeOffBeltSoundInstance;
+import de.dafuqs.spectrum.spells.InkSpellEffects;
+import de.dafuqs.spectrum.spells.MoonstoneStrike;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.gui.MapRenderer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ItemParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.protocol.PacketUtils;
+import net.minecraft.network.protocol.game.ClientboundMapItemDataPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 @Environment(EnvType.CLIENT)
 public class SpectrumS2CPacketReceiver {
@@ -48,16 +66,16 @@ public class SpectrumS2CPacketReceiver {
 	@SuppressWarnings("deprecation")
 	public static void registerS2CReceivers() {
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.PLAY_PARTICLE_WITH_RANDOM_OFFSET_AND_VELOCITY, (client, handler, buf, responseSender) -> {
-			Vec3d position = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
-			ParticleType<?> particleType = Registries.PARTICLE_TYPE.get(buf.readIdentifier());
+			Vec3 position = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			ParticleType<?> particleType = BuiltInRegistries.PARTICLE_TYPE.get(buf.readResourceLocation());
 			int amount = buf.readInt();
-			Vec3d randomOffset = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
-			Vec3d randomVelocity = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
-			if (particleType instanceof ParticleEffect particleEffect) {
+			Vec3 randomOffset = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			Vec3 randomVelocity = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			if (particleType instanceof ParticleOptions particleEffect) {
 				client.execute(() -> {
 					// Everything in this lambda is running on the render thread
 					
-					Random random = client.world.random;
+					RandomSource random = client.level.random;
 					
 					for (int i = 0; i < amount; i++) {
 						double randomOffsetX = randomOffset.x - random.nextDouble() * randomOffset.x * 2;
@@ -67,8 +85,8 @@ public class SpectrumS2CPacketReceiver {
 						double randomVelocityY = randomVelocity.y - random.nextDouble() * randomVelocity.y * 2;
 						double randomVelocityZ = randomVelocity.z - random.nextDouble() * randomVelocity.z * 2;
 						
-						client.world.addParticle(particleEffect,
-								position.getX() + randomOffsetX, position.getY() + randomOffsetY, position.getZ() + randomOffsetZ,
+						client.level.addParticle(particleEffect,
+								position.x() + randomOffsetX, position.y() + randomOffsetY, position.z() + randomOffsetZ,
 								randomVelocityX, randomVelocityY, randomVelocityZ);
 					}
 				});
@@ -79,16 +97,16 @@ public class SpectrumS2CPacketReceiver {
 			double posX = buf.readDouble();
 			double posY = buf.readDouble();
 			double posZ = buf.readDouble();
-			ParticleType<?> particleType = Registries.PARTICLE_TYPE.get(buf.readIdentifier());
+			ParticleType<?> particleType = BuiltInRegistries.PARTICLE_TYPE.get(buf.readResourceLocation());
 			int amount = buf.readInt();
 			double velocityX = buf.readDouble();
 			double velocityY = buf.readDouble();
 			double velocityZ = buf.readDouble();
-			if (particleType instanceof ParticleEffect particleEffect) {
+			if (particleType instanceof ParticleOptions particleEffect) {
 				client.execute(() -> {
 					// Everything in this lambda is running on the render thread
 					for (int i = 0; i < amount; i++) {
-						client.world.addParticle(particleEffect,
+						client.level.addParticle(particleEffect,
 								posX, posY, posZ,
 								velocityX, velocityY, velocityZ);
 					}
@@ -97,28 +115,28 @@ public class SpectrumS2CPacketReceiver {
 		});
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.PLAY_PARTICLE_PACKET_WITH_PATTERN_AND_VELOCITY_ID, (client, handler, buf, responseSender) -> {
-			Vec3d position = new Vec3d(buf.readDouble(), buf.readDouble(), buf.readDouble());
-			ParticleType<?> particleType = Registries.PARTICLE_TYPE.get(buf.readIdentifier());
+			Vec3 position = new Vec3(buf.readDouble(), buf.readDouble(), buf.readDouble());
+			ParticleType<?> particleType = BuiltInRegistries.PARTICLE_TYPE.get(buf.readResourceLocation());
 			VectorPattern pattern = VectorPattern.values()[buf.readInt()];
 			double velocity = buf.readDouble();
-			if (particleType instanceof ParticleEffect particleEffect) {
+			if (particleType instanceof ParticleOptions particleEffect) {
 				client.execute(() -> {
 					// Everything in this lambda is running on the render thread
-					ParticleHelper.playParticleWithPatternAndVelocityClient(client.world, position, particleEffect, pattern, velocity);
+					ParticleHelper.playParticleWithPatternAndVelocityClient(client.level, position, particleEffect, pattern, velocity);
 				});
 			}
 		});
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.START_SKY_LERPING, (client, handler, buf, responseSender) -> {
-			DimensionType dimensionType = client.world.getDimension();
+			DimensionType dimensionType = client.level.dimensionType();
 			long sourceTime = buf.readLong();
 			long targetTime = buf.readLong();
 			
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
-				SpectrumClient.skyLerper.trigger(dimensionType, sourceTime, client.getTickDelta(), targetTime);
-				if (client.world.isSkyVisible(client.player.getBlockPos())) {
-					client.world.playSound(null, client.player.getBlockPos(), SpectrumSoundEvents.CELESTIAL_POCKET_WATCH_FLY_BY, SoundCategory.NEUTRAL, 0.15F, 1.0F);
+				SpectrumClient.skyLerper.trigger(dimensionType, sourceTime, client.getFrameTime(), targetTime);
+				if (client.level.canSeeSky(client.player.blockPosition())) {
+					client.level.playSound(null, client.player.blockPosition(), SpectrumSoundEvents.CELESTIAL_POCKET_WATCH_FLY_BY, SoundSource.NEUTRAL, 0.15F, 1.0F);
 				}
 			});
 			
@@ -126,12 +144,12 @@ public class SpectrumS2CPacketReceiver {
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.PLAY_PEDESTAL_CRAFTING_FINISHED_PARTICLE_PACKET_ID, (client, handler, buf, responseSender) -> {
 			BlockPos position = buf.readBlockPos(); // the block pos of the pedestal
-			ItemStack itemStack = buf.readItemStack(); // the item stack that was crafted
+			ItemStack itemStack = buf.readItem(); // the item stack that was crafted
 			client.execute(() -> {
-				Random random = client.world.random;
+				RandomSource random = client.level.random;
 				// Everything in this lambda is running on the render thread
 				for (int i = 0; i < 10; i++) {
-					client.world.addParticle(new ItemStackParticleEffect(ParticleTypes.ITEM, itemStack), position.getX() + 0.5, position.getY() + 1, position.getZ() + 0.5, 0.15 - random.nextFloat() * 0.3, random.nextFloat() * 0.15 + 0.1, 0.15 - random.nextFloat() * 0.3);
+					client.level.addParticle(new ItemParticleOption(ParticleTypes.ITEM, itemStack), position.getX() + 0.5, position.getY() + 1, position.getZ() + 0.5, 0.15 - random.nextFloat() * 0.3, random.nextFloat() * 0.15 + 0.1, 0.15 - random.nextFloat() * 0.3);
 				}
 			});
 		});
@@ -144,14 +162,14 @@ public class SpectrumS2CPacketReceiver {
 			
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
-				ShootingStarEntity.playHitParticles(client.world, x, y, z, shootingStarType, 25);
+				ShootingStarEntity.playHitParticles(client.level, x, y, z, shootingStarType, 25);
 			});
 		});
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.PLAY_FUSION_CRAFTING_IN_PROGRESS_PARTICLE_PACKET_ID, (client, handler, buf, responseSender) -> {
 			BlockPos position = buf.readBlockPos();
 			client.execute(() -> {
-				BlockEntity blockEntity = client.world.getBlockEntity(position);
+				BlockEntity blockEntity = client.level.getBlockEntity(position);
 				if (blockEntity instanceof FusionShrineBlockEntity fusionShrineBlockEntity) {
 					fusionShrineBlockEntity.spawnCraftingParticles();
 				}
@@ -162,12 +180,12 @@ public class SpectrumS2CPacketReceiver {
 			BlockPos position = buf.readBlockPos();
 			DyeColor dyeColor = DyeColor.values()[buf.readInt()];
 			client.execute(() -> {
-				Vec3d sourcePos = new Vec3d(position.getX() + 0.5, position.getY() + 1, position.getZ() + 0.5);
+				Vec3 sourcePos = new Vec3(position.getX() + 0.5, position.getY() + 1, position.getZ() + 0.5);
 				
 				Vector3f color = ColorHelper.getRGBVec(dyeColor);
 				float velocityModifier = 0.25F;
-				for (Vec3d velocity : VectorPattern.SIXTEEN.getVectors()) {
-					client.world.addParticle(
+				for (Vec3 velocity : VectorPattern.SIXTEEN.getVectors()) {
+					client.level.addParticle(
 							new DynamicParticleEffect(SpectrumParticleTypes.WHITE_CRAFTING, 0.0F, color, 1.5F, 40, false, true),
 							sourcePos.x, sourcePos.y, sourcePos.z,
 							velocity.x * velocityModifier, 0.0F, velocity.z * velocityModifier
@@ -184,7 +202,7 @@ public class SpectrumS2CPacketReceiver {
 			int amount = buf.readInt();
 			
 			client.execute(() -> {
-				Random random = client.world.random;
+				RandomSource random = client.level.random;
 				
 				Vector3f colorVec1 = ColorHelper.colorIntToVec(color1);
 				Vector3f colorVec2 = ColorHelper.colorIntToVec(color2);
@@ -193,14 +211,14 @@ public class SpectrumS2CPacketReceiver {
 					int randomLifetime = 30 + random.nextInt(20);
 					
 					// color1
-					client.world.addParticle(
+					client.level.addParticle(
 							new DynamicParticleEffect(SpectrumParticleTypes.WHITE_CRAFTING, 0.5F, colorVec1, 1.0F, randomLifetime, false, true),
 							position.getX() + 0.5, position.getY() + 0.5, position.getZ(),
 							0.15 - random.nextFloat() * 0.3, random.nextFloat() * 0.15 + 0.1, 0.15 - random.nextFloat() * 0.3
 					);
 					
 					// color2
-					client.world.addParticle(
+					client.level.addParticle(
 							new DynamicParticleEffect(SpectrumParticleTypes.WHITE_CRAFTING, 0.5F, colorVec2, 1.0F, randomLifetime, false, true),
 							position.getX() + 0.5, position.getY(), position.getZ() + 0.5,
 							0.15 - random.nextFloat() * 0.3, random.nextFloat() * 0.15 + 0.1, 0.15 - random.nextFloat() * 0.3
@@ -224,7 +242,7 @@ public class SpectrumS2CPacketReceiver {
 			
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
-				PedestalBlockEntity.spawnCraftingStartParticles(client.world, position);
+				PedestalBlockEntity.spawnCraftingStartParticles(client.level, position);
 			});
 		});
 		
@@ -234,14 +252,14 @@ public class SpectrumS2CPacketReceiver {
 
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
-				if (client.world.getBlockEntity(pos) instanceof ParticleSpawnerBlockEntity particleSpawnerBlockEntity) {
+				if (client.level.getBlockEntity(pos) instanceof ParticleSpawnerBlockEntity particleSpawnerBlockEntity) {
 					particleSpawnerBlockEntity.applySettings(configuration);
 				}
 			});
 		});
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.PASTEL_TRANSMISSION, (client, handler, buf, responseSender) -> {
-			UUID networkUUID = buf.readUuid();
+			UUID networkUUID = buf.readUUID();
 			int travelTime = buf.readInt();
 			PastelTransmission transmission = PastelTransmission.fromPacket(buf);
 			BlockPos spawnPos = transmission.getStartPos();
@@ -249,7 +267,7 @@ public class SpectrumS2CPacketReceiver {
 			
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
-				client.world.addParticle(new PastelTransmissionParticleEffect(transmission.getNodePositions(), transmission.getVariant().toStack(), travelTime, color), spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, 0, 0, 0);
+				client.level.addParticle(new PastelTransmissionParticleEffect(transmission.getNodePositions(), transmission.getVariant().toStack(), travelTime, color), spawnPos.getX() + 0.5, spawnPos.getY() + 0.5, spawnPos.getZ() + 0.5, 0, 0, 0);
 			});
 		});
 		
@@ -259,11 +277,11 @@ public class SpectrumS2CPacketReceiver {
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
 				switch (transmission.getVariant()) {
-					case BLOCK_POS -> client.world.addImportantParticle(new BlockPosEventTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().getX(), transmission.getOrigin().getY(), transmission.getOrigin().getZ(), 0.0D, 0.0D, 0.0D);
-					case ITEM -> client.world.addImportantParticle(new ItemTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().getX(), transmission.getOrigin().getY(), transmission.getOrigin().getZ(), 0.0D, 0.0D, 0.0D);
-					case EXPERIENCE -> client.world.addImportantParticle(new ExperienceTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().getX(), transmission.getOrigin().getY(), transmission.getOrigin().getZ(), 0.0D, 0.0D, 0.0D);
-					case HUMMINGSTONE -> client.world.addImportantParticle(new HummingstoneTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().getX(), transmission.getOrigin().getY(), transmission.getOrigin().getZ(), 0.0D, 0.0D, 0.0D);
-					case REDSTONE -> client.world.addImportantParticle(new WirelessRedstoneTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().getX(), transmission.getOrigin().getY(), transmission.getOrigin().getZ(), 0.0D, 0.0D, 0.0D);
+					case BLOCK_POS -> client.level.addAlwaysVisibleParticle(new BlockPosEventTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().x(), transmission.getOrigin().y(), transmission.getOrigin().z(), 0.0D, 0.0D, 0.0D);
+					case ITEM -> client.level.addAlwaysVisibleParticle(new ItemTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().x(), transmission.getOrigin().y(), transmission.getOrigin().z(), 0.0D, 0.0D, 0.0D);
+					case EXPERIENCE -> client.level.addAlwaysVisibleParticle(new ExperienceTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().x(), transmission.getOrigin().y(), transmission.getOrigin().z(), 0.0D, 0.0D, 0.0D);
+					case HUMMINGSTONE -> client.level.addAlwaysVisibleParticle(new HummingstoneTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().x(), transmission.getOrigin().y(), transmission.getOrigin().z(), 0.0D, 0.0D, 0.0D);
+					case REDSTONE -> client.level.addAlwaysVisibleParticle(new WirelessRedstoneTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks()), true, transmission.getOrigin().x(), transmission.getOrigin().y(), transmission.getOrigin().z(), 0.0D, 0.0D, 0.0D);
 				}
 			});
 		});
@@ -272,14 +290,14 @@ public class SpectrumS2CPacketReceiver {
 			ColoredTransmission transmission = ColoredTransmission.readFromBuf(buf);
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
-				client.world.addImportantParticle(new ColoredTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks(), transmission.getDyeColor()), true, transmission.getOrigin().getX(), transmission.getOrigin().getY(), transmission.getOrigin().getZ(), 0.0D, 0.0D, 0.0D);
+				client.level.addAlwaysVisibleParticle(new ColoredTransmissionParticleEffect(transmission.getDestination(), transmission.getArrivalInTicks(), transmission.getDyeColor()), true, transmission.getOrigin().x(), transmission.getOrigin().y(), transmission.getOrigin().z(), 0.0D, 0.0D, 0.0D);
 			});
 		});
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.PLAY_BLOCK_BOUND_SOUND_INSTANCE, (client, handler, buf, responseSender) -> {
 			if (SpectrumCommon.CONFIG.BlockSoundVolume > 0) {
-				Identifier soundEffectIdentifier = buf.readIdentifier();
-				Identifier blockIdentifier = buf.readIdentifier();
+				ResourceLocation soundEffectIdentifier = buf.readResourceLocation();
+				ResourceLocation blockIdentifier = buf.readResourceLocation();
 				BlockPos blockPos = buf.readBlockPos();
 				int maxDurationTicks = buf.readInt();
 				
@@ -287,8 +305,8 @@ public class SpectrumS2CPacketReceiver {
 					if (soundEffectIdentifier.getPath().equals("stop")) {
 						CraftingBlockSoundInstance.stopPlayingOnPos(blockPos);
 					} else {
-						SoundEvent soundEvent = Registries.SOUND_EVENT.get(soundEffectIdentifier);
-						Block block = Registries.BLOCK.get(blockIdentifier);
+						SoundEvent soundEvent = BuiltInRegistries.SOUND_EVENT.get(soundEffectIdentifier);
+						Block block = BuiltInRegistries.BLOCK.get(blockIdentifier);
 						
 						CraftingBlockSoundInstance.startSoundInstance(soundEvent, blockPos, block, maxDurationTicks);
 					}
@@ -305,12 +323,12 @@ public class SpectrumS2CPacketReceiver {
 			int colorEntries = buf.readInt();
 			Map<InkColor, Long> colors = new HashMap<>();
 			for (int i = 0; i < colorEntries; i++) {
-				colors.put(InkColor.of(buf.readString()), buf.readLong());
+				colors.put(InkColor.of(buf.readUtf()), buf.readLong());
 			}
 			
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
-				BlockEntity blockEntity = client.world.getBlockEntity(blockPos);
+				BlockEntity blockEntity = client.level.getBlockEntity(blockPos);
 				if (blockEntity instanceof InkStorageBlockEntity<?> inkStorageBlockEntity) {
 					inkStorageBlockEntity.getEnergyStorage().setEnergy(colors, colorTotal);
 				}
@@ -318,13 +336,13 @@ public class SpectrumS2CPacketReceiver {
 		});
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.INK_COLOR_SELECTED, (client, handler, buf, responseSender) -> {
-			ScreenHandler screenHandler = client.player.currentScreenHandler;
+			AbstractContainerMenu screenHandler = client.player.containerMenu;
 			if (screenHandler instanceof InkColorSelectedPacketReceiver inkColorSelectedPacketReceiver) {
 				boolean isSelection = buf.readBoolean();
 				
 				InkColor color;
 				if (isSelection) {
-					String inkColorString = buf.readString();
+					String inkColorString = buf.readUtf();
 					color = InkColor.of(inkColorString);
 				} else {
 					color = null;
@@ -334,7 +352,7 @@ public class SpectrumS2CPacketReceiver {
 		});
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.PLAY_INK_EFFECT_PARTICLES, (client, handler, buf, responseSender) -> {
-			InkColor inkColor = InkColor.of(buf.readString());
+			InkColor inkColor = InkColor.of(buf.readUtf());
 			double posX = buf.readDouble();
 			double posY = buf.readDouble();
 			double posZ = buf.readDouble();
@@ -342,7 +360,7 @@ public class SpectrumS2CPacketReceiver {
 			
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
-				InkSpellEffects.getEffect(inkColor).playEffects(client.world, new Vec3d(posX, posY, posZ), potency);
+				InkSpellEffects.getEffect(inkColor).playEffects(client.level, new Vec3(posX, posY, posZ), potency);
 			});
 		});
 		
@@ -359,29 +377,29 @@ public class SpectrumS2CPacketReceiver {
 			
 			client.execute(() -> {
 				// Everything in this lambda is running on the render thread
-				PresentBlock.spawnParticles(client.world, pos, colors);
+				PresentBlock.spawnParticles(client.level, pos, colors);
 			});
 		});
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.PLAY_ASCENSION_APPLIED_EFFECTS, (client, handler, buf, responseSender) -> client.execute(() -> {
 			// Everything in this lambda is running on the render thread
-			client.world.playSound(null, client.player.getBlockPos(), SpectrumSoundEvents.FADING_PLACED, SoundCategory.PLAYERS, 1.0F, 1.0F);
+			client.level.playSound(null, client.player.blockPosition(), SpectrumSoundEvents.FADING_PLACED, SoundSource.PLAYERS, 1.0F, 1.0F);
 			client.getSoundManager().play(new DivinitySoundInstance());
 		}));
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.PLAY_DIVINITY_APPLIED_EFFECTS, (client, handler, buf, responseSender) -> client.execute(() -> {
 			// Everything in this lambda is running on the render thread
-			ClientPlayerEntity player = client.player;
-			client.particleManager.addEmitter(player, SpectrumParticleTypes.DIVINITY, 30);
-			client.gameRenderer.showFloatingItem(SpectrumItems.DIVINATION_HEART.getDefaultStack());
-			client.world.playSound(null, player.getBlockPos(), SpectrumSoundEvents.FAILING_PLACED, SoundCategory.PLAYERS, 1.0F, 1.0F);
+			LocalPlayer player = client.player;
+			client.particleEngine.createTrackingEmitter(player, SpectrumParticleTypes.DIVINITY, 30);
+			client.gameRenderer.displayItemActivation(SpectrumItems.DIVINATION_HEART.getDefaultInstance());
+			client.level.playSound(null, player.blockPosition(), SpectrumSoundEvents.FAILING_PLACED, SoundSource.PLAYERS, 1.0F, 1.0F);
 			
-			ParticleHelper.playParticleWithPatternAndVelocityClient(player.getWorld(), player.getPos(), SpectrumParticleTypes.WHITE_CRAFTING, VectorPattern.SIXTEEN, 0.4);
-			ParticleHelper.playParticleWithPatternAndVelocityClient(player.getWorld(), player.getPos(), SpectrumParticleTypes.RED_CRAFTING, VectorPattern.SIXTEEN, 0.4);
+			ParticleHelper.playParticleWithPatternAndVelocityClient(player.level(), player.position(), SpectrumParticleTypes.WHITE_CRAFTING, VectorPattern.SIXTEEN, 0.4);
+			ParticleHelper.playParticleWithPatternAndVelocityClient(player.level(), player.position(), SpectrumParticleTypes.RED_CRAFTING, VectorPattern.SIXTEEN, 0.4);
 		}));
 		
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.MOONSTONE_BLAST, (client, handler, buf, responseSender) -> {
-			ClientPlayerEntity player = client.player;
+			LocalPlayer player = client.player;
 			
 			double x = buf.readDouble();
 			double y = buf.readDouble();
@@ -393,35 +411,35 @@ public class SpectrumS2CPacketReceiver {
 			double playerVelocityZ = buf.readDouble();
 			
 			client.execute(() -> {
-				MoonstoneStrike.create(client.world, null, null, x, y, z, power, knockback);
-				player.setVelocity(player.getVelocity().add(playerVelocityX, playerVelocityY, playerVelocityZ));
+				MoonstoneStrike.create(client.level, null, null, x, y, z, power, knockback);
+				player.setDeltaMovement(player.getDeltaMovement().add(playerVelocityX, playerVelocityY, playerVelocityZ));
 			});
 		});
 
 		ClientPlayNetworking.registerGlobalReceiver(SpectrumS2CPackets.SYNC_ARTISANS_ATLAS, (client, handler, buf, responseSender) -> {
-			String targetIdStr = buf.readString();
-			Identifier targetId = targetIdStr.length() == 0 ? null : new Identifier(targetIdStr);
+			String targetIdStr = buf.readUtf();
+			ResourceLocation targetId = targetIdStr.length() == 0 ? null : new ResourceLocation(targetIdStr);
 
-			MapUpdateS2CPacket packet = new MapUpdateS2CPacket(buf);
+			ClientboundMapItemDataPacket packet = new ClientboundMapItemDataPacket(buf);
 
 			client.execute(() -> {
-				NetworkThreadUtils.forceMainThread(packet, handler, client);
+				PacketUtils.ensureRunningOnSameThread(packet, handler, client);
 				MapRenderer mapRenderer = client.gameRenderer.getMapRenderer();
-				int i = packet.getId();
-				String string = FilledMapItem.getMapName(i);
+				int i = packet.getMapId();
+				String string = MapItem.makeKey(i);
 
-				if (client.world != null) {
-					MapState mapState = client.world.getMapState(string);
+				if (client.level != null) {
+					MapItemSavedData mapState = client.level.getMapData(string);
 
 					if (mapState == null) {
-						mapState = new ArtisansAtlasState(packet.getScale(), packet.isLocked(), client.world.getRegistryKey());
-						client.world.putClientsideMapState(string, mapState);
+						mapState = new ArtisansAtlasState(packet.getScale(), packet.isLocked(), client.level.dimension());
+						client.level.overrideMapData(string, mapState);
 					}
 
 					if (mapState instanceof ArtisansAtlasState artisansAtlasState) {
 						artisansAtlasState.setTargetId(targetId);
-						packet.apply(mapState);
-						mapRenderer.updateTexture(i, mapState);
+						packet.applyToMap(mapState);
+						mapRenderer.update(i, mapState);
 					}
 				}
 			});

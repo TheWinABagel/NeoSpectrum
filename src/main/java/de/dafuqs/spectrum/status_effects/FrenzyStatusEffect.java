@@ -1,14 +1,17 @@
 package de.dafuqs.spectrum.status_effects;
 
-import de.dafuqs.spectrum.api.status_effect.*;
-import de.dafuqs.spectrum.cca.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.attribute.*;
-import net.minecraft.entity.effect.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.status_effect.StackableStatusEffect;
+import de.dafuqs.spectrum.cca.LastKillComponent;
+import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeMap;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Map;
 
 public class FrenzyStatusEffect extends SpectrumStatusEffect implements StackableStatusEffect {
 	
@@ -26,33 +29,33 @@ public class FrenzyStatusEffect extends SpectrumStatusEffect implements Stackabl
 	
 	public static final long REQUIRE_KILL_EVERY_X_TICKS = 200;
 	
-	public FrenzyStatusEffect(StatusEffectCategory category, int color) {
+	public FrenzyStatusEffect(MobEffectCategory category, int color) {
 		super(category, color);
 	}
 	
 	@Override
-	public void onApplied(LivingEntity entity, AttributeContainer attributes, int amplifier) {
-		if (!SpectrumStatusEffects.effectsAreGettingStacked && !entity.hasStatusEffect(this)) {
-			super.onApplied(entity, attributes, amplifier);
+	public void addAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
+		if (!SpectrumStatusEffects.effectsAreGettingStacked && !entity.hasEffect(this)) {
+			super.addAttributeModifiers(entity, attributes, amplifier);
 		}
 	}
 	
 	@Override
-	public void onRemoved(LivingEntity entity, AttributeContainer attributes, int amplifier) {
+	public void removeAttributeModifiers(LivingEntity entity, AttributeMap attributes, int amplifier) {
 		if (!SpectrumStatusEffects.effectsAreGettingStacked) {
-			super.onRemoved(entity, attributes, amplifier);
+			super.removeAttributeModifiers(entity, attributes, amplifier);
 		}
 	}
 	
 	@Override
-	public boolean canApplyUpdateEffect(int duration, int amplifier) {
+	public boolean isDurationEffectTick(int duration, int amplifier) {
 		return true;
 	}
 	
 	@Override
-	public void applyUpdateEffect(LivingEntity entity, int amplifier) {
+	public void applyEffectTick(LivingEntity entity, int amplifier) {
 		long lastKillTick = LastKillComponent.getLastKillTick(entity);
-		long worldTime = entity.getWorld().getTime();
+		long worldTime = entity.level().getGameTime();
 		long lastKillTickDifference = worldTime - lastKillTick;
 		boolean scoredKillInTime = lastKillTick >= 0 && lastKillTickDifference < REQUIRE_KILL_EVERY_X_TICKS;
 		
@@ -66,17 +69,17 @@ public class FrenzyStatusEffect extends SpectrumStatusEffect implements Stackabl
 	}
 	
 	public void updateAttributes(@NotNull LivingEntity entity, int amplifier, int increase) {
-		AttributeContainer attributes = entity.getAttributes();
+		AttributeMap attributes = entity.getAttributes();
 		if (attributes != null) {
-			for (Map.Entry<EntityAttribute, EntityAttributeModifier> attributeEntry : this.getAttributeModifiers().entrySet()) {
-				EntityAttributeInstance entityInstance = attributes.getCustomInstance(attributeEntry.getKey());
+			for (Map.Entry<Attribute, AttributeModifier> attributeEntry : this.getAttributeModifiers().entrySet()) {
+				AttributeInstance entityInstance = attributes.getInstance(attributeEntry.getKey());
 				if (entityInstance != null) {
-					EntityAttributeModifier baseAttributeValue = attributeEntry.getValue();
-					EntityAttributeModifier appliedModifier = entityInstance.getModifier(baseAttributeValue.getId());
-					double newBaseValue = appliedModifier == null ? baseAttributeValue.getValue() : appliedModifier.getValue();
-					double newValue = this.adjustModifierAmount(newBaseValue, attributeEntry.getValue().getValue(), amplifier, increase);
+					AttributeModifier baseAttributeValue = attributeEntry.getValue();
+					AttributeModifier appliedModifier = entityInstance.getModifier(baseAttributeValue.getId());
+					double newBaseValue = appliedModifier == null ? baseAttributeValue.getAmount() : appliedModifier.getAmount();
+					double newValue = this.adjustModifierAmount(newBaseValue, attributeEntry.getValue().getAmount(), amplifier, increase);
 					entityInstance.removeModifier(baseAttributeValue);
-					entityInstance.addPersistentModifier(new EntityAttributeModifier(baseAttributeValue.getId(), baseAttributeValue.getName(), newValue, baseAttributeValue.getOperation()));
+					entityInstance.addPermanentModifier(new AttributeModifier(baseAttributeValue.getId(), baseAttributeValue.getName(), newValue, baseAttributeValue.getOperation()));
 					entityInstance.getValue();
 				}
 			}

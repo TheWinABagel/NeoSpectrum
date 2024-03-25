@@ -1,26 +1,30 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import me.shedaniel.math.*;
-import me.shedaniel.rei.api.client.gui.*;
-import me.shedaniel.rei.api.client.gui.widgets.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import me.shedaniel.math.Point;
+import me.shedaniel.math.Rectangle;
+import me.shedaniel.rei.api.client.gui.Renderer;
+import me.shedaniel.rei.api.client.gui.widgets.Widget;
+import me.shedaniel.rei.api.client.gui.widgets.Widgets;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import me.shedaniel.rei.api.common.util.EntryStacks;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class AnvilCrushingCategory extends GatedDisplayCategory<AnvilCrushingDisplay> {
 	
-	private final static Identifier WALL_TEXTURE = SpectrumCommon.locate("textures/gui/container/anvil_crushing.png");
+	private final static ResourceLocation WALL_TEXTURE = SpectrumCommon.locate("textures/gui/container/anvil_crushing.png");
 	private final static EntryIngredient ANVIL = EntryIngredients.of(Items.ANVIL);
 	
 	@Override
@@ -29,8 +33,8 @@ public class AnvilCrushingCategory extends GatedDisplayCategory<AnvilCrushingDis
 	}
 	
 	@Override
-	public Text getTitle() {
-		return Text.translatable("container.spectrum.rei.anvil_crushing.title");
+	public Component getTitle() {
+		return Component.translatable("container.spectrum.rei.anvil_crushing.title");
 	}
 	
 	@Override
@@ -59,17 +63,17 @@ public class AnvilCrushingCategory extends GatedDisplayCategory<AnvilCrushingDis
 		
 		// xp text
 		widgets.add(Widgets.createLabel(new Point(startPoint.x + 84, startPoint.y - 8 + 48),
-				Text.translatable("container.spectrum.rei.anvil_crushing.plus_xp", display.experience)
+				Component.translatable("container.spectrum.rei.anvil_crushing.plus_xp", display.experience)
 		).leftAligned().color(0x3f3f3f).noShadow());
 		
 		// the tooltip text
-		Text text;
+		Component text;
 		if (display.crushedItemsPerPointOfDamage >= 1) {
-			text = Text.translatable("container.spectrum.rei.anvil_crushing.low_force_required");
+			text = Component.translatable("container.spectrum.rei.anvil_crushing.low_force_required");
 		} else if (display.crushedItemsPerPointOfDamage >= 0.5) {
-			text = Text.translatable("container.spectrum.rei.anvil_crushing.medium_force_required");
+			text = Component.translatable("container.spectrum.rei.anvil_crushing.medium_force_required");
 		} else {
-			text = Text.translatable("container.spectrum.rei.anvil_crushing.high_force_required");
+			text = Component.translatable("container.spectrum.rei.anvil_crushing.high_force_required");
 		}
 		widgets.add(Widgets.createLabel(new Point(startPoint.x, startPoint.y - 10 + 64), text).leftAligned().color(0x3f3f3f).noShadow());
 	}

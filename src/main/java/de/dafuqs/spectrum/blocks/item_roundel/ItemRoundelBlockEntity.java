@@ -1,12 +1,12 @@
 package de.dafuqs.spectrum.blocks.item_roundel;
 
-import de.dafuqs.spectrum.blocks.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.inventory.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.math.*;
+import de.dafuqs.spectrum.blocks.InWorldInteractionBlockEntity;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class ItemRoundelBlockEntity extends InWorldInteractionBlockEntity {
 	
@@ -25,24 +25,24 @@ public class ItemRoundelBlockEntity extends InWorldInteractionBlockEntity {
 	}
 
 	@Override
-	public void readNbt(NbtCompound nbt) {
-		super.readNbt(nbt);
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
 		if (!this.deserializeLootTable(nbt)) {
-			Inventories.readNbt(nbt, this.items);
+			ContainerHelper.loadAllItems(nbt, this.items);
 		}
 	}
 
 	@Override
-	public void writeNbt(NbtCompound nbt) {
-		super.writeNbt(nbt);
+	public void saveAdditional(CompoundTag nbt) {
+		super.saveAdditional(nbt);
 		if (!this.serializeLootTable(nbt)) {
-			Inventories.writeNbt(nbt, this.items);
+			ContainerHelper.saveAllItems(nbt, this.items);
 		}
 	}
 
 	@Override
-	public NbtCompound toInitialChunkDataNbt() {
+	public CompoundTag getUpdateTag() {
 		this.checkLootInteraction(null);
-		return super.toInitialChunkDataNbt();
+		return super.getUpdateTag();
 	}
 }

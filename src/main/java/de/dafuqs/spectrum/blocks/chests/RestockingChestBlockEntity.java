@@ -1,25 +1,30 @@
 package de.dafuqs.spectrum.blocks.chests;
 
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.inventories.*;
-import de.dafuqs.spectrum.items.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.recipe.*;
-import net.minecraft.screen.*;
-import net.minecraft.text.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.helpers.InventoryHelper;
+import de.dafuqs.spectrum.inventories.RestockingChestScreenHandler;
+import de.dafuqs.spectrum.items.CraftingTabletItem;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.WorldlyContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
-public class RestockingChestBlockEntity extends SpectrumChestBlockEntity implements SidedInventory {
+public class RestockingChestBlockEntity extends SpectrumChestBlockEntity implements WorldlyContainer {
 	
 	public static final int INVENTORY_SIZE = 27 + 4 + 4; // 27 items, 4 crafting tablets, 4 result slots
 	public static final int[] CHEST_SLOTS = new int[]{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
@@ -31,19 +36,19 @@ public class RestockingChestBlockEntity extends SpectrumChestBlockEntity impleme
 		super(SpectrumBlockEntities.RESTOCKING_CHEST, blockPos, blockState);
 	}
 	
-	public static void tick(World world, BlockPos pos, BlockState state, RestockingChestBlockEntity restockingChestBlockEntity) {
-		if (world.isClient) {
-			restockingChestBlockEntity.lidAnimator.step();
+	public static void tick(Level world, BlockPos pos, BlockState state, RestockingChestBlockEntity restockingChestBlockEntity) {
+		if (world.isClientSide) {
+			restockingChestBlockEntity.lidAnimator.tickLid();
 		} else {
 			if (tickCooldown(restockingChestBlockEntity)) {
 				for (int i = 0; i < 4; i++) {
 					ItemStack outputItemStack = restockingChestBlockEntity.inventory.get(RESULT_SLOTS[i]);
 					ItemStack craftingTabletItemStack = restockingChestBlockEntity.inventory.get(RECIPE_SLOTS[i]);
-					if (!craftingTabletItemStack.isEmpty() && (outputItemStack.isEmpty() || outputItemStack.getCount() < outputItemStack.getMaxCount())) {
+					if (!craftingTabletItemStack.isEmpty() && (outputItemStack.isEmpty() || outputItemStack.getCount() < outputItemStack.getMaxStackSize())) {
 						boolean couldCraft = restockingChestBlockEntity.tryCraft(restockingChestBlockEntity, i);
 						if (couldCraft) {
 							restockingChestBlockEntity.setCooldown(restockingChestBlockEntity, 20);
-							restockingChestBlockEntity.markDirty();
+							restockingChestBlockEntity.setChanged();
 							return;
 						}
 					}
@@ -63,12 +68,12 @@ public class RestockingChestBlockEntity extends SpectrumChestBlockEntity impleme
 	}
 	
 	@Override
-	protected Text getContainerName() {
-		return Text.translatable("block.spectrum.restocking_chest");
+	protected Component getDefaultName() {
+		return Component.translatable("block.spectrum.restocking_chest");
 	}
 	
 	@Override
-	protected ScreenHandler createScreenHandler(int syncId, PlayerInventory playerInventory) {
+	protected AbstractContainerMenu createMenu(int syncId, Inventory playerInventory) {
 		return new RestockingChestScreenHandler(syncId, playerInventory, this);
 	}
 	
@@ -78,11 +83,11 @@ public class RestockingChestBlockEntity extends SpectrumChestBlockEntity impleme
 	
 	private boolean tryCraft(RestockingChestBlockEntity restockingChestBlockEntity, int index) {
 		ItemStack craftingTabletItemStack = restockingChestBlockEntity.inventory.get(RECIPE_SLOTS[index]);
-		if (craftingTabletItemStack.isOf(SpectrumItems.CRAFTING_TABLET)) {
-			Recipe<?> recipe = CraftingTabletItem.getStoredRecipe(world, craftingTabletItemStack);
+		if (craftingTabletItemStack.is(SpectrumItems.CRAFTING_TABLET)) {
+			Recipe<?> recipe = CraftingTabletItem.getStoredRecipe(level, craftingTabletItemStack);
 			if (recipe instanceof ShapelessRecipe || recipe instanceof ShapedRecipe) {
-				DefaultedList<Ingredient> ingredients = recipe.getIngredients();
-				ItemStack outputItemStack = recipe.getOutput(world.getRegistryManager());
+				NonNullList<Ingredient> ingredients = recipe.getIngredients();
+				ItemStack outputItemStack = recipe.getResultItem(level.registryAccess());
 				ItemStack currentItemStack = restockingChestBlockEntity.inventory.get(RESULT_SLOTS[index]);
 				if (InventoryHelper.canCombineItemStacks(currentItemStack, outputItemStack) && InventoryHelper.hasInInventory(ingredients, restockingChestBlockEntity)) {
 					List<ItemStack> remainders = InventoryHelper.removeFromInventoryWithRemainders(ingredients, restockingChestBlockEntity);
@@ -90,7 +95,7 @@ public class RestockingChestBlockEntity extends SpectrumChestBlockEntity impleme
 					if (currentItemStack.isEmpty()) {
 						restockingChestBlockEntity.inventory.set(RESULT_SLOTS[index], outputItemStack.copy());
 					} else {
-						currentItemStack.increment(outputItemStack.getCount());
+						currentItemStack.grow(outputItemStack.getCount());
 					}
 					
 					for (ItemStack remainder : remainders) {
@@ -105,26 +110,26 @@ public class RestockingChestBlockEntity extends SpectrumChestBlockEntity impleme
 	}
 	
 	@Override
-	public int size() {
+	public int getContainerSize() {
 		return INVENTORY_SIZE;
 	}
 	
 	@Override
-	public void writeNbt(NbtCompound tag) {
-		super.writeNbt(tag);
+	public void saveAdditional(CompoundTag tag) {
+		super.saveAdditional(tag);
 		tag.putInt("cooldown", coolDownTicks);
 	}
 	
 	@Override
-	public void readNbt(NbtCompound tag) {
-		super.readNbt(tag);
+	public void load(CompoundTag tag) {
+		super.load(tag);
 		if (tag.contains("cooldown")) {
 			coolDownTicks = tag.getInt("cooldown");
 		}
 	}
 	
 	@Override
-	public int[] getAvailableSlots(Direction side) {
+	public int[] getSlotsForFace(Direction side) {
 		if (side == Direction.DOWN) {
 			return RESULT_SLOTS;
 		} else {
@@ -133,12 +138,12 @@ public class RestockingChestBlockEntity extends SpectrumChestBlockEntity impleme
 	}
 	
 	@Override
-	public boolean canInsert(int slot, ItemStack stack, @Nullable Direction dir) {
+	public boolean canPlaceItemThroughFace(int slot, ItemStack stack, @Nullable Direction dir) {
 		return slot <= CHEST_SLOTS[CHEST_SLOTS.length - 1];
 	}
 	
 	@Override
-	public boolean canExtract(int slot, ItemStack stack, Direction dir) {
+	public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction dir) {
 		return true;
 	}
 	

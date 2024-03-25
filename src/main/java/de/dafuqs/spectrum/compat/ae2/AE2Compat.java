@@ -1,19 +1,21 @@
 package de.dafuqs.spectrum.compat.ae2;
 
-import de.dafuqs.spectrum.blocks.crystallarieum.*;
-import de.dafuqs.spectrum.compat.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.blockrenderlayer.v1.*;
-import net.fabricmc.fabric.api.item.v1.*;
-import net.fabricmc.fabric.api.object.builder.v1.block.*;
-import net.minecraft.block.*;
-import net.minecraft.block.piston.PistonBehavior;
-import net.minecraft.client.render.*;
-import net.minecraft.item.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.blocks.crystallarieum.CrystallarieumGrowableBlock;
+import de.dafuqs.spectrum.compat.SpectrumIntegrationPacks;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
+import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.material.MapColor;
+import net.minecraft.world.level.material.PushReaction;
 
-import static de.dafuqs.spectrum.registries.SpectrumBlocks.*;
+import static de.dafuqs.spectrum.registries.SpectrumBlocks.registerBlockWithItem;
 
 public class AE2Compat extends SpectrumIntegrationPacks.ModIntegrationPack {
 	
@@ -33,15 +35,15 @@ public class AE2Compat extends SpectrumIntegrationPacks.ModIntegrationPack {
 	@Override
 	public void register() {
 		// BLOCKS
-		SMALL_CERTUS_QUARTZ_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.create().pistonBehavior(PistonBehavior.DESTROY).hardness(1.0f).mapColor(MapColor.TERRACOTTA_WHITE).requiresTool().nonOpaque(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
+		SMALL_CERTUS_QUARTZ_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.of().pushReaction(PushReaction.DESTROY).destroyTime(1.0f).mapColor(MapColor.TERRACOTTA_WHITE).requiresCorrectToolForDrops().noOcclusion(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
 		LARGE_CERTUS_QUARTZ_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_CERTUS_QUARTZ_BUD), CrystallarieumGrowableBlock.GrowthStage.LARGE);
 		CERTUS_QUARTZ_CLUSTER = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_CERTUS_QUARTZ_BUD), CrystallarieumGrowableBlock.GrowthStage.CLUSTER);
-		SMALL_FLUIX_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.create().pistonBehavior(PistonBehavior.DESTROY).hardness(1.0f).mapColor(Blocks.PURPLE_CONCRETE.getDefaultMapColor()).requiresTool().nonOpaque(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
+		SMALL_FLUIX_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.of().pushReaction(PushReaction.DESTROY).destroyTime(1.0f).mapColor(Blocks.PURPLE_CONCRETE.defaultMapColor()).requiresCorrectToolForDrops().noOcclusion(), CrystallarieumGrowableBlock.GrowthStage.SMALL);
 		LARGE_FLUIX_BUD = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_FLUIX_BUD), CrystallarieumGrowableBlock.GrowthStage.LARGE);
 		FLUIX_CLUSTER = new CrystallarieumGrowableBlock(FabricBlockSettings.copyOf(SMALL_FLUIX_BUD), CrystallarieumGrowableBlock.GrowthStage.CLUSTER);
 		
-		PURE_CERTUS_QUARTZ_BLOCK = new Block(FabricBlockSettings.create().mapColor(MapColor.PALE_YELLOW).strength(0.3F).sounds(BlockSoundGroup.GLASS));
-		PURE_FLUIX_BLOCK = new Block(FabricBlockSettings.create().mapColor(MapColor.PALE_YELLOW).strength(0.3F).sounds(BlockSoundGroup.GLASS));
+		PURE_CERTUS_QUARTZ_BLOCK = new Block(FabricBlockSettings.of().mapColor(MapColor.SAND).strength(0.3F).sound(SoundType.GLASS));
+		PURE_FLUIX_BLOCK = new Block(FabricBlockSettings.of().mapColor(MapColor.SAND).strength(0.3F).sound(SoundType.GLASS));
 		
 		FabricItemSettings settings = SpectrumItems.IS.of();
 		registerBlockWithItem("small_certus_quartz_bud", SMALL_CERTUS_QUARTZ_BUD, settings, DyeColor.YELLOW);
@@ -64,12 +66,12 @@ public class AE2Compat extends SpectrumIntegrationPacks.ModIntegrationPack {
 	
 	@Override
 	public void registerClient() {
-		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_CERTUS_QUARTZ_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_CERTUS_QUARTZ_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(CERTUS_QUARTZ_CLUSTER, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_FLUIX_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_FLUIX_BUD, RenderLayer.getCutout());
-		BlockRenderLayerMap.INSTANCE.putBlock(FLUIX_CLUSTER, RenderLayer.getCutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_CERTUS_QUARTZ_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_CERTUS_QUARTZ_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(CERTUS_QUARTZ_CLUSTER, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(SMALL_FLUIX_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(LARGE_FLUIX_BUD, RenderType.cutout());
+		BlockRenderLayerMap.INSTANCE.putBlock(FLUIX_CLUSTER, RenderType.cutout());
 	}
 	
 }

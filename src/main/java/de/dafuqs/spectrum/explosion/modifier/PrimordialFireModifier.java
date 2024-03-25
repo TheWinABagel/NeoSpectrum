@@ -1,30 +1,32 @@
 package de.dafuqs.spectrum.explosion.modifier;
 
-import de.dafuqs.spectrum.blocks.*;
-import de.dafuqs.spectrum.cca.*;
-import de.dafuqs.spectrum.explosion.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.particle.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.blocks.PrimordialFireBlock;
+import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
+import de.dafuqs.spectrum.explosion.ExplosionModifierType;
+import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Optional;
 
 public class PrimordialFireModifier extends DamageChangingModifier {
 	
 	
-	public PrimordialFireModifier(ExplosionModifierType type,ParticleEffect effect, int displayColor) {
+	public PrimordialFireModifier(ExplosionModifierType type,ParticleOptions effect, int displayColor) {
 		super(type, effect, displayColor);
 	}
 	
 	@Override
-	public void applyToBlocks(@NotNull World world, @NotNull Iterable<BlockPos> blocks) {
+	public void applyToBlocks(@NotNull Level world, @NotNull Iterable<BlockPos> blocks) {
 		for (BlockPos pos : blocks) {
-			if (world.getRandom().nextInt(3) == 0 && world.getBlockState(pos).isAir() && world.getBlockState(pos.down()).isOpaqueFullCube(world, pos.down())) {
-				world.setBlockState(pos, PrimordialFireBlock.getState(world, pos));
+			if (world.getRandom().nextInt(3) == 0 && world.getBlockState(pos).isAir() && world.getBlockState(pos.below()).isSolidRender(world, pos.below())) {
+				world.setBlockAndUpdate(pos, PrimordialFireBlock.getState(world, pos));
 			}
 		}
 	}
@@ -46,6 +48,6 @@ public class PrimordialFireModifier extends DamageChangingModifier {
 		if (owner == null) {
 			return Optional.empty();
 		}
-		return Optional.of(SpectrumDamageTypes.primordialFire(owner.getWorld(), owner));
+		return Optional.of(SpectrumDamageTypes.primordialFire(owner.level(), owner));
 	}
 }

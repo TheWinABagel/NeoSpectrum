@@ -1,22 +1,22 @@
 package de.dafuqs.spectrum.blocks.redstone;
 
-import net.minecraft.block.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class BlockLightDetectorBlock extends DetectorBlock {
 	
-	public BlockLightDetectorBlock(Settings settings) {
+	public BlockLightDetectorBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	protected void updateState(BlockState state, World world, BlockPos pos) {
-		int power = world.getLightLevel(pos);
+	protected void updateState(BlockState state, Level world, BlockPos pos) {
+		int power = world.getMaxLocalRawBrightness(pos);
 		
-		power = state.get(INVERTED) ? 15 - power : power;
-		if (state.get(POWER) != power) {
-			world.setBlockState(pos, state.with(POWER, power), 3);
+		power = state.getValue(INVERTED) ? 15 - power : power;
+		if (state.getValue(POWER) != power) {
+			world.setBlock(pos, state.setValue(POWER, power), 3);
 		}
 	}
 	

@@ -1,11 +1,11 @@
 package de.dafuqs.spectrum.items.food.beverages.properties;
 
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.List;
 
 // wrapper for beverage itemstack nbt
 // unique for each beverage
@@ -21,7 +21,7 @@ public class BeverageProperties {
 		this.thickness = thickness;
 	}
 	
-	public BeverageProperties(NbtCompound nbtCompound) {
+	public BeverageProperties(CompoundTag nbtCompound) {
 		if (nbtCompound != null) {
 			this.ageDays = nbtCompound.contains("AgeDays") ? nbtCompound.getLong("AgeDays") : 0;
 			this.alcPercent = nbtCompound.contains("AlcPercent") ? nbtCompound.getInt("AlcPercent") : 0;
@@ -30,24 +30,24 @@ public class BeverageProperties {
 	}
 	
 	public static BeverageProperties getFromStack(ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getNbt();
+		CompoundTag nbtCompound = itemStack.getTag();
 		return new BeverageProperties(nbtCompound);
 	}
 	
-	public void addTooltip(ItemStack itemStack, List<Text> tooltip) {
-		tooltip.add(Text.translatable("item.spectrum.infused_beverage.tooltip.age", ageDays, alcPercent).formatted(Formatting.GRAY));
+	public void addTooltip(ItemStack itemStack, List<Component> tooltip) {
+		tooltip.add(Component.translatable("item.spectrum.infused_beverage.tooltip.age", ageDays, alcPercent).withStyle(ChatFormatting.GRAY));
 	}
 	
-	protected void toNbt(NbtCompound nbtCompound) {
+	protected void toNbt(CompoundTag nbtCompound) {
 		nbtCompound.putLong("AgeDays", this.ageDays);
 		nbtCompound.putInt("AlcPercent", this.alcPercent);
 		nbtCompound.putFloat("Thickness", this.thickness);
 	}
 	
 	public ItemStack getStack(ItemStack itemStack) {
-		NbtCompound compound = itemStack.getOrCreateNbt();
+		CompoundTag compound = itemStack.getOrCreateTag();
 		toNbt(compound);
-		itemStack.setNbt(compound);
+		itemStack.setTag(compound);
 		return itemStack;
 	}
 	

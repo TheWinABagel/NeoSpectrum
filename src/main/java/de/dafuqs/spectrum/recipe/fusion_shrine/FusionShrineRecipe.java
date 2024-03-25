@@ -1,33 +1,39 @@
 package de.dafuqs.spectrum.recipe.fusion_shrine;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.blocks.fusion_shrine.*;
-import de.dafuqs.spectrum.blocks.upgrade.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.api.predicate.world.*;
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.fluid.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.block.MultiblockCrafter;
+import de.dafuqs.spectrum.api.predicate.world.WorldConditionPredicate;
+import de.dafuqs.spectrum.api.recipe.FusionShrineRecipeWorldEffect;
+import de.dafuqs.spectrum.blocks.fusion_shrine.FusionShrineBlockEntity;
+import de.dafuqs.spectrum.blocks.upgrade.Upgradeable;
+import de.dafuqs.spectrum.helpers.InventoryHelper;
+import de.dafuqs.spectrum.helpers.SpectrumEnchantmentHelper;
+import de.dafuqs.spectrum.helpers.Support;
+import de.dafuqs.spectrum.recipe.GatedStackSpectrumRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Fluid;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public class FusionShrineRecipe extends GatedStackSpectrumRecipe {
 	
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("build_fusion_shrine");
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("build_fusion_shrine");
 	
 	protected final List<IngredientStack> craftingInputs;
 	protected final Fluid fluidInput;
@@ -50,13 +56,13 @@ public class FusionShrineRecipe extends GatedStackSpectrumRecipe {
 	@NotNull
 	protected final FusionShrineRecipeWorldEffect finishWorldEffect;
 	@Nullable
-	protected final Text description;
+	protected final Component description;
 	// copy all nbt data from the first stack in the ingredients to the output stack
 	protected final boolean copyNbt;
 	
-	public FusionShrineRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier,
+	public FusionShrineRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier,
 							  List<IngredientStack> craftingInputs, Fluid fluidInput, ItemStack output, float experience, int craftingTime, boolean yieldUpgradesDisabled, boolean playCraftingFinishedEffects, boolean copyNbt,
-							  List<WorldConditionPredicate> worldConditions, @NotNull FusionShrineRecipeWorldEffect startWorldEffect, @NotNull List<FusionShrineRecipeWorldEffect> duringWorldEffects, @NotNull FusionShrineRecipeWorldEffect finishWorldEffect, @Nullable Text description) {
+							  List<WorldConditionPredicate> worldConditions, @NotNull FusionShrineRecipeWorldEffect startWorldEffect, @NotNull List<FusionShrineRecipeWorldEffect> duringWorldEffects, @NotNull FusionShrineRecipeWorldEffect finishWorldEffect, @Nullable Component description) {
 		super(id, group, secret, requiredAdvancementIdentifier);
 		
 		this.craftingInputs = craftingInputs;
@@ -81,27 +87,27 @@ public class FusionShrineRecipe extends GatedStackSpectrumRecipe {
 	 * Only tests the items. The required fluid has to be tested manually by the crafting block
 	 */
 	@Override
-	public boolean matches(Inventory inv, World world) {
+	public boolean matches(Container inv, Level world) {
 		return matchIngredientStacksExclusively(inv, getIngredientStacks());
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inv, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inv, RegistryAccess drm) {
 		return ItemStack.EMPTY;
 	}
 	
 	@Override
-	public boolean fits(int width, int height) {
+	public boolean canCraftInDimensions(int width, int height) {
 		return true;
 	}
 	
 	@Override
-	public ItemStack getOutput(DynamicRegistryManager registryManager) {
+	public ItemStack getResultItem(RegistryAccess registryManager) {
 		return output;
 	}
 	
 	@Override
-	public ItemStack createIcon() {
+	public ItemStack getToastSymbol() {
 		return new ItemStack(SpectrumBlocks.FUSION_SHRINE_BASALT);
 	}
 	
@@ -128,7 +134,7 @@ public class FusionShrineRecipe extends GatedStackSpectrumRecipe {
 	 * Returns a boolean depending on if the recipes condition is set
 	 * This can be always true, a specific day or moon phase, or weather.
 	 */
-	public boolean areConditionMetCurrently(ServerWorld world, BlockPos pos) {
+	public boolean areConditionMetCurrently(ServerLevel world, BlockPos pos) {
 		for (WorldConditionPredicate worldCondition : this.worldConditions) {
 			if (!worldCondition.test(world, pos)) {
 				return false;
@@ -174,7 +180,7 @@ public class FusionShrineRecipe extends GatedStackSpectrumRecipe {
 		}
 	}
 	
-	public Optional<Text> getDescription() {
+	public Optional<Component> getDescription() {
 		if (this.description == null) {
 			return Optional.empty();
 		} else {
@@ -183,7 +189,7 @@ public class FusionShrineRecipe extends GatedStackSpectrumRecipe {
 	}
 
 	@Override
-	public Identifier getRecipeTypeUnlockIdentifier() {
+	public ResourceLocation getRecipeTypeUnlockIdentifier() {
 		return UNLOCK_IDENTIFIER;
 	}
 	
@@ -192,15 +198,15 @@ public class FusionShrineRecipe extends GatedStackSpectrumRecipe {
 		return SpectrumRecipeTypes.FUSION_SHRINE_ID;
 	}
 	
-	public void craft(World world, FusionShrineBlockEntity fusionShrineBlockEntity) {
+	public void craft(Level world, FusionShrineBlockEntity fusionShrineBlockEntity) {
 		ItemStack firstStack = ItemStack.EMPTY;
 		
 		int maxAmount = 1;
-		if (!getOutput(world.getRegistryManager()).isEmpty()) {
-			maxAmount = getOutput(world.getRegistryManager()).getMaxCount();
+		if (!getResultItem(world.registryAccess()).isEmpty()) {
+			maxAmount = getResultItem(world.registryAccess()).getMaxStackSize();
 			for (IngredientStack ingredientStack : getIngredientStacks()) {
-				for (int i = 0; i < fusionShrineBlockEntity.size(); i++) {
-					ItemStack currentStack = fusionShrineBlockEntity.getStack(i);
+				for (int i = 0; i < fusionShrineBlockEntity.getContainerSize(); i++) {
+					ItemStack currentStack = fusionShrineBlockEntity.getItem(i);
 					if (ingredientStack.test(currentStack)) {
 						if (firstStack.isEmpty()) {
 							firstStack = currentStack;
@@ -220,43 +226,43 @@ public class FusionShrineRecipe extends GatedStackSpectrumRecipe {
 			for (IngredientStack ingredientStack : getIngredientStacks()) {
 				double efficiencyModifier = fusionShrineBlockEntity.getUpgradeHolder().getEffectiveValue(Upgradeable.UpgradeType.EFFICIENCY);
 
-				for (int i = 0; i < fusionShrineBlockEntity.size(); i++) {
-					ItemStack currentStack = fusionShrineBlockEntity.getStack(i);
+				for (int i = 0; i < fusionShrineBlockEntity.getContainerSize(); i++) {
+					ItemStack currentStack = fusionShrineBlockEntity.getItem(i);
 					if (ingredientStack.test(currentStack)) {
 						int reducedAmountAfterMod = Support.getIntFromDecimalWithChance(ingredientStack.getCount() / efficiencyModifier, world.random);
-						currentStack.decrement(reducedAmountAfterMod);
+						currentStack.shrink(reducedAmountAfterMod);
 						break;
 					}
 				}
 			}
 		}
 		
-		ItemStack output = getOutput(world.getRegistryManager()).copy();
+		ItemStack output = getResultItem(world.registryAccess()).copy();
 		if (this.copyNbt) {
 			// this overrides all nbt data, that are not nested compounds (like lists)
-			NbtCompound sourceNbt = firstStack.getNbt();
+			CompoundTag sourceNbt = firstStack.getTag();
 			if (sourceNbt != null) {
 				sourceNbt = sourceNbt.copy();
-				sourceNbt.remove(ItemStack.DAMAGE_KEY);
-				output.setNbt(sourceNbt);
+				sourceNbt.remove(ItemStack.TAG_DAMAGE);
+				output.setTag(sourceNbt);
 				// so we need to restore all previous enchantments that the original item had and are still applicable to the new item
-				output = SpectrumEnchantmentHelper.clearAndCombineEnchantments(output, false, false, getOutput(world.getRegistryManager()), firstStack);
+				output = SpectrumEnchantmentHelper.clearAndCombineEnchantments(output, false, false, getResultItem(world.registryAccess()), firstStack);
 			}
 		}
 		
 		spawnCraftingResultAndXP(world, fusionShrineBlockEntity, output, maxAmount); // spawn results
 	}
 	
-	private void decrementIngredients(World world, FusionShrineBlockEntity fusionShrineBlockEntity, int recipesCrafted, double efficiencyModifier) {
+	private void decrementIngredients(Level world, FusionShrineBlockEntity fusionShrineBlockEntity, int recipesCrafted, double efficiencyModifier) {
 		for (IngredientStack ingredientStack : getIngredientStacks()) {
-			for (int i = 0; i < fusionShrineBlockEntity.size(); i++) {
-				ItemStack currentStack = fusionShrineBlockEntity.getStack(i);
+			for (int i = 0; i < fusionShrineBlockEntity.getContainerSize(); i++) {
+				ItemStack currentStack = fusionShrineBlockEntity.getItem(i);
 				if (ingredientStack.test(currentStack)) {
 					int reducedAmount = recipesCrafted * ingredientStack.getCount();
 					int reducedAmountAfterMod = efficiencyModifier == 1 ? reducedAmount : Support.getIntFromDecimalWithChance(reducedAmount / efficiencyModifier, world.random);
 					
 					ItemStack currentRemainder = currentStack.getRecipeRemainder();
-					currentStack.decrement(reducedAmountAfterMod);
+					currentStack.shrink(reducedAmountAfterMod);
 					
 					if (!currentRemainder.isEmpty()) {
 						currentRemainder = currentRemainder.copy();
@@ -270,16 +276,16 @@ public class FusionShrineRecipe extends GatedStackSpectrumRecipe {
 		}
 	}
 	
-	protected void spawnCraftingResultAndXP(@NotNull World world, @NotNull FusionShrineBlockEntity fusionShrineBlockEntity, @NotNull ItemStack stack, int recipeCount) {
+	protected void spawnCraftingResultAndXP(@NotNull Level world, @NotNull FusionShrineBlockEntity fusionShrineBlockEntity, @NotNull ItemStack stack, int recipeCount) {
 		int resultAmountBeforeMod = recipeCount * stack.getCount();
 		double yieldModifier = yieldUpgradesDisabled ? 1.0 : fusionShrineBlockEntity.getUpgradeHolder().getEffectiveValue(Upgradeable.UpgradeType.YIELD);
 		int resultAmountAfterMod = Support.getIntFromDecimalWithChance(resultAmountBeforeMod * yieldModifier, world.random);
 		
 		int intExperience = Support.getIntFromDecimalWithChance(recipeCount * experience, world.random);
-		MultiblockCrafter.spawnItemStackAsEntitySplitViaMaxCount(world, fusionShrineBlockEntity.getPos().up(2), stack, resultAmountAfterMod, MultiblockCrafter.RECIPE_STACK_VELOCITY);
+		MultiblockCrafter.spawnItemStackAsEntitySplitViaMaxCount(world, fusionShrineBlockEntity.getBlockPos().above(2), stack, resultAmountAfterMod, MultiblockCrafter.RECIPE_STACK_VELOCITY);
 		
 		if (experience > 0) {
-			MultiblockCrafter.spawnExperience(world, fusionShrineBlockEntity.getPos(), intExperience);
+			MultiblockCrafter.spawnExperience(world, fusionShrineBlockEntity.getBlockPos(), intExperience);
 		}
 		
 		//only triggered on server side. Therefore, has to be sent to client via S2C packet

@@ -1,17 +1,23 @@
 package de.dafuqs.spectrum.compat.emi.recipes;
 
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.compat.emi.*;
-import de.dafuqs.spectrum.recipe.titration_barrel.*;
-import dev.emi.emi.api.stack.*;
-import dev.emi.emi.api.widget.TextWidget.*;
-import dev.emi.emi.api.widget.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.recipe.FluidIngredient;
+import de.dafuqs.spectrum.compat.emi.FluidIngredientEmi;
+import de.dafuqs.spectrum.compat.emi.GatedSpectrumEmiRecipe;
+import de.dafuqs.spectrum.compat.emi.SpectrumEmiRecipeCategories;
+import de.dafuqs.spectrum.recipe.titration_barrel.ITitrationBarrelRecipe;
+import de.dafuqs.spectrum.recipe.titration_barrel.TitrationBarrelRecipe;
+import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.widget.TextWidget.Alignment;
+import dev.emi.emi.api.widget.WidgetHolder;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TitrationBarrelEmiRecipeGated extends GatedSpectrumEmiRecipe<ITitrationBarrelRecipe> {
 	
@@ -58,11 +64,11 @@ public class TitrationBarrelEmiRecipeGated extends GatedSpectrumEmiRecipe<ITitra
 		if (displayedStacks == null) {
 			widgets.addSlot(outputs.get(0), 100, 5).large(true).recipeContext(this);
 		} else {
-			widgets.addGeneratedSlot(random -> displayedStacks.get((int) (MinecraftClient.getInstance().world.getTime() % displayedStacks.size())), 1, 100, 5).large(true).recipeContext(this);
+			widgets.addGeneratedSlot(random -> displayedStacks.get((int) (Minecraft.getInstance().level.getGameTime() % displayedStacks.size())), 1, 100, 5).large(true).recipeContext(this);
 			
 		}
 		
-		Text text = TitrationBarrelRecipe.getDurationText(recipe.getMinFermentationTimeHours(), recipe.getFermentationData());
+		Component text = TitrationBarrelRecipe.getDurationText(recipe.getMinFermentationTimeHours(), recipe.getFermentationData());
 		widgets.addText(text, width / 2, 40, 0x3f3f3f, false).horizontalAlign(Alignment.CENTER);
 	}
 }

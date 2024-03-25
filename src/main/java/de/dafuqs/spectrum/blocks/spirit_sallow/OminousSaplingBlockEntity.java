@@ -1,14 +1,15 @@
 package de.dafuqs.spectrum.blocks.spirit_sallow;
 
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.math.*;
+import de.dafuqs.spectrum.api.block.PlayerOwned;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.UUID;
 
 public class OminousSaplingBlockEntity extends BlockEntity implements PlayerOwned {
 	
@@ -28,28 +29,28 @@ public class OminousSaplingBlockEntity extends BlockEntity implements PlayerOwne
 	}
 	
 	@Override
-	public void setOwner(PlayerEntity playerEntity) {
-		this.ownerUUID = playerEntity.getUuid();
-		markDirty();
+	public void setOwner(Player playerEntity) {
+		this.ownerUUID = playerEntity.getUUID();
+		setChanged();
 	}
 	
 	// Serialize the BlockEntity
 	@Override
-	public void writeNbt(NbtCompound tag) {
-		super.writeNbt(tag);
+	public void saveAdditional(CompoundTag tag) {
+		super.saveAdditional(tag);
 		
 		if (this.ownerUUID != null) {
-			tag.putUuid("OwnerUUID", this.ownerUUID);
+			tag.putUUID("OwnerUUID", this.ownerUUID);
 		}
 	}
 	
 	// Deserialize the BlockEntity
 	@Override
-	public void readNbt(NbtCompound tag) {
-		super.readNbt(tag);
+	public void load(CompoundTag tag) {
+		super.load(tag);
 		
 		if (tag.contains("OwnerUUID")) {
-			this.ownerUUID = tag.getUuid("OwnerUUID");
+			this.ownerUUID = tag.getUUID("OwnerUUID");
 		} else {
 			this.ownerUUID = null;
 		}

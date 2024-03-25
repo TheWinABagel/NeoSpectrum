@@ -1,24 +1,28 @@
 package de.dafuqs.spectrum.blocks.conditional;
 
-import de.dafuqs.revelationary.api.revelations.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import de.dafuqs.revelationary.api.revelations.RevelationAware;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemNameBlockItem;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.Map;
 
-public class MermaidsGemItem extends AliasedBlockItem implements RevelationAware {
+public class MermaidsGemItem extends ItemNameBlockItem implements RevelationAware {
 	
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("place_pedestal");
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("place_pedestal");
 	
-	public MermaidsGemItem(Block block, Settings settings) {
+	public MermaidsGemItem(Block block, Properties settings) {
 		super(block, settings);
 		RevelationAware.register(this);
 	}
 	
 	@Override
-	public Identifier getCloakAdvancementIdentifier() {
+	public ResourceLocation getCloakAdvancementIdentifier() {
 		return UNLOCK_IDENTIFIER;
 	}
 	
@@ -28,8 +32,8 @@ public class MermaidsGemItem extends AliasedBlockItem implements RevelationAware
 	}
 	
 	@Override
-	public Pair<Item, Item> getItemCloak() {
-		return new Pair<>(this, Items.ORANGE_DYE);
+	public Tuple<Item, Item> getItemCloak() {
+		return new Tuple<>(this, Items.ORANGE_DYE);
 	}
 	
 }

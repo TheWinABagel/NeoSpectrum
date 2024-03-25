@@ -1,6 +1,7 @@
 package de.dafuqs.spectrum.helpers;
 
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 
 // TODO: migrate to net.minecraft.world.tick ?
 public final class TickLooper {
@@ -41,13 +42,13 @@ public final class TickLooper {
         return "TickLooper (" + currentTick + "/" + maxTick + ")";
     }
     
-    public void readNbt(NbtCompound nbt) {
+    public void readNbt(CompoundTag nbt) {
         maxTick = nbt.getInt("max");
         currentTick = nbt.getInt("current");
     }
     
-    public NbtElement toNbt() {
-        NbtCompound nbt = new NbtCompound();
+    public Tag toNbt() {
+        CompoundTag nbt = new CompoundTag();
         nbt.putInt("max", maxTick);
         nbt.putInt("current", currentTick);
         return nbt;

@@ -1,19 +1,21 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.recipe.spirit_instiller.*;
-import de.dafuqs.spectrum.recipe.spirit_instiller.spawner.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.display.basic.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.minecraft.client.*;
-import net.minecraft.item.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.compat.REI.GatedSpectrumDisplay;
+import de.dafuqs.spectrum.compat.REI.REIHelper;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.helpers.LoreHelper;
+import de.dafuqs.spectrum.recipe.spirit_instiller.SpiritInstillerRecipe;
+import de.dafuqs.spectrum.recipe.spirit_instiller.spawner.SpawnerChangeRecipe;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collections;
 
 public class SpiritInstillingDisplay extends GatedSpectrumDisplay {
 	
@@ -28,11 +30,11 @@ public class SpiritInstillingDisplay extends GatedSpectrumDisplay {
 	
 	public static EntryIngredient buildOutput(SpiritInstillerRecipe recipe) {
 		if (recipe instanceof SpawnerChangeRecipe spawnerChangeRecipe) {
-			ItemStack outputStack = recipe.getOutput(BasicDisplay.registryAccess());
+			ItemStack outputStack = recipe.getResultItem(BasicDisplay.registryAccess());
 			LoreHelper.setLore(outputStack, spawnerChangeRecipe.getOutputLoreText());
 			return EntryIngredients.of(outputStack);
 		} else {
-			return EntryIngredients.of(recipe.getOutput(BasicDisplay.registryAccess()));
+			return EntryIngredients.of(recipe.getResultItem(BasicDisplay.registryAccess()));
 		}
 	}
 	
@@ -43,7 +45,7 @@ public class SpiritInstillingDisplay extends GatedSpectrumDisplay {
 	
 	@Override
     public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return AdvancementHelper.hasAdvancement(client.player, SpiritInstillerRecipe.UNLOCK_IDENTIFIER) && super.isUnlocked();
 	}
 	

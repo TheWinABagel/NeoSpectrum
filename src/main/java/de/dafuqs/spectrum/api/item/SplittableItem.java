@@ -1,18 +1,18 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Hand;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 
 public interface SplittableItem {
 
-    ItemStack getResult(ServerPlayerEntity player, ItemStack parent);
+    ItemStack getResult(ServerPlayer player, ItemStack parent);
 
-    boolean canSplit(ServerPlayerEntity player, Hand activeHand, ItemStack stack);
+    boolean canSplit(ServerPlayer player, InteractionHand activeHand, ItemStack stack);
 
-    default void sign(ServerPlayerEntity player, ItemStack stack) {
-        stack.getOrCreateNbt().putLong("pairSignature", player.getWorld().getTime() + player.getUuid().getMostSignificantBits());
+    default void sign(ServerPlayer player, ItemStack stack) {
+        stack.getOrCreateTag().putLong("pairSignature", player.level().getGameTime() + player.getUUID().getMostSignificantBits());
     }
 
     SoundEvent getSplitSound();

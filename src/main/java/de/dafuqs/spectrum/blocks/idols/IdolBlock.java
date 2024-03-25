@@ -1,76 +1,81 @@
 package de.dafuqs.spectrum.blocks.idols;
 
-import de.dafuqs.spectrum.networking.*;
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.entity.projectile.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.*;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public abstract class IdolBlock extends Block {
 	
-	public static final BooleanProperty COOLDOWN = BooleanProperty.of("cooldown");
-	public final ParticleEffect particleEffect;
+	public static final BooleanProperty COOLDOWN = BooleanProperty.create("cooldown");
+	public final ParticleOptions particleEffect;
 	
-	public IdolBlock(Settings settings, ParticleEffect particleEffect) {
+	public IdolBlock(Properties settings, ParticleOptions particleEffect) {
 		super(settings);
 		this.particleEffect = particleEffect;
-		setDefaultState(getStateManager().getDefaultState().with(COOLDOWN, false));
+		registerDefaultState(getStateDefinition().any().setValue(COOLDOWN, false));
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(COOLDOWN);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable BlockView world, List<Text> tooltip, TooltipContext options) {
-		super.appendTooltip(stack, world, tooltip, options);
-		tooltip.add(Text.translatable("block.spectrum.mob_block.tooltip").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable BlockGetter world, List<Component> tooltip, TooltipFlag options) {
+		super.appendHoverText(stack, world, tooltip, options);
+		tooltip.add(Component.translatable("block.spectrum.mob_block.tooltip").withStyle(ChatFormatting.GRAY));
 	}
 	
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		if (!world.isClient) {
-			if (!hasCooldown(state) && trigger((ServerWorld) world, pos, state, player, hit.getSide())) {
-				playTriggerParticles((ServerWorld) world, pos);
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		if (!world.isClientSide) {
+			if (!hasCooldown(state) && trigger((ServerLevel) world, pos, state, player, hit.getDirection())) {
+				playTriggerParticles((ServerLevel) world, pos);
 				playTriggerSound(world, pos);
 				triggerCooldown(world, pos);
 			}
-			return ActionResult.CONSUME;
+			return InteractionResult.CONSUME;
 		} else {
-			return ActionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		}
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-		super.scheduledTick(state, world, pos, random);
-		world.setBlockState(pos, world.getBlockState(pos).with(COOLDOWN, false));
+	public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
+		super.tick(state, world, pos, random);
+		world.setBlockAndUpdate(pos, world.getBlockState(pos).setValue(COOLDOWN, false));
 	}
 	
 	@Override
-	public void onSteppedOn(World world, BlockPos pos, BlockState state, Entity entity) {
-		super.onSteppedOn(world, pos, state, entity);
-		if (!world.isClient && !hasCooldown(state)) {
-			if (trigger((ServerWorld) world, pos, state, entity, Direction.UP)) {
-				playTriggerParticles((ServerWorld) world, pos);
+	public void stepOn(Level world, BlockPos pos, BlockState state, Entity entity) {
+		super.stepOn(world, pos, state, entity);
+		if (!world.isClientSide && !hasCooldown(state)) {
+			if (trigger((ServerLevel) world, pos, state, entity, Direction.UP)) {
+				playTriggerParticles((ServerLevel) world, pos);
 				playTriggerSound(world, pos);
 				triggerCooldown(world, pos);
 			}
@@ -78,44 +83,44 @@ public abstract class IdolBlock extends Block {
 	}
 	
 	@Override
-	public void onProjectileHit(World world, BlockState state, BlockHitResult hit, ProjectileEntity projectile) {
-		if (!world.isClient) {
+	public void onProjectileHit(Level world, BlockState state, BlockHitResult hit, Projectile projectile) {
+		if (!world.isClientSide) {
 			BlockPos hitPos = hit.getBlockPos();
-			if (!hasCooldown(state) && trigger((ServerWorld) world, hitPos, state, projectile.getOwner(), hit.getSide())) {
-				playTriggerParticles((ServerWorld) world, hit.getBlockPos());
+			if (!hasCooldown(state) && trigger((ServerLevel) world, hitPos, state, projectile.getOwner(), hit.getDirection())) {
+				playTriggerParticles((ServerLevel) world, hit.getBlockPos());
 				playTriggerSound(world, hitPos);
 				triggerCooldown(world, hitPos);
 			}
 		}
 	}
 	
-	public abstract boolean trigger(ServerWorld world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side);
+	public abstract boolean trigger(ServerLevel world, BlockPos blockPos, BlockState state, @Nullable Entity entity, Direction side);
 	
-	public void playTriggerParticles(ServerWorld world, BlockPos blockPos) {
-		SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity(world, new Vec3d(blockPos.getX() + 0.5, blockPos.getY() + 0.2, blockPos.getZ() + 0.5), particleEffect, 10, new Vec3d(0.5, 0.5, 0.5), new Vec3d(0.2, 0.08, 0.2));
+	public void playTriggerParticles(ServerLevel world, BlockPos blockPos) {
+		SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity(world, new Vec3(blockPos.getX() + 0.5, blockPos.getY() + 0.2, blockPos.getZ() + 0.5), particleEffect, 10, new Vec3(0.5, 0.5, 0.5), new Vec3(0.2, 0.08, 0.2));
 	}
 	
-	public void playTriggerSound(World world, BlockPos blockPos) {
-		world.playSound(null, blockPos, this.soundGroup.getPlaceSound(), SoundCategory.PLAYERS, 1.0F, 1.0F);
+	public void playTriggerSound(Level world, BlockPos blockPos) {
+		world.playSound(null, blockPos, this.soundType.getPlaceSound(), SoundSource.PLAYERS, 1.0F, 1.0F);
 	}
 	
 	public boolean hasCooldown(BlockState state) {
-		return state.get(COOLDOWN);
+		return state.getValue(COOLDOWN);
 	}
 	
-	public void triggerCooldown(World world, BlockPos pos) {
-		world.setBlockState(pos, world.getBlockState(pos).with(COOLDOWN, true));
-		world.scheduleBlockTick(pos, this, getCooldownTicks());
+	public void triggerCooldown(Level world, BlockPos pos) {
+		world.setBlockAndUpdate(pos, world.getBlockState(pos).setValue(COOLDOWN, true));
+		world.scheduleTick(pos, this, getCooldownTicks());
 	}
 	
 	public int getCooldownTicks() {
 		return 40;
 	}
 	
-	public Position getOutputLocation(BlockPointer pointer, Direction direction) {
-		double d = pointer.getX() + 0.7D * (double) direction.getOffsetX();
-		double e = pointer.getY() + 0.7D * (double) direction.getOffsetY();
-		double f = pointer.getZ() + 0.7D * (double) direction.getOffsetZ();
+	public Position getOutputLocation(BlockSource pointer, Direction direction) {
+		double d = pointer.x() + 0.7D * (double) direction.getStepX();
+		double e = pointer.y() + 0.7D * (double) direction.getStepY();
+		double f = pointer.z() + 0.7D * (double) direction.getStepZ();
 		return new PositionImpl(d, e, f);
 	}
 	

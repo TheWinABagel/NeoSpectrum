@@ -1,23 +1,25 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.display.basic.*;
-import me.shedaniel.rei.api.common.entry.*;
-import net.minecraft.client.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.compat.REI.GatedRecipeDisplay;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.entry.EntryStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collections;
 
 public class NaturesStaffConversionsDisplay extends BasicDisplay implements GatedRecipeDisplay {
 	
-	public static final Identifier UNLOCK_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("unlocks/items/natures_staff");
-	private final @Nullable Identifier requiredAdvancementIdentifier;
+	public static final ResourceLocation UNLOCK_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("unlocks/items/natures_staff");
+	private final @Nullable ResourceLocation requiredAdvancementIdentifier;
 	
-	public NaturesStaffConversionsDisplay(EntryStack<?> in, EntryStack<?> out, @Nullable Identifier requiredAdvancementIdentifier) {
+	public NaturesStaffConversionsDisplay(EntryStack<?> in, EntryStack<?> out, @Nullable ResourceLocation requiredAdvancementIdentifier) {
 		super(Collections.singletonList(EntryIngredient.of(in)), Collections.singletonList(EntryIngredient.of(out)));
 		this.requiredAdvancementIdentifier = requiredAdvancementIdentifier;
 	}
@@ -29,7 +31,7 @@ public class NaturesStaffConversionsDisplay extends BasicDisplay implements Gate
 	
 	@Override
     public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return AdvancementHelper.hasAdvancement(client.player, this.requiredAdvancementIdentifier)
 				&& AdvancementHelper.hasAdvancement(client.player, UNLOCK_ADVANCEMENT_IDENTIFIER);
 	}

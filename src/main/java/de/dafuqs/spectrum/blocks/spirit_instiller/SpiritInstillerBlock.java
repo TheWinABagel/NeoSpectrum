@@ -1,35 +1,47 @@
 package de.dafuqs.spectrum.blocks.spirit_instiller;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.blocks.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.progression.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import vazkii.patchouli.api.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.blocks.InWorldInteractionBlock;
+import de.dafuqs.spectrum.helpers.Support;
+import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import de.dafuqs.spectrum.registries.SpectrumMultiblocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import vazkii.patchouli.api.IMultiblock;
+import vazkii.patchouli.api.PatchouliAPI;
 
 public class SpiritInstillerBlock extends InWorldInteractionBlock {
 	
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("midgame/build_spirit_instiller_structure");
-	protected static final VoxelShape SHAPE = Block.createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 15.0D, 16.0D);
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("midgame/build_spirit_instiller_structure");
+	protected static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 15.0D, 16.0D);
 	
-	public SpiritInstillerBlock(Settings settings) {
+	public SpiritInstillerBlock(Properties settings) {
 		super(settings);
 	}
 	
-	public static void clearCurrentlyRenderedMultiBlock(World world) {
-		if (world.isClient) {
+	public static void clearCurrentlyRenderedMultiBlock(Level world) {
+		if (world.isClientSide) {
 			IMultiblock currentlyRenderedMultiBlock = PatchouliAPI.get().getCurrentMultiblock();
 			if (currentlyRenderedMultiBlock != null && currentlyRenderedMultiBlock.getID().equals(SpectrumMultiblocks.SPIRIT_INSTILLER_IDENTIFIER)) {
 				PatchouliAPI.get().clearMultiblock();
@@ -37,24 +49,24 @@ public class SpiritInstillerBlock extends InWorldInteractionBlock {
 		}
 	}
 	
-	public static boolean verifyStructure(World world, @NotNull BlockPos blockPos, @Nullable ServerPlayerEntity serverPlayerEntity, @NotNull SpiritInstillerBlockEntity spiritInstillerBlockEntity) {
+	public static boolean verifyStructure(Level world, @NotNull BlockPos blockPos, @Nullable ServerPlayer serverPlayerEntity, @NotNull SpiritInstillerBlockEntity spiritInstillerBlockEntity) {
 		IMultiblock multiblock = SpectrumMultiblocks.MULTIBLOCKS.get(SpectrumMultiblocks.SPIRIT_INSTILLER_IDENTIFIER);
 		
-		BlockRotation lastBlockRotation = spiritInstillerBlockEntity.getMultiblockRotation();
+		Rotation lastBlockRotation = spiritInstillerBlockEntity.getMultiblockRotation();
 		boolean valid = false;
 		
 		// try all 4 rotations
 		int offset = -4;
-		BlockRotation checkRotation = lastBlockRotation;
-		for (int i = 0; i < BlockRotation.values().length; i++) {
-			valid = multiblock.validate(world, blockPos.down(1).offset(Support.directionFromRotation(checkRotation), offset), checkRotation);
+		Rotation checkRotation = lastBlockRotation;
+		for (int i = 0; i < Rotation.values().length; i++) {
+			valid = multiblock.validate(world, blockPos.below(1).relative(Support.directionFromRotation(checkRotation), offset), checkRotation);
 			if (valid) {
 				if (i != 0) {
 					spiritInstillerBlockEntity.setMultiblockRotation(checkRotation);
 				}
 				break;
 			} else {
-				checkRotation = BlockRotation.values()[(checkRotation.ordinal() + 1) % BlockRotation.values().length];
+				checkRotation = Rotation.values()[(checkRotation.ordinal() + 1) % Rotation.values().length];
 			}
 		}
 		
@@ -63,13 +75,13 @@ public class SpiritInstillerBlock extends InWorldInteractionBlock {
 				SpectrumAdvancementCriteria.COMPLETED_MULTIBLOCK.trigger(serverPlayerEntity, multiblock);
 			}
 		} else {
-			if (world.isClient) {
+			if (world.isClientSide) {
 				IMultiblock currentMultiBlock = PatchouliAPI.get().getCurrentMultiblock();
 				if (currentMultiBlock == multiblock) {
-					lastBlockRotation = BlockRotation.values()[(lastBlockRotation.ordinal() + 1) % BlockRotation.values().length]; // cycle rotation
+					lastBlockRotation = Rotation.values()[(lastBlockRotation.ordinal() + 1) % Rotation.values().length]; // cycle rotation
 					spiritInstillerBlockEntity.setMultiblockRotation(lastBlockRotation);
 				}
-				PatchouliAPI.get().showMultiblock(multiblock, Text.translatable("multiblock.spectrum.spirit_instiller.structure"), blockPos.down(2).offset(Support.directionFromRotation(lastBlockRotation), offset), lastBlockRotation);
+				PatchouliAPI.get().showMultiblock(multiblock, Component.translatable("multiblock.spectrum.spirit_instiller.structure"), blockPos.below(2).relative(Support.directionFromRotation(lastBlockRotation), offset), lastBlockRotation);
 			} else {
 				scatterContents(world, blockPos);
 			}
@@ -80,51 +92,51 @@ public class SpiritInstillerBlock extends InWorldInteractionBlock {
 	
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new SpiritInstillerBlockEntity(pos, state);
 	}
 	
 	@Nullable
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		if (world.isClient) {
-			return checkType(type, SpectrumBlockEntities.SPIRIT_INSTILLER, SpiritInstillerBlockEntity::clientTick);
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		if (world.isClientSide) {
+			return createTickerHelper(type, SpectrumBlockEntities.SPIRIT_INSTILLER, SpiritInstillerBlockEntity::clientTick);
 		} else {
-			return checkType(type, SpectrumBlockEntities.SPIRIT_INSTILLER, SpiritInstillerBlockEntity::serverTick);
+			return createTickerHelper(type, SpectrumBlockEntities.SPIRIT_INSTILLER, SpiritInstillerBlockEntity::serverTick);
 		}
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return SHAPE;
 	}
 	
 	@Override
-	public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
-		if (world.isClient()) {
-			clearCurrentlyRenderedMultiBlock((World) world);
+	public void destroy(LevelAccessor world, BlockPos pos, BlockState state) {
+		if (world.isClientSide()) {
+			clearCurrentlyRenderedMultiBlock((Level) world);
 		}
 	}
 	
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
-		if (world.isClient) {
+		if (world.isClientSide) {
 			if (blockEntity instanceof SpiritInstillerBlockEntity spiritInstillerBlockEntity) {
 				verifyStructure(world, pos, null, spiritInstillerBlockEntity);
 			}
-			return ActionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		} else {
 			if (blockEntity instanceof SpiritInstillerBlockEntity spiritInstillerBlockEntity) {
-				if (verifyStructure(world, pos, (ServerPlayerEntity) player, spiritInstillerBlockEntity)) {
-					ItemStack handStack = player.getStackInHand(hand);
+				if (verifyStructure(world, pos, (ServerPlayer) player, spiritInstillerBlockEntity)) {
+					ItemStack handStack = player.getItemInHand(hand);
 					if (exchangeStack(world, pos, player, hand, handStack, spiritInstillerBlockEntity)) {
 						spiritInstillerBlockEntity.setOwner(player);
 						spiritInstillerBlockEntity.inventoryChanged();
 					}
 				}
 			}
-			return ActionResult.CONSUME;
+			return InteractionResult.CONSUME;
 		}
 	}
 	

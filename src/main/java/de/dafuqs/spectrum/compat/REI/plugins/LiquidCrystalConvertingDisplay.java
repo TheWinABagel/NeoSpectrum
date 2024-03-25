@@ -1,9 +1,9 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.recipe.fluid_converting.*;
-import me.shedaniel.rei.api.common.category.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.recipe.fluid_converting.LiquidCrystalConvertingRecipe;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import net.minecraft.resources.ResourceLocation;
 
 public class LiquidCrystalConvertingDisplay extends FluidConvertingDisplay {
 	
@@ -17,7 +17,7 @@ public class LiquidCrystalConvertingDisplay extends FluidConvertingDisplay {
 	}
 	
 	@Override
-	public Identifier getUnlockIdentifier() {
+	public ResourceLocation getUnlockIdentifier() {
 		return LiquidCrystalConvertingRecipe.UNLOCK_IDENTIFIER;
 	}
 	

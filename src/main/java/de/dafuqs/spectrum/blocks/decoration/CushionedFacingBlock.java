@@ -1,16 +1,16 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class CushionedFacingBlock extends SpectrumFacingBlock {
 
-    public CushionedFacingBlock(Settings settings) {
+    public CushionedFacingBlock(Properties settings) {
         super(settings);
     }
 
     @Override
-    public void onLandedUpon(World world, BlockState state, BlockPos pos, Entity entity, float fallDistance) {}
+    public void fallOn(Level world, BlockState state, BlockPos pos, Entity entity, float fallDistance) {}
 }

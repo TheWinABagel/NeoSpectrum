@@ -1,17 +1,20 @@
 package de.dafuqs.spectrum.recipe.titration_barrel;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.recipe.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.recipe.FluidIngredient;
+import de.dafuqs.spectrum.api.recipe.GatedRecipe;
 import de.dafuqs.spectrum.helpers.TimeHelper;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.List;
 
 /**
  * In contrast to most other Minecraft things, the titration barrel also counts the fermenting time
@@ -21,9 +24,9 @@ import java.util.*;
  */
 public interface ITitrationBarrelRecipe extends GatedRecipe {
 	
-	Identifier UNLOCK_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("unlocks/blocks/titration_barrel");
+	ResourceLocation UNLOCK_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("unlocks/blocks/titration_barrel");
 	
-	ItemStack tap(Inventory inventory, long secondsFermented, float downfall);
+	ItemStack tap(Container inventory, long secondsFermented, float downfall);
 	
 	Item getTappingItem();
 	
@@ -32,16 +35,16 @@ public interface ITitrationBarrelRecipe extends GatedRecipe {
 	float getAngelsSharePerMcDay();
 	
 	// the amount of bottles able to get out of a single barrel
-	default int getOutputCountAfterAngelsShare(World world, float temperature, long secondsFermented) {
+	default int getOutputCountAfterAngelsShare(Level world, float temperature, long secondsFermented) {
 		if (getFermentationData() == null) {
-			return getOutput(world.getRegistryManager()).getCount();
+			return getResultItem(world.registryAccess()).getCount();
 		}
 		
 		float angelsSharePercent = getAngelsSharePercent(secondsFermented, temperature);
 		if (angelsSharePercent > 0) {
-			return (int) (getOutput(world.getRegistryManager()).getCount() * Math.ceil(1F - angelsSharePercent / 100F));
+			return (int) (getResultItem(world.registryAccess()).getCount() * Math.ceil(1F - angelsSharePercent / 100F));
 		} else {
-			return (int) (getOutput(world.getRegistryManager()).getCount() * Math.floor(1F - angelsSharePercent / 100F));
+			return (int) (getResultItem(world.registryAccess()).getCount() * Math.floor(1F - angelsSharePercent / 100F));
 		}
 	}
 	
@@ -53,13 +56,13 @@ public interface ITitrationBarrelRecipe extends GatedRecipe {
 	}
 	
 	@Override
-	default boolean fits(int width, int height) {
+	default boolean canCraftInDimensions(int width, int height) {
 		return true;
 	}
 	
 	@Override
-	default ItemStack createIcon() {
-		return SpectrumBlocks.TITRATION_BARREL.asItem().getDefaultStack();
+	default ItemStack getToastSymbol() {
+		return SpectrumBlocks.TITRATION_BARREL.asItem().getDefaultInstance();
 	}
 	
 	@Override

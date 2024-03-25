@@ -1,33 +1,35 @@
 package de.dafuqs.spectrum.entity.render;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.entity.entity.*;
-import de.dafuqs.spectrum.entity.models.*;
-import de.dafuqs.spectrum.registries.client.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.render.entity.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.util.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.entity.entity.PreservationTurretEntity;
+import de.dafuqs.spectrum.entity.models.PreservationTurretEntityModel;
+import de.dafuqs.spectrum.registries.client.SpectrumModelLayers;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.resources.ResourceLocation;
 
 @Environment(EnvType.CLIENT)
-public class PreservationTurretEntityRenderer extends MobEntityRenderer<PreservationTurretEntity, PreservationTurretEntityModel<PreservationTurretEntity>> {
+public class PreservationTurretEntityRenderer extends MobRenderer<PreservationTurretEntity, PreservationTurretEntityModel<PreservationTurretEntity>> {
 	
-	public static final Identifier TEXTURE = SpectrumCommon.locate("textures/entity/preservation_turret/preservation_turret.png");
+	public static final ResourceLocation TEXTURE = SpectrumCommon.locate("textures/entity/preservation_turret/preservation_turret.png");
 	
-	public PreservationTurretEntityRenderer(EntityRendererFactory.Context context) {
-		super(context, new PreservationTurretEntityModel<>(context.getPart(SpectrumModelLayers.PRESERVATION_TURRET)), 0.0F);
+	public PreservationTurretEntityRenderer(EntityRendererProvider.Context context) {
+		super(context, new PreservationTurretEntityModel<>(context.bakeLayer(SpectrumModelLayers.PRESERVATION_TURRET)), 0.0F);
 	}
 	
 	@Override
-	public Identifier getTexture(PreservationTurretEntity turretEntity) {
+	public ResourceLocation getTexture(PreservationTurretEntity turretEntity) {
 		return TEXTURE;
 	}
 	
 	@Override
-	protected void setupTransforms(PreservationTurretEntity turretEntity, MatrixStack matrixStack, float f, float g, float h) {
-		super.setupTransforms(turretEntity, matrixStack, f, g + 180.0F, h);
+	protected void setupTransforms(PreservationTurretEntity turretEntity, PoseStack matrixStack, float f, float g, float h) {
+		super.setupRotations(turretEntity, matrixStack, f, g + 180.0F, h);
 		matrixStack.translate(0.0, 0.5, 0.0);
-		matrixStack.multiply(turretEntity.getAttachedFace().getOpposite().getRotationQuaternion());
+		matrixStack.mulPose(turretEntity.getAttachedFace().getOpposite().getRotation());
 		matrixStack.translate(0.0, -0.5, 0.0);
 	}
 	

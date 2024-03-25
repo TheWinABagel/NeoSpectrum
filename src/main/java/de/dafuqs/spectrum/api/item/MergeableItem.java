@@ -1,25 +1,23 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundEvent;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 
 public interface MergeableItem {
 
-    ItemStack getResult(ServerPlayerEntity player, ItemStack firstHalf, ItemStack secondHalf);
+    ItemStack getResult(ServerPlayer player, ItemStack firstHalf, ItemStack secondHalf);
 
-    boolean canMerge(ServerPlayerEntity player, ItemStack parent, ItemStack other);
+    boolean canMerge(ServerPlayer player, ItemStack parent, ItemStack other);
 
     default boolean verify(ItemStack parent, ItemStack other) {
-        if (!EnchantmentHelper.get(parent).equals(EnchantmentHelper.get(other))) {
+        if (!EnchantmentHelper.getEnchantments(parent).equals(EnchantmentHelper.getEnchantments(other))) {
             return false;
         }
 
-        var parNbt = parent.getOrCreateNbt();
-        var otherNbt = other.getOrCreateNbt();
+        var parNbt = parent.getOrCreateTag();
+        var otherNbt = other.getOrCreateTag();
         if (parNbt.contains("pairSignature") && otherNbt.contains("pairSignature"))
             return parNbt.getLong("pairSignature") == otherNbt.getLong("pairSignature");
         return false;

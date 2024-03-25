@@ -1,35 +1,36 @@
 package de.dafuqs.spectrum.api.block;
 
-import net.minecraft.state.property.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 public interface RedstonePoweredBlock {
 	
-	BooleanProperty POWERED = BooleanProperty.of("powered");
+	BooleanProperty POWERED = BooleanProperty.create("powered");
 	
-	default boolean checkGettingPowered(World world, BlockPos pos) {
+	default boolean checkGettingPowered(Level world, BlockPos pos) {
 		Direction[] var4 = Direction.values();
 		int var5 = var4.length;
 		
 		int var6;
 		for (var6 = 0; var6 < var5; ++var6) {
 			Direction direction = var4[var6];
-			if (world.isEmittingRedstonePower(pos.offset(direction), direction)) {
+			if (world.hasSignal(pos.relative(direction), direction)) {
 				return true;
 			}
 		}
 		
-		if (world.isEmittingRedstonePower(pos, Direction.DOWN)) {
+		if (world.hasSignal(pos, Direction.DOWN)) {
 			return true;
 		} else {
-			BlockPos blockPos = pos.up();
+			BlockPos blockPos = pos.above();
 			Direction[] var10 = Direction.values();
 			var6 = var10.length;
 			
 			for (int var11 = 0; var11 < var6; ++var11) {
 				Direction direction2 = var10[var11];
-				if (direction2 != Direction.DOWN && world.isEmittingRedstonePower(blockPos.offset(direction2), direction2)) {
+				if (direction2 != Direction.DOWN && world.hasSignal(blockPos.relative(direction2), direction2)) {
 					return true;
 				}
 			}
@@ -37,12 +38,12 @@ public interface RedstonePoweredBlock {
 		}
 	}
 	
-	default void power(World world, BlockPos pos) {
-		world.setBlockState(pos, world.getBlockState(pos).with(POWERED, true));
+	default void power(Level world, BlockPos pos) {
+		world.setBlockAndUpdate(pos, world.getBlockState(pos).setValue(POWERED, true));
 	}
 	
-	default void unPower(World world, BlockPos pos) {
-		world.setBlockState(pos, world.getBlockState(pos).with(POWERED, false));
+	default void unPower(Level world, BlockPos pos) {
+		world.setBlockAndUpdate(pos, world.getBlockState(pos).setValue(POWERED, false));
 	}
 	
 }

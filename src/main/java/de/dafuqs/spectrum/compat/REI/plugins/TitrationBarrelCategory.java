@@ -1,19 +1,23 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.recipe.titration_barrel.*;
-import de.dafuqs.spectrum.registries.*;
-import me.shedaniel.math.*;
-import me.shedaniel.rei.api.client.gui.*;
-import me.shedaniel.rei.api.client.gui.widgets.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.fabricmc.api.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.recipe.titration_barrel.TitrationBarrelRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import me.shedaniel.math.Point;
+import me.shedaniel.math.Rectangle;
+import me.shedaniel.rei.api.client.gui.Renderer;
+import me.shedaniel.rei.api.client.gui.widgets.Widget;
+import me.shedaniel.rei.api.client.gui.widgets.Widgets;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryStacks;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class TitrationBarrelCategory extends GatedDisplayCategory<TitrationBarrelDisplay> {
@@ -24,7 +28,7 @@ public class TitrationBarrelCategory extends GatedDisplayCategory<TitrationBarre
 	}
 	
 	@Override
-	public Text getTitle() {
+	public Component getTitle() {
 		return SpectrumBlocks.TITRATION_BARREL.getName();
 	}
 	
@@ -66,7 +70,7 @@ public class TitrationBarrelCategory extends GatedDisplayCategory<TitrationBarre
 		widgets.add(Widgets.createSlot(new Point(startPoint.x + 95, startPoint.y + 11)).markOutput().disableBackground().entries(display.getOutputEntries().get(0)));
 		
 		// duration text
-		MutableText text = TitrationBarrelRecipe.getDurationText(display.minFermentationTimeHours, display.fermentationData);
+		MutableComponent text = TitrationBarrelRecipe.getDurationText(display.minFermentationTimeHours, display.fermentationData);
 		widgets.add(Widgets.createLabel(new Point(startPoint.x - 10, startPoint.y + 42), text).leftAligned().color(0x3f3f3f).noShadow());
 	}
 	

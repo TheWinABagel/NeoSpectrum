@@ -1,15 +1,22 @@
 package de.dafuqs.spectrum.api.energy.storage;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import net.fabricmc.api.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.color.ElementalColor;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
-import static de.dafuqs.spectrum.helpers.Support.*;
+import static de.dafuqs.spectrum.helpers.Support.getShortenedNumberString;
 
 public class TotalCappedInkStorage implements InkStorage {
 	
@@ -37,8 +44,8 @@ public class TotalCappedInkStorage implements InkStorage {
 		}
 	}
 	
-	public static @Nullable TotalCappedInkStorage fromNbt(@NotNull NbtCompound compound) {
-		if (compound.contains("MaxEnergyTotal", NbtElement.LONG_TYPE)) {
+	public static @Nullable TotalCappedInkStorage fromNbt(@NotNull CompoundTag compound) {
+		if (compound.contains("MaxEnergyTotal", Tag.TAG_LONG)) {
 			long maxEnergyTotal = compound.getLong("MaxEnergyTotal");
 			
 			Map<InkColor, Long> colors = new HashMap<>();
@@ -128,8 +135,8 @@ public class TotalCappedInkStorage implements InkStorage {
 		return this.currentTotal >= this.maxEnergyTotal;
 	}
 	
-	public NbtCompound toNbt() {
-		NbtCompound compound = new NbtCompound();
+	public CompoundTag toNbt() {
+		CompoundTag compound = new CompoundTag();
 		compound.putLong("MaxEnergyTotal", this.maxEnergyTotal);
 		for (Map.Entry<InkColor, Long> color : this.storedEnergy.entrySet()) {
 			compound.putLong(color.getKey().toString(), color.getValue());
@@ -157,13 +164,13 @@ public class TotalCappedInkStorage implements InkStorage {
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void addTooltip(List<Text> tooltip, boolean includeHeader) {
+	public void addTooltip(List<Component> tooltip, boolean includeHeader) {
 		if (includeHeader) {
-			tooltip.add(Text.translatable("item.spectrum.total_capped_simple_pigment_energy_storage.tooltip", getShortenedNumberString(maxEnergyTotal)));
+			tooltip.add(Component.translatable("item.spectrum.total_capped_simple_pigment_energy_storage.tooltip", getShortenedNumberString(maxEnergyTotal)));
 		}
 		for (Map.Entry<InkColor, Long> color : this.storedEnergy.entrySet()) {
 			if (color.getValue() > 0) {
-				tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.bullet." + color.getKey().toString().toLowerCase(Locale.ROOT), getShortenedNumberString(color.getValue())));
+				tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.bullet." + color.getKey().toString().toLowerCase(Locale.ROOT), getShortenedNumberString(color.getValue())));
 			}
 		}
 	}

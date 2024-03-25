@@ -1,99 +1,109 @@
 package de.dafuqs.spectrum.inventories;
 
-import com.mojang.blaze3d.systems.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.blocks.particle_spawner.*;
-import de.dafuqs.spectrum.data_loaders.*;
-import de.dafuqs.spectrum.networking.*;
-import net.fabricmc.api.*;
-import net.fabricmc.fabric.api.client.networking.v1.*;
-import net.fabricmc.fabric.api.networking.v1.*;
-import net.fabricmc.fabric.mixin.client.particle.*;
-import net.minecraft.client.gui.*;
-import net.minecraft.client.gui.screen.ingame.*;
-import net.minecraft.client.gui.widget.*;
-import net.minecraft.client.texture.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.network.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
-import org.joml.*;
-import org.lwjgl.glfw.*;
+import com.mojang.blaze3d.systems.RenderSystem;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.blocks.particle_spawner.ParticleSpawnerBlockEntity;
+import de.dafuqs.spectrum.blocks.particle_spawner.ParticleSpawnerConfiguration;
+import de.dafuqs.spectrum.data_loaders.ParticleSpawnerParticlesDataLoader;
+import de.dafuqs.spectrum.networking.SpectrumC2SPackets;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.mixin.client.particle.ParticleManagerAccessor;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.texture.SpriteContents;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Inventory;
+import org.jetbrains.annotations.NotNull;
+import org.joml.RoundingMode;
+import org.joml.Vector3f;
+import org.joml.Vector3i;
+import org.lwjgl.glfw.GLFW;
 
-import java.lang.Math;
-import java.util.*;
-import java.util.function.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 @Environment(EnvType.CLIENT)
-public class ParticleSpawnerScreen extends HandledScreen<ParticleSpawnerScreenHandler> {
+public class ParticleSpawnerScreen extends AbstractContainerScreen<ParticleSpawnerScreenHandler> {
 	
-	protected static final Identifier GUI_TEXTURE = SpectrumCommon.locate("textures/gui/container/particle_spawner.png");
+	protected static final ResourceLocation GUI_TEXTURE = SpectrumCommon.locate("textures/gui/container/particle_spawner.png");
 	protected static final int PARTICLES_PER_PAGE = 6;
 	protected static final int TEXT_COLOR = 2236962;
 	
-	protected SpriteAtlasTexture spriteAtlasTexture;
+	protected TextureAtlas spriteAtlasTexture;
 	protected boolean glowing = false;
 	protected boolean collisionsEnabled = false;
 	protected int activeParticlePage = 0;
 	protected int particleSelectionIndex = 0;
 	protected boolean selectedParticleSupportsColoring = false;
 	
-	private final List<ClickableWidget> selectableWidgets = new ArrayList<>();
-	private TextFieldWidget cyanField;
-	private TextFieldWidget magentaField;
-	private TextFieldWidget yellowField;
-	private ButtonWidget glowingButton;
-	private TextFieldWidget amountField;
-	private TextFieldWidget positionXField;
-	private TextFieldWidget positionYField;
-	private TextFieldWidget positionZField;
-	private TextFieldWidget positionXVarianceField;
-	private TextFieldWidget positionYVarianceField;
-	private TextFieldWidget positionZVarianceField;
-	private TextFieldWidget velocityXField;
-	private TextFieldWidget velocityYField;
-	private TextFieldWidget velocityZField;
-	private TextFieldWidget velocityXVarianceField;
-	private TextFieldWidget velocityYVarianceField;
-	private TextFieldWidget velocityZVarianceField;
-	private TextFieldWidget scale;
-	private TextFieldWidget scaleVariance;
-	private TextFieldWidget duration;
-	private TextFieldWidget durationVariance;
-	private TextFieldWidget gravity;
-	private ButtonWidget collisionsButton;
-	private ButtonWidget backButton;
-	private ButtonWidget forwardButton;
-	private List<ButtonWidget> particleButtons;
+	private final List<AbstractWidget> selectableWidgets = new ArrayList<>();
+	private EditBox cyanField;
+	private EditBox magentaField;
+	private EditBox yellowField;
+	private Button glowingButton;
+	private EditBox amountField;
+	private EditBox positionXField;
+	private EditBox positionYField;
+	private EditBox positionZField;
+	private EditBox positionXVarianceField;
+	private EditBox positionYVarianceField;
+	private EditBox positionZVarianceField;
+	private EditBox velocityXField;
+	private EditBox velocityYField;
+	private EditBox velocityZField;
+	private EditBox velocityXVarianceField;
+	private EditBox velocityYVarianceField;
+	private EditBox velocityZVarianceField;
+	private EditBox scale;
+	private EditBox scaleVariance;
+	private EditBox duration;
+	private EditBox durationVariance;
+	private EditBox gravity;
+	private Button collisionsButton;
+	private Button backButton;
+	private Button forwardButton;
+	private List<Button> particleButtons;
 	
 	private List<ParticleSpawnerParticlesDataLoader.ParticleSpawnerEntry> displayedParticleEntries = new ArrayList<>();
 	
-	public ParticleSpawnerScreen(ParticleSpawnerScreenHandler handler, PlayerInventory inventory, Text title) {
+	public ParticleSpawnerScreen(ParticleSpawnerScreenHandler handler, Inventory inventory, Component title) {
 		super(handler, inventory, title);
-		this.titleX = 48;
-		this.titleY = 7;
-		this.backgroundHeight = 243;
+		this.titleLabelX = 48;
+		this.titleLabelY = 7;
+		this.imageHeight = 243;
 	}
 	
 	@Override
 	protected void init() {
 		super.init();
 
-		this.spriteAtlasTexture = ((ParticleManagerAccessor) client.particleManager).getParticleAtlasTexture();
-		this.displayedParticleEntries = ParticleSpawnerParticlesDataLoader.getAllUnlocked(client.player);
+		this.spriteAtlasTexture = ((ParticleManagerAccessor) minecraft.particleEngine).getParticleAtlasTexture();
+		this.displayedParticleEntries = ParticleSpawnerParticlesDataLoader.getAllUnlocked(minecraft.player);
 		
 		this.selectableWidgets.clear();
-		setupInputFields(handler.getBlockEntity());
+		setupInputFields(menu.getBlockEntity());
 		setInitialFocus(amountField);
 	}
 	
 	@Override
-	public void handledScreenTick() {
-		super.handledScreenTick();
+	public void containerTick() {
+		super.containerTick();
 		
-		for (ClickableWidget widget : selectableWidgets) {
-			if (widget instanceof TextFieldWidget textFieldWidget) {
+		for (AbstractWidget widget : selectableWidgets) {
+			if (widget instanceof EditBox textFieldWidget) {
 				textFieldWidget.tick();
 			}
 		}
@@ -102,11 +112,11 @@ public class ParticleSpawnerScreen extends HandledScreen<ParticleSpawnerScreenHa
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
 		if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-			client.player.closeHandledScreen();
+			minecraft.player.closeContainer();
 		}
 		
-		Element focusedElement = getFocused();
-		if (focusedElement instanceof TextFieldWidget focusedTextFieldWidget) {
+		GuiEventListener focusedElement = getFocused();
+		if (focusedElement instanceof EditBox focusedTextFieldWidget) {
 			if (keyCode == GLFW.GLFW_KEY_TAB) {
 				int currentIndex = selectableWidgets.indexOf(focusedElement);
 				focusedTextFieldWidget.setFocused(false);
@@ -124,132 +134,132 @@ public class ParticleSpawnerScreen extends HandledScreen<ParticleSpawnerScreenHa
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float delta) {
 		renderBackground(drawContext);
 		super.render(drawContext, mouseX, mouseY, delta);
 		
 		RenderSystem.disableBlend();
 		renderForeground(drawContext, mouseX, mouseY, delta);
-		drawMouseoverTooltip(drawContext, mouseX, mouseY);
+		renderTooltip(drawContext, mouseX, mouseY);
 	}
 	
-	public void renderForeground(DrawContext drawContext, int mouseX, int mouseY, float delta) {
-		for (ClickableWidget widget : selectableWidgets) {
-			if (widget instanceof TextFieldWidget) {
+	public void renderForeground(GuiGraphics drawContext, int mouseX, int mouseY, float delta) {
+		for (AbstractWidget widget : selectableWidgets) {
+			if (widget instanceof EditBox) {
 				widget.render(drawContext, mouseX, mouseY, delta);
 			}
 		}
 	}
 	
 	@Override
-	protected void drawForeground(DrawContext drawContext, int mouseX, int mouseY) {
-		var tr = this.textRenderer;
-		drawContext.drawText(tr, this.title, this.titleX, this.titleY, 2236962, false);
+	protected void renderLabels(GuiGraphics drawContext, int mouseX, int mouseY) {
+		var tr = this.font;
+		drawContext.drawString(tr, this.title, this.titleLabelX, this.titleLabelY, 2236962, false);
 		
-		drawContext.drawText(tr, Text.literal("C").formatted(Formatting.AQUA), 7, 54, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.literal("M").formatted(Formatting.LIGHT_PURPLE), 47, 54, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.literal("Y").formatted(Formatting.GOLD), 90, 54, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.literal("Glow"), 130, 54, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.literal("C").withStyle(ChatFormatting.AQUA), 7, 54, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.literal("M").withStyle(ChatFormatting.LIGHT_PURPLE), 47, 54, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.literal("Y").withStyle(ChatFormatting.GOLD), 90, 54, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.literal("Glow"), 130, 54, TEXT_COLOR, false);
 		
 		int offset = 23;
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.particle_count"), 10, 53 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.literal("x"), 66, 64 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.literal("y"), 99, 64 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.literal("z"), 134, 64 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.offset"), 10, 78 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.variance"), 21, 97 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.velocity"), 10, 117 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.variance"), 21, 137 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.scale"), 10, 161 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.variance"), 91, 161 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.duration"), 10, 181 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.variance"), 91, 181 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.gravity"), 10, 201 + offset, TEXT_COLOR, false);
-		drawContext.drawText(tr, Text.translatable("block.spectrum.particle_spawner.collisions"), 90, 201 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.particle_count"), 10, 53 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.literal("x"), 66, 64 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.literal("y"), 99, 64 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.literal("z"), 134, 64 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.offset"), 10, 78 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.variance"), 21, 97 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.velocity"), 10, 117 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.variance"), 21, 137 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.scale"), 10, 161 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.variance"), 91, 161 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.duration"), 10, 181 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.variance"), 91, 181 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.gravity"), 10, 201 + offset, TEXT_COLOR, false);
+		drawContext.drawString(tr, Component.translatable("block.spectrum.particle_spawner.collisions"), 90, 201 + offset, TEXT_COLOR, false);
 	}
 	
 	@Override
-	protected void drawBackground(DrawContext drawContext, float delta, int mouseX, int mouseY) {
-		int x = (this.width - this.backgroundWidth) / 2;
-		int y = (this.height - this.backgroundHeight) / 2;
+	protected void renderBg(GuiGraphics drawContext, float delta, int mouseX, int mouseY) {
+		int x = (this.width - this.imageWidth) / 2;
+		int y = (this.height - this.imageHeight) / 2;
 		
 		// the background
-		drawContext.drawTexture(GUI_TEXTURE, x, y, 0, 0, this.backgroundWidth, this.backgroundHeight);
+		drawContext.blit(GUI_TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight);
 		
 		// disabled coloring text field backgrounds
 		if (!selectedParticleSupportsColoring) {
-			drawContext.drawTexture(GUI_TEXTURE, x + 15, y + 50, 214, 0, 31, 16);
-			drawContext.drawTexture(GUI_TEXTURE, x + 56, y + 50, 214, 0, 31, 16);
-			drawContext.drawTexture(GUI_TEXTURE, x + 97, y + 50, 214, 0, 31, 16);
+			drawContext.blit(GUI_TEXTURE, x + 15, y + 50, 214, 0, 31, 16);
+			drawContext.blit(GUI_TEXTURE, x + 56, y + 50, 214, 0, 31, 16);
+			drawContext.blit(GUI_TEXTURE, x + 97, y + 50, 214, 0, 31, 16);
 		}
 		
 		// the checked & collision buttons checkmarks, if enabled
 		if (collisionsEnabled) {
-			drawContext.drawTexture(GUI_TEXTURE, x + 146, y + 220, 176, 0, 16, 16);
+			drawContext.blit(GUI_TEXTURE, x + 146, y + 220, 176, 0, 16, 16);
 		}
 		if (glowing) {
-			drawContext.drawTexture(GUI_TEXTURE, x + 153, y + 50, 176, 0, 16, 16);
+			drawContext.blit(GUI_TEXTURE, x + 153, y + 50, 176, 0, 16, 16);
 		}
 		
 		// particle selection outline
 		if (particleSelectionIndex / PARTICLES_PER_PAGE == activeParticlePage) {
-			drawContext.drawTexture(GUI_TEXTURE, x + 27 + (20 * (particleSelectionIndex % PARTICLES_PER_PAGE)), y + 19, 192, 0, 22, 22);
+			drawContext.blit(GUI_TEXTURE, x + 27 + (20 * (particleSelectionIndex % PARTICLES_PER_PAGE)), y + 19, 192, 0, 22, 22);
 		}
 		
-		RenderSystem.setShaderTexture(0, spriteAtlasTexture.getId());
+		RenderSystem.setShaderTexture(0, spriteAtlasTexture.location());
 		int firstDisplayedEntryId = PARTICLES_PER_PAGE * activeParticlePage;
 		for (int j = 0; j < PARTICLES_PER_PAGE; j++) {
 			int spriteIndex = firstDisplayedEntryId + j;
 			if (spriteIndex >= displayedParticleEntries.size()) {
 				break;
 			}
-			Sprite particleSprite = spriteAtlasTexture.getSprite(displayedParticleEntries.get(spriteIndex).textureIdentifier());
-			SpriteContents contents = particleSprite.getContents();
-			drawContext.drawSprite(x + 38 + j * 20 - contents.getWidth() / 2, y + 31 - contents.getHeight() / 2, 0, contents.getWidth(), contents.getHeight(), particleSprite);
+			TextureAtlasSprite particleSprite = spriteAtlasTexture.getSprite(displayedParticleEntries.get(spriteIndex).textureIdentifier());
+			SpriteContents contents = particleSprite.contents();
+			drawContext.blit(x + 38 + j * 20 - contents.width() / 2, y + 31 - contents.height() / 2, 0, contents.width(), contents.height(), particleSprite);
 		}
 	}
 	
 	protected void setupInputFields(ParticleSpawnerBlockEntity blockEntity) {
-		int startX = (this.width - this.backgroundWidth) / 2 + 3;
-		int startY = (this.height - this.backgroundHeight) / 2 + 3;
+		int startX = (this.width - this.imageWidth) / 2 + 3;
+		int startY = (this.height - this.imageHeight) / 2 + 3;
 		
 		ParticleSpawnerConfiguration configuration = blockEntity.getConfiguration();
-		cyanField = addTextFieldWidget(startX + 16, startY + 51, Text.literal("Cyan"), String.valueOf(configuration.getCmyColor().x()), this::isPositiveDecimalNumber100);
-		magentaField = addTextFieldWidget(startX + 57, startY + 51, Text.literal("Magenta"), String.valueOf(configuration.getCmyColor().y()), this::isPositiveDecimalNumber100);
-		yellowField = addTextFieldWidget(startX + 97, startY + 51, Text.literal("Yellow"), String.valueOf(configuration.getCmyColor().z()), this::isPositiveDecimalNumber100);
-		glowingButton = ButtonWidget.builder(Text.translatable("gui.spectrum.button.glowing"), this::glowingButtonPressed)
+		cyanField = addTextFieldWidget(startX + 16, startY + 51, Component.literal("Cyan"), String.valueOf(configuration.getCmyColor().x()), this::isPositiveDecimalNumber100);
+		magentaField = addTextFieldWidget(startX + 57, startY + 51, Component.literal("Magenta"), String.valueOf(configuration.getCmyColor().y()), this::isPositiveDecimalNumber100);
+		yellowField = addTextFieldWidget(startX + 97, startY + 51, Component.literal("Yellow"), String.valueOf(configuration.getCmyColor().z()), this::isPositiveDecimalNumber100);
+		glowingButton = Button.builder(Component.translatable("gui.spectrum.button.glowing"), this::glowingButtonPressed)
 				.size(16, 16)
-				.position(startX + 153, startY + 50)
+				.pos(startX + 153, startY + 50)
 				.build();
-		addSelectableChild(glowingButton);
+		addWidget(glowingButton);
 		this.glowing = configuration.glows();
 		
 		int offset = 23;
-		amountField = addTextFieldWidget(startX + 110, startY + 50 + offset, Text.literal("Particles per Second"), String.valueOf(configuration.getParticlesPerSecond()), this::isPositiveDecimalNumberUnderThousand);
-		positionXField = addTextFieldWidget(startX + 61, startY + 74 + offset, Text.literal("X Position"), String.valueOf(configuration.getSourcePosition().x()), this::isAbsoluteDecimalNumberThousand);
-		positionYField = addTextFieldWidget(startX + 96, startY + 74 + offset, Text.literal("Y Position"), String.valueOf(configuration.getSourcePosition().y()), this::isAbsoluteDecimalNumberThousand);
-		positionZField = addTextFieldWidget(startX + 131, startY + 74 + offset, Text.literal("Z Position"), String.valueOf(configuration.getSourcePosition().z()), this::isAbsoluteDecimalNumberThousand);
-		positionXVarianceField = addTextFieldWidget(startX + 69, startY + 94 + offset, Text.literal("X Position Variance"), String.valueOf(configuration.getSourcePositionVariance().x()), this::isAbsoluteDecimalNumberThousand);
-		positionYVarianceField = addTextFieldWidget(startX + 104, startY + 94 + offset, Text.literal("Y Position Variance"), String.valueOf(configuration.getSourcePositionVariance().y()), this::isAbsoluteDecimalNumberThousand);
-		positionZVarianceField = addTextFieldWidget(startX + 140, startY + 94 + offset, Text.literal("Z Position Variance"), String.valueOf(configuration.getSourcePositionVariance().z()), this::isAbsoluteDecimalNumberThousand);
-		velocityXField = addTextFieldWidget(startX + 61, startY + 114 + offset, Text.literal("X Velocity"), String.valueOf(configuration.getVelocity().x()), this::isAbsoluteDecimalNumberThousand);
-		velocityYField = addTextFieldWidget(startX + 96, startY + 114 + offset, Text.literal("Y Velocity"), String.valueOf(configuration.getVelocity().y()), this::isAbsoluteDecimalNumberThousand);
-		velocityZField = addTextFieldWidget(startX + 131, startY + 114 + offset, Text.literal("Z Velocity"), String.valueOf(configuration.getVelocity().z()), this::isAbsoluteDecimalNumberThousand);
-		velocityXVarianceField = addTextFieldWidget(startX + 69, startY + 134 + offset, Text.literal("X Velocity Variance"), String.valueOf(configuration.getVelocityVariance().x()), this::isAbsoluteDecimalNumberThousand);
-		velocityYVarianceField = addTextFieldWidget(startX + 104, startY + 134 + offset, Text.literal("Y Velocity Variance"), String.valueOf(configuration.getVelocityVariance().y()), this::isAbsoluteDecimalNumberThousand);
-		velocityZVarianceField = addTextFieldWidget(startX + 140, startY + 134 + offset, Text.literal("Z Velocity Variance"), String.valueOf(configuration.getVelocityVariance().z()), this::isAbsoluteDecimalNumberThousand);
-		scale = addTextFieldWidget(startX + 55, startY + 158 + offset, Text.literal("Scale"), String.valueOf(configuration.getScale()), this::isPositiveDecimalNumberUnderTen);
-		scaleVariance = addTextFieldWidget(startX + 139, startY + 158 + offset, Text.literal("Scale Variance"), String.valueOf(configuration.getScaleVariance()), this::isPositiveDecimalNumberUnderTen);
-		duration = addTextFieldWidget(startX + 55, startY + 178 + offset, Text.literal("Duration"), String.valueOf(configuration.getLifetimeTicks()), this::isPositiveWholeNumberUnderThousand);
-		durationVariance = addTextFieldWidget(startX + 139, startY + 178 + offset, Text.literal("Duration Variance"), String.valueOf(configuration.getLifetimeVariance()), this::isPositiveWholeNumberUnderThousand);
-		gravity = addTextFieldWidget(startX + 55, startY + 198 + offset, Text.literal("Gravity"), String.valueOf(configuration.getGravity()), this::isBetweenZeroAndOne);
+		amountField = addTextFieldWidget(startX + 110, startY + 50 + offset, Component.literal("Particles per Second"), String.valueOf(configuration.getParticlesPerSecond()), this::isPositiveDecimalNumberUnderThousand);
+		positionXField = addTextFieldWidget(startX + 61, startY + 74 + offset, Component.literal("X Position"), String.valueOf(configuration.getSourcePosition().x()), this::isAbsoluteDecimalNumberThousand);
+		positionYField = addTextFieldWidget(startX + 96, startY + 74 + offset, Component.literal("Y Position"), String.valueOf(configuration.getSourcePosition().y()), this::isAbsoluteDecimalNumberThousand);
+		positionZField = addTextFieldWidget(startX + 131, startY + 74 + offset, Component.literal("Z Position"), String.valueOf(configuration.getSourcePosition().z()), this::isAbsoluteDecimalNumberThousand);
+		positionXVarianceField = addTextFieldWidget(startX + 69, startY + 94 + offset, Component.literal("X Position Variance"), String.valueOf(configuration.getSourcePositionVariance().x()), this::isAbsoluteDecimalNumberThousand);
+		positionYVarianceField = addTextFieldWidget(startX + 104, startY + 94 + offset, Component.literal("Y Position Variance"), String.valueOf(configuration.getSourcePositionVariance().y()), this::isAbsoluteDecimalNumberThousand);
+		positionZVarianceField = addTextFieldWidget(startX + 140, startY + 94 + offset, Component.literal("Z Position Variance"), String.valueOf(configuration.getSourcePositionVariance().z()), this::isAbsoluteDecimalNumberThousand);
+		velocityXField = addTextFieldWidget(startX + 61, startY + 114 + offset, Component.literal("X Velocity"), String.valueOf(configuration.getVelocity().x()), this::isAbsoluteDecimalNumberThousand);
+		velocityYField = addTextFieldWidget(startX + 96, startY + 114 + offset, Component.literal("Y Velocity"), String.valueOf(configuration.getVelocity().y()), this::isAbsoluteDecimalNumberThousand);
+		velocityZField = addTextFieldWidget(startX + 131, startY + 114 + offset, Component.literal("Z Velocity"), String.valueOf(configuration.getVelocity().z()), this::isAbsoluteDecimalNumberThousand);
+		velocityXVarianceField = addTextFieldWidget(startX + 69, startY + 134 + offset, Component.literal("X Velocity Variance"), String.valueOf(configuration.getVelocityVariance().x()), this::isAbsoluteDecimalNumberThousand);
+		velocityYVarianceField = addTextFieldWidget(startX + 104, startY + 134 + offset, Component.literal("Y Velocity Variance"), String.valueOf(configuration.getVelocityVariance().y()), this::isAbsoluteDecimalNumberThousand);
+		velocityZVarianceField = addTextFieldWidget(startX + 140, startY + 134 + offset, Component.literal("Z Velocity Variance"), String.valueOf(configuration.getVelocityVariance().z()), this::isAbsoluteDecimalNumberThousand);
+		scale = addTextFieldWidget(startX + 55, startY + 158 + offset, Component.literal("Scale"), String.valueOf(configuration.getScale()), this::isPositiveDecimalNumberUnderTen);
+		scaleVariance = addTextFieldWidget(startX + 139, startY + 158 + offset, Component.literal("Scale Variance"), String.valueOf(configuration.getScaleVariance()), this::isPositiveDecimalNumberUnderTen);
+		duration = addTextFieldWidget(startX + 55, startY + 178 + offset, Component.literal("Duration"), String.valueOf(configuration.getLifetimeTicks()), this::isPositiveWholeNumberUnderThousand);
+		durationVariance = addTextFieldWidget(startX + 139, startY + 178 + offset, Component.literal("Duration Variance"), String.valueOf(configuration.getLifetimeVariance()), this::isPositiveWholeNumberUnderThousand);
+		gravity = addTextFieldWidget(startX + 55, startY + 198 + offset, Component.literal("Gravity"), String.valueOf(configuration.getGravity()), this::isBetweenZeroAndOne);
 		
-		collisionsButton = ButtonWidget.builder(Text.translatable("gui.spectrum.button.collisions"), this::collisionButtonPressed)
-				.position(startX + 142, startY + 194 + offset)
+		collisionsButton = Button.builder(Component.translatable("gui.spectrum.button.collisions"), this::collisionButtonPressed)
+				.pos(startX + 142, startY + 194 + offset)
 				.size(16, 16)
 				.build();
 		collisionsEnabled = configuration.hasCollisions();
-		addSelectableChild(collisionsButton);
+		addWidget(collisionsButton);
 		
 		selectableWidgets.add(cyanField);
 		selectableWidgets.add(magentaField);
@@ -275,16 +285,16 @@ public class ParticleSpawnerScreen extends HandledScreen<ParticleSpawnerScreenHa
 		selectableWidgets.add(gravity);
 		selectableWidgets.add(collisionsButton);
 		
-		backButton = ButtonWidget.builder(Text.translatable("gui.spectrum.button.back"), this::navigationButtonPressed)
+		backButton = Button.builder(Component.translatable("gui.spectrum.button.back"), this::navigationButtonPressed)
 				.size(12, 14)
-				.position(startX + 11, startY + 19)
+				.pos(startX + 11, startY + 19)
 				.build();
-		addSelectableChild(backButton);
-		forwardButton = ButtonWidget.builder(Text.translatable("gui.spectrum.button.forward"), this::navigationButtonPressed)
+		addWidget(backButton);
+		forwardButton = Button.builder(Component.translatable("gui.spectrum.button.forward"), this::navigationButtonPressed)
 				.size(12, 14)
-				.position(startX + 147, startY + 19)
+				.pos(startX + 147, startY + 19)
 				.build();
-		addSelectableChild(forwardButton);
+		addWidget(forwardButton);
 		
 		particleButtons = List.of(
 				addParticleButton(startX + 23, startY + 16),
@@ -313,7 +323,7 @@ public class ParticleSpawnerScreen extends HandledScreen<ParticleSpawnerScreenHa
 		setColoringEnabled(entry.supportsColoring());
 	}
 	
-	private void navigationButtonPressed(ButtonWidget buttonWidget) {
+	private void navigationButtonPressed(Button buttonWidget) {
 		int pageCount = displayedParticleEntries.size() / PARTICLES_PER_PAGE;
 		if (buttonWidget == forwardButton) {
 			activeParticlePage = (activeParticlePage + 1) % pageCount;
@@ -322,33 +332,33 @@ public class ParticleSpawnerScreen extends HandledScreen<ParticleSpawnerScreenHa
 		}
 	}
 	
-	private @NotNull TextFieldWidget addTextFieldWidget(int x, int y, Text text, String defaultText, Predicate<String> textPredicate) {
-		TextFieldWidget textFieldWidget = new TextFieldWidget(this.textRenderer, x, y, 31, 16, text);
+	private @NotNull EditBox addTextFieldWidget(int x, int y, Component text, String defaultText, Predicate<String> textPredicate) {
+		EditBox textFieldWidget = new EditBox(this.font, x, y, 31, 16, text);
 		
-		textFieldWidget.setTextPredicate(textPredicate);
-		textFieldWidget.setFocusUnlocked(true);
+		textFieldWidget.setFilter(textPredicate);
+		textFieldWidget.setCanLoseFocus(true);
 		textFieldWidget.setEditable(true);
-		textFieldWidget.setEditableColor(-1);
-		textFieldWidget.setUneditableColor(-1);
-		textFieldWidget.setDrawsBackground(false);
+		textFieldWidget.setTextColor(-1);
+		textFieldWidget.setTextColorUneditable(-1);
+		textFieldWidget.setBordered(false);
 		textFieldWidget.setMaxLength(6);
-		textFieldWidget.setText(defaultText);
-		textFieldWidget.setChangedListener(this::onTextBoxValueChanged);
-		addSelectableChild(textFieldWidget);
+		textFieldWidget.setValue(defaultText);
+		textFieldWidget.setResponder(this::onTextBoxValueChanged);
+		addWidget(textFieldWidget);
 		
 		return textFieldWidget;
 	}
 	
-	private @NotNull ButtonWidget addParticleButton(int x, int y) {
-		ButtonWidget button = ButtonWidget.builder(Text.translatable("gui.spectrum.button.particles"), this::particleButtonPressed)
+	private @NotNull Button addParticleButton(int x, int y) {
+		Button button = Button.builder(Component.translatable("gui.spectrum.button.particles"), this::particleButtonPressed)
 				.size(20, 20)
-				.position(x, y)
+				.pos(x, y)
 				.build();
-		addSelectableChild(button);
+		addWidget(button);
 		return button;
 	}
 	
-	private void particleButtonPressed(ButtonWidget buttonWidget) {
+	private void particleButtonPressed(Button buttonWidget) {
 		int buttonIndex = particleButtons.indexOf(buttonWidget);
 		int newIndex = PARTICLES_PER_PAGE * activeParticlePage + buttonIndex;
 
@@ -367,22 +377,22 @@ public class ParticleSpawnerScreen extends HandledScreen<ParticleSpawnerScreenHa
 		this.cyanField.setEditable(enabled);
 		this.magentaField.setEditable(enabled);
 		this.yellowField.setEditable(enabled);
-		this.cyanField.setFocusUnlocked(enabled);
-		this.magentaField.setFocusUnlocked(enabled);
-		this.yellowField.setFocusUnlocked(enabled);
-		this.cyanField.setChangedListener(enabled ? this::onTextBoxValueChanged : null);
-		this.magentaField.setChangedListener(enabled ? this::onTextBoxValueChanged : null);
-		this.yellowField.setChangedListener(enabled ? this::onTextBoxValueChanged : null);
+		this.cyanField.setCanLoseFocus(enabled);
+		this.magentaField.setCanLoseFocus(enabled);
+		this.yellowField.setCanLoseFocus(enabled);
+		this.cyanField.setResponder(enabled ? this::onTextBoxValueChanged : null);
+		this.magentaField.setResponder(enabled ? this::onTextBoxValueChanged : null);
+		this.yellowField.setResponder(enabled ? this::onTextBoxValueChanged : null);
 		
 		this.setFocused(this.amountField);
 	}
 	
-	private void collisionButtonPressed(ButtonWidget buttonWidget) {
+	private void collisionButtonPressed(Button buttonWidget) {
 		collisionsEnabled = !collisionsEnabled;
 		this.onValuesChanged();
 	}
 	
-	private void glowingButtonPressed(ButtonWidget buttonWidget) {
+	private void glowingButtonPressed(Button buttonWidget) {
 		glowing = !glowing;
 		this.onValuesChanged();
 	}
@@ -460,22 +470,22 @@ public class ParticleSpawnerScreen extends HandledScreen<ParticleSpawnerScreenHa
 		try {
 			ParticleSpawnerConfiguration configuration = new ParticleSpawnerConfiguration(
 					displayedParticleEntries.get(particleSelectionIndex).particleType(),
-					selectedParticleSupportsColoring ? new Vector3i(Float.parseFloat(cyanField.getText()), Float.parseFloat(magentaField.getText()), Float.parseFloat(yellowField.getText()), RoundingMode.HALF_DOWN) : new Vector3i(0, 0, 0),
+					selectedParticleSupportsColoring ? new Vector3i(Float.parseFloat(cyanField.getValue()), Float.parseFloat(magentaField.getValue()), Float.parseFloat(yellowField.getValue()), RoundingMode.HALF_DOWN) : new Vector3i(0, 0, 0),
 					glowing,
-					Float.parseFloat(amountField.getText()),
-					new Vector3f(Float.parseFloat(positionXField.getText()), Float.parseFloat(positionYField.getText()), Float.parseFloat(positionZField.getText())),
-					new Vector3f(Float.parseFloat(positionXVarianceField.getText()), Float.parseFloat(positionYVarianceField.getText()), Float.parseFloat(positionZVarianceField.getText())),
-					new Vector3f(Float.parseFloat(velocityXField.getText()), Float.parseFloat(velocityYField.getText()), Float.parseFloat(velocityZField.getText())),
-					new Vector3f(Float.parseFloat(velocityXVarianceField.getText()), Float.parseFloat(velocityYVarianceField.getText()), Float.parseFloat(velocityZVarianceField.getText())),
-					Float.parseFloat(scale.getText()),
-					Float.parseFloat(scaleVariance.getText()),
-					Integer.parseInt(duration.getText()),
-					Integer.parseInt(durationVariance.getText()),
-					Float.parseFloat(gravity.getText()),
+					Float.parseFloat(amountField.getValue()),
+					new Vector3f(Float.parseFloat(positionXField.getValue()), Float.parseFloat(positionYField.getValue()), Float.parseFloat(positionZField.getValue())),
+					new Vector3f(Float.parseFloat(positionXVarianceField.getValue()), Float.parseFloat(positionYVarianceField.getValue()), Float.parseFloat(positionZVarianceField.getValue())),
+					new Vector3f(Float.parseFloat(velocityXField.getValue()), Float.parseFloat(velocityYField.getValue()), Float.parseFloat(velocityZField.getValue())),
+					new Vector3f(Float.parseFloat(velocityXVarianceField.getValue()), Float.parseFloat(velocityYVarianceField.getValue()), Float.parseFloat(velocityZVarianceField.getValue())),
+					Float.parseFloat(scale.getValue()),
+					Float.parseFloat(scaleVariance.getValue()),
+					Integer.parseInt(duration.getValue()),
+					Integer.parseInt(durationVariance.getValue()),
+					Float.parseFloat(gravity.getValue()),
 					collisionsEnabled
 			);
 			
-			PacketByteBuf packetByteBuf = PacketByteBufs.create();
+			FriendlyByteBuf packetByteBuf = PacketByteBufs.create();
 			configuration.write(packetByteBuf);
 			
 			ClientPlayNetworking.send(SpectrumC2SPackets.CHANGE_PARTICLE_SPAWNER_SETTINGS_PACKET_ID, packetByteBuf);

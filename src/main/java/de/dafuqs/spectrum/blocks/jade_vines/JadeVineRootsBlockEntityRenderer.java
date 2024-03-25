@@ -1,43 +1,48 @@
 package de.dafuqs.spectrum.blocks.jade_vines;
 
-import net.fabricmc.api.*;
-import net.minecraft.block.*;
-import net.minecraft.client.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.block.*;
-import net.minecraft.client.render.block.entity.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.world.World;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
 
 @Environment(EnvType.CLIENT)
 public class JadeVineRootsBlockEntityRenderer implements BlockEntityRenderer<JadeVineRootsBlockEntity> {
 	
-	public JadeVineRootsBlockEntityRenderer(BlockEntityRendererFactory.Context ctx) {
+	public JadeVineRootsBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {
 	
 	}
 	
 	@Override
-    public void render(JadeVineRootsBlockEntity entity, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, int overlay) {
-		World world = entity.getWorld();
-		if (entity.getWorld() != null) {
+    public void render(JadeVineRootsBlockEntity entity, float tickDelta, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int light, int overlay) {
+		Level world = entity.getLevel();
+		if (entity.getLevel() != null) {
 			BlockState fenceBlockState = entity.getFenceBlockState();
-			if (fenceBlockState.getRenderType() == BlockRenderType.MODEL && fenceBlockState.getRenderType() != BlockRenderType.INVISIBLE) {
-				matrixStack.push();
+			if (fenceBlockState.getRenderShape() == RenderShape.MODEL && fenceBlockState.getRenderShape() != RenderShape.INVISIBLE) {
+				matrixStack.pushPose();
 				
-				BlockRenderManager blockRenderManager = MinecraftClient.getInstance().getBlockRenderManager();
-				blockRenderManager.getModelRenderer().render(entity.getWorld(),
-						blockRenderManager.getModel(fenceBlockState),
+				BlockRenderDispatcher blockRenderManager = Minecraft.getInstance().getBlockRenderer();
+				blockRenderManager.getModelRenderer().tesselateBlock(entity.getLevel(),
+						blockRenderManager.getBlockModel(fenceBlockState),
 						fenceBlockState,
-						entity.getPos(),
+						entity.getBlockPos(),
 						matrixStack,
-						vertexConsumerProvider.getBuffer(RenderLayers.getMovingBlockLayer(fenceBlockState)),
+						vertexConsumerProvider.getBuffer(ItemBlockRenderTypes.getMovingBlockRenderType(fenceBlockState)),
 						true,
 						world.random,
-						fenceBlockState.getRenderingSeed(entity.getPos()),
-						OverlayTexture.DEFAULT_UV
+						fenceBlockState.getSeed(entity.getBlockPos()),
+						OverlayTexture.NO_OVERLAY
 				);
 				
-				matrixStack.pop();
+				matrixStack.popPose();
 			}
 		}
 	}

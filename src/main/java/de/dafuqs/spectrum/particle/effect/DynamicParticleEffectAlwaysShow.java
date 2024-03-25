@@ -1,22 +1,24 @@
 package de.dafuqs.spectrum.particle.effect;
 
-import com.mojang.brigadier.*;
-import com.mojang.brigadier.exceptions.*;
-import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.*;
-import de.dafuqs.spectrum.particle.*;
-import net.minecraft.network.*;
-import net.minecraft.particle.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.dynamic.*;
-import org.joml.*;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import net.minecraft.core.particles.DustParticleOptionsBase;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ExtraCodecs;
+import org.joml.Vector3f;
 
 public class DynamicParticleEffectAlwaysShow extends DynamicParticleEffect {
 	
 	public static final Codec<DynamicParticleEffectAlwaysShow> CODEC = RecordCodecBuilder.create(
 			(instance) -> instance.group(
-					Codecs.VECTOR_3F.fieldOf("color").forGetter((effect) -> effect.color),
+					ExtraCodecs.VECTOR3F.fieldOf("color").forGetter((effect) -> effect.color),
 					Codec.STRING.fieldOf("particle_type_identifier").forGetter((effect) -> effect.particleTypeIdentifier.toString()),
 					Codec.FLOAT.fieldOf("scale").forGetter((effect) -> effect.scale),
 					Codec.INT.fieldOf("lifetime_ticks").forGetter((effect) -> effect.lifetimeTicks),
@@ -26,12 +28,12 @@ public class DynamicParticleEffectAlwaysShow extends DynamicParticleEffect {
 			).apply(instance, DynamicParticleEffectAlwaysShow::new));
 	
 	@SuppressWarnings("deprecation")
-	public static final ParticleEffect.Factory<DynamicParticleEffectAlwaysShow> FACTORY = new ParticleEffect.Factory<>() {
+	public static final ParticleOptions.Deserializer<DynamicParticleEffectAlwaysShow> FACTORY = new ParticleOptions.Deserializer<>() {
 		@Override
-		public DynamicParticleEffectAlwaysShow read(ParticleType<DynamicParticleEffectAlwaysShow> particleType, StringReader stringReader) throws CommandSyntaxException {
-			Vector3f color = AbstractDustParticleEffect.readColor(stringReader);
+		public DynamicParticleEffectAlwaysShow fromCommand(ParticleType<DynamicParticleEffectAlwaysShow> particleType, StringReader stringReader) throws CommandSyntaxException {
+			Vector3f color = DustParticleOptionsBase.readVector3f(stringReader);
 			stringReader.expect(' ');
-			Identifier textureIdentifier = new Identifier(stringReader.readString());
+			ResourceLocation textureIdentifier = new ResourceLocation(stringReader.readString());
 			stringReader.expect(' ');
 			float scale = stringReader.readFloat();
 			stringReader.expect(' ');
@@ -46,9 +48,9 @@ public class DynamicParticleEffectAlwaysShow extends DynamicParticleEffect {
 		}
 		
 		@Override
-		public DynamicParticleEffectAlwaysShow read(ParticleType<DynamicParticleEffectAlwaysShow> particleType, PacketByteBuf packetByteBuf) {
-			Vector3f color = AbstractDustParticleEffect.readColor(packetByteBuf);
-			Identifier textureIdentifier = packetByteBuf.readIdentifier();
+		public DynamicParticleEffectAlwaysShow fromNetwork(ParticleType<DynamicParticleEffectAlwaysShow> particleType, FriendlyByteBuf packetByteBuf) {
+			Vector3f color = DustParticleOptionsBase.readVector3f(packetByteBuf);
+			ResourceLocation textureIdentifier = packetByteBuf.readResourceLocation();
 			float scale = packetByteBuf.readFloat();
 			int lifetimeTicks = packetByteBuf.readInt();
 			float gravity = packetByteBuf.readFloat();
@@ -76,8 +78,8 @@ public class DynamicParticleEffectAlwaysShow extends DynamicParticleEffect {
 	}
 	
 	@Override
-	public String asString() {
-		return String.valueOf(Registries.PARTICLE_TYPE.getId(this.getType()));
+	public String writeToString() {
+		return String.valueOf(BuiltInRegistries.PARTICLE_TYPE.getKey(this.getType()));
 	}
 	
 	@Override

@@ -1,22 +1,24 @@
 package de.dafuqs.spectrum.enchantments;
 
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.util.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
+import net.minecraft.world.item.enchantment.Enchantments;
 
 public class RazingEnchantment extends SpectrumEnchantment {
 	
-	public RazingEnchantment(Rarity weight, Identifier unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
-		super(weight, EnchantmentTarget.DIGGER, slotTypes, unlockAdvancementIdentifier);
+	public RazingEnchantment(Rarity weight, ResourceLocation unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
+		super(weight, EnchantmentCategory.DIGGER, slotTypes, unlockAdvancementIdentifier);
 	}
 	
 	@Override
-	public int getMinPower(int level) {
+	public int getMinCost(int level) {
 		return 20;
 	}
 
     @Override
-    public int getMaxPower(int level) {
+    public int getMaxCost(int level) {
         return 30;
     }
 
@@ -26,7 +28,7 @@ public class RazingEnchantment extends SpectrumEnchantment {
     }
 
     @Override
-    protected boolean canAccept(Enchantment other) {
-        return other != Enchantments.FORTUNE && super.canAccept(other);
+    protected boolean checkCompatibility(Enchantment other) {
+        return other != Enchantments.BLOCK_FORTUNE && super.checkCompatibility(other);
     }
 }

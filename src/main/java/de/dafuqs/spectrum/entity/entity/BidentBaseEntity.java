@@ -1,59 +1,62 @@
 package de.dafuqs.spectrum.entity.entity;
 
-import de.dafuqs.spectrum.mixin.accessors.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.data.*;
-import net.minecraft.entity.projectile.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.math.Box;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.mixin.accessors.TridentEntityAccessor;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.projectile.ThrownTrident;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 
-public abstract class BidentBaseEntity extends TridentEntity {
+public abstract class BidentBaseEntity extends ThrownTrident {
 	
-	private static final TrackedData<ItemStack> STACK = DataTracker.registerData(BidentBaseEntity.class, TrackedDataHandlerRegistry.ITEM_STACK);
+	private static final EntityDataAccessor<ItemStack> STACK = SynchedEntityData.defineId(BidentBaseEntity.class, EntityDataSerializers.ITEM_STACK);
 	
-	public BidentBaseEntity(EntityType<? extends TridentEntity> entityType, World world) {
+	public BidentBaseEntity(EntityType<? extends ThrownTrident> entityType, Level world) {
 		super(entityType, world);
 	}
 	
 	@Override
-	protected void initDataTracker() {
-		super.initDataTracker();
-		this.dataTracker.startTracking(STACK, Items.AIR.getDefaultStack());
+	protected void defineSynchedData() {
+		super.defineSynchedData();
+		this.entityData.define(STACK, Items.AIR.getDefaultInstance());
 	}
 	
 	public void setStack(ItemStack stack) {
 		setTrackedStack(stack.copy());
 		((TridentEntityAccessor) this).spectrum$setTridentStack(stack);
-		this.dataTracker.set(TridentEntityAccessor.spectrum$getLoyalty(), (byte) EnchantmentHelper.getLoyalty(stack));
-		this.dataTracker.set(TridentEntityAccessor.spectrum$getEnchanted(), stack.hasGlint());
+		this.entityData.set(TridentEntityAccessor.spectrum$getLoyalty(), (byte) EnchantmentHelper.getLoyalty(stack));
+		this.entityData.set(TridentEntityAccessor.spectrum$getEnchanted(), stack.hasFoil());
 	}
 	
 	@Override
-	protected SoundEvent getHitSound() {
+	protected SoundEvent getDefaultHitGroundSoundEvent() {
 		return SpectrumSoundEvents.BIDENT_HIT_GROUND;
 	}
 	
 	public ItemStack getTrackedStack() {
-		return this.dataTracker.get(STACK);
+		return this.entityData.get(STACK);
 	}
 
 	public void setTrackedStack(ItemStack stack) {
-		dataTracker.set(STACK, stack);
+		entityData.set(STACK, stack);
 	}
 	
 	@Override
-	public void readCustomDataFromNbt(NbtCompound nbt) {
-		super.readCustomDataFromNbt(nbt);
-		this.dataTracker.set(STACK, ItemStack.fromNbt(nbt.getCompound("Trident")));
+	public void readAdditionalSaveData(CompoundTag nbt) {
+		super.readAdditionalSaveData(nbt);
+		this.entityData.set(STACK, ItemStack.of(nbt.getCompound("Trident")));
 	}
 
 	@Override
-	public Box calculateBoundingBox() {
-		return super.calculateBoundingBox();
+	public AABB makeBoundingBox() {
+		return super.makeBoundingBox();
 	}
 }

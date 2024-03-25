@@ -1,15 +1,15 @@
 package de.dafuqs.spectrum.recipe;
 
-import de.dafuqs.matchbooks.recipe.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import net.minecraft.core.NonNullList;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.Ingredient;
 
-import java.util.*;
+import java.util.List;
 
 public abstract class GatedStackSpectrumRecipe extends GatedSpectrumRecipe {
 	
-	protected GatedStackSpectrumRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier) {
+	protected GatedStackSpectrumRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier) {
 		super(id, group, secret, requiredAdvancementIdentifier);
 	}
 	
@@ -23,7 +23,7 @@ public abstract class GatedStackSpectrumRecipe extends GatedSpectrumRecipe {
 	 */
 	@Override
 	@Deprecated
-	public DefaultedList<Ingredient> getIngredients() {
+	public NonNullList<Ingredient> getIngredients() {
 		return IngredientStack.listIngredients(getIngredientStacks());
 	}
 	

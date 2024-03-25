@@ -1,19 +1,19 @@
 package de.dafuqs.spectrum.inventories.slots;
 
-import de.dafuqs.spectrum.api.item.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.screen.slot.*;
+import de.dafuqs.spectrum.api.item.ExperienceStorageItem;
+import net.minecraft.world.Container;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class ExperienceStorageItemSlot extends Slot {
 	
-	public ExperienceStorageItemSlot(Inventory inventory, int index, int x, int y) {
+	public ExperienceStorageItemSlot(Container inventory, int index, int x, int y) {
 		super(inventory, index, x, y);
 	}
 	
 	@Override
-	public boolean canInsert(ItemStack stack) {
-		return super.canInsert(stack) && stack.getItem() instanceof ExperienceStorageItem;
+	public boolean mayPlace(ItemStack stack) {
+		return super.mayPlace(stack) && stack.getItem() instanceof ExperienceStorageItem;
 	}
 	
 }

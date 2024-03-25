@@ -1,20 +1,20 @@
 package de.dafuqs.spectrum.api.interaction;
 
-import it.unimi.dsi.fastutil.objects.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Map;
 
 public class ResonanceDropProcessors {
 
-	protected static Map<Identifier, ResonanceDropProcessor.Serializer> PROCESSORS = new Object2ObjectOpenHashMap<>();
+	protected static Map<ResourceLocation, ResonanceDropProcessor.Serializer> PROCESSORS = new Object2ObjectOpenHashMap<>();
 
-	public static void register(Identifier id, ResonanceDropProcessor.Serializer target) {
+	public static void register(ResourceLocation id, ResonanceDropProcessor.Serializer target) {
 		PROCESSORS.put(id, target);
 	}
 
-	public static @Nullable ResonanceDropProcessor.Serializer get(Identifier id) {
+	public static @Nullable ResonanceDropProcessor.Serializer get(ResourceLocation id) {
 		return PROCESSORS.getOrDefault(id, null);
 	}
 	

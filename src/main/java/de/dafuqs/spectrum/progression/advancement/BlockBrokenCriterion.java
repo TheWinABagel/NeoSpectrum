@@ -1,46 +1,45 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.predicate.block.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.block.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.predicate.block.BrokenBlockPredicate;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-public class BlockBrokenCriterion extends AbstractCriterion<BlockBrokenCriterion.Conditions> {
+public class BlockBrokenCriterion extends SimpleCriterionTrigger<BlockBrokenCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("block_broken");
+	static final ResourceLocation ID = SpectrumCommon.locate("block_broken");
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
-	public void trigger(ServerPlayerEntity player, BlockState minedBlock) {
+	public void trigger(ServerPlayer player, BlockState minedBlock) {
 		this.trigger(player, (conditions) -> conditions.matches(minedBlock));
 	}
 
 	@Override
-	protected Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate playerPredicate, AdvancementEntityPredicateDeserializer predicateDeserializer) {
+	protected Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate playerPredicate, DeserializationContext predicateDeserializer) {
 		BrokenBlockPredicate brokenBlockPredicate = BrokenBlockPredicate.fromJson(jsonObject.get("broken_block"));
 		return new BlockBrokenCriterion.Conditions(playerPredicate, brokenBlockPredicate);
 	}
 
-	public static class Conditions extends AbstractCriterionConditions {
+	public static class Conditions extends AbstractCriterionTriggerInstance {
 		
 		private final BrokenBlockPredicate brokenBlockPredicate;
 		
-		public Conditions(LootContextPredicate player, @Nullable BrokenBlockPredicate brokenBlockPredicate) {
+		public Conditions(ContextAwarePredicate player, @Nullable BrokenBlockPredicate brokenBlockPredicate) {
 			super(ID, player);
 			this.brokenBlockPredicate = brokenBlockPredicate;
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
 			jsonObject.add("broken_block", this.brokenBlockPredicate.toJson());
 			return jsonObject;
 		}

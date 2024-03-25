@@ -1,11 +1,11 @@
 package de.dafuqs.spectrum.api.predicate.world;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.helpers.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.helpers.TimeHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
-import java.util.*;
+import java.util.Locale;
 
 public class TimeOfDayPredicate implements WorldConditionPredicate {
 	public static final TimeOfDayPredicate ANY = new TimeOfDayPredicate(null);
@@ -22,7 +22,7 @@ public class TimeOfDayPredicate implements WorldConditionPredicate {
 	}
 	
 	@Override
-	public boolean test(ServerWorld world, BlockPos pos) {
+	public boolean test(ServerLevel world, BlockPos pos) {
 		if (this == ANY) return true;
 		TimeHelper.TimeOfDay worldTimeOfDay = TimeHelper.getTimeOfDay(world);
 		switch (this.timeOfDay) {

@@ -1,42 +1,46 @@
 package de.dafuqs.spectrum.blocks.structure;
 
-import de.dafuqs.spectrum.blocks.decoration.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.blocks.decoration.SpectrumFacingBlock;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.GameMasterBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-public class PreservationBlockDetectorBlock extends SpectrumFacingBlock implements BlockEntityProvider, OperatorBlock {
+public class PreservationBlockDetectorBlock extends SpectrumFacingBlock implements EntityBlock, GameMasterBlock {
 	
-	public PreservationBlockDetectorBlock(Settings settings) {
+	public PreservationBlockDetectorBlock(Properties settings) {
 		super(settings);
-		this.setDefaultState(this.stateManager.getDefaultState().with(FACING, Direction.SOUTH));
+		this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.SOUTH));
 	}
 	
 	@Override
-	public BlockRenderType getRenderType(BlockState state) {
-		return BlockRenderType.MODEL;
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public BlockState getStateForNeighborUpdate(BlockState state, Direction direction, BlockState neighborState, WorldAccess world, BlockPos pos, BlockPos neighborPos) {
-		if (state.get(FACING) == direction && world.getBlockEntity(pos) instanceof PreservationBlockDetectorBlockEntity blockEntity) {
+	public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+		if (state.getValue(FACING) == direction && world.getBlockEntity(pos) instanceof PreservationBlockDetectorBlockEntity blockEntity) {
 			blockEntity.triggerForNeighbor(neighborState);
 		}
-		return super.getStateForNeighborUpdate(state, direction, neighborState, world, pos, neighborPos);
+		return super.updateShape(state, direction, neighborState, world, pos, neighborPos);
 	}
 	
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		return this.getDefaultState().with(FACING, ctx.getPlayerLookDirection().getOpposite().getOpposite());
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		return this.defaultBlockState().setValue(FACING, ctx.getNearestLookingDirection().getOpposite().getOpposite());
 	}
 	
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new PreservationBlockDetectorBlockEntity(pos, state);
 	}
 	

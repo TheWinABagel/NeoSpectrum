@@ -1,26 +1,27 @@
 package de.dafuqs.spectrum.events;
 
-import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.*;
-import net.minecraft.network.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.PositionSource;
+import net.minecraft.world.level.gameevent.PositionSourceType;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.Optional;
 
 public class ExactPositionSource implements PositionSource {
 	
-	public static final Codec<ExactPositionSource> CODEC = RecordCodecBuilder.create((instance) -> instance.group(Vec3d.CODEC.fieldOf("pos").forGetter((positionSource) -> positionSource.pos)).apply(instance, ExactPositionSource::new));
+	public static final Codec<ExactPositionSource> CODEC = RecordCodecBuilder.create((instance) -> instance.group(Vec3.CODEC.fieldOf("pos").forGetter((positionSource) -> positionSource.pos)).apply(instance, ExactPositionSource::new));
 	
-	final Vec3d pos;
+	final Vec3 pos;
 	
-	public ExactPositionSource(Vec3d pos) {
+	public ExactPositionSource(Vec3 pos) {
 		this.pos = pos;
 	}
 	
 	@Override
-	public Optional<Vec3d> getPos(World world) {
+	public Optional<Vec3> getPosition(Level world) {
 		return Optional.of(this.pos);
 	}
 	
@@ -34,19 +35,19 @@ public class ExactPositionSource implements PositionSource {
 		}
 		
 		@Override
-		public ExactPositionSource readFromBuf(PacketByteBuf packetByteBuf) {
-			return new ExactPositionSource(new Vec3d(packetByteBuf.readDouble(), packetByteBuf.readDouble(), packetByteBuf.readDouble()));
+		public ExactPositionSource read(FriendlyByteBuf packetByteBuf) {
+			return new ExactPositionSource(new Vec3(packetByteBuf.readDouble(), packetByteBuf.readDouble(), packetByteBuf.readDouble()));
 		}
 		
 		@Override
-		public void writeToBuf(PacketByteBuf packetByteBuf, ExactPositionSource blockPositionSource) {
+		public void writeToBuf(FriendlyByteBuf packetByteBuf, ExactPositionSource blockPositionSource) {
 			packetByteBuf.writeDouble(blockPositionSource.pos.x);
 			packetByteBuf.writeDouble(blockPositionSource.pos.y);
 			packetByteBuf.writeDouble(blockPositionSource.pos.z);
 		}
 		
 		@Override
-		public Codec<ExactPositionSource> getCodec() {
+		public Codec<ExactPositionSource> codec() {
 			return ExactPositionSource.CODEC;
 		}
 	}

@@ -1,31 +1,34 @@
 package de.dafuqs.spectrum.compat.emi.recipes;
 
-import de.dafuqs.spectrum.compat.emi.*;
-import de.dafuqs.spectrum.recipe.fusion_shrine.*;
-import de.dafuqs.spectrum.registries.*;
-import dev.emi.emi.api.stack.*;
-import dev.emi.emi.api.widget.TextWidget.*;
-import dev.emi.emi.api.widget.*;
-import net.minecraft.client.*;
-import net.minecraft.text.*;
+import de.dafuqs.spectrum.compat.emi.GatedSpectrumEmiRecipe;
+import de.dafuqs.spectrum.compat.emi.SpectrumEmiRecipeCategories;
+import de.dafuqs.spectrum.recipe.fusion_shrine.FusionShrineRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.widget.TextWidget.Alignment;
+import dev.emi.emi.api.widget.WidgetHolder;
+import net.minecraft.client.Minecraft;
+import net.minecraft.util.FormattedCharSequence;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FusionShrineEmiRecipeGated extends GatedSpectrumEmiRecipe<FusionShrineRecipe> {
-	private final List<OrderedText> texts;
+	private final List<FormattedCharSequence> texts;
 	
 	public FusionShrineEmiRecipeGated(FusionShrineRecipe recipe) {
 		super(SpectrumEmiRecipeCategories.FUSION_SHRINE, recipe, 138, 60);
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		if (recipe.getDescription().isPresent()) {
-			texts = client.textRenderer.wrapLines(recipe.getDescription().get(), width);
+			texts = client.font.split(recipe.getDescription().get(), width);
 		} else {
 			texts = List.of();
 		}
 		inputs = new ArrayList<>();
 		inputs.add(EmiIngredient.of(List.of(EmiStack.of(recipe.getFluidInput()))));
 		inputs.addAll(recipe.getIngredientStacks().stream().map(s -> EmiIngredient.of(s.getStacks().stream().map(EmiStack::of).toList())).toList());
-		outputs = List.of(EmiStack.of(recipe.getOutput(getRegistryManager())));
+		outputs = List.of(EmiStack.of(recipe.getResultItem(getRegistryManager())));
 	}
 
 	@Override

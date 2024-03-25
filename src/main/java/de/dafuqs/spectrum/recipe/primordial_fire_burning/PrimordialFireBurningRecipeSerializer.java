@@ -1,13 +1,14 @@
 package de.dafuqs.spectrum.recipe.primordial_fire_burning;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import de.dafuqs.spectrum.recipe.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.api.recipe.GatedRecipeSerializer;
+import de.dafuqs.spectrum.recipe.RecipeUtils;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class PrimordialFireBurningRecipeSerializer implements GatedRecipeSerializer<PrimordialFireBurningRecipe> {
 	
@@ -18,40 +19,40 @@ public class PrimordialFireBurningRecipeSerializer implements GatedRecipeSeriali
 	}
 	
 	public interface RecipeFactory {
-		PrimordialFireBurningRecipe create(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, Ingredient ingredient, ItemStack output);
+		PrimordialFireBurningRecipe create(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, Ingredient ingredient, ItemStack output);
 	}
 	
 	@Override
-	public PrimordialFireBurningRecipe read(Identifier identifier, JsonObject jsonObject) {
+	public PrimordialFireBurningRecipe fromJson(ResourceLocation identifier, JsonObject jsonObject) {
 		String group = readGroup(jsonObject);
 		boolean secret = readSecret(jsonObject);
-		Identifier requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
+		ResourceLocation requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
 		
-		JsonElement jsonElement = JsonHelper.hasArray(jsonObject, "ingredient") ? JsonHelper.getArray(jsonObject, "ingredient") : JsonHelper.getObject(jsonObject, "ingredient");
+		JsonElement jsonElement = GsonHelper.isArrayNode(jsonObject, "ingredient") ? GsonHelper.getAsJsonArray(jsonObject, "ingredient") : GsonHelper.getAsJsonObject(jsonObject, "ingredient");
 		Ingredient ingredient = Ingredient.fromJson(jsonElement);
-		ItemStack output = RecipeUtils.itemStackWithNbtFromJson(JsonHelper.getObject(jsonObject, "result"));
+		ItemStack output = RecipeUtils.itemStackWithNbtFromJson(GsonHelper.getAsJsonObject(jsonObject, "result"));
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, ingredient, output);
 	}
 	
 	@Override
-	public void write(PacketByteBuf packetByteBuf, PrimordialFireBurningRecipe recipe) {
-		packetByteBuf.writeString(recipe.group);
+	public void write(FriendlyByteBuf packetByteBuf, PrimordialFireBurningRecipe recipe) {
+		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);
 		
-		recipe.input.write(packetByteBuf);
-		packetByteBuf.writeItemStack(recipe.output);
+		recipe.input.toNetwork(packetByteBuf);
+		packetByteBuf.writeItem(recipe.output);
 	}
 	
 	@Override
-	public PrimordialFireBurningRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
-		String group = packetByteBuf.readString();
+	public PrimordialFireBurningRecipe fromNetwork(ResourceLocation identifier, FriendlyByteBuf packetByteBuf) {
+		String group = packetByteBuf.readUtf();
 		boolean secret = packetByteBuf.readBoolean();
-		Identifier requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
+		ResourceLocation requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
 		
-		Ingredient ingredient = Ingredient.fromPacket(packetByteBuf);
-		ItemStack output = packetByteBuf.readItemStack();
+		Ingredient ingredient = Ingredient.fromNetwork(packetByteBuf);
+		ItemStack output = packetByteBuf.readItem();
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, ingredient, output);
 	}

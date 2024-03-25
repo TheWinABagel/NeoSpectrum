@@ -1,14 +1,18 @@
 package de.dafuqs.spectrum.api.recipe;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.server.*;
-import net.minecraft.server.command.*;
-import net.minecraft.server.world.*;
-import net.minecraft.text.*;
-import net.minecraft.util.math.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Effects that are played when crafting with the fusion shrine
@@ -19,7 +23,7 @@ public interface FusionShrineRecipeWorldEffect {
 
 	FusionShrineRecipeWorldEffect NOTHING = register("nothing", new FusionShrineRecipeWorldEffect.SingleTimeRecipeWorldEffect() {
 		@Override
-		public void trigger(ServerWorld world, BlockPos pos) { }
+		public void trigger(ServerLevel world, BlockPos pos) { }
 	});
 	
 	static FusionShrineRecipeWorldEffect register(String id, FusionShrineRecipeWorldEffect effect) {
@@ -49,7 +53,7 @@ public interface FusionShrineRecipeWorldEffect {
 	 */
 	boolean isOneTimeEffect();
 	
-	void trigger(ServerWorld world, BlockPos pos);
+	void trigger(ServerLevel world, BlockPos pos);
 	
 	abstract class EveryTickRecipeWorldEffect implements FusionShrineRecipeWorldEffect {
 		
@@ -75,7 +79,7 @@ public interface FusionShrineRecipeWorldEffect {
 		
 	}
 	
-	class CommandRecipeWorldEffect implements FusionShrineRecipeWorldEffect, CommandOutput {
+	class CommandRecipeWorldEffect implements FusionShrineRecipeWorldEffect, CommandSource {
 		
 		protected final String command;
 		
@@ -93,27 +97,27 @@ public interface FusionShrineRecipeWorldEffect {
 		}
 		
 		@Override
-		public void trigger(ServerWorld world, BlockPos pos) {
+		public void trigger(ServerLevel world, BlockPos pos) {
 			MinecraftServer minecraftServer = world.getServer();
-			ServerCommandSource serverCommandSource = new ServerCommandSource(this, Vec3d.ofCenter(pos), Vec2f.ZERO, world, 2, "FusionShrine", world.getBlockState(pos).getBlock().getName(), minecraftServer, null);
-			minecraftServer.getCommandManager().executeWithPrefix(serverCommandSource, command);
+			CommandSourceStack serverCommandSource = new CommandSourceStack(this, Vec3.atCenterOf(pos), Vec2.ZERO, world, 2, "FusionShrine", world.getBlockState(pos).getBlock().getName(), minecraftServer, null);
+			minecraftServer.getCommands().performPrefixedCommand(serverCommandSource, command);
 		}
 		
 		@Override
-		public void sendMessage(Text message) { }
+		public void sendSystemMessage(Component message) { }
 		
 		@Override
-		public boolean shouldReceiveFeedback() {
+		public boolean acceptsSuccess() {
 			return false;
 		}
 		
 		@Override
-		public boolean shouldTrackOutput() {
+		public boolean acceptsFailure() {
 			return false;
 		}
 		
 		@Override
-		public boolean shouldBroadcastConsoleToOps() {
+		public boolean shouldInformAdmins() {
 			return false;
 		}
 	}

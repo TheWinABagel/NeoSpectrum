@@ -1,22 +1,23 @@
 package de.dafuqs.spectrum.registries;
 
-import com.google.common.collect.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.sound.*;
-
-import java.util.*;
-import java.util.function.Supplier;
-
 import com.google.common.base.Suppliers;
+import com.google.common.collect.Maps;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.crafting.Ingredient;
+
+import java.util.Map;
+import java.util.function.Supplier;
 
 public enum SpectrumArmorMaterials implements ArmorMaterial {
 	
 	GEMSTONE("gemstone", 9, SpectrumCommon.CONFIG.GemstoneArmorBootsProtection, SpectrumCommon.CONFIG.GemstoneArmorLeggingsProtection, SpectrumCommon.CONFIG.GemstoneArmorChestplateProtection, SpectrumCommon.CONFIG.GemstoneArmorHelmetProtection,
-			15, SoundEvents.BLOCK_AMETHYST_BLOCK_CHIME, SpectrumCommon.CONFIG.GemstoneArmorToughness, SpectrumCommon.CONFIG.GemstoneArmorKnockbackResistance, () -> Ingredient.fromTag(SpectrumItemTags.GEMSTONE_SHARDS)),
+			15, SoundEvents.AMETHYST_BLOCK_CHIME, SpectrumCommon.CONFIG.GemstoneArmorToughness, SpectrumCommon.CONFIG.GemstoneArmorKnockbackResistance, () -> Ingredient.of(SpectrumItemTags.GEMSTONE_SHARDS)),
 	BEDROCK("bedrock", 70, SpectrumCommon.CONFIG.BedrockArmorBootsProtection, SpectrumCommon.CONFIG.BedrockArmorLeggingsProtection, SpectrumCommon.CONFIG.BedrockArmorChestplateProtection, SpectrumCommon.CONFIG.BedrockArmorHelmetProtection,
-			5, SoundEvents.ITEM_ARMOR_EQUIP_NETHERITE, SpectrumCommon.CONFIG.BedrockArmorToughness, SpectrumCommon.CONFIG.BedrockArmorKnockbackResistance, () -> Ingredient.ofItems(SpectrumItems.BEDROCK_DUST));
+			5, SoundEvents.ARMOR_EQUIP_NETHERITE, SpectrumCommon.CONFIG.BedrockArmorToughness, SpectrumCommon.CONFIG.BedrockArmorKnockbackResistance, () -> Ingredient.of(SpectrumItems.BEDROCK_DUST));
 	
 	private static final int[] BASE_DURABILITY = new int[]{13, 15, 16, 11};
 	private final String name;
@@ -46,17 +47,17 @@ public enum SpectrumArmorMaterials implements ArmorMaterial {
 	}
 	
 	@Override
-	public int getDurability(ArmorItem.Type type) {
-		return BASE_DURABILITY[type.getEquipmentSlot().getEntitySlotId()] * this.durabilityMultiplier;
+	public int getDurabilityForType(ArmorItem.Type type) {
+		return BASE_DURABILITY[type.getSlot().getIndex()] * this.durabilityMultiplier;
 	}
 	
 	@Override
-	public int getProtection(ArmorItem.Type type) {
+	public int getDefenseForType(ArmorItem.Type type) {
 		return protectionAmounts.get(type);
 	}
 	
 	@Override
-	public int getEnchantability() {
+	public int getEnchantmentValue() {
 		return this.enchantability;
 	}
 	

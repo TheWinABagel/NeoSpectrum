@@ -1,10 +1,11 @@
 package de.dafuqs.spectrum.helpers;
 
-import net.minecraft.entity.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
-public record CollisionResult<T>(World world, T collision, CollisionType type, Vec3d collisionPoint) {
+public record CollisionResult<T>(Level world, T collision, CollisionType type, Vec3 collisionPoint) {
 
     public boolean sanityCheck() {
         if (type != CollisionType.BLOCK) {
@@ -12,8 +13,8 @@ public record CollisionResult<T>(World world, T collision, CollisionType type, V
             return collisionBox.contains(collisionPoint);
         }
         else {
-            var pos = BlockPos.ofFloored(collisionPoint);
-            return world.getBlockState(pos).getRaycastShape(world, pos).getBoundingBoxes().stream().anyMatch(box -> box.contains(collisionPoint));
+            var pos = BlockPos.containing(collisionPoint);
+            return world.getBlockState(pos).getInteractionShape(world, pos).toAabbs().stream().anyMatch(box -> box.contains(collisionPoint));
         }
     }
 

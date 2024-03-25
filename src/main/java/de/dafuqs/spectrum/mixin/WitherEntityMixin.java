@@ -1,28 +1,32 @@
 package de.dafuqs.spectrum.mixin;
 
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.boss.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.world.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.injection.*;
-import org.spongepowered.asm.mixin.injection.callback.*;
+import de.dafuqs.spectrum.helpers.SpectrumEnchantmentHelper;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.boss.wither.WitherBoss;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.level.Level;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-@Mixin(WitherEntity.class)
+@Mixin(WitherBoss.class)
 public abstract class WitherEntityMixin {
 	
 	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/ItemEntity;setCovetedItem()V"),
 			method = "dropEquipment(Lnet/minecraft/entity/damage/DamageSource;IZ)V", locals = LocalCapture.CAPTURE_FAILSOFT)
 	private void spawnEntity(DamageSource source, int lootingMultiplier, boolean allowDrops, CallbackInfo ci, ItemEntity itemEntity) {
-		Entity attackerEntity = source.getAttacker();
+		Entity attackerEntity = source.getEntity();
 		if (attackerEntity instanceof LivingEntity livingAttacker) {
-			World world = attackerEntity.getWorld();
-			int cloversFavorLevel = SpectrumEnchantmentHelper.getUsableLevel(SpectrumEnchantments.CLOVERS_FAVOR, livingAttacker.getMainHandStack(), livingAttacker);
+			Level world = attackerEntity.level();
+			int cloversFavorLevel = SpectrumEnchantmentHelper.getUsableLevel(SpectrumEnchantments.CLOVERS_FAVOR, livingAttacker.getMainHandItem(), livingAttacker);
 			if (cloversFavorLevel > 0) {
 				int additionalCount = (int) (cloversFavorLevel / 2.0F + world.random.nextFloat() * cloversFavorLevel);
-				itemEntity.getStack().setCount(itemEntity.getStack().getCount() + additionalCount);
+				itemEntity.getItem().setCount(itemEntity.getItem().getCount() + additionalCount);
 			}
 		}
 	}

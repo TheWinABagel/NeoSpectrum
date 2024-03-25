@@ -1,24 +1,31 @@
 package de.dafuqs.spectrum.loot.conditions;
 
-import com.google.common.collect.*;
-import com.google.gson.*;
-import de.dafuqs.spectrum.loot.*;
-import de.dafuqs.spectrum.progression.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.loot.condition.*;
-import net.minecraft.loot.context.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.JsonSerializer;
-import net.minecraft.util.*;
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSerializationContext;
+import de.dafuqs.spectrum.loot.SpectrumLootConditionTypes;
+import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
+import de.dafuqs.spectrum.registries.SpectrumEnchantments;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParam;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
+import net.minecraft.world.level.storage.loot.predicates.LootItemConditionType;
 
-import java.util.*;
+import java.util.Set;
 
-public class RandomChanceWithTreasureHunterLootCondition implements LootCondition {
+public class RandomChanceWithTreasureHunterLootCondition implements LootItemCondition {
 	
 	private final float chance;
 	private final ItemStack advancementTriggerItemStack;
@@ -33,24 +40,24 @@ public class RandomChanceWithTreasureHunterLootCondition implements LootConditio
 	}
 	
 	@Override
-	public LootConditionType getType() {
+	public LootItemConditionType getType() {
 		return SpectrumLootConditionTypes.RANDOM_CHANCE_WITH_TREASURE_HUNTER;
 	}
 	
 	@Override
-	public Set<LootContextParameter<?>> getRequiredParameters() {
-		return ImmutableSet.of(LootContextParameters.KILLER_ENTITY);
+	public Set<LootContextParam<?>> getReferencedContextParams() {
+		return ImmutableSet.of(LootContextParams.KILLER_ENTITY);
 	}
 	
 	@Override
 	public boolean test(LootContext lootContext) {
-		Entity entity = lootContext.get(LootContextParameters.KILLER_ENTITY);
+		Entity entity = lootContext.getParamOrNull(LootContextParams.KILLER_ENTITY);
 		int treasureHunterLevel = 0;
-		if (entity instanceof PlayerEntity playerEntity) {
+		if (entity instanceof Player playerEntity) {
 			if (!SpectrumEnchantments.TREASURE_HUNTER.canEntityUse(playerEntity)) {
 				return false;
 			}
-			treasureHunterLevel = EnchantmentHelper.getEquipmentLevel(SpectrumEnchantments.TREASURE_HUNTER, (LivingEntity) entity);
+			treasureHunterLevel = EnchantmentHelper.getEnchantmentLevel(SpectrumEnchantments.TREASURE_HUNTER, (LivingEntity) entity);
 		}
 		
 		if (treasureHunterLevel == 0) {
@@ -59,8 +66,8 @@ public class RandomChanceWithTreasureHunterLootCondition implements LootConditio
 		} else {
 			boolean success = lootContext.getRandom().nextFloat() < this.chance * treasureHunterLevel;
 			if (success) {
-				Entity killerEntity = lootContext.get(LootContextParameters.KILLER_ENTITY);
-				if (killerEntity instanceof ServerPlayerEntity serverPlayerEntity) {
+				Entity killerEntity = lootContext.getParamOrNull(LootContextParams.KILLER_ENTITY);
+				if (killerEntity instanceof ServerPlayer serverPlayerEntity) {
 					SpectrumAdvancementCriteria.TREASURE_HUNTER_DROP.trigger(serverPlayerEntity, advancementTriggerItemStack);
 				}
 			}
@@ -68,7 +75,7 @@ public class RandomChanceWithTreasureHunterLootCondition implements LootConditio
 		}
 	}
 	
-	public static class Serializer implements JsonSerializer<RandomChanceWithTreasureHunterLootCondition> {
+	public static class Serializer implements net.minecraft.world.level.storage.loot.Serializer<RandomChanceWithTreasureHunterLootCondition> {
 		
 		public Serializer() {
 		}
@@ -76,14 +83,14 @@ public class RandomChanceWithTreasureHunterLootCondition implements LootConditio
 		@Override
 		public void toJson(JsonObject jsonObject, RandomChanceWithTreasureHunterLootCondition randomChanceWithLootingLootCondition, JsonSerializationContext jsonSerializationContext) {
 			jsonObject.addProperty("chance", randomChanceWithLootingLootCondition.chance);
-			jsonObject.addProperty("advancement_trigger_itemstack", Registries.ITEM.getId(randomChanceWithLootingLootCondition.advancementTriggerItemStack.getItem()).toString());
+			jsonObject.addProperty("advancement_trigger_itemstack", BuiltInRegistries.ITEM.getKey(randomChanceWithLootingLootCondition.advancementTriggerItemStack.getItem()).toString());
 		}
 		
 		@Override
-		public RandomChanceWithTreasureHunterLootCondition fromJson(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext) {
+		public RandomChanceWithTreasureHunterLootCondition deserialize(JsonObject jsonObject, JsonDeserializationContext jsonDeserializationContext) {
 			return new RandomChanceWithTreasureHunterLootCondition(
-					JsonHelper.getFloat(jsonObject, "chance"),
-					Registries.ITEM.get(new Identifier(JsonHelper.getString(jsonObject, "advancement_trigger_itemstack")))
+					GsonHelper.getAsFloat(jsonObject, "chance"),
+					BuiltInRegistries.ITEM.get(new ResourceLocation(GsonHelper.getAsString(jsonObject, "advancement_trigger_itemstack")))
 			);
 		}
 	}

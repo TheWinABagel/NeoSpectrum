@@ -1,19 +1,23 @@
 package de.dafuqs.spectrum.blocks.conditional.colored_tree;
 
-import com.google.common.collect.*;
-import de.dafuqs.revelationary.api.revelations.*;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import com.google.common.collect.Maps;
+import de.dafuqs.revelationary.api.revelations.RevelationAware;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.Map;
 
-public class ColoredWoodBlock extends PillarBlock implements RevelationAware, ColoredTree {
+public class ColoredWoodBlock extends RotatedPillarBlock implements RevelationAware, ColoredTree {
 	
 	private static final Map<DyeColor, ColoredWoodBlock> WOOD = Maps.newEnumMap(DyeColor.class);
 	protected final DyeColor color;
 	
-	public ColoredWoodBlock(Settings settings, DyeColor color) {
+	public ColoredWoodBlock(Properties settings, DyeColor color) {
 		super(settings);
 		this.color = color;
 		WOOD.put(color, this);
@@ -21,18 +25,18 @@ public class ColoredWoodBlock extends PillarBlock implements RevelationAware, Co
 	}
 	
 	@Override
-	public Identifier getCloakAdvancementIdentifier() {
+	public ResourceLocation getCloakAdvancementIdentifier() {
 		return ColoredTree.getTreeCloakAdvancementIdentifier(TreePart.WOOD, this.color);
 	}
 	
 	@Override
 	public Map<BlockState, BlockState> getBlockStateCloaks() {
-		return Map.of(this.getDefaultState(), Blocks.OAK_WOOD.getDefaultState());
+		return Map.of(this.defaultBlockState(), Blocks.OAK_WOOD.defaultBlockState());
 	}
 	
 	@Override
-	public Pair<Item, Item> getItemCloak() {
-		return new Pair<>(this.asItem(), Blocks.OAK_WOOD.asItem());
+	public Tuple<Item, Item> getItemCloak() {
+		return new Tuple<>(this.asItem(), Blocks.OAK_WOOD.asItem());
 	}
 	
 	@Override

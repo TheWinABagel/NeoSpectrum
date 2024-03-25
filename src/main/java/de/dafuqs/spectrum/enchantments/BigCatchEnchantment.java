@@ -1,26 +1,26 @@
 package de.dafuqs.spectrum.enchantments;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.items.tools.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.items.tools.SpectrumFishingRodItem;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
 
 public class BigCatchEnchantment extends SpectrumEnchantment {
 	
-	public BigCatchEnchantment(Rarity weight, Identifier unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
-		super(weight, EnchantmentTarget.FISHING_ROD, slotTypes, unlockAdvancementIdentifier);
+	public BigCatchEnchantment(Rarity weight, ResourceLocation unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
+		super(weight, EnchantmentCategory.FISHING_ROD, slotTypes, unlockAdvancementIdentifier);
 	}
 	
 	@Override
-	public int getMinPower(int level) {
+	public int getMinCost(int level) {
 		return 20;
 	}
 	
 	@Override
-	public int getMaxPower(int level) {
-		return super.getMinPower(level) + 30;
+	public int getMaxCost(int level) {
+		return super.getMinCost(level) + 30;
 	}
 	
 	@Override
@@ -29,8 +29,8 @@ public class BigCatchEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public boolean isAcceptableItem(ItemStack stack) {
-		return super.isAcceptableItem(stack) || stack.getItem() instanceof SpectrumFishingRodItem;
+	public boolean canEnchant(ItemStack stack) {
+		return super.canEnchant(stack) || stack.getItem() instanceof SpectrumFishingRodItem;
 	}
 	
 	

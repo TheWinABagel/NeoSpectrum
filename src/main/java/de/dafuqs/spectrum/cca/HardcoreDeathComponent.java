@@ -1,15 +1,22 @@
 package de.dafuqs.spectrum.cca;
 
-import com.mojang.authlib.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.registries.*;
-import dev.onyxstudios.cca.api.v3.component.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.nbt.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import com.mojang.authlib.GameProfile;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
+import dev.onyxstudios.cca.api.v3.component.Component;
+import dev.onyxstudios.cca.api.v3.component.ComponentKey;
+import dev.onyxstudios.cca.api.v3.component.ComponentRegistry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class HardcoreDeathComponent implements Component {
 	
@@ -18,25 +25,25 @@ public class HardcoreDeathComponent implements Component {
 	private final static List<UUID> playersThatDiedInHardcore = new ArrayList<>();
 	
 	@Override
-	public void writeToNbt(@NotNull NbtCompound tag) {
-		NbtList uuidList = new NbtList();
+	public void writeToNbt(@NotNull CompoundTag tag) {
+		ListTag uuidList = new ListTag();
 		for (UUID playerThatDiedInHardcore : playersThatDiedInHardcore) {
-			uuidList.add(NbtHelper.fromUuid(playerThatDiedInHardcore));
+			uuidList.add(NbtUtils.createUUID(playerThatDiedInHardcore));
 		}
 		tag.put("HardcoreDeaths", uuidList);
 	}
 	
 	@Override
-	public void readFromNbt(NbtCompound tag) {
+	public void readFromNbt(CompoundTag tag) {
 		playersThatDiedInHardcore.clear();
-		NbtList uuidList = tag.getList("HardcoreDeaths", NbtElement.INT_ARRAY_TYPE);
-		for (NbtElement listEntry : uuidList) {
-			playersThatDiedInHardcore.add(NbtHelper.toUuid(listEntry));
+		ListTag uuidList = tag.getList("HardcoreDeaths", Tag.TAG_INT_ARRAY);
+		for (Tag listEntry : uuidList) {
+			playersThatDiedInHardcore.add(NbtUtils.loadUUID(listEntry));
 		}
 	}
 	
-	public static boolean isInHardcore(PlayerEntity player) {
-		return player.hasStatusEffect(SpectrumStatusEffects.DIVINITY);
+	public static boolean isInHardcore(Player player) {
+		return player.hasEffect(SpectrumStatusEffects.DIVINITY);
 	}
 	
 	public static void addHardcoreDeath(GameProfile profile) {
@@ -55,7 +62,7 @@ public class HardcoreDeathComponent implements Component {
 		if (!playersThatDiedInHardcore.contains(uuid)) {
 			playersThatDiedInHardcore.add(uuid);
 		}
-		SpectrumCommon.minecraftServer.getPlayerManager().getPlayer(uuid).changeGameMode(GameMode.SPECTATOR);
+		SpectrumCommon.minecraftServer.getPlayerList().getPlayer(uuid).setGameMode(GameType.SPECTATOR);
 	}
 	
 	protected static boolean hasHardcoreDeath(UUID uuid) {

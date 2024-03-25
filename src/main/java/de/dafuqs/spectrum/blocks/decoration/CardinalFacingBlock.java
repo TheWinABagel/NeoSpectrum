@@ -1,29 +1,30 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.util.math.*;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 public class CardinalFacingBlock extends Block {
 	
-	public static final BooleanProperty CARDINAL_FACING = BooleanProperty.of("cardinal_facing");
+	public static final BooleanProperty CARDINAL_FACING = BooleanProperty.create("cardinal_facing");
 	
-	public CardinalFacingBlock(Settings settings) {
+	public CardinalFacingBlock(Properties settings) {
 		super(settings);
-		this.setDefaultState(this.stateManager.getDefaultState().with(CARDINAL_FACING, false));
+		this.registerDefaultState(this.stateDefinition.any().setValue(CARDINAL_FACING, false));
 	}
 	
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		Direction facing = ctx.getHorizontalPlayerFacing();
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		Direction facing = ctx.getHorizontalDirection();
 		boolean facingVertical = facing.equals(Direction.EAST) || facing.equals(Direction.WEST);
-		return this.getDefaultState().with(CARDINAL_FACING, facingVertical);
+		return this.defaultBlockState().setValue(CARDINAL_FACING, facingVertical);
 	}
 	
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(CARDINAL_FACING);
 	}
 	

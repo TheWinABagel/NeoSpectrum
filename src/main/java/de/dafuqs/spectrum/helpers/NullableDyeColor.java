@@ -1,14 +1,19 @@
 package de.dafuqs.spectrum.helpers;
 
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
 
-public enum NullableDyeColor implements StringIdentifiable {
+public enum NullableDyeColor implements StringRepresentable {
 	WHITE(0, "white", DyeColor.WHITE),
 	ORANGE(1, "orange", DyeColor.ORANGE),
 	MAGENTA(2, "magenta", DyeColor.MAGENTA),
@@ -71,7 +76,7 @@ public enum NullableDyeColor implements StringIdentifiable {
 	}
 	
 	@Override
-	public String asString() {
+	public String getSerializedName() {
 		return this.name;
 	}
 	
@@ -79,20 +84,20 @@ public enum NullableDyeColor implements StringIdentifiable {
 	public static final String COLOR_NBT_KEY = "color";
 	
 	public static void set(ItemStack stack, NullableDyeColor color) {
-		stack.getOrCreateNbt().putString(NullableDyeColor.COLOR_NBT_KEY, color.getName().toLowerCase(Locale.ROOT));
+		stack.getOrCreateTag().putString(NullableDyeColor.COLOR_NBT_KEY, color.getName().toLowerCase(Locale.ROOT));
 	}
 	
-	public static NullableDyeColor get(@Nullable NbtCompound nbt) {
-		if (nbt == null || !nbt.contains(COLOR_NBT_KEY, NbtElement.STRING_TYPE)) {
+	public static NullableDyeColor get(@Nullable CompoundTag nbt) {
+		if (nbt == null || !nbt.contains(COLOR_NBT_KEY, Tag.TAG_STRING)) {
 			return NullableDyeColor.NONE;
 		}
 		return NullableDyeColor.valueOf(nbt.getString(COLOR_NBT_KEY).toUpperCase(Locale.ROOT));
 	}
 	
-	public static void addTooltip(ItemStack stack, List<Text> tooltip) {
-		NullableDyeColor color = NullableDyeColor.get(stack.getNbt());
+	public static void addTooltip(ItemStack stack, List<Component> tooltip) {
+		NullableDyeColor color = NullableDyeColor.get(stack.getTag());
 		if (color != NullableDyeColor.NONE) {
-			tooltip.add(Text.translatable("spectrum.ink.color." + color.getName()));
+			tooltip.add(Component.translatable("spectrum.ink.color." + color.getName()));
 		}
 	}
 	

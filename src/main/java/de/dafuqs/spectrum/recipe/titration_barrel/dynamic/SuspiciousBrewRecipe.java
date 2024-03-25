@@ -1,23 +1,29 @@
 package de.dafuqs.spectrum.recipe.titration_barrel.dynamic;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.recipe.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.recipe.FluidIngredient;
+import de.dafuqs.spectrum.helpers.Support;
 import de.dafuqs.spectrum.helpers.TimeHelper;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.items.food.beverages.properties.*;
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.recipe.titration_barrel.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.fluid.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.items.food.beverages.properties.StatusEffectBeverageProperties;
+import de.dafuqs.spectrum.recipe.EmptyRecipeSerializer;
+import de.dafuqs.spectrum.recipe.titration_barrel.FermentationData;
+import de.dafuqs.spectrum.recipe.titration_barrel.TitrationBarrelRecipe;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.Container;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.FlowerBlock;
+import net.minecraft.world.level.material.Fluids;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
@@ -29,31 +35,31 @@ public class SuspiciousBrewRecipe extends TitrationBarrelRecipe {
 	public static final Item TAPPING_ITEM = Items.GLASS_BOTTLE;
 	public static final int MIN_FERMENTATION_TIME_HOURS = 4;
 	public static final ItemStack OUTPUT_STACK = getDefaultStackWithCount(SpectrumItems.SUSPICIOUS_BREW, 4);
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/food/suspicious_brew");
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/food/suspicious_brew");
 	public static final List<IngredientStack> INGREDIENT_STACKS = new ArrayList<>() {{
-		add(IngredientStack.of(Ingredient.fromTag(ItemTags.SMALL_FLOWERS)));
-		add(IngredientStack.of(Ingredient.fromTag(ItemTags.SMALL_FLOWERS)));
-		add(IngredientStack.of(Ingredient.fromTag(ItemTags.SMALL_FLOWERS)));
-		add(IngredientStack.of(Ingredient.fromTag(ItemTags.SMALL_FLOWERS)));
+		add(IngredientStack.of(Ingredient.of(ItemTags.SMALL_FLOWERS)));
+		add(IngredientStack.of(Ingredient.of(ItemTags.SMALL_FLOWERS)));
+		add(IngredientStack.of(Ingredient.of(ItemTags.SMALL_FLOWERS)));
+		add(IngredientStack.of(Ingredient.of(ItemTags.SMALL_FLOWERS)));
 	}};
 	
-	public SuspiciousBrewRecipe(Identifier identifier) {
+	public SuspiciousBrewRecipe(ResourceLocation identifier) {
 		super(identifier, "", false, UNLOCK_IDENTIFIER, INGREDIENT_STACKS, FluidIngredient.of(Fluids.WATER), OUTPUT_STACK, TAPPING_ITEM, MIN_FERMENTATION_TIME_HOURS, new FermentationData(1.0F, 0.01F, List.of()));
 	}
 
 	@Override
 	public ItemStack getPreviewTap(int timeMultiplier) {
-		ItemStack flowerStack = Items.POPPY.getDefaultStack();
+		ItemStack flowerStack = Items.POPPY.getDefaultInstance();
 		flowerStack.setCount(4);
 		return tapWith(List.of(flowerStack), 1.0F, this.minFermentationTimeHours * 60L * 60L * timeMultiplier, 0.4F);
 	}
 	
 	@Override
-	public ItemStack tap(Inventory inventory, long secondsFermented, float downfall) {
+	public ItemStack tap(Container inventory, long secondsFermented, float downfall) {
 		List<ItemStack> stacks = new ArrayList<>();
 		int itemCount = 0;
-		for (int i = 0; i < inventory.size(); i++) {
-			ItemStack stack = inventory.getStack(i);
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			ItemStack stack = inventory.getItem(i);
 			if (!stack.isEmpty()) {
 				stacks.add(stack);
 				itemCount += stack.getCount();
@@ -71,14 +77,14 @@ public class SuspiciousBrewRecipe extends TitrationBarrelRecipe {
 		float ageIngameDays = TimeHelper.minecraftDaysFromSeconds(secondsFermented);
 		double alcPercent = getAlcPercent(this.fermentationData.fermentationSpeedMod(), thickness, downfall, ageIngameDays);
 		if (alcPercent >= 100) {
-			return SpectrumItems.PURE_ALCOHOL.getDefaultStack();
+			return SpectrumItems.PURE_ALCOHOL.getDefaultInstance();
 		} else {
 			// add up all stew effects with their durations from the input stacks
-			Map<StatusEffect, Integer> stewEffects = new HashMap<>();
+			Map<MobEffect, Integer> stewEffects = new HashMap<>();
 			for (ItemStack stack : stacks) {
-				Optional<Pair<StatusEffect, Integer>> stewEffect = getStewEffectFrom(stack);
+				Optional<Pair<MobEffect, Integer>> stewEffect = getStewEffectFrom(stack);
 				if (stewEffect.isPresent()) {
-					StatusEffect effect = stewEffect.get().getLeft();
+					MobEffect effect = stewEffect.get().getLeft();
 					int duration = (int) (stewEffect.get().getRight() * (1 + Support.logBase(stack.getCount(), 2)));
 					if (stewEffects.containsKey(effect)) {
 						stewEffects.put(effect, stewEffects.get(effect) + duration);
@@ -88,11 +94,11 @@ public class SuspiciousBrewRecipe extends TitrationBarrelRecipe {
 				}
 			}
 			
-			List<StatusEffectInstance> finalStatusEffects = new ArrayList<>();
+			List<MobEffectInstance> finalStatusEffects = new ArrayList<>();
 			double cappedAlcPercent = Math.min(alcPercent, 20D);
-			for (Map.Entry<StatusEffect, Integer> entry : stewEffects.entrySet()) {
+			for (Map.Entry<MobEffect, Integer> entry : stewEffects.entrySet()) {
 				int finalDurationTicks = (int) (entry.getValue() * Math.pow(2, 1 + cappedAlcPercent));
-				finalStatusEffects.add(new StatusEffectInstance(entry.getKey(), finalDurationTicks, 0));
+				finalStatusEffects.add(new MobEffectInstance(entry.getKey(), finalDurationTicks, 0));
 			}
 			
 			ItemStack outputStack = OUTPUT_STACK.copy();
@@ -102,18 +108,18 @@ public class SuspiciousBrewRecipe extends TitrationBarrelRecipe {
 	}
 	
 	// taken from SuspiciousStewItem
-	private Optional<Pair<StatusEffect, Integer>> getStewEffectFrom(ItemStack stack) {
+	private Optional<Pair<MobEffect, Integer>> getStewEffectFrom(ItemStack stack) {
 		if (stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof FlowerBlock flowerBlock) {
-			return Optional.of(Pair.of(flowerBlock.getEffectInStew(), flowerBlock.getEffectInStewDuration()));
+			return Optional.of(Pair.of(flowerBlock.getSuspiciousEffect(), flowerBlock.getEffectDuration()));
 		}
 		return Optional.empty();
 	}
 	
 	@Override
-	public boolean matches(Inventory inventory, World world) {
+	public boolean matches(Container inventory, Level world) {
 		boolean flowerFound = false;
-		for (int i = 0; i < inventory.size(); i++) {
-			ItemStack stack = inventory.getStack(i);
+		for (int i = 0; i < inventory.getContainerSize(); i++) {
+			ItemStack stack = inventory.getItem(i);
 			if (!stack.isEmpty()) {
 				if (stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() instanceof FlowerBlock) {
 					flowerFound = true;

@@ -1,18 +1,20 @@
 package de.dafuqs.spectrum.mixin.accessors;
 
-import com.google.gson.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.collection.*;
-import org.spongepowered.asm.mixin.*;
-import org.spongepowered.asm.mixin.gen.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import net.minecraft.core.NonNullList;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.ShapedRecipe;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.gen.Invoker;
 
-import java.util.*;
+import java.util.Map;
 
 @Mixin(ShapedRecipe.class)
 public interface ShapedRecipeAccessor {
 	
 	@Invoker(value = "createPatternMatrix")
-	static DefaultedList<Ingredient> invokeCreatePatternMatrix(String[] pattern, Map<String, Ingredient> key, int width, int height) {
+	static NonNullList<Ingredient> invokeCreatePatternMatrix(String[] pattern, Map<String, Ingredient> key, int width, int height) {
 		throw new AssertionError();
 	}
 	

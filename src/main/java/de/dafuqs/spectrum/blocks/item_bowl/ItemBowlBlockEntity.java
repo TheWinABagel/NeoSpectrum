@@ -1,29 +1,32 @@
 package de.dafuqs.spectrum.blocks.item_bowl;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.color.*;
-import de.dafuqs.spectrum.blocks.*;
-import de.dafuqs.spectrum.events.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.particle.effect.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.client.world.*;
-import net.minecraft.entity.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.color.ColorRegistry;
+import de.dafuqs.spectrum.blocks.InWorldInteractionBlockEntity;
+import de.dafuqs.spectrum.events.ExactPositionSource;
+import de.dafuqs.spectrum.helpers.Support;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.particle.effect.ColoredTransmission;
+import de.dafuqs.spectrum.particle.effect.ColoredTransmissionParticleEffect;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Optional;
 
 public class ItemBowlBlockEntity extends InWorldInteractionBlockEntity {
 	
@@ -34,43 +37,43 @@ public class ItemBowlBlockEntity extends InWorldInteractionBlockEntity {
 	}
 
 	@Override
-	public void readNbt(NbtCompound nbt) {
-		super.readNbt(nbt);
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
 		if (!this.deserializeLootTable(nbt)) {
-			Inventories.readNbt(nbt, this.items);
+			ContainerHelper.loadAllItems(nbt, this.items);
 		}
 	}
 
 	@Override
-	public void writeNbt(NbtCompound nbt) {
-		super.writeNbt(nbt);
+	public void saveAdditional(CompoundTag nbt) {
+		super.saveAdditional(nbt);
 		if (!this.serializeLootTable(nbt)) {
-			Inventories.writeNbt(nbt, this.items);
+			ContainerHelper.saveAllItems(nbt, this.items);
 		}
 	}
 
 	@Override
-	public NbtCompound toInitialChunkDataNbt() {
+	public CompoundTag getUpdateTag() {
 		this.checkLootInteraction(null);
-		return super.toInitialChunkDataNbt();
+		return super.getUpdateTag();
 	}
 	
-	public static void clientTick(@NotNull World world, BlockPos blockPos, BlockState blockState, ItemBowlBlockEntity itemBowlBlockEntity) {
-		ItemStack storedStack = itemBowlBlockEntity.getStack(0);
+	public static void clientTick(@NotNull Level world, BlockPos blockPos, BlockState blockState, ItemBowlBlockEntity itemBowlBlockEntity) {
+		ItemStack storedStack = itemBowlBlockEntity.getItem(0);
 		if (!storedStack.isEmpty()) {
 			Optional<DyeColor> optionalItemColor = ColorRegistry.ITEM_COLORS.getMapping(storedStack.getItem());
 			if (optionalItemColor.isPresent()) {
-				int particleCount = Support.getIntFromDecimalWithChance(Math.max(0.1, (float) storedStack.getCount() / (storedStack.getMaxCount() * 2)), world.random);
+				int particleCount = Support.getIntFromDecimalWithChance(Math.max(0.1, (float) storedStack.getCount() / (storedStack.getMaxStackSize() * 2)), world.random);
 				spawnRisingParticles(world, blockPos, storedStack, particleCount);
 			}
 		}
 	}
 	
-	public static void spawnRisingParticles(World world, BlockPos blockPos, ItemStack itemStack, int amount) {
+	public static void spawnRisingParticles(Level world, BlockPos blockPos, ItemStack itemStack, int amount) {
 		if (amount > 0) {
 			Optional<DyeColor> optionalItemColor = ColorRegistry.ITEM_COLORS.getMapping(itemStack.getItem());
 			if (optionalItemColor.isPresent()) {
-				ParticleEffect particleEffect = SpectrumParticleTypes.getSparkleRisingParticle(optionalItemColor.get());
+				ParticleOptions particleEffect = SpectrumParticleTypes.getSparkleRisingParticle(optionalItemColor.get());
 				
 				for (int i = 0; i < amount; i++) {
 					float randomX = 0.1F + world.random.nextFloat() * 0.8F;
@@ -81,8 +84,8 @@ public class ItemBowlBlockEntity extends InWorldInteractionBlockEntity {
 		}
 	}
 	
-	public int decrementBowlStack(Vec3d orbTargetPos, int amount, boolean doEffects) {
-		ItemStack storedStack = this.getStack(0);
+	public int decrementBowlStack(Vec3 orbTargetPos, int amount, boolean doEffects) {
+		ItemStack storedStack = this.getItem(0);
 		if (storedStack.isEmpty()) {
 			return 0;
 		}
@@ -91,17 +94,17 @@ public class ItemBowlBlockEntity extends InWorldInteractionBlockEntity {
 		ItemStack remainder = storedStack.getRecipeRemainder();
 		if (!remainder.isEmpty()) {
 			if (storedStack.getCount() == 1) {
-				setStack(0, remainder);
+				setItem(0, remainder);
 			} else {
-				getStack(0).decrement(decrementAmount);
+				getItem(0).shrink(decrementAmount);
 				remainder.setCount(decrementAmount);
 				
-				ItemEntity itemEntity = new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 1, pos.getZ() + 0.5, remainder);
-				itemEntity.addVelocity(0, 0.1, 0);
-				world.spawnEntity(itemEntity);
+				ItemEntity itemEntity = new ItemEntity(level, worldPosition.getX() + 0.5, worldPosition.getY() + 1, worldPosition.getZ() + 0.5, remainder);
+				itemEntity.push(0, 0.1, 0);
+				level.addFreshEntity(itemEntity);
 			}
 		} else {
-			getStack(0).decrement(decrementAmount);
+			getItem(0).shrink(decrementAmount);
 		}
 		
 		if (decrementAmount > 0) {
@@ -109,45 +112,45 @@ public class ItemBowlBlockEntity extends InWorldInteractionBlockEntity {
 				spawnOrbParticles(orbTargetPos);
 			}
 			updateInClientWorld();
-			markDirty();
+			setChanged();
 		}
 		
 		return decrementAmount;
 	}
 	
-	public void spawnOrbParticles(Vec3d orbTargetPos) {
-		ItemStack storedStack = this.getStack(0);
+	public void spawnOrbParticles(Vec3 orbTargetPos) {
+		ItemStack storedStack = this.getItem(0);
 		if (!storedStack.isEmpty()) {
 			Optional<DyeColor> optionalItemColor = ColorRegistry.ITEM_COLORS.getMapping(storedStack.getItem(), DyeColor.PURPLE);
 			if (optionalItemColor.isPresent()) {
-				ParticleEffect sparkleRisingParticleEffect = SpectrumParticleTypes.getSparkleRisingParticle(optionalItemColor.get());
+				ParticleOptions sparkleRisingParticleEffect = SpectrumParticleTypes.getSparkleRisingParticle(optionalItemColor.get());
 				
-				if (this.getWorld() instanceof ServerWorld serverWorld) {
-					SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerWorld) world,
-							new Vec3d(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5),
+				if (this.getLevel() instanceof ServerLevel serverWorld) {
+					SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerLevel) level,
+							new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 0.5, worldPosition.getZ() + 0.5),
 							sparkleRisingParticleEffect, 50,
-							new Vec3d(0.4, 0.2, 0.4), new Vec3d(0.06, 0.16, 0.06));
+							new Vec3(0.4, 0.2, 0.4), new Vec3(0.06, 0.16, 0.06));
 					
-					SpectrumS2CPacketSender.playColorTransmissionParticle(serverWorld, new ColoredTransmission(new Vec3d(this.pos.getX() + 0.5D, this.pos.getY() + 1.0D, this.pos.getZ() + 0.5D), new ExactPositionSource(orbTargetPos), 20, optionalItemColor.get()));
-				} else if (this.getWorld() instanceof ClientWorld clientWorld) {
+					SpectrumS2CPacketSender.playColorTransmissionParticle(serverWorld, new ColoredTransmission(new Vec3(this.worldPosition.getX() + 0.5D, this.worldPosition.getY() + 1.0D, this.worldPosition.getZ() + 0.5D), new ExactPositionSource(orbTargetPos), 20, optionalItemColor.get()));
+				} else if (this.getLevel() instanceof ClientLevel clientWorld) {
 					for (int i = 0; i < 50; i++) {
-						float randomOffsetX = pos.getX() + 0.3F + world.random.nextFloat() * 0.6F;
-						float randomOffsetY = pos.getY() + 0.3F + world.random.nextFloat() * 0.6F;
-						float randomOffsetZ = pos.getZ() + 0.3F + world.random.nextFloat() * 0.6F;
-						float randomVelocityX = 0.03F - world.random.nextFloat() * 0.06F;
-						float randomVelocityY = world.random.nextFloat() * 0.16F;
-						float randomVelocityZ = 0.03F - world.random.nextFloat() * 0.06F;
+						float randomOffsetX = worldPosition.getX() + 0.3F + level.random.nextFloat() * 0.6F;
+						float randomOffsetY = worldPosition.getY() + 0.3F + level.random.nextFloat() * 0.6F;
+						float randomOffsetZ = worldPosition.getZ() + 0.3F + level.random.nextFloat() * 0.6F;
+						float randomVelocityX = 0.03F - level.random.nextFloat() * 0.06F;
+						float randomVelocityY = level.random.nextFloat() * 0.16F;
+						float randomVelocityZ = 0.03F - level.random.nextFloat() * 0.06F;
 						
 						clientWorld.addParticle(sparkleRisingParticleEffect,
 								randomOffsetX, randomOffsetY, randomOffsetZ,
 								randomVelocityX, randomVelocityY, randomVelocityZ);
 					}
 					
-					ParticleEffect sphereParticleEffect = new ColoredTransmissionParticleEffect(new ExactPositionSource(orbTargetPos), 20, optionalItemColor.get());
-					clientWorld.addParticle(sphereParticleEffect, this.pos.getX() + 0.5D, this.pos.getY() + 1.0D, this.pos.getZ() + 0.5D, (orbTargetPos.getX() - this.pos.getX()) * 0.045, 0, (orbTargetPos.getZ() - this.pos.getZ()) * 0.045);
+					ParticleOptions sphereParticleEffect = new ColoredTransmissionParticleEffect(new ExactPositionSource(orbTargetPos), 20, optionalItemColor.get());
+					clientWorld.addParticle(sphereParticleEffect, this.worldPosition.getX() + 0.5D, this.worldPosition.getY() + 1.0D, this.worldPosition.getZ() + 0.5D, (orbTargetPos.x() - this.worldPosition.getX()) * 0.045, 0, (orbTargetPos.z() - this.worldPosition.getZ()) * 0.045);
 				}
 				
-				world.playSound(null, this.pos, SpectrumSoundEvents.ENCHANTER_DING, SoundCategory.BLOCKS, SpectrumCommon.CONFIG.BlockSoundVolume, 0.7F + world.random.nextFloat() * 0.6F);
+				level.playSound(null, this.worldPosition, SpectrumSoundEvents.ENCHANTER_DING, SoundSource.BLOCKS, SpectrumCommon.CONFIG.BlockSoundVolume, 0.7F + level.random.nextFloat() * 0.6F);
 			}
 		}
 	}

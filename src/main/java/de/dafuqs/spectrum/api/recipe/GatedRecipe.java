@@ -1,27 +1,29 @@
 package de.dafuqs.spectrum.api.recipe;
 
-import de.dafuqs.spectrum.progression.*;
-import net.fabricmc.api.*;
-import net.fabricmc.loader.api.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.recipe.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.progression.UnlockToastManager;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeType;
 
-public interface GatedRecipe extends Recipe<Inventory> {
+public interface GatedRecipe extends Recipe<Container> {
 	
-	boolean canPlayerCraft(PlayerEntity playerEntity);
+	boolean canPlayerCraft(Player playerEntity);
 	
 	boolean isSecret();
 	
-	Identifier getRequiredAdvancementIdentifier();
+	ResourceLocation getRequiredAdvancementIdentifier();
 	
-	Identifier getRecipeTypeUnlockIdentifier();
+	ResourceLocation getRecipeTypeUnlockIdentifier();
 	
-	Text getSingleUnlockToastString();
+	Component getSingleUnlockToastString();
 	
-	Text getMultipleUnlockToastString();
+	Component getMultipleUnlockToastString();
 	
 	default void registerInToastManager(RecipeType<?> recipeType, GatedRecipe gatedRecipe) {
 		if (FabricLoader.getInstance().getEnvironmentType() != EnvType.SERVER) {

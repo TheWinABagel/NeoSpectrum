@@ -1,12 +1,14 @@
 package de.dafuqs.spectrum.api.energy.storage;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CreativeInkStorage implements InkStorage {
 	
@@ -24,7 +26,7 @@ public class CreativeInkStorage implements InkStorage {
 		super();
 	}
 	
-	public static CreativeInkStorage fromNbt(@NotNull NbtCompound compound) {
+	public static CreativeInkStorage fromNbt(@NotNull CompoundTag compound) {
 		return new CreativeInkStorage();
 	}
 	
@@ -96,9 +98,9 @@ public class CreativeInkStorage implements InkStorage {
 	}
 	
 	@Override
-	public void addTooltip(List<Text> tooltip, boolean includeHeader) {
+	public void addTooltip(List<Component> tooltip, boolean includeHeader) {
 		if (includeHeader) {
-			tooltip.add(Text.translatable("item.spectrum.creative_ink_assortment.tooltip"));
+			tooltip.add(Component.translatable("item.spectrum.creative_ink_assortment.tooltip"));
 		}
 	}
 	

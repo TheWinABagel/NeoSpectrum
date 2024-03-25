@@ -1,25 +1,27 @@
 package de.dafuqs.spectrum.recipe.pedestal;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.blocks.pedestal.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import oshi.util.tuples.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.item.GemstoneColor;
+import de.dafuqs.spectrum.blocks.pedestal.PedestalBlockEntity;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import oshi.util.tuples.Triplet;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
 public class ShapedPedestalRecipe extends PedestalRecipe {
 	
 	protected final int width;
 	protected final int height;
 	
-	public ShapedPedestalRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier,
+	public ShapedPedestalRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier,
 								PedestalRecipeTier tier, int width, int height, List<IngredientStack> inputs, Map<GemstoneColor, Integer> gemstonePowderInputs, ItemStack output,
 								float experience, int craftingTime, boolean skipRecipeRemainders, boolean noBenefitsFromYieldUpgrades) {
 		super(id, group, secret, requiredAdvancementIdentifier, tier, inputs, gemstonePowderInputs, output, experience, craftingTime, skipRecipeRemainders, noBenefitsFromYieldUpgrades);
@@ -29,12 +31,12 @@ public class ShapedPedestalRecipe extends PedestalRecipe {
 	}
 	
 	@Override
-	public boolean matches(Inventory inv, World world) {
+	public boolean matches(Container inv, Level world) {
 		return getRecipeOrientation(inv) != null && super.matches(inv, world);
 	}
 	
 	// Triplet<XOffset, YOffset, Flipped>
-	public Triplet<Integer, Integer, Boolean> getRecipeOrientation(Inventory inv) {
+	public Triplet<Integer, Integer, Boolean> getRecipeOrientation(Container inv) {
 		for (int i = 0; i <= 3 - this.width; ++i) {
 			for (int j = 0; j <= 3 - this.height; ++j) {
 				if (this.matchesPattern(inv, i, j, true)) {
@@ -48,7 +50,7 @@ public class ShapedPedestalRecipe extends PedestalRecipe {
 		return null;
 	}
 	
-	public boolean matchesPattern(Inventory inv, int offsetX, int offsetY, boolean flipped) {
+	public boolean matchesPattern(Container inv, int offsetX, int offsetY, boolean flipped) {
 		for (int i = 0; i < 3; ++i) {
 			for (int j = 0; j < 3; ++j) {
 				int k = i - offsetX;
@@ -62,7 +64,7 @@ public class ShapedPedestalRecipe extends PedestalRecipe {
 					}
 				}
 				
-				if (!ingredient.test(inv.getStack(i + j * 3))) {
+				if (!ingredient.test(inv.getItem(i + j * 3))) {
 					return false;
 				}
 			}
@@ -86,7 +88,7 @@ public class ShapedPedestalRecipe extends PedestalRecipe {
 				int slot = (x + orientation.getA()) + 3 * (y + orientation.getB());
 				
 				IngredientStack ingredientStackAtPos = this.inputs.get(ingredientStackId);
-				ItemStack slotStack = pedestal.getStack(slot);
+				ItemStack slotStack = pedestal.getItem(slot);
 				if (!ingredientStackAtPos.test(slotStack)) {
 					SpectrumCommon.logError("Looks like DaFuqs fucked up Spectrums Pedestal recipe matching. Go open up a report with the recipe that was crafted and an image of the pedestals contents, please! :)");
 				}

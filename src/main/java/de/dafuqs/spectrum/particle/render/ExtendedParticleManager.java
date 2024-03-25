@@ -1,10 +1,12 @@
 package de.dafuqs.spectrum.particle.render;
 
-import net.fabricmc.api.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Camera;
+import net.minecraft.client.renderer.MultiBufferSource;
 
 @Environment(EnvType.CLIENT)
 public interface ExtendedParticleManager {
-    void render(MatrixStack matrices, VertexConsumerProvider vertexConsumers, Camera camera, float tickDelta);
+    void render(PoseStack matrices, MultiBufferSource vertexConsumers, Camera camera, float tickDelta);
 }

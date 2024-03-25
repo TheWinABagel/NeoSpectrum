@@ -1,32 +1,40 @@
 package de.dafuqs.spectrum.enchantments;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.compat.gofish.*;
-import de.dafuqs.spectrum.items.tools.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.compat.gofish.GoFishCompat;
+import de.dafuqs.spectrum.items.tools.MoltenRodItem;
+import de.dafuqs.spectrum.items.tools.SpectrumFishingRodItem;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.StackedContents;
+import net.minecraft.world.inventory.StackedContentsCompatible;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class FoundryEnchantment extends SpectrumEnchantment {
 	
 	private static final AutoSmeltInventory autoSmeltInventory = new AutoSmeltInventory();
 	
-	public FoundryEnchantment(Rarity weight, Identifier unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
-		super(weight, EnchantmentTarget.DIGGER, slotTypes, unlockAdvancementIdentifier);
+	public FoundryEnchantment(Rarity weight, ResourceLocation unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
+		super(weight, EnchantmentCategory.DIGGER, slotTypes, unlockAdvancementIdentifier);
 	}
 	
-	public static ItemStack getAutoSmeltedItemStack(ItemStack inputItemStack, World world) {
+	public static ItemStack getAutoSmeltedItemStack(ItemStack inputItemStack, Level world) {
 		SmeltingRecipe smeltingRecipe = autoSmeltInventory.getRecipe(inputItemStack, world);
 		if (smeltingRecipe != null) {
-			ItemStack recipeOutputStack = smeltingRecipe.getOutput(world.getRegistryManager()).copy();
+			ItemStack recipeOutputStack = smeltingRecipe.getResultItem(world.registryAccess()).copy();
 			recipeOutputStack.setCount(recipeOutputStack.getCount() * inputItemStack.getCount());
 			return recipeOutputStack;
 		} else {
@@ -35,7 +43,7 @@ public class FoundryEnchantment extends SpectrumEnchantment {
 	}
 	
 	@NotNull
-	public static List<ItemStack> applyFoundry(World world, List<ItemStack> originalStacks) {
+	public static List<ItemStack> applyFoundry(Level world, List<ItemStack> originalStacks) {
 		List<ItemStack> returnItemStacks = new ArrayList<>();
 		
 		for (ItemStack is : originalStacks) {
@@ -44,7 +52,7 @@ public class FoundryEnchantment extends SpectrumEnchantment {
 				returnItemStacks.add(is);
 			} else {
 				while (smeltedStack.getCount() > 0) {
-					int currentAmount = Math.min(smeltedStack.getCount(), smeltedStack.getItem().getMaxCount());
+					int currentAmount = Math.min(smeltedStack.getCount(), smeltedStack.getItem().getMaxStackSize());
 					ItemStack currentStack = smeltedStack.copy();
 					currentStack.setCount(currentAmount);
 					returnItemStacks.add(currentStack);
@@ -56,13 +64,13 @@ public class FoundryEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public int getMinPower(int level) {
+	public int getMinCost(int level) {
 		return 15;
 	}
 	
 	@Override
-	public int getMaxPower(int level) {
-		return super.getMinPower(level) + 50;
+	public int getMaxCost(int level) {
+		return super.getMinCost(level) + 50;
 	}
 	
 	@Override
@@ -71,25 +79,25 @@ public class FoundryEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public boolean canAccept(Enchantment other) {
-		return super.canAccept(other) && other != Enchantments.SILK_TOUCH && !GoFishCompat.isDeepfry(other);
+	public boolean checkCompatibility(Enchantment other) {
+		return super.checkCompatibility(other) && other != Enchantments.SILK_TOUCH && !GoFishCompat.isDeepfry(other);
 	}
 	
 	@Override
 	public boolean canEntityUse(Entity entity) {
-		return super.canEntityUse(entity) || (entity instanceof PlayerEntity playerEntity && AdvancementHelper.hasAdvancement(playerEntity, MoltenRodItem.UNLOCK_IDENTIFIER));
+		return super.canEntityUse(entity) || (entity instanceof Player playerEntity && AdvancementHelper.hasAdvancement(playerEntity, MoltenRodItem.UNLOCK_IDENTIFIER));
 	}
 	
 	@Override
-	public boolean isAcceptableItem(ItemStack stack) {
-		return super.isAcceptableItem(stack) || stack.getItem() instanceof SpectrumFishingRodItem;
+	public boolean canEnchant(ItemStack stack) {
+		return super.canEnchant(stack) || stack.getItem() instanceof SpectrumFishingRodItem;
 	}
 	
-	public static class AutoSmeltInventory implements Inventory, RecipeInputProvider {
+	public static class AutoSmeltInventory implements Container, StackedContentsCompatible {
 		ItemStack input = ItemStack.EMPTY;
 		
 		@Override
-		public int size() {
+		public int getContainerSize() {
 			return 1;
 		}
 		
@@ -99,47 +107,47 @@ public class FoundryEnchantment extends SpectrumEnchantment {
 		}
 		
 		@Override
-		public ItemStack getStack(int slot) {
+		public ItemStack getItem(int slot) {
 			return input;
 		}
 		
 		@Override
-		public ItemStack removeStack(int slot, int amount) {
+		public ItemStack removeItem(int slot, int amount) {
 			return null;
 		}
 		
 		@Override
-		public ItemStack removeStack(int slot) {
+		public ItemStack removeItemNoUpdate(int slot) {
 			return null;
 		}
 		
 		@Override
-		public void setStack(int slot, ItemStack stack) {
+		public void setItem(int slot, ItemStack stack) {
 			this.input = stack;
 		}
 		
 		@Override
-		public void markDirty() {
+		public void setChanged() {
 		}
 		
 		@Override
-		public boolean canPlayerUse(PlayerEntity player) {
+		public boolean stillValid(Player player) {
 			return false;
 		}
 		
 		@Override
-		public void clear() {
+		public void clearContent() {
 			input = ItemStack.EMPTY;
 		}
 		
-		private SmeltingRecipe getRecipe(ItemStack itemStack, World world) {
-			setStack(0, itemStack);
-			return world.getRecipeManager().getFirstMatch(RecipeType.SMELTING, this, world).orElse(null);
+		private SmeltingRecipe getRecipe(ItemStack itemStack, Level world) {
+			setItem(0, itemStack);
+			return world.getRecipeManager().getRecipeFor(RecipeType.SMELTING, this, world).orElse(null);
 		}
 		
 		@Override
-		public void provideRecipeInputs(RecipeMatcher recipeMatcher) {
-			recipeMatcher.addInput(input);
+		public void fillStackedContents(StackedContents recipeMatcher) {
+			recipeMatcher.accountStack(input);
 		}
 		
 	}

@@ -1,26 +1,28 @@
 package de.dafuqs.spectrum.recipe.spirit_instiller.spawner;
 
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.registries.*;
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.matchbooks.recipe.matchbook.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.recipe.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.matchbooks.recipe.matchbook.Matchbook;
+import de.dafuqs.spectrum.recipe.EmptyRecipeSerializer;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 
 public class SpawnerRequiredPlayerRangeChangeRecipe extends SpawnerChangeRecipe {
 	
 	public static final RecipeSerializer<SpawnerRequiredPlayerRangeChangeRecipe> SERIALIZER = new EmptyRecipeSerializer<>(SpawnerRequiredPlayerRangeChangeRecipe::new);
 	protected static final int DEFAULT_DETECTION_RANGE = 16;
 	protected static final int MAX_DETECTION_RANGE = 64;
-	public SpawnerRequiredPlayerRangeChangeRecipe(Identifier identifier) {
-		super(identifier, IngredientStack.of(Ingredient.ofItems(SpectrumItems.STRATINE_GEM), Matchbook.empty(), null, 4));
+	public SpawnerRequiredPlayerRangeChangeRecipe(ResourceLocation identifier) {
+		super(identifier, IngredientStack.of(Ingredient.of(SpectrumItems.STRATINE_GEM), Matchbook.empty(), null, 4));
 	}
 	
 	@Override
-	public boolean canCraftWithBlockEntityTag(NbtCompound spawnerBlockEntityNbt, ItemStack leftBowlStack, ItemStack rightBowlStack) {
+	public boolean canCraftWithBlockEntityTag(CompoundTag spawnerBlockEntityNbt, ItemStack leftBowlStack, ItemStack rightBowlStack) {
 		if (spawnerBlockEntityNbt.contains("RequiredPlayerRange")) {
 			return spawnerBlockEntityNbt.getShort("RequiredPlayerRange") < MAX_DETECTION_RANGE;
 		}
@@ -33,12 +35,12 @@ public class SpawnerRequiredPlayerRangeChangeRecipe extends SpawnerChangeRecipe 
 	}
 	
 	@Override
-	public Text getOutputLoreText() {
-		return Text.translatable("recipe.spectrum.spawner.lore.increased_required_player_range");
+	public Component getOutputLoreText() {
+		return Component.translatable("recipe.spectrum.spawner.lore.increased_required_player_range");
 	}
 	
 	@Override
-	public NbtCompound getSpawnerResultNbt(NbtCompound spawnerBlockEntityNbt, ItemStack firstBowlStack, ItemStack secondBowlStack) {
+	public CompoundTag getSpawnerResultNbt(CompoundTag spawnerBlockEntityNbt, ItemStack firstBowlStack, ItemStack secondBowlStack) {
 		// Default spawner tag:
 		/* BlockEntityTag: {
 			MaxNearbyEntities: 6s,
@@ -53,7 +55,7 @@ public class SpawnerRequiredPlayerRangeChangeRecipe extends SpawnerChangeRecipe 
 		 */
 		
 		short requiredPlayerRange = DEFAULT_DETECTION_RANGE;
-		if (spawnerBlockEntityNbt.contains("RequiredPlayerRange", NbtElement.SHORT_TYPE)) {
+		if (spawnerBlockEntityNbt.contains("RequiredPlayerRange", Tag.TAG_SHORT)) {
 			requiredPlayerRange = spawnerBlockEntityNbt.getShort("RequiredPlayerRange");
 		}
 		

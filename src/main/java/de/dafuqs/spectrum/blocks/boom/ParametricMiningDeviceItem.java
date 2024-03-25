@@ -1,47 +1,49 @@
 package de.dafuqs.spectrum.blocks.boom;
 
-import de.dafuqs.spectrum.entity.entity.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.entity.entity.ParametricMiningDeviceEntity;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class ParametricMiningDeviceItem extends ModularExplosionBlockItem {
 	
-	public ParametricMiningDeviceItem(Block block, Settings settings) {
+	public ParametricMiningDeviceItem(Block block, Properties settings) {
 		super(block, 5, 0, 3, settings);
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		tooltip.add(Text.translatable("block.spectrum.parametric_mining_device.tooltip").formatted(Formatting.GRAY));
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		tooltip.add(Component.translatable("block.spectrum.parametric_mining_device.tooltip").withStyle(ChatFormatting.GRAY));
+		super.appendHoverText(stack, world, tooltip, context);
 	}
 	
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		var stack = user.getStackInHand(hand);
-		if (stack.isOf(this)) {
-			world.playSound(null, user.getX(), user.getY(), user.getZ(), SpectrumSoundEvents.BLOCK_PARAMETRIC_MINING_DEVICE_THROWN, SoundCategory.NEUTRAL, 0.5F, 0.4F / (world.getRandom().nextFloat() * 0.4F + 0.8F));
-			if (!world.isClient()) {
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		var stack = user.getItemInHand(hand);
+		if (stack.is(this)) {
+			world.playSound(null, user.getX(), user.getY(), user.getZ(), SpectrumSoundEvents.BLOCK_PARAMETRIC_MINING_DEVICE_THROWN, SoundSource.NEUTRAL, 0.5F, 0.4F / (world.getRandom().nextFloat() * 0.4F + 0.8F));
+			if (!world.isClientSide()) {
 				ParametricMiningDeviceEntity entity = new ParametricMiningDeviceEntity(world, user);
 				entity.setItem(stack);
-				entity.setVelocity(user, user.getPitch(), user.getYaw(), 0, 1.5F, 0F);
-				world.spawnEntity(entity);
+				entity.shootFromRotation(user, user.getXRot(), user.getYRot(), 0, 1.5F, 0F);
+				world.addFreshEntity(entity);
 			}
-			if (!user.getAbilities().creativeMode) {
-				stack.decrement(1);
+			if (!user.getAbilities().instabuild) {
+				stack.shrink(1);
 			}
 		}
-		return TypedActionResult.success(stack);
+		return InteractionResultHolder.success(stack);
 	}
 	
 }

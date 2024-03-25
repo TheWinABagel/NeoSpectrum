@@ -1,11 +1,14 @@
 package de.dafuqs.spectrum.recipe.potion_workshop;
 
-import com.google.gson.*;
-import net.minecraft.network.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.random.Random;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.Tuple;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PotionMod {
 	
@@ -40,87 +43,87 @@ public class PotionMod {
 	public boolean negateDecreasingDuration = false;
 	public boolean randomColor = false;
 	
-	public List<Pair<PotionRecipeEffect, Float>> additionalEffects = new ArrayList<>();
+	public List<Tuple<PotionRecipeEffect, Float>> additionalEffects = new ArrayList<>();
 	
 	
 	public static PotionMod fromJson(JsonObject jsonObject) {
 		PotionMod mod = new PotionMod();
 		
-		if (JsonHelper.hasNumber(jsonObject, "flat_duration_bonus_ticks")) {
-			mod.flatDurationBonusTicks += JsonHelper.getInt(jsonObject, "flat_duration_bonus_ticks");
+		if (GsonHelper.isNumberValue(jsonObject, "flat_duration_bonus_ticks")) {
+			mod.flatDurationBonusTicks += GsonHelper.getAsInt(jsonObject, "flat_duration_bonus_ticks");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "flat_potency_bonus")) {
-			mod.flatPotencyBonus += JsonHelper.getFloat(jsonObject, "flat_potency_bonus");
+		if (GsonHelper.isNumberValue(jsonObject, "flat_potency_bonus")) {
+			mod.flatPotencyBonus += GsonHelper.getAsFloat(jsonObject, "flat_potency_bonus");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "duration_multiplier")) {
-			mod.durationMultiplier = JsonHelper.getFloat(jsonObject, "duration_multiplier");
+		if (GsonHelper.isNumberValue(jsonObject, "duration_multiplier")) {
+			mod.durationMultiplier = GsonHelper.getAsFloat(jsonObject, "duration_multiplier");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "potency_multiplier")) {
-			mod.potencyMultiplier = JsonHelper.getFloat(jsonObject, "potency_multiplier");
+		if (GsonHelper.isNumberValue(jsonObject, "potency_multiplier")) {
+			mod.potencyMultiplier = GsonHelper.getAsFloat(jsonObject, "potency_multiplier");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "flat_potency_bonus_positive_effects")) {
-			mod.flatPotencyBonusPositiveEffects += JsonHelper.getFloat(jsonObject, "flat_potency_bonus_positive_effects");
+		if (GsonHelper.isNumberValue(jsonObject, "flat_potency_bonus_positive_effects")) {
+			mod.flatPotencyBonusPositiveEffects += GsonHelper.getAsFloat(jsonObject, "flat_potency_bonus_positive_effects");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "flat_potency_bonus_negative_effects")) {
-			mod.flatPotencyBonusNegativeEffects += JsonHelper.getFloat(jsonObject, "flat_potency_bonus_negative_effects");
+		if (GsonHelper.isNumberValue(jsonObject, "flat_potency_bonus_negative_effects")) {
+			mod.flatPotencyBonusNegativeEffects += GsonHelper.getAsFloat(jsonObject, "flat_potency_bonus_negative_effects");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "flat_duration_bonus_positive_effects")) {
-			mod.flatDurationBonusPositiveEffects += JsonHelper.getInt(jsonObject, "flat_duration_bonus_positive_effects");
+		if (GsonHelper.isNumberValue(jsonObject, "flat_duration_bonus_positive_effects")) {
+			mod.flatDurationBonusPositiveEffects += GsonHelper.getAsInt(jsonObject, "flat_duration_bonus_positive_effects");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "flat_duration_bonus_negative_effects")) {
-			mod.flatDurationBonusNegativeEffects += JsonHelper.getInt(jsonObject, "flat_duration_bonus_negative_effects");
+		if (GsonHelper.isNumberValue(jsonObject, "flat_duration_bonus_negative_effects")) {
+			mod.flatDurationBonusNegativeEffects += GsonHelper.getAsInt(jsonObject, "flat_duration_bonus_negative_effects");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "additional_random_positive_effect_count")) {
-			mod.additionalRandomPositiveEffectCount += JsonHelper.getFloat(jsonObject, "additional_random_positive_effect_count");
+		if (GsonHelper.isNumberValue(jsonObject, "additional_random_positive_effect_count")) {
+			mod.additionalRandomPositiveEffectCount += GsonHelper.getAsFloat(jsonObject, "additional_random_positive_effect_count");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "additional_random_negative_effect_count")) {
-			mod.additionalRandomNegativeEffectCount += JsonHelper.getFloat(jsonObject, "additional_random_negative_effect_count");
+		if (GsonHelper.isNumberValue(jsonObject, "additional_random_negative_effect_count")) {
+			mod.additionalRandomNegativeEffectCount += GsonHelper.getAsFloat(jsonObject, "additional_random_negative_effect_count");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "chance_to_add_last_effect")) {
-			mod.chanceToAddLastEffect += JsonHelper.getFloat(jsonObject, "chance_to_add_last_effect");
+		if (GsonHelper.isNumberValue(jsonObject, "chance_to_add_last_effect")) {
+			mod.chanceToAddLastEffect += GsonHelper.getAsFloat(jsonObject, "chance_to_add_last_effect");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "last_effect_potency_modifier")) {
-			mod.lastEffectPotencyMultiplier = JsonHelper.getFloat(jsonObject, "last_effect_potency_modifier");
+		if (GsonHelper.isNumberValue(jsonObject, "last_effect_potency_modifier")) {
+			mod.lastEffectPotencyMultiplier = GsonHelper.getAsFloat(jsonObject, "last_effect_potency_modifier");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "last_effect_duration_modifier")) {
-			mod.lastEffectDurationMultiplier = JsonHelper.getFloat(jsonObject, "last_effect_duration_modifier");
+		if (GsonHelper.isNumberValue(jsonObject, "last_effect_duration_modifier")) {
+			mod.lastEffectDurationMultiplier = GsonHelper.getAsFloat(jsonObject, "last_effect_duration_modifier");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "flat_yield_bonus")) {
-			mod.yield += JsonHelper.getFloat(jsonObject, "flat_yield_bonus");
+		if (GsonHelper.isNumberValue(jsonObject, "flat_yield_bonus")) {
+			mod.yield += GsonHelper.getAsFloat(jsonObject, "flat_yield_bonus");
 		}
-		if (JsonHelper.hasBoolean(jsonObject, "make_splashing")) {
-			mod.makeSplashing = JsonHelper.getBoolean(jsonObject, "make_splashing");
+		if (GsonHelper.isBooleanValue(jsonObject, "make_splashing")) {
+			mod.makeSplashing = GsonHelper.getAsBoolean(jsonObject, "make_splashing");
 		}
-		if (JsonHelper.hasBoolean(jsonObject, "make_lingering")) {
-			mod.makeLingering = JsonHelper.getBoolean(jsonObject, "make_lingering");
+		if (GsonHelper.isBooleanValue(jsonObject, "make_lingering")) {
+			mod.makeLingering = GsonHelper.getAsBoolean(jsonObject, "make_lingering");
 		}
-		if (JsonHelper.hasBoolean(jsonObject, "no_particles")) {
-			mod.noParticles = JsonHelper.getBoolean(jsonObject, "no_particles");
+		if (GsonHelper.isBooleanValue(jsonObject, "no_particles")) {
+			mod.noParticles = GsonHelper.getAsBoolean(jsonObject, "no_particles");
 		}
-		if (JsonHelper.hasBoolean(jsonObject, "unidentifiable")) {
-			mod.unidentifiable = JsonHelper.getBoolean(jsonObject, "unidentifiable");
+		if (GsonHelper.isBooleanValue(jsonObject, "unidentifiable")) {
+			mod.unidentifiable = GsonHelper.getAsBoolean(jsonObject, "unidentifiable");
 		}
-		if (JsonHelper.hasBoolean(jsonObject, "make_effects_positive")) {
-			mod.makeEffectsPositive = JsonHelper.getBoolean(jsonObject, "make_effects_positive");
+		if (GsonHelper.isBooleanValue(jsonObject, "make_effects_positive")) {
+			mod.makeEffectsPositive = GsonHelper.getAsBoolean(jsonObject, "make_effects_positive");
 		}
-		if (JsonHelper.hasBoolean(jsonObject, "potent_decreasing_effect")) {
-			mod.potentDecreasingEffect = JsonHelper.getBoolean(jsonObject, "potent_decreasing_effect");
+		if (GsonHelper.isBooleanValue(jsonObject, "potent_decreasing_effect")) {
+			mod.potentDecreasingEffect = GsonHelper.getAsBoolean(jsonObject, "potent_decreasing_effect");
 		}
-		if (JsonHelper.hasBoolean(jsonObject, "negate_decreasing_duration")) {
-			mod.negateDecreasingDuration = JsonHelper.getBoolean(jsonObject, "negate_decreasing_duration");
+		if (GsonHelper.isBooleanValue(jsonObject, "negate_decreasing_duration")) {
+			mod.negateDecreasingDuration = GsonHelper.getAsBoolean(jsonObject, "negate_decreasing_duration");
 		}
-		if (JsonHelper.hasNumber(jsonObject, "additional_drink_duration_ticks")) {
-			mod.additionalDrinkDurationTicks = JsonHelper.getInt(jsonObject, "additional_drink_duration_ticks");
+		if (GsonHelper.isNumberValue(jsonObject, "additional_drink_duration_ticks")) {
+			mod.additionalDrinkDurationTicks = GsonHelper.getAsInt(jsonObject, "additional_drink_duration_ticks");
 		}
-		if (JsonHelper.hasBoolean(jsonObject, "random_color")) {
-			mod.randomColor = JsonHelper.getBoolean(jsonObject, "random_color");
+		if (GsonHelper.isBooleanValue(jsonObject, "random_color")) {
+			mod.randomColor = GsonHelper.getAsBoolean(jsonObject, "random_color");
 		}
-		if (JsonHelper.hasArray(jsonObject, "additional_effects")) {
-			for (JsonElement e : JsonHelper.getArray(jsonObject, "additional_effects")) {
+		if (GsonHelper.isArrayNode(jsonObject, "additional_effects")) {
+			for (JsonElement e : GsonHelper.getAsJsonArray(jsonObject, "additional_effects")) {
 				if (e instanceof JsonObject effectObject) {
-					float chance = JsonHelper.getFloat(effectObject, "chance", 1.0F);
+					float chance = GsonHelper.getAsFloat(effectObject, "chance", 1.0F);
 					PotionRecipeEffect effect = PotionRecipeEffect.read(effectObject);
-					mod.additionalEffects.add(new Pair<>(effect, chance));
+					mod.additionalEffects.add(new Tuple<>(effect, chance));
 				}
 			}
 		}
@@ -128,7 +131,7 @@ public class PotionMod {
 		return mod;
 	}
 	
-	public void write(PacketByteBuf packetByteBuf) {
+	public void write(FriendlyByteBuf packetByteBuf) {
 		packetByteBuf.writeInt(flatDurationBonusTicks);
 		packetByteBuf.writeFloat(flatPotencyBonus);
 		packetByteBuf.writeFloat(durationMultiplier);
@@ -154,13 +157,13 @@ public class PotionMod {
 		packetByteBuf.writeBoolean(randomColor);
 		
 		packetByteBuf.writeInt(additionalEffects.size());
-		for (Pair<PotionRecipeEffect, Float> effectAndChance : additionalEffects) {
-			effectAndChance.getLeft().write(packetByteBuf);
-			packetByteBuf.writeFloat(effectAndChance.getRight());
+		for (Tuple<PotionRecipeEffect, Float> effectAndChance : additionalEffects) {
+			effectAndChance.getA().write(packetByteBuf);
+			packetByteBuf.writeFloat(effectAndChance.getB());
 		}
 	}
 	
-	public static PotionMod fromPacket(PacketByteBuf packetByteBuf) {
+	public static PotionMod fromPacket(FriendlyByteBuf packetByteBuf) {
 		PotionMod potionMod = new PotionMod();
 		potionMod.flatDurationBonusTicks = packetByteBuf.readInt();
 		potionMod.flatPotencyBonus = packetByteBuf.readFloat();
@@ -188,7 +191,7 @@ public class PotionMod {
 		
 		int statusEffectCount = packetByteBuf.readInt();
 		for (int i = 0; i < statusEffectCount; i++) {
-			potionMod.additionalEffects.add(new Pair<>(PotionRecipeEffect.read(packetByteBuf), packetByteBuf.readFloat()));
+			potionMod.additionalEffects.add(new Tuple<>(PotionRecipeEffect.read(packetByteBuf), packetByteBuf.readFloat()));
 		}
 		
 		return potionMod;
@@ -221,7 +224,7 @@ public class PotionMod {
 		this.additionalEffects.addAll(potionMod.additionalEffects);
 	}
 	
-	public int getColor(Random random) {
+	public int getColor(RandomSource random) {
 		return this.randomColor ? java.awt.Color.getHSBColor(random.nextFloat(), 0.7F, 0.9F).getRGB() : this.unidentifiable ? 0x2f2f2f : -1; // dark gray
 	}
 	

@@ -1,10 +1,12 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.enchantment.*;
-import net.minecraft.item.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Map;
 
 public interface Preenchanted {
 	
@@ -13,7 +15,7 @@ public interface Preenchanted {
 	default @NotNull ItemStack getDefaultEnchantedStack(Item item) {
 		ItemStack itemStack = new ItemStack(item);
 		for (Map.Entry<Enchantment, Integer> defaultEnchantment : getDefaultEnchantments().entrySet()) {
-			itemStack.addEnchantment(defaultEnchantment.getKey(), defaultEnchantment.getValue());
+			itemStack.enchant(defaultEnchantment.getKey(), defaultEnchantment.getValue());
 		}
 		return itemStack;
 	}
@@ -24,7 +26,7 @@ public interface Preenchanted {
 	 */
 	default boolean onlyHasPreEnchantments(ItemStack stack) {
 		Map<Enchantment, Integer> innateEnchantments = getDefaultEnchantments();
-		Map<Enchantment, Integer> stackEnchantments = EnchantmentHelper.get(stack);
+		Map<Enchantment, Integer> stackEnchantments = EnchantmentHelper.getEnchantments(stack);
 		
 		for (Map.Entry<Enchantment, Integer> stackEnchantment : stackEnchantments.entrySet()) {
 			int innateLevel = innateEnchantments.getOrDefault(stackEnchantment.getKey(), 0);

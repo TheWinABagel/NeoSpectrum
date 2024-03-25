@@ -1,15 +1,18 @@
 package de.dafuqs.spectrum.api.energy.storage;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import net.fabricmc.api.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static de.dafuqs.spectrum.helpers.Support.*;
+import static de.dafuqs.spectrum.helpers.Support.getShortenedNumberString;
 
 public class IndividualCappedInkStorage implements InkStorage {
 	
@@ -43,8 +46,8 @@ public class IndividualCappedInkStorage implements InkStorage {
 		}
 	}
 	
-	public static @Nullable IndividualCappedInkStorage fromNbt(@NotNull NbtCompound compound) {
-		if (compound.contains("MaxEnergyPerColor", NbtElement.LONG_TYPE)) {
+	public static @Nullable IndividualCappedInkStorage fromNbt(@NotNull CompoundTag compound) {
+		if (compound.contains("MaxEnergyPerColor", Tag.TAG_LONG)) {
 			long maxEnergyPerColor = compound.getLong("MaxEnergyPerColor");
 			
 			Map<InkColor, Long> colors = new HashMap<>();
@@ -142,8 +145,8 @@ public class IndividualCappedInkStorage implements InkStorage {
 		return this.currentTotal >= this.getMaxTotal();
 	}
 	
-	public NbtCompound toNbt() {
-		NbtCompound compound = new NbtCompound();
+	public CompoundTag toNbt() {
+		CompoundTag compound = new CompoundTag();
 		compound.putLong("MaxEnergyPerColor", this.maxEnergyPerColor);
 		for (Map.Entry<InkColor, Long> color : this.storedEnergy.entrySet()) {
 			compound.putLong(color.getKey().toString(), color.getValue());
@@ -153,13 +156,13 @@ public class IndividualCappedInkStorage implements InkStorage {
 	
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void addTooltip(List<Text> tooltip, boolean includeHeader) {
+	public void addTooltip(List<Component> tooltip, boolean includeHeader) {
 		if (includeHeader) {
-			tooltip.add(Text.translatable("item.spectrum.pigment_palette.tooltip", getShortenedNumberString(maxEnergyPerColor)));
+			tooltip.add(Component.translatable("item.spectrum.pigment_palette.tooltip", getShortenedNumberString(maxEnergyPerColor)));
 		}
 		for (Map.Entry<InkColor, Long> color : this.storedEnergy.entrySet()) {
 			if (color.getValue() > 0) {
-				tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.bullet." + color.getKey().toString().toLowerCase(Locale.ROOT), getShortenedNumberString(color.getValue())));
+				tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.bullet." + color.getKey().toString().toLowerCase(Locale.ROOT), getShortenedNumberString(color.getValue())));
 			}
 		}
 	}

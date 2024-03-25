@@ -1,87 +1,102 @@
 package de.dafuqs.spectrum.blocks;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.helpers.Support;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.fabricmc.fabric.api.dimension.v1.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.fluid.*;
-import net.minecraft.item.*;
-import net.minecraft.registry.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.state.*;
-import net.minecraft.state.property.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.portal.PortalInfo;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class DeeperDownPortalBlock extends Block {
 
-	private final static Identifier CREATE_PORTAL_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("midgame/open_deeper_down_portal");
+	private final static ResourceLocation CREATE_PORTAL_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("midgame/open_deeper_down_portal");
 	private final static String CREATE_PORTAL_ADVANCEMENT_CRITERION = "opened_deeper_down_portal";
 
-	public static final BooleanProperty FACING_UP = Properties.UP;
+	public static final BooleanProperty FACING_UP = BlockStateProperties.UP;
 
-	protected static final VoxelShape SHAPE = Block.createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 4D, 16.0D);
-	protected static final VoxelShape SHAPE_UP = Block.createCuboidShape(0.0D, 4D, 0.0D, 16.0D, 16.0D, 16.0D);
+	protected static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 4D, 16.0D);
+	protected static final VoxelShape SHAPE_UP = Block.box(0.0D, 4D, 0.0D, 16.0D, 16.0D, 16.0D);
 
-	public DeeperDownPortalBlock(Settings settings) {
+	public DeeperDownPortalBlock(Properties settings) {
 		super(settings);
-		this.setDefaultState((this.stateManager.getDefaultState()).with(FACING_UP, false));
+		this.registerDefaultState((this.stateDefinition.any()).setValue(FACING_UP, false));
 	}
 
 	@Override
-	public boolean hasSidedTransparency(BlockState state) {
+	public boolean useShapeForLightOcclusion(BlockState state) {
 		return true;
 	}
 
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
-		super.onBlockAdded(state, world, pos, oldState, notify);
+	public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify) {
+		super.onPlace(state, world, pos, oldState, notify);
 
-		if (!world.isClient) { // that should be a given, but in modded you never know
-			SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerWorld) world, Vec3d.ofCenter(pos), SpectrumParticleTypes.VOID_FOG, 30, new Vec3d(0.5, 0.0, 0.5), Vec3d.ZERO);
+		if (!world.isClientSide) { // that should be a given, but in modded you never know
+			SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerLevel) world, Vec3.atCenterOf(pos), SpectrumParticleTypes.VOID_FOG, 30, new Vec3(0.5, 0.0, 0.5), Vec3.ZERO);
 			if (!hasNeighboringPortals(world, pos)) {
-				world.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, SpectrumSoundEvents.DEEPER_DOWN_PORTAL_OPEN, SoundCategory.BLOCKS, 0.75F, 0.75F);
+				world.playSound(null, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, SpectrumSoundEvents.DEEPER_DOWN_PORTAL_OPEN, SoundSource.BLOCKS, 0.75F, 0.75F);
 
-				for (PlayerEntity nearbyPlayer : world.getEntitiesByType(EntityType.PLAYER, Box.of(Vec3d.ofCenter(pos), 16D, 16D, 16D), LivingEntity::isAlive)) {
-					Support.grantAdvancementCriterion((ServerPlayerEntity) nearbyPlayer, CREATE_PORTAL_ADVANCEMENT_IDENTIFIER, CREATE_PORTAL_ADVANCEMENT_CRITERION);
+				for (Player nearbyPlayer : world.getEntities(EntityType.PLAYER, AABB.ofSize(Vec3.atCenterOf(pos), 16D, 16D, 16D), LivingEntity::isAlive)) {
+					Support.grantAdvancementCriterion((ServerPlayer) nearbyPlayer, CREATE_PORTAL_ADVANCEMENT_IDENTIFIER, CREATE_PORTAL_ADVANCEMENT_CRITERION);
 				}
 			}
 		}
 	}
 
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		ItemStack handStack = player.getStackInHand(hand);
-		if (handStack.isOf(SpectrumItems.BEDROCK_DUST)) {
-			if (world.isClient) {
-				return ActionResult.SUCCESS;
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		ItemStack handStack = player.getItemInHand(hand);
+		if (handStack.is(SpectrumItems.BEDROCK_DUST)) {
+			if (world.isClientSide) {
+				return InteractionResult.SUCCESS;
 			} else {
-				BlockState placedState = Blocks.BEDROCK.getDefaultState();
-				world.setBlockState(pos, placedState);
-				world.playSound(null, pos, placedState.getSoundGroup().getPlaceSound(), SoundCategory.BLOCKS, 1.0F, 1.0F);
-				return ActionResult.CONSUME;
+				BlockState placedState = Blocks.BEDROCK.defaultBlockState();
+				world.setBlockAndUpdate(pos, placedState);
+				world.playSound(null, pos, placedState.getSoundType().getPlaceSound(), SoundSource.BLOCKS, 1.0F, 1.0F);
+				return InteractionResult.CONSUME;
 			}
 		}
 
-		return ActionResult.PASS;
+		return InteractionResult.PASS;
 	}
 
-	private boolean hasNeighboringPortals(World world, BlockPos pos) {
-		for (Direction direction : Direction.Type.HORIZONTAL) {
-			if (world.getBlockState(pos.offset(direction)).isOf(this)) {
+	private boolean hasNeighboringPortals(Level world, BlockPos pos) {
+		for (Direction direction : Direction.Plane.HORIZONTAL) {
+			if (world.getBlockState(pos.relative(direction)).is(this)) {
 				return true;
 			}
 		}
@@ -89,68 +104,68 @@ public class DeeperDownPortalBlock extends Block {
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		return state.get(FACING_UP) ? SHAPE_UP : SHAPE;
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		return state.getValue(FACING_UP) ? SHAPE_UP : SHAPE;
 	}
 
 	@Override
-	public ItemStack getPickStack(BlockView world, BlockPos pos, BlockState state) {
+	public ItemStack getCloneItemStack(BlockGetter world, BlockPos pos, BlockState state) {
 		return ItemStack.EMPTY;
 	}
 
 	@Override
-	public boolean canBucketPlace(BlockState state, Fluid fluid) {
+	public boolean canBeReplaced(BlockState state, Fluid fluid) {
 		return false;
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(FACING_UP);
 	}
 
 	@Override
-	public void onEntityCollision(BlockState state, World world, BlockPos pos, Entity entity) {
-		if (world instanceof ServerWorld
-				&& !entity.hasVehicle()
-				&& !entity.hasPassengers()
-				&& entity.canUsePortals()) {
+	public void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
+		if (world instanceof ServerLevel
+				&& !entity.isPassenger()
+				&& !entity.isVehicle()
+				&& entity.canChangeDimensions()) {
 
-			RegistryKey<World> currentWorldKey = world.getRegistryKey();
-			if (currentWorldKey == World.OVERWORLD) {
-				if (!entity.hasPortalCooldown()) {
-					entity.resetPortalCooldown();
+			ResourceKey<Level> currentWorldKey = world.dimension();
+			if (currentWorldKey == Level.OVERWORLD) {
+				if (!entity.isOnPortalCooldown()) {
+					entity.setPortalCooldown();
 
 					// => teleport to DD
-					ServerWorld targetWorld = ((ServerWorld) world).getServer().getWorld(SpectrumDimensions.DIMENSION_KEY);
+					ServerLevel targetWorld = ((ServerLevel) world).getServer().getLevel(SpectrumDimensions.DIMENSION_KEY);
 					if (targetWorld != null) {
-						BlockPos portalPos = new BlockPos(pos.getX(), targetWorld.getTopY() - 1, pos.getZ());
-						if (!targetWorld.getBlockState(portalPos).isOf(SpectrumBlocks.DEEPER_DOWN_PORTAL)) {
-							targetWorld.setBlockState(portalPos, SpectrumBlocks.DEEPER_DOWN_PORTAL.getDefaultState().with(FACING_UP, true));
+						BlockPos portalPos = new BlockPos(pos.getX(), targetWorld.getMaxBuildHeight() - 1, pos.getZ());
+						if (!targetWorld.getBlockState(portalPos).is(SpectrumBlocks.DEEPER_DOWN_PORTAL)) {
+							targetWorld.setBlockAndUpdate(portalPos, SpectrumBlocks.DEEPER_DOWN_PORTAL.defaultBlockState().setValue(FACING_UP, true));
 						}
 
-						BlockPos targetPos = portalPos.down(3);
-						if (entity instanceof PlayerEntity) {
+						BlockPos targetPos = portalPos.below(3);
+						if (entity instanceof Player) {
 							makeRoomAround(targetWorld, targetPos, 2);
 						}
-						FabricDimensions.teleport(entity, targetWorld, new TeleportTarget(Vec3d.ofCenter(targetPos), Vec3d.ZERO, entity.getYaw(), entity.getPitch()));
-						teleportToSafePosition(targetWorld, entity, targetPos.down(), 5);
+						FabricDimensions.teleport(entity, targetWorld, new PortalInfo(Vec3.atCenterOf(targetPos), Vec3.ZERO, entity.getYRot(), entity.getXRot()));
+						teleportToSafePosition(targetWorld, entity, targetPos.below(), 5);
 					}
 				}
 			} else {
-				if (!entity.hasPortalCooldown()) {
-					entity.resetPortalCooldown();
+				if (!entity.isOnPortalCooldown()) {
+					entity.setPortalCooldown();
 
 					// => teleport to Overworld
-					ServerWorld targetWorld = ((ServerWorld) world).getServer().getWorld(World.OVERWORLD);
+					ServerLevel targetWorld = ((ServerLevel) world).getServer().getLevel(Level.OVERWORLD);
 					if (targetWorld != null) {
-						BlockPos portalPos = new BlockPos(pos.getX(), targetWorld.getBottomY(), pos.getZ());
-						if (!targetWorld.getBlockState(portalPos).isOf(SpectrumBlocks.DEEPER_DOWN_PORTAL)) {
-							targetWorld.setBlockState(portalPos, SpectrumBlocks.DEEPER_DOWN_PORTAL.getDefaultState().with(FACING_UP, false));
+						BlockPos portalPos = new BlockPos(pos.getX(), targetWorld.getMinBuildHeight(), pos.getZ());
+						if (!targetWorld.getBlockState(portalPos).is(SpectrumBlocks.DEEPER_DOWN_PORTAL)) {
+							targetWorld.setBlockAndUpdate(portalPos, SpectrumBlocks.DEEPER_DOWN_PORTAL.defaultBlockState().setValue(FACING_UP, false));
 						}
 
-						BlockPos targetPos = portalPos.up(2);
+						BlockPos targetPos = portalPos.above(2);
 						makeRoomAround(targetWorld, targetPos, 2);
-						FabricDimensions.teleport(entity, targetWorld, new TeleportTarget(Vec3d.ofCenter(targetPos), Vec3d.ZERO, entity.getYaw(), entity.getPitch()));
+						FabricDimensions.teleport(entity, targetWorld, new PortalInfo(Vec3.atCenterOf(targetPos), Vec3.ZERO, entity.getYRot(), entity.getXRot()));
 						teleportToSafePosition(targetWorld, entity, targetPos, 3);
 					}
 				}
@@ -158,65 +173,65 @@ public class DeeperDownPortalBlock extends Block {
 		}
 	}
 
-	public void makeRoomAround(World world, BlockPos blockPos, int radius) {
+	public void makeRoomAround(Level world, BlockPos blockPos, int radius) {
 		BlockState state = world.getBlockState(blockPos);
-		if (state.getCollisionShape(world, blockPos).isEmpty() && state.getCollisionShape(world, blockPos.up()).isEmpty()) {
+		if (state.getCollisionShape(world, blockPos).isEmpty() && state.getCollisionShape(world, blockPos.above()).isEmpty()) {
 			return;
 		}
 
-		for (BlockPos pos : BlockPos.iterateOutwards(blockPos, radius, radius, radius)) {
+		for (BlockPos pos : BlockPos.withinManhattan(blockPos, radius, radius, radius)) {
 			if (world.getBlockEntity(pos) != null) {
 				continue;
 			}
 
 			state = world.getBlockState(pos);
 
-			if (state.isOf(Blocks.BEDROCK)) {
+			if (state.is(Blocks.BEDROCK)) {
 				if (pos.getX() == blockPos.getX() && pos.getZ() == blockPos.getZ()) {
-					world.breakBlock(pos, true, null);
+					world.destroyBlock(pos, true, null);
 				}
 				continue;
 			}
 
-			if (!state.isIn(SpectrumBlockTags.BASE_STONE_DEEPER_DOWN)) {
+			if (!state.is(SpectrumBlockTags.BASE_STONE_DEEPER_DOWN)) {
 				continue;
 			}
 
-			float hardness = state.getHardness(world, pos);
+			float hardness = state.getDestroySpeed(world, pos);
 			if (hardness >= 0 && hardness < 30) {
-				world.breakBlock(pos, true, null);
+				world.destroyBlock(pos, true, null);
 			}
 		}
 	}
 
-	public void teleportToSafePosition(World world, Entity entity, BlockPos targetPos, int maxRadius) {
-		for (BlockPos bp : BlockPos.iterateOutwards(targetPos, maxRadius, maxRadius, maxRadius)) {
-			entity.setPosition(Vec3d.ofBottomCenter(bp));
-			if (world.getBlockState(bp.down()).getCollisionShape(world, bp.down()) == VoxelShapes.fullCube()
-					&& world.isSpaceEmpty(entity)
-					&& entity.getY() < (double) world.getTopY()
-					&& entity.getY() > (double) world.getBottomY()) {
+	public void teleportToSafePosition(Level world, Entity entity, BlockPos targetPos, int maxRadius) {
+		for (BlockPos bp : BlockPos.withinManhattan(targetPos, maxRadius, maxRadius, maxRadius)) {
+			entity.setPos(Vec3.atBottomCenterOf(bp));
+			if (world.getBlockState(bp.below()).getCollisionShape(world, bp.below()) == Shapes.block()
+					&& world.noCollision(entity)
+					&& entity.getY() < (double) world.getMaxBuildHeight()
+					&& entity.getY() > (double) world.getMinBuildHeight()) {
 
-				entity.teleport(bp.getX() + 0.5, bp.getY() + 0.5, bp.getZ() + 0.5);
+				entity.teleportToWithTicket(bp.getX() + 0.5, bp.getY() + 0.5, bp.getZ() + 0.5);
 				return;
 			}
 		}
 
-		world.removeBlock(targetPos.up(1), false);
+		world.removeBlock(targetPos.above(1), false);
 		world.removeBlock(targetPos, false);
-		world.setBlockState(targetPos.down(1), Blocks.COBBLED_DEEPSLATE.getDefaultState());
-		entity.teleport(targetPos.getX() + 0.5, targetPos.getY() + 0.5, targetPos.getZ() + 0.5);
+		world.setBlockAndUpdate(targetPos.below(1), Blocks.COBBLED_DEEPSLATE.defaultBlockState());
+		entity.teleportToWithTicket(targetPos.getX() + 0.5, targetPos.getY() + 0.5, targetPos.getZ() + 0.5);
 	}
 
 	@Override
 	@Environment(EnvType.CLIENT)
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-		if (!state.get(DeeperDownPortalBlock.FACING_UP) || random.nextInt(8) == 0) {
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
+		if (!state.getValue(DeeperDownPortalBlock.FACING_UP) || random.nextInt(8) == 0) {
 			spawnVoidFogParticle(world, pos, random);
 		}
 	}
 
-	private static void spawnVoidFogParticle(World world, BlockPos pos, Random random) {
+	private static void spawnVoidFogParticle(Level world, BlockPos pos, RandomSource random) {
 		double d = (double) pos.getX() + random.nextDouble();
 		double e = (double) pos.getY() + 0.3D;
 		double f = (double) pos.getZ() + random.nextDouble();

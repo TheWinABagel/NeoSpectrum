@@ -1,14 +1,19 @@
 package de.dafuqs.spectrum.api.energy.storage;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.InkStorage;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
-import static de.dafuqs.spectrum.helpers.Support.*;
+import static de.dafuqs.spectrum.helpers.Support.getShortenedNumberString;
 
 public class SingleInkStorage implements InkStorage {
 	
@@ -32,8 +37,8 @@ public class SingleInkStorage implements InkStorage {
 		this.storedEnergy = amount;
 	}
 	
-	public static @Nullable SingleInkStorage fromNbt(@NotNull NbtCompound compound) {
-		if (compound.contains("MaxEnergyTotal", NbtElement.LONG_TYPE)) {
+	public static @Nullable SingleInkStorage fromNbt(@NotNull CompoundTag compound) {
+		if (compound.contains("MaxEnergyTotal", Tag.TAG_LONG)) {
 			long maxEnergyTotal = compound.getLong("MaxEnergyTotal");
 			InkColor color = InkColor.of(compound.getString("Color"));
 			long amount = compound.getLong("Amount");
@@ -142,8 +147,8 @@ public class SingleInkStorage implements InkStorage {
 		return this.storedEnergy >= this.maxEnergy;
 	}
 	
-	public NbtCompound toNbt() {
-		NbtCompound compound = new NbtCompound();
+	public CompoundTag toNbt() {
+		CompoundTag compound = new CompoundTag();
 		compound.putLong("MaxEnergyTotal", this.maxEnergy);
 		compound.putString("Color", this.storedColor.toString());
 		compound.putLong("Amount", this.storedEnergy);
@@ -151,12 +156,12 @@ public class SingleInkStorage implements InkStorage {
 	}
 	
 	@Override
-	public void addTooltip(List<Text> tooltip, boolean includeHeader) {
+	public void addTooltip(List<Component> tooltip, boolean includeHeader) {
 		if (includeHeader) {
-			tooltip.add(Text.translatable("item.spectrum.ink_flask.tooltip", getShortenedNumberString(this.maxEnergy)));
+			tooltip.add(Component.translatable("item.spectrum.ink_flask.tooltip", getShortenedNumberString(this.maxEnergy)));
 		}
 		if (this.storedEnergy > 0) {
-			tooltip.add(Text.translatable("spectrum.tooltip.ink_powered.bullet." + this.storedColor.toString().toLowerCase(Locale.ROOT), getShortenedNumberString(this.storedEnergy)));
+			tooltip.add(Component.translatable("spectrum.tooltip.ink_powered.bullet." + this.storedColor.toString().toLowerCase(Locale.ROOT), getShortenedNumberString(this.storedEnergy)));
 		}
 	}
 	

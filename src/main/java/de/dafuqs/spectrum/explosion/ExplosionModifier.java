@@ -1,17 +1,21 @@
 package de.dafuqs.spectrum.explosion;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.registries.SpectrumRegistries;
+import net.minecraft.Util;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Optional;
 
 /**
  * Modifies an explosion in some way
@@ -37,7 +41,7 @@ public abstract class ExplosionModifier {
 	}
 	
 	@ApiStatus.OverrideOnly
-	public void applyToBlocks(@NotNull World world, @NotNull Iterable<BlockPos> blocks) {
+	public void applyToBlocks(@NotNull Level world, @NotNull Iterable<BlockPos> blocks) {
 	}
 	
 	@ApiStatus.OverrideOnly
@@ -66,7 +70,7 @@ public abstract class ExplosionModifier {
 	}
 	
 	@ApiStatus.OverrideOnly
-	public Optional<ParticleEffect> getParticleEffects() {
+	public Optional<ParticleOptions> getParticleEffects() {
 		return Optional.empty();
 	}
 	
@@ -79,19 +83,19 @@ public abstract class ExplosionModifier {
 		return Optional.empty();
 	}
 	
-	public Identifier getId() {
-		return SpectrumRegistries.EXPLOSION_MODIFIERS.getId(this);
+	public ResourceLocation getId() {
+		return SpectrumRegistries.EXPLOSION_MODIFIERS.getKey(this);
 	}
 	
 	protected String loadTranslationKey() {
 		if (this.translationKey == null) {
-			this.translationKey = Util.createTranslationKey("explosion_modifier", SpectrumRegistries.EXPLOSION_MODIFIERS.getId(this));
+			this.translationKey = Util.makeDescriptionId("explosion_modifier", SpectrumRegistries.EXPLOSION_MODIFIERS.getKey(this));
 		}
 		return this.translationKey;
 	}
 	
-	public Text getName() {
-		return Text.translatable(loadTranslationKey()).styled(style -> style.withColor(displayColor).withItalic(true));
+	public Component getName() {
+		return Component.translatable(loadTranslationKey()).withStyle(style -> style.withColor(displayColor).withItalic(true));
 	}
 	
 }

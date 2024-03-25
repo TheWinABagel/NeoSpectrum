@@ -1,8 +1,14 @@
 package de.dafuqs.spectrum.blocks.mob_head.models;
 
-import net.fabricmc.api.*;
-import net.minecraft.client.model.*;
-import net.minecraft.client.render.entity.model.*;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartNames;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeDeformation;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
 
 @Environment(EnvType.CLIENT)
 public class WardenHeadModel extends SpectrumHeadModel {
@@ -11,16 +17,16 @@ public class WardenHeadModel extends SpectrumHeadModel {
 		super(root);
 	}
 	
-	public static TexturedModelData getTexturedModelData() {
-		ModelData modelData = new ModelData();
+	public static LayerDefinition getTexturedModelData() {
+		MeshDefinition modelData = new MeshDefinition();
 		
-		modelData.getRoot().addChild(EntityModelPartNames.HEAD, ModelPartBuilder.create()
-						.uv(0, 32).cuboid(-8.0F, -16.0F, -5.0F, 16.0F, 16.0F, 10.0F, new Dilation(0.0F))
-						.uv(58, 2).cuboid(8.0F, -21.0F, 0.0F, 10.0F, 16.0F, 0.0F, new Dilation(0.0F))
-						.uv(58, 34).cuboid(-18.0F, -21.0F, 0.0F, 10.0F, 16.0F, 0.0F, new Dilation(0.0F)),
-				ModelTransform.pivot(0.0F, 0.0F, 0.0F));
+		modelData.getRoot().addOrReplaceChild(PartNames.HEAD, CubeListBuilder.create()
+						.texOffs(0, 32).addBox(-8.0F, -16.0F, -5.0F, 16.0F, 16.0F, 10.0F, new CubeDeformation(0.0F))
+						.texOffs(58, 2).addBox(8.0F, -21.0F, 0.0F, 10.0F, 16.0F, 0.0F, new CubeDeformation(0.0F))
+						.texOffs(58, 34).addBox(-18.0F, -21.0F, 0.0F, 10.0F, 16.0F, 0.0F, new CubeDeformation(0.0F)),
+				PartPose.offset(0.0F, 0.0F, 0.0F));
 		
-		return TexturedModelData.of(modelData, 128, 128);
+		return LayerDefinition.create(modelData, 128, 128);
 	}
 	
 	@Override

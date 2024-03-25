@@ -1,32 +1,37 @@
 package de.dafuqs.spectrum.blocks.shooting_star;
 
-import de.dafuqs.spectrum.entity.entity.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.stat.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.entity.entity.ShootingStarEntity;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.stats.Stats;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class ShootingStarItem extends BlockItem implements ShootingStar {
 	
 	private final Type shootingStarType;
 	
-	public ShootingStarItem(ShootingStarBlock block, Settings settings) {
+	public ShootingStarItem(ShootingStarBlock block, Properties settings) {
 		super(block, settings);
 		this.shootingStarType = block.shootingStarType;
 	}
 	
 	public static int getRemainingHits(@NotNull ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getNbt();
-		if (nbtCompound == null || !nbtCompound.contains("remaining_hits", NbtElement.NUMBER_TYPE)) {
+		CompoundTag nbtCompound = itemStack.getTag();
+		if (nbtCompound == null || !nbtCompound.contains("remaining_hits", Tag.TAG_ANY_NUMERIC)) {
 			return 5;
 		} else {
 			return nbtCompound.getInt("remaining_hits");
@@ -34,11 +39,11 @@ public class ShootingStarItem extends BlockItem implements ShootingStar {
 	}
 	
 	public static @NotNull ItemStack getWithRemainingHits(@NotNull ShootingStarItem shootingStarItem, int remainingHits, boolean hardened) {
-		return getWithRemainingHits(shootingStarItem.getDefaultStack(), remainingHits, hardened);
+		return getWithRemainingHits(shootingStarItem.getDefaultInstance(), remainingHits, hardened);
 	}
 	
 	public static @NotNull ItemStack getWithRemainingHits(@NotNull ItemStack stack, int remainingHits, boolean hardened) {
-		NbtCompound nbt = stack.getOrCreateNbt();
+		CompoundTag nbt = stack.getOrCreateTag();
 		nbt.putInt("remaining_hits", remainingHits);
 		if (hardened) {
 			nbt.putBoolean("Hardened", true);
@@ -47,40 +52,40 @@ public class ShootingStarItem extends BlockItem implements ShootingStar {
 	}
 	
 	@Override
-	public ActionResult useOnBlock(@NotNull ItemUsageContext context) {
-		if (context.getPlayer().isSneaking()) {
+	public InteractionResult useOn(@NotNull UseOnContext context) {
+		if (context.getPlayer().isShiftKeyDown()) {
 			// place as block
-			return super.useOnBlock(context);
+			return super.useOn(context);
 		} else {
 			// place as entity
-			World world = context.getWorld();
+			Level world = context.getLevel();
 			
-			if (!world.isClient) {
-				ItemStack itemStack = context.getStack();
-				Vec3d hitPos = context.getHitPos();
-				PlayerEntity user = context.getPlayer();
+			if (!world.isClientSide) {
+				ItemStack itemStack = context.getItemInHand();
+				Vec3 hitPos = context.getClickLocation();
+				Player user = context.getPlayer();
 
-				ShootingStarEntity shootingStarEntity = getEntityForStack(context.getWorld(), hitPos, itemStack);
-				shootingStarEntity.setYaw(user.getYaw());
-				if (!world.isSpaceEmpty(shootingStarEntity, shootingStarEntity.getBoundingBox())) {
-					return ActionResult.FAIL;
+				ShootingStarEntity shootingStarEntity = getEntityForStack(context.getLevel(), hitPos, itemStack);
+				shootingStarEntity.setYRot(user.getYRot());
+				if (!world.noCollision(shootingStarEntity, shootingStarEntity.getBoundingBox())) {
+					return InteractionResult.FAIL;
 				} else {
-					world.spawnEntity(shootingStarEntity);
-					world.emitGameEvent(user, GameEvent.ENTITY_PLACE, context.getBlockPos());
-					if (!user.getAbilities().creativeMode) {
-						itemStack.decrement(1);
+					world.addFreshEntity(shootingStarEntity);
+					world.gameEvent(user, GameEvent.ENTITY_PLACE, context.getClickedPos());
+					if (!user.getAbilities().instabuild) {
+						itemStack.shrink(1);
 					}
 					
-					user.incrementStat(Stats.USED.getOrCreateStat(this));
+					user.awardStat(Stats.ITEM_USED.get(this));
 				}
 			}
 			
-			return ActionResult.success(world.isClient);
+			return InteractionResult.sidedSuccess(world.isClientSide);
 		}
 	}
 
 	@NotNull
-	public ShootingStarEntity getEntityForStack(@NotNull World world, Vec3d pos, ItemStack stack) {
+	public ShootingStarEntity getEntityForStack(@NotNull Level world, Vec3 pos, ItemStack stack) {
 		ShootingStarEntity shootingStarEntity = new ShootingStarEntity(world, pos.x, pos.y, pos.z);
 		shootingStarEntity.setShootingStarType(this.shootingStarType, true, isHardened(stack));
 		shootingStarEntity.setAvailableHits(getRemainingHits(stack));
@@ -88,10 +93,10 @@ public class ShootingStarItem extends BlockItem implements ShootingStar {
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		if (isHardened(stack)) {
-			tooltip.add(Text.translatable("item.spectrum.shooting_star.tooltip.hardened").formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.shooting_star.tooltip.hardened").withStyle(ChatFormatting.GRAY));
 		}
 	}
 	
@@ -100,14 +105,14 @@ public class ShootingStarItem extends BlockItem implements ShootingStar {
 	}
 	
 	public static boolean isHardened(ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getNbt();
+		CompoundTag nbtCompound = itemStack.getTag();
 		return nbtCompound != null && nbtCompound.getBoolean("Hardened");
 	}
 	
 	public static void setHardened(ItemStack itemStack) {
-		NbtCompound nbt = itemStack.getOrCreateNbt();
+		CompoundTag nbt = itemStack.getOrCreateTag();
 		nbt.putBoolean("Hardened", true);
-		itemStack.setNbt(nbt);
+		itemStack.setTag(nbt);
 	}
 
 }

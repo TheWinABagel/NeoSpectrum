@@ -1,23 +1,37 @@
 package de.dafuqs.spectrum.recipe.potion_workshop;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.potion.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.util.math.random.Random;
-import org.jetbrains.annotations.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.api.energy.InkPoweredStatusEffectInstance;
+import de.dafuqs.spectrum.api.item.InkPoweredPotionFillable;
+import de.dafuqs.spectrum.helpers.Support;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumPotions;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.Container;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 	
@@ -28,28 +42,28 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 	 * When potionMod.potentDecreasingEffect is set each status effect is split into separate
 	 * instances defined in this list. First value is the new effects new potency mod, second the duration
 	 */
-	protected static final List<Pair<Float, Float>> SPLIT_EFFECT_POTENCY_AND_DURATION = new ArrayList<>() {{
-		add(new Pair<>(2.0F, 0.15F));
-		add(new Pair<>(0.75F, 0.5F));
-		add(new Pair<>(0.25F, 1.0F));
+	protected static final List<Tuple<Float, Float>> SPLIT_EFFECT_POTENCY_AND_DURATION = new ArrayList<>() {{
+		add(new Tuple<>(2.0F, 0.15F));
+		add(new Tuple<>(0.75F, 0.5F));
+		add(new Tuple<>(0.25F, 1.0F));
 	}};
 	
-	public static final Map<StatusEffect, StatusEffect> negativeToPositiveEffect = new HashMap<>() {{
-		put(StatusEffects.BAD_OMEN, StatusEffects.HERO_OF_THE_VILLAGE);
-		put(StatusEffects.HUNGER, StatusEffects.SATURATION);
-		put(StatusEffects.INSTANT_DAMAGE, StatusEffects.INSTANT_HEALTH);
-		put(StatusEffects.MINING_FATIGUE, StatusEffects.HASTE);
-		put(StatusEffects.SLOWNESS, StatusEffects.SPEED);
-		put(StatusEffects.UNLUCK, StatusEffects.LUCK);
-		put(StatusEffects.WEAKNESS, StatusEffects.STRENGTH);
-		put(StatusEffects.WITHER, StatusEffects.REGENERATION);
+	public static final Map<MobEffect, MobEffect> negativeToPositiveEffect = new HashMap<>() {{
+		put(MobEffects.BAD_OMEN, MobEffects.HERO_OF_THE_VILLAGE);
+		put(MobEffects.HUNGER, MobEffects.SATURATION);
+		put(MobEffects.HARM, MobEffects.HEAL);
+		put(MobEffects.DIG_SLOWDOWN, MobEffects.DIG_SPEED);
+		put(MobEffects.MOVEMENT_SLOWDOWN, MobEffects.MOVEMENT_SPEED);
+		put(MobEffects.UNLUCK, MobEffects.LUCK);
+		put(MobEffects.WEAKNESS, MobEffects.DAMAGE_BOOST);
+		put(MobEffects.WITHER, MobEffects.REGENERATION);
 		put(SpectrumStatusEffects.STIFFNESS, SpectrumStatusEffects.SWIFTNESS);
 		put(SpectrumStatusEffects.DENSITY, SpectrumStatusEffects.LIGHTWEIGHT);
 	}};
 	
-	public static @Nullable PotionWorkshopBrewingRecipe getPositiveRecipe(@NotNull StatusEffect statusEffect) {
-		if (statusEffect.getCategory() == StatusEffectCategory.HARMFUL) {
-			StatusEffect positiveEffect = negativeToPositiveEffect.getOrDefault(statusEffect, null);
+	public static @Nullable PotionWorkshopBrewingRecipe getPositiveRecipe(@NotNull MobEffect statusEffect) {
+		if (statusEffect.getCategory() == MobEffectCategory.HARMFUL) {
+			MobEffect positiveEffect = negativeToPositiveEffect.getOrDefault(statusEffect, null);
 			if (positiveEffect == null) {
 				return null;
 			}
@@ -69,7 +83,7 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 	
 	protected ItemStack cachedOutput;
 	
-	public PotionWorkshopBrewingRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, int craftingTime,
+	public PotionWorkshopBrewingRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, int craftingTime,
 									   IngredientStack ingredient1, IngredientStack ingredient2, IngredientStack ingredient3, PotionRecipeEffect recipeData) {
 		
 		super(id, group, secret, requiredAdvancementIdentifier, craftingTime, recipeData.statusEffect().getColor(), ingredient1, ingredient2, ingredient3);
@@ -78,14 +92,14 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 		registerInToastManager(getType(), this);
 		
 		// remember one of each status effect recipe for quick lookup
-		if (recipeData.statusEffect().getCategory() == StatusEffectCategory.BENEFICIAL) {
+		if (recipeData.statusEffect().getCategory() == MobEffectCategory.BENEFICIAL) {
 			for (PotionWorkshopBrewingRecipe ae : positiveRecipes) {
 				if (ae.recipeData.statusEffect() == recipeData.statusEffect()) {
 					return;
 				}
 			}
 			positiveRecipes.add(this);
-		} else if (recipeData.statusEffect().getCategory() == StatusEffectCategory.HARMFUL) {
+		} else if (recipeData.statusEffect().getCategory() == MobEffectCategory.HARMFUL) {
 			for (PotionWorkshopBrewingRecipe ae : negativeRecipes) {
 				if (ae.recipeData.statusEffect() == recipeData.statusEffect()) {
 					return;
@@ -97,8 +111,8 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 	
 	@Override
 	public boolean isValidBaseIngredient(ItemStack itemStack) {
-		return recipeData.applicableToPotions() && itemStack.isOf(Items.GLASS_BOTTLE)
-				|| recipeData.applicableToTippedArrows() && itemStack.isOf(Items.ARROW)
+		return recipeData.applicableToPotions() && itemStack.is(Items.GLASS_BOTTLE)
+				|| recipeData.applicableToTippedArrows() && itemStack.is(Items.ARROW)
 				|| itemStack.getItem() instanceof InkPoweredPotionFillable fillable && ((fillable.isWeapon() && recipeData.applicableToWeapons()) || recipeData.applicableToPotionFillabes());
 	}
 	
@@ -119,34 +133,34 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 	
 	@Override
 	public int getMinOutputCount(ItemStack baseItemStack) {
-		return baseItemStack.isOf(Items.GLASS_BOTTLE) ? BASE_POTION_COUNT_ON_BREWING : 1;
+		return baseItemStack.is(Items.GLASS_BOTTLE) ? BASE_POTION_COUNT_ON_BREWING : 1;
 	}
 	
 	@Override
 	public List<IngredientStack> getIngredientStacks() {
-		DefaultedList<IngredientStack> defaultedList = DefaultedList.of();
-		defaultedList.add(IngredientStack.ofStacks(SpectrumItems.MERMAIDS_GEM.getDefaultStack()));
-		defaultedList.add(IngredientStack.ofStacks(Items.GLASS_BOTTLE.getDefaultStack()));
+		NonNullList<IngredientStack> defaultedList = NonNullList.create();
+		defaultedList.add(IngredientStack.ofStacks(SpectrumItems.MERMAIDS_GEM.getDefaultInstance()));
+		defaultedList.add(IngredientStack.ofStacks(Items.GLASS_BOTTLE.getDefaultInstance()));
 		addIngredientStacks(defaultedList);
 		return defaultedList;
 	}
 	
 	@Override
-	public ItemStack getOutput(DynamicRegistryManager registryManager) {
+	public ItemStack getResultItem(RegistryAccess registryManager) {
 		if (this.cachedOutput == null) {
-			this.cachedOutput = getPotion(Items.POTION.getDefaultStack(), new PotionMod(), null, Random.create());
+			this.cachedOutput = getPotion(Items.POTION.getDefaultInstance(), new PotionMod(), null, RandomSource.create());
 		}
 		return this.cachedOutput;
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inventory, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inventory, RegistryAccess drm) {
 		ItemStack stack = new ItemStack(Items.POTION);
-		PotionUtil.setCustomPotionEffects(stack, List.of(new StatusEffectInstance(recipeData.statusEffect(), recipeData.baseDurationTicks())));
+		PotionUtils.setCustomEffects(stack, List.of(new MobEffectInstance(recipeData.statusEffect(), recipeData.baseDurationTicks())));
 		return stack;
 	}
 	
-	public ItemStack getPotion(ItemStack stack, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, Random random) {
+	public ItemStack getPotion(ItemStack stack, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, RandomSource random) {
 		List<InkPoweredStatusEffectInstance> effects = generateEffects(stack, potionMod, lastRecipe, random);
 		
 		// potion type
@@ -160,35 +174,35 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 		// apply to potion
 		if (effects.isEmpty()) {
 			// no effects: thick potion
-			PotionUtil.setPotion(itemStack, Potions.THICK);
+			PotionUtils.setPotion(itemStack, Potions.THICK);
 		} else {
-			PotionUtil.setPotion(itemStack, SpectrumPotions.PIGMENT_POTION);
+			PotionUtils.setPotion(itemStack, SpectrumPotions.PIGMENT_POTION);
 		}
 		setCustomPotionEffects(itemStack, potionMod, effects);
 		
 		if (potionMod.additionalDrinkDurationTicks != 0) {
-			NbtCompound compound = itemStack.getOrCreateNbt();
-			itemStack.setNbt(compound);
+			CompoundTag compound = itemStack.getOrCreateTag();
+			itemStack.setTag(compound);
 		}
 		
 		return itemStack;
 	}
 	
-	public ItemStack getTippedArrows(ItemStack stack, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, int amount, Random random) {
+	public ItemStack getTippedArrows(ItemStack stack, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, int amount, RandomSource random) {
 		List<InkPoweredStatusEffectInstance> effects = generateEffects(stack, potionMod, lastRecipe, random);
 		
 		ItemStack itemStack = new ItemStack(Items.TIPPED_ARROW, amount);
 		if (effects.isEmpty()) {
-			PotionUtil.setPotion(itemStack, Potions.THICK);
+			PotionUtils.setPotion(itemStack, Potions.THICK);
 		} else {
-			PotionUtil.setPotion(itemStack, SpectrumPotions.PIGMENT_POTION);
+			PotionUtils.setPotion(itemStack, SpectrumPotions.PIGMENT_POTION);
 			setCustomPotionEffects(itemStack, potionMod, effects);
 		}
 		
 		return itemStack;
 	}
 	
-	public void fillPotionFillable(ItemStack stack, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, Random random) {
+	public void fillPotionFillable(ItemStack stack, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, RandomSource random) {
 		if (stack.getItem() instanceof InkPoweredPotionFillable inkPoweredPotionFillable) {
 			List<InkPoweredStatusEffectInstance> effects = generateEffects(stack, potionMod, lastRecipe, random);
 			inkPoweredPotionFillable.addOrUpgradeEffects(stack, effects);
@@ -196,24 +210,24 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 	}
 	
 	private static void setCustomPotionEffects(ItemStack stack, PotionMod potionMod, List<InkPoweredStatusEffectInstance> effects) {
-		List<StatusEffectInstance> instances = new ArrayList<>();
+		List<MobEffectInstance> instances = new ArrayList<>();
 		for (InkPoweredStatusEffectInstance e : effects) {
 			instances.add(e.getStatusEffectInstance());
 		}
-		PotionUtil.setCustomPotionEffects(stack, instances);
+		PotionUtils.setCustomEffects(stack, instances);
 		for (InkPoweredStatusEffectInstance effect : effects) {
 			if (effect.getColor() != -1) {
-				NbtCompound nbtCompound = stack.getOrCreateNbt();
+				CompoundTag nbtCompound = stack.getOrCreateTag();
 				nbtCompound.putInt("CustomPotionColor", effect.getColor());
 			}
 		}
-		NbtCompound nbtCompound = stack.getOrCreateNbt();
+		CompoundTag nbtCompound = stack.getOrCreateTag();
 		if (potionMod.unidentifiable) {
 			nbtCompound.putBoolean("spectrum_unidentifiable", true); // used in PotionItemMixin
 		}
 	}
 	
-	private List<InkPoweredStatusEffectInstance> generateEffects(ItemStack baseIngredient, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, Random random) {
+	private List<InkPoweredStatusEffectInstance> generateEffects(ItemStack baseIngredient, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, RandomSource random) {
 		List<InkPoweredStatusEffectInstance> effects = new ArrayList<>();
 		
 		addEffect(potionMod, random, effects); // main effect
@@ -229,7 +243,7 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 		return effects;
 	}
 	
-	private static void addLastEffect(ItemStack baseIngredient, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, Random random, List<InkPoweredStatusEffectInstance> effects) {
+	private static void addLastEffect(ItemStack baseIngredient, PotionMod potionMod, PotionWorkshopBrewingRecipe lastRecipe, RandomSource random, List<InkPoweredStatusEffectInstance> effects) {
 		if (lastRecipe != null && (potionMod.chanceToAddLastEffect >= 1 || random.nextFloat() < potionMod.chanceToAddLastEffect) && lastRecipe.recipeData.isApplicableTo(baseIngredient, potionMod)) {
 			PotionMod lastEffectMod = new PotionMod();
 			lastEffectMod.potencyMultiplier = potionMod.lastEffectPotencyMultiplier;
@@ -239,10 +253,10 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 		}
 	}
 	
-	private static void addAdditionalEffects(ItemStack baseIngredient, PotionMod potionMod, Random random, List<InkPoweredStatusEffectInstance> effects) {
-		for (Pair<PotionRecipeEffect, Float> entry : potionMod.additionalEffects) {
-			if (random.nextFloat() < entry.getRight() && entry.getLeft().isApplicableTo(baseIngredient, potionMod)) {
-				InkPoweredStatusEffectInstance statusEffectInstance = entry.getLeft().getStatusEffectInstance(potionMod, random);
+	private static void addAdditionalEffects(ItemStack baseIngredient, PotionMod potionMod, RandomSource random, List<InkPoweredStatusEffectInstance> effects) {
+		for (Tuple<PotionRecipeEffect, Float> entry : potionMod.additionalEffects) {
+			if (random.nextFloat() < entry.getB() && entry.getA().isApplicableTo(baseIngredient, potionMod)) {
+				InkPoweredStatusEffectInstance statusEffectInstance = entry.getA().getStatusEffectInstance(potionMod, random);
 				if (statusEffectInstance != null) {
 					effects.add(statusEffectInstance);
 				}
@@ -250,7 +264,7 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 		}
 	}
 	
-	private void addEffect(PotionMod potionMod, Random random, List<InkPoweredStatusEffectInstance> effects) {
+	private void addEffect(PotionMod potionMod, RandomSource random, List<InkPoweredStatusEffectInstance> effects) {
 		if (potionMod.makeEffectsPositive) {
 			PotionWorkshopBrewingRecipe positiveRecipe = getPositiveRecipe(recipeData.statusEffect());
 			if (positiveRecipe != null) {
@@ -265,7 +279,7 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 		}
 	}
 	
-	private void addRandomEffects(PotionMod potionMod, Random random, List<InkPoweredStatusEffectInstance> effects) {
+	private void addRandomEffects(PotionMod potionMod, RandomSource random, List<InkPoweredStatusEffectInstance> effects) {
 		// random positive ones
 		if (!positiveRecipes.isEmpty()) {
 			int additionalPositiveEffects = Support.getIntFromDecimalWithChance(potionMod.additionalRandomPositiveEffectCount, random);
@@ -324,32 +338,32 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 		}
 	}
 	
-	private boolean containsEffect(List<InkPoweredStatusEffectInstance> effects, StatusEffect statusEffect) {
+	private boolean containsEffect(List<InkPoweredStatusEffectInstance> effects, MobEffect statusEffect) {
 		for (InkPoweredStatusEffectInstance existingInstance : effects) {
-			if (existingInstance.getStatusEffectInstance().getEffectType() == statusEffect) {
+			if (existingInstance.getStatusEffectInstance().getEffect() == statusEffect) {
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	private List<InkPoweredStatusEffectInstance> applyPotentDecreasingEffect(@NotNull List<InkPoweredStatusEffectInstance> statusEffectInstances, Random random) {
+	private List<InkPoweredStatusEffectInstance> applyPotentDecreasingEffect(@NotNull List<InkPoweredStatusEffectInstance> statusEffectInstances, RandomSource random) {
 		List<InkPoweredStatusEffectInstance> splitInstances = new ArrayList<>();
 		
 		for (InkPoweredStatusEffectInstance poweredInstance : statusEffectInstances) {
-			StatusEffectInstance instance = poweredInstance.getStatusEffectInstance();
+			MobEffectInstance instance = poweredInstance.getStatusEffectInstance();
 			
 			// instant effects, like harming do not get split (that would apply harming 3x
-			if (instance.getEffectType().isInstant()) {
+			if (instance.getEffect().isInstantenous()) {
 				splitInstances.add(poweredInstance);
 				continue;
 			}
 			
-			for (Pair<Float, Float> mods : SPLIT_EFFECT_POTENCY_AND_DURATION) {
-				int newDuration = (int) (instance.getDuration() * mods.getRight());
-				int newAmplifier = Support.getIntFromDecimalWithChance(instance.getAmplifier() * mods.getLeft(), random);
+			for (Tuple<Float, Float> mods : SPLIT_EFFECT_POTENCY_AND_DURATION) {
+				int newDuration = (int) (instance.getDuration() * mods.getB());
+				int newAmplifier = Support.getIntFromDecimalWithChance(instance.getAmplifier() * mods.getA(), random);
 				if (newAmplifier >= 0) {
-					splitInstances.add(new InkPoweredStatusEffectInstance(new StatusEffectInstance(instance.getEffectType(), newDuration, newAmplifier, instance.isAmbient(), instance.shouldShowParticles()), poweredInstance.getInkCost(), poweredInstance.getColor(), poweredInstance.isUnidentifiable()));
+					splitInstances.add(new InkPoweredStatusEffectInstance(new MobEffectInstance(instance.getEffect(), newDuration, newAmplifier, instance.isAmbient(), instance.isVisible()), poweredInstance.getInkCost(), poweredInstance.getColor(), poweredInstance.isUnidentifiable()));
 				}
 			}
 		}
@@ -357,7 +371,7 @@ public class PotionWorkshopBrewingRecipe extends PotionWorkshopRecipe {
 		return splitInstances;
 	}
 	
-	public StatusEffect getStatusEffect() {
+	public MobEffect getStatusEffect() {
 		return this.recipeData.statusEffect();
 	}
 	

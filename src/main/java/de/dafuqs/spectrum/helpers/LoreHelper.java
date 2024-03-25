@@ -1,26 +1,30 @@
 package de.dafuqs.spectrum.helpers;
 
-import com.google.gson.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonParseException;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LoreHelper {
 	
-	public static @NotNull List<Text> getLoreTextArrayFromString(@NotNull String string) {
-		List<Text> loreText = new ArrayList<>();
+	public static @NotNull List<Component> getLoreTextArrayFromString(@NotNull String string) {
+		List<Component> loreText = new ArrayList<>();
 		
 		for (String split : string.split("\\\\n")) {
-			loreText.add(0, Text.literal(split));
+			loreText.add(0, Component.literal(split));
 		}
 		
 		return loreText;
 	}
 	
-	public static @NotNull String getStringFromLoreTextArray(@NotNull List<Text> lore) {
+	public static @NotNull String getStringFromLoreTextArray(@NotNull List<Component> lore) {
 		if (lore.size() == 0) {
 			return "";
 		} else {
@@ -35,64 +39,64 @@ public class LoreHelper {
 		}
 	}
 	
-	public static void setLore(@NotNull ItemStack itemStack, @Nullable List<Text> lore) {
-		NbtCompound nbtCompound = itemStack.getOrCreateSubNbt(ItemStack.DISPLAY_KEY);
+	public static void setLore(@NotNull ItemStack itemStack, @Nullable List<Component> lore) {
+		CompoundTag nbtCompound = itemStack.getOrCreateTagElement(ItemStack.TAG_DISPLAY);
 		if (lore != null) {
-			NbtList nbtList = new NbtList();
+			ListTag nbtList = new ListTag();
 			
-			for (Text loreText : lore) {
-				NbtString nbtString = NbtString.of(Text.Serializer.toJson(loreText));
-				nbtList.addElement(0, nbtString);
+			for (Component loreText : lore) {
+				StringTag nbtString = StringTag.valueOf(Component.Serializer.toJson(loreText));
+				nbtList.addTag(0, nbtString);
 			}
 			
-			nbtCompound.put(ItemStack.LORE_KEY, nbtList);
+			nbtCompound.put(ItemStack.TAG_LORE, nbtList);
 		} else {
-			nbtCompound.remove(ItemStack.LORE_KEY);
+			nbtCompound.remove(ItemStack.TAG_LORE);
 		}
 	}
 	
 	public static void removeLore(@NotNull ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getSubNbt(ItemStack.DISPLAY_KEY);
+		CompoundTag nbtCompound = itemStack.getTagElement(ItemStack.TAG_DISPLAY);
 		if (nbtCompound != null) {
-			nbtCompound.remove(ItemStack.LORE_KEY);
+			nbtCompound.remove(ItemStack.TAG_LORE);
 			if (nbtCompound.isEmpty()) {
-				itemStack.removeSubNbt(ItemStack.DISPLAY_KEY);
+				itemStack.removeTagKey(ItemStack.TAG_DISPLAY);
 			}
 		}
 		
-		if (itemStack.getNbt() != null && itemStack.getNbt().isEmpty()) {
-			itemStack.setNbt(null);
+		if (itemStack.getTag() != null && itemStack.getTag().isEmpty()) {
+			itemStack.setTag(null);
 		}
 	}
 	
 	public static boolean hasLore(@NotNull ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getSubNbt(ItemStack.DISPLAY_KEY);
-		return nbtCompound != null && nbtCompound.contains(ItemStack.LORE_KEY, 8);
+		CompoundTag nbtCompound = itemStack.getTagElement(ItemStack.TAG_DISPLAY);
+		return nbtCompound != null && nbtCompound.contains(ItemStack.TAG_LORE, 8);
 	}
 	
-	public static @NotNull List<Text> getLoreList(@NotNull ItemStack itemStack) {
-		List<Text> lore = new ArrayList<>();
+	public static @NotNull List<Component> getLoreList(@NotNull ItemStack itemStack) {
+		List<Component> lore = new ArrayList<>();
 		
-		NbtCompound nbtCompound = itemStack.getSubNbt(ItemStack.DISPLAY_KEY);
-		if (nbtCompound != null && nbtCompound.contains(ItemStack.LORE_KEY, 8)) {
+		CompoundTag nbtCompound = itemStack.getTagElement(ItemStack.TAG_DISPLAY);
+		if (nbtCompound != null && nbtCompound.contains(ItemStack.TAG_LORE, 8)) {
 			try {
-				NbtList nbtList = nbtCompound.getList(ItemStack.LORE_KEY, 8);
+				ListTag nbtList = nbtCompound.getList(ItemStack.TAG_LORE, 8);
 				for (int i = 0; i < nbtList.size(); i++) {
 					String s = nbtList.getString(i);
-					Text text = Text.Serializer.fromJson(s);
+					Component text = Component.Serializer.fromJson(s);
 					lore.add(text);
 				}
 			} catch (JsonParseException e) {
-				nbtCompound.remove(ItemStack.LORE_KEY);
+				nbtCompound.remove(ItemStack.TAG_LORE);
 			}
 		}
 		
 		return lore;
 	}
 	
-	public static boolean equalsLore(List<Text> lore, ItemStack stack) {
+	public static boolean equalsLore(List<Component> lore, ItemStack stack) {
 		if (hasLore(stack)) {
-			List<Text> loreList = getLoreList(stack);
+			List<Component> loreList = getLoreList(stack);
 			
 			if (lore.size() != loreList.size()) {
 				return false;
@@ -108,14 +112,14 @@ public class LoreHelper {
 		return false;
 	}
 	
-	public static void setLore(@NotNull ItemStack stack, @Nullable Text lore) {
-		NbtCompound nbtCompound = stack.getOrCreateSubNbt(ItemStack.DISPLAY_KEY);
+	public static void setLore(@NotNull ItemStack stack, @Nullable Component lore) {
+		CompoundTag nbtCompound = stack.getOrCreateTagElement(ItemStack.TAG_DISPLAY);
 		if (lore != null) {
-			NbtList nbtList = new NbtList();
-			nbtList.addElement(0, NbtString.of(Text.Serializer.toJson(lore)));
-			nbtCompound.put(ItemStack.LORE_KEY, nbtList);
+			ListTag nbtList = new ListTag();
+			nbtList.addTag(0, StringTag.valueOf(Component.Serializer.toJson(lore)));
+			nbtCompound.put(ItemStack.TAG_LORE, nbtList);
 		} else {
-			nbtCompound.remove(ItemStack.LORE_KEY);
+			nbtCompound.remove(ItemStack.TAG_LORE);
 		}
 	}
 	

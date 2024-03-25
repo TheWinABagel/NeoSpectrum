@@ -1,8 +1,8 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.damage.*;
-import net.minecraft.item.*;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 
 public interface ArmorWithHitEffect {
 	

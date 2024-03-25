@@ -1,30 +1,31 @@
 package de.dafuqs.spectrum.items.trinkets;
 
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.energy.storage.*;
-import de.dafuqs.spectrum.api.item.*;
-import dev.emi.trinkets.api.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.item.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.api.energy.storage.FixedSingleInkStorage;
+import de.dafuqs.spectrum.api.item.AzureDikeItem;
+import dev.emi.trinkets.api.SlotReference;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class AzureDikeAmuletItem extends InkDrainTrinketItem implements AzureDikeItem {
 	
-	public AzureDikeAmuletItem(Settings settings) {
+	public AzureDikeAmuletItem(Properties settings) {
 		super(settings, UNLOCK_IDENTIFIER, InkColors.BLUE);
 	}
 	
 	@Environment(EnvType.CLIENT)
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		tooltip.add(Text.translatable("item.spectrum.azure_dike_provider.tooltip", maxAzureDike(stack)));
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		tooltip.add(Component.translatable("item.spectrum.azure_dike_provider.tooltip", maxAzureDike(stack)));
+		super.appendHoverText(stack, world, tooltip, context);
 	}
 	
 	@Override

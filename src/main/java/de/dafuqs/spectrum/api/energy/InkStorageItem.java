@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.api.energy;
 
-import net.minecraft.item.*;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Defines that an object holds a PigmentEnergyStorage

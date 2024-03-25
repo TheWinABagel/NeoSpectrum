@@ -1,19 +1,23 @@
 package de.dafuqs.spectrum.particle.effect;
 
-import com.mojang.brigadier.*;
-import com.mojang.brigadier.exceptions.*;
-import com.mojang.serialization.*;
-import com.mojang.serialization.codecs.*;
-import de.dafuqs.spectrum.particle.*;
-import net.minecraft.item.*;
-import net.minecraft.network.*;
-import net.minecraft.particle.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.math.*;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
-public class PastelTransmissionParticleEffect implements ParticleEffect {
+public class PastelTransmissionParticleEffect implements ParticleOptions {
 
 	public static final Codec<PastelTransmissionParticleEffect> CODEC = RecordCodecBuilder.create((instance) -> instance.group(
             Codec.list(BlockPos.CODEC).fieldOf("positions").forGetter((particleEffect) -> particleEffect.nodePositions),
@@ -23,9 +27,9 @@ public class PastelTransmissionParticleEffect implements ParticleEffect {
     ).apply(instance, PastelTransmissionParticleEffect::new));
 
 	@SuppressWarnings("deprecation")
-	public static final Factory<PastelTransmissionParticleEffect> FACTORY = new Factory<>() {
+	public static final Deserializer<PastelTransmissionParticleEffect> FACTORY = new Deserializer<>() {
 		@Override
-		public PastelTransmissionParticleEffect read(ParticleType<PastelTransmissionParticleEffect> particleType, StringReader stringReader) throws CommandSyntaxException {
+		public PastelTransmissionParticleEffect fromCommand(ParticleType<PastelTransmissionParticleEffect> particleType, StringReader stringReader) throws CommandSyntaxException {
 			List<BlockPos> posList = new ArrayList<>();
 			
 			stringReader.expect(' ');
@@ -53,17 +57,17 @@ public class PastelTransmissionParticleEffect implements ParticleEffect {
 			BlockPos destinationPos = new BlockPos(x2, y2, z2);
 			posList.add(sourcePos);
 			posList.add(destinationPos);
-			return new PastelTransmissionParticleEffect(posList, Items.STONE.getDefaultStack(), travelTime, color);
+			return new PastelTransmissionParticleEffect(posList, Items.STONE.getDefaultInstance(), travelTime, color);
 		}
 		
 		@Override
-		public PastelTransmissionParticleEffect read(ParticleType<PastelTransmissionParticleEffect> particleType, PacketByteBuf buf) {
+		public PastelTransmissionParticleEffect fromNetwork(ParticleType<PastelTransmissionParticleEffect> particleType, FriendlyByteBuf buf) {
 			int posCount = buf.readInt();
 			List<BlockPos> posList = new ArrayList<>();
 			for (int i = 0; i < posCount; i++) {
 				posList.add(buf.readBlockPos());
 			}
-			ItemStack stack = buf.readItemStack();
+			ItemStack stack = buf.readItem();
 			int travelTime = buf.readInt();
 			int color = buf.readInt();
 			return new PastelTransmissionParticleEffect(posList, stack, travelTime, color);
@@ -88,7 +92,7 @@ public class PastelTransmissionParticleEffect implements ParticleEffect {
 	}
 	
 	@Override
-	public String asString() {
+	public String writeToString() {
 		int nodeCount = this.nodePositions.size();
 		BlockPos source = this.nodePositions.get(0);
 		BlockPos destination = this.nodePositions.get(this.nodePositions.size() - 1);
@@ -98,16 +102,16 @@ public class PastelTransmissionParticleEffect implements ParticleEffect {
 		int g = destination.getX();
 		int h = destination.getY();
 		int i = destination.getZ();
-		return String.format(Locale.ROOT, "%s %d %d %d %d %d %d %d %d %d", Registries.PARTICLE_TYPE.getId(this.getType()), this.travelTime, nodeCount, d, e, f, g, h, i, this.color);
+		return String.format(Locale.ROOT, "%s %d %d %d %d %d %d %d %d %d", BuiltInRegistries.PARTICLE_TYPE.getKey(this.getType()), this.travelTime, nodeCount, d, e, f, g, h, i, this.color);
 	}
 
 	@Override
-    public void write(PacketByteBuf buf) {
+    public void writeToNetwork(FriendlyByteBuf buf) {
         buf.writeInt(nodePositions.size());
         for (BlockPos pos : nodePositions) {
             buf.writeBlockPos(pos);
         }
-        buf.writeItemStack(stack);
+        buf.writeItem(stack);
         buf.writeInt(travelTime);
         buf.writeInt(color);
     }

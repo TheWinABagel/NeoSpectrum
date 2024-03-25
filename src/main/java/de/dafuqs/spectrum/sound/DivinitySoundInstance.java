@@ -1,13 +1,17 @@
 package de.dafuqs.spectrum.sound;
 
 
-import de.dafuqs.spectrum.registries.*;
-import de.dafuqs.spectrum.status_effects.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.client.network.*;
-import net.minecraft.client.sound.*;
-import net.minecraft.sound.*;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
+import de.dafuqs.spectrum.status_effects.AscensionStatusEffect;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.resources.sounds.AbstractSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.TickableSoundInstance;
+import net.minecraft.sounds.SoundSource;
 
 @Environment(EnvType.CLIENT)
 public class DivinitySoundInstance extends AbstractSoundInstance implements TickableSoundInstance {
@@ -17,35 +21,35 @@ public class DivinitySoundInstance extends AbstractSoundInstance implements Tick
 	private boolean done;
 	
 	public DivinitySoundInstance() {
-		super(SpectrumSoundEvents.DIVINITY, SoundCategory.RECORDS, SoundInstance.createRandom());
-		this.repeat = true;
-		this.repeatDelay = 0;
+		super(SpectrumSoundEvents.DIVINITY, SoundSource.RECORDS, SoundInstance.createUnseededRandom());
+		this.looping = true;
+		this.delay = 0;
 		this.volume = 0.8F;
 		instances++;
-		MinecraftClient.getInstance().getSoundManager().stopSounds(null, SoundCategory.MUSIC);
+		Minecraft.getInstance().getSoundManager().stop(null, SoundSource.MUSIC);
 	}
 	
 	@Override
-	public boolean isDone() {
+	public boolean isStopped() {
 		return this.done;
 	}
 	
 	@Override
-	public boolean shouldAlwaysPlay() {
+	public boolean canStartSilent() {
 		return true;
 	}
 	
 	@Override
     public void tick() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		time++;
 		if (time > AscensionStatusEffect.MUSIC_INTRO_TICKS) {
 			this.volume = 0.8F;
 		} else {
 			this.volume = 0.5F + ((float) time / AscensionStatusEffect.MUSIC_INTRO_TICKS) * 0.2F;
 		}
-		ClientPlayerEntity player = client.player;
-		if (instances > 1 || player == null || !(player.hasStatusEffect(SpectrumStatusEffects.ASCENSION) || player.hasStatusEffect(SpectrumStatusEffects.DIVINITY))) {
+		LocalPlayer player = client.player;
+		if (instances > 1 || player == null || !(player.hasEffect(SpectrumStatusEffects.ASCENSION) || player.hasEffect(SpectrumStatusEffects.DIVINITY))) {
 			this.setDone();
 		} else {
 			this.x = ((float) player.getX());
@@ -56,7 +60,7 @@ public class DivinitySoundInstance extends AbstractSoundInstance implements Tick
 	
 	protected final void setDone() {
 		this.done = true;
-		this.repeat = false;
+		this.looping = false;
 		instances--;
 	}
 }

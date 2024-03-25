@@ -1,14 +1,16 @@
 package de.dafuqs.spectrum.inventories;
 
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.networking.SpectrumC2SPacketSender;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Inventory;
+import org.jetbrains.annotations.Nullable;
 
 @Environment(EnvType.CLIENT)
 public class PaintbrushScreen extends QuickNavigationGridScreen<PaintbrushScreenHandler> {
@@ -45,7 +47,7 @@ public class PaintbrushScreen extends QuickNavigationGridScreen<PaintbrushScreen
 			GridEntry.colored(InkColors.GRAY.getColor(), "spectrum.ink.color.gray", (screen) -> chooseColor(InkColors.GRAY))
 	);
 	
-	public PaintbrushScreen(PaintbrushScreenHandler handler, PlayerInventory playerInventory, Text title) {
+	public PaintbrushScreen(PaintbrushScreenHandler handler, Inventory playerInventory, Component title) {
 		super(handler, playerInventory, title);
 		gridStack.push(new QuickNavigationGridScreen.Grid(
 				GridEntry.CLOSE,
@@ -58,9 +60,9 @@ public class PaintbrushScreen extends QuickNavigationGridScreen<PaintbrushScreen
 	
 	protected static void chooseColor(@Nullable InkColor inkColor) {
 		SpectrumC2SPacketSender.sendInkColorSelectedInGUI(inkColor);
-		MinecraftClient client = MinecraftClient.getInstance();
-		client.world.playSound(null, client.player.getBlockPos(), SpectrumSoundEvents.PAINTBRUSH_PAINT, SoundCategory.NEUTRAL, 0.6F, 1.0F);
-		client.player.closeHandledScreen();
+		Minecraft client = Minecraft.getInstance();
+		client.level.playSound(null, client.player.blockPosition(), SpectrumSoundEvents.PAINTBRUSH_PAINT, SoundSource.NEUTRAL, 0.6F, 1.0F);
+		client.player.closeContainer();
 	}
 	
 }

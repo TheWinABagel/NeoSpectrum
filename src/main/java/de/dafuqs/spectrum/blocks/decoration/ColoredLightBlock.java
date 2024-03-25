@@ -1,20 +1,22 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import com.google.common.collect.*;
-import net.minecraft.block.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import com.google.common.collect.Maps;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.RedstoneLampBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
-import java.util.*;
+import java.util.Map;
 
 public class ColoredLightBlock extends RedstoneLampBlock {
 	
 	private static final Map<DyeColor, ColoredLightBlock> LIGHTS = Maps.newEnumMap(DyeColor.class);
 	protected final DyeColor color;
 	
-	public ColoredLightBlock(Settings settings, DyeColor color) {
+	public ColoredLightBlock(Properties settings, DyeColor color) {
 		super(settings);
 		this.color = color;
 		LIGHTS.put(color, this);
@@ -36,8 +38,8 @@ public class ColoredLightBlock extends RedstoneLampBlock {
 	 * but usually most sides will be visible either way)
 	 */
 	@Override
-	public VoxelShape getCullingShape(BlockState state, BlockView world, BlockPos pos) {
-		return VoxelShapes.empty();
+	public VoxelShape getOcclusionShape(BlockState state, BlockGetter world, BlockPos pos) {
+		return Shapes.empty();
 	}
 	
 }

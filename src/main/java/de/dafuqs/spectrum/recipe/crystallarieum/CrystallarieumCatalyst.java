@@ -1,9 +1,9 @@
 package de.dafuqs.spectrum.recipe.crystallarieum;
 
-import com.google.gson.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonObject;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class CrystallarieumCatalyst {
 	
@@ -22,22 +22,22 @@ public class CrystallarieumCatalyst {
 	}
 	
 	public static CrystallarieumCatalyst fromJson(JsonObject jsonObject) {
-		Ingredient ingredient = Ingredient.fromJson(JsonHelper.getObject(jsonObject, "ingredient"));
-		float growthAccelerationMod = JsonHelper.getFloat(jsonObject, "growth_acceleration_mod");
-		float inkConsumptionMod = JsonHelper.getFloat(jsonObject, "ink_consumption_mod");
-		float consumeChancePerSecond = JsonHelper.getFloat(jsonObject, "consume_chance_per_second");
+		Ingredient ingredient = Ingredient.fromJson(GsonHelper.getAsJsonObject(jsonObject, "ingredient"));
+		float growthAccelerationMod = GsonHelper.getAsFloat(jsonObject, "growth_acceleration_mod");
+		float inkConsumptionMod = GsonHelper.getAsFloat(jsonObject, "ink_consumption_mod");
+		float consumeChancePerSecond = GsonHelper.getAsFloat(jsonObject, "consume_chance_per_second");
 		return new CrystallarieumCatalyst(ingredient, growthAccelerationMod, inkConsumptionMod, consumeChancePerSecond);
 	}
 	
-	public void write(PacketByteBuf packetByteBuf) {
-		this.ingredient.write(packetByteBuf);
+	public void write(FriendlyByteBuf packetByteBuf) {
+		this.ingredient.toNetwork(packetByteBuf);
 		packetByteBuf.writeFloat(growthAccelerationMod);
 		packetByteBuf.writeFloat(inkConsumptionMod);
 		packetByteBuf.writeFloat(consumeChancePerSecond);
 	}
 	
-	public static CrystallarieumCatalyst fromPacket(PacketByteBuf packetByteBuf) {
-		Ingredient ingredient = Ingredient.fromPacket(packetByteBuf);
+	public static CrystallarieumCatalyst fromPacket(FriendlyByteBuf packetByteBuf) {
+		Ingredient ingredient = Ingredient.fromNetwork(packetByteBuf);
 		float growthAccelerationMod = packetByteBuf.readFloat();
 		float inkConsumptionMod = packetByteBuf.readFloat();
 		float consumeChancePerSecond = packetByteBuf.readFloat();

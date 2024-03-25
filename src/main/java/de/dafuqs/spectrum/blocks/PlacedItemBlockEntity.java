@@ -1,16 +1,17 @@
 package de.dafuqs.spectrum.blocks;
 
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.math.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.block.PlayerOwned;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.UUID;
 
 public class PlacedItemBlockEntity extends BlockEntity implements PlayerOwned {
 	
@@ -26,23 +27,23 @@ public class PlacedItemBlockEntity extends BlockEntity implements PlayerOwned {
 	}
 	
 	@Override
-	public void readNbt(NbtCompound nbt) {
-		super.readNbt(nbt);
-		this.stack = ItemStack.fromNbt(nbt.getCompound("stack"));
+	public void load(CompoundTag nbt) {
+		super.load(nbt);
+		this.stack = ItemStack.of(nbt.getCompound("stack"));
 		this.ownerUUID = PlayerOwned.readOwnerUUID(nbt);
 	}
 	
 	@Override
-	public void writeNbt(NbtCompound nbt) {
-		super.writeNbt(nbt);
-		nbt.put("stack", this.stack.writeNbt(new NbtCompound()));
+	public void saveAdditional(CompoundTag nbt) {
+		super.saveAdditional(nbt);
+		nbt.put("stack", this.stack.save(new CompoundTag()));
 		
 		PlayerOwned.writeOwnerUUID(nbt, this.ownerUUID);
 	}
 	
 	public void setStack(ItemStack stack) {
 		this.stack = stack;
-		this.markDirty();
+		this.setChanged();
 	}
 	
 	public ItemStack getStack() {
@@ -55,9 +56,9 @@ public class PlacedItemBlockEntity extends BlockEntity implements PlayerOwned {
 	}
 	
 	@Override
-	public void setOwner(@NotNull PlayerEntity playerEntity) {
-		this.ownerUUID = playerEntity.getUuid();
-		markDirty();
+	public void setOwner(@NotNull Player playerEntity) {
+		this.ownerUUID = playerEntity.getUUID();
+		setChanged();
 	}
 	
 }

@@ -1,29 +1,30 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.spectrum.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.tag.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.effect.MobEffect;
 
 public class SpectrumStatusEffectTags {
 	
-	public static TagKey<StatusEffect> UNCURABLE;
-	public static TagKey<StatusEffect> NO_DURATION_EXTENSION;
+	public static TagKey<MobEffect> UNCURABLE;
+	public static TagKey<MobEffect> NO_DURATION_EXTENSION;
 	
 	public static void register() {
 		UNCURABLE = of("uncurable");
 		NO_DURATION_EXTENSION = of("no_duration_extension");
 	}
 	
-	private static TagKey<StatusEffect> of(String id) {
-		return TagKey.of(RegistryKeys.STATUS_EFFECT, SpectrumCommon.locate(id));
+	private static TagKey<MobEffect> of(String id) {
+		return TagKey.create(Registries.MOB_EFFECT, SpectrumCommon.locate(id));
 	}
 
-	public static boolean isIn(TagKey<StatusEffect> tag, StatusEffect effect) {
-		return Registries.STATUS_EFFECT.getEntry(effect).isIn(tag);
+	public static boolean isIn(TagKey<MobEffect> tag, MobEffect effect) {
+		return BuiltInRegistries.MOB_EFFECT.wrapAsHolder(effect).is(tag);
 	}
 	
-	public static boolean isUncurable(StatusEffect statusEffect) {
+	public static boolean isUncurable(MobEffect statusEffect) {
 		return isIn(SpectrumStatusEffectTags.UNCURABLE, statusEffect);
 	}
 	

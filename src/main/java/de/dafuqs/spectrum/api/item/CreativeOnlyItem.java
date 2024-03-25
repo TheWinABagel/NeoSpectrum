@@ -1,15 +1,15 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.text.*;
-import net.minecraft.util.*;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
-import java.util.*;
+import java.util.List;
 
 public interface CreativeOnlyItem {
 	
-	Text DESCRIPTION = Text.translatable("item.spectrum.creative_only").formatted(Formatting.DARK_PURPLE);
+	Component DESCRIPTION = Component.translatable("item.spectrum.creative_only").withStyle(ChatFormatting.DARK_PURPLE);
 	
-	static void appendTooltip(List<Text> tooltip) {
+	static void appendTooltip(List<Component> tooltip) {
 		tooltip.add(DESCRIPTION);
 	}
 	

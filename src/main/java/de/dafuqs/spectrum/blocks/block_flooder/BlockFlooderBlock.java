@@ -1,23 +1,33 @@
 package de.dafuqs.spectrum.blocks.block_flooder;
 
-import com.google.common.collect.*;
-import de.dafuqs.spectrum.api.block.*;
-import de.dafuqs.spectrum.compat.claims.*;
-import de.dafuqs.spectrum.helpers.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import com.google.common.collect.ImmutableList;
+import de.dafuqs.spectrum.api.block.PlayerOwned;
+import de.dafuqs.spectrum.compat.claims.GenericClaimModsCompat;
+import de.dafuqs.spectrum.helpers.InventoryHelper;
+import de.dafuqs.spectrum.helpers.Support;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-public class BlockFlooderBlock extends BlockWithEntity {
+public class BlockFlooderBlock extends BaseEntityBlock {
 	
 	// when replacing blocks there may be cases when there is a good reason to use replacement blocks
 	// like using dirt instead of grass, because grass will be growing anyway and silk touching grass
@@ -30,68 +40,68 @@ public class BlockFlooderBlock extends BlockWithEntity {
 	}};
 	public static final List<TagKey<Block>> exchangeBlockTags = ImmutableList.copyOf(exchangeableBlocks.keySet()); // for quick lookup
 	public final short MAX_DISTANCE = 10;
-	public final BlockState DEFAULT_BLOCK_STATE = Blocks.COBBLESTONE.getDefaultState();
+	public final BlockState DEFAULT_BLOCK_STATE = Blocks.COBBLESTONE.defaultBlockState();
 	
-	public BlockFlooderBlock(Settings settings) {
+	public BlockFlooderBlock(Properties settings) {
 		super(settings);
 	}
 	
-	public static boolean isReplaceableBlock(World world, BlockPos blockPos) {
+	public static boolean isReplaceableBlock(Level world, BlockPos blockPos) {
 		BlockState state = world.getBlockState(blockPos);
 		Block block = state.getBlock();
-		return world.getBlockEntity(blockPos) == null && !(block instanceof BlockFlooderBlock) && (state.isAir() || block instanceof FluidBlock || state.isReplaceable() || block instanceof AbstractPlantBlock || block instanceof FlowerBlock);
+		return world.getBlockEntity(blockPos) == null && !(block instanceof BlockFlooderBlock) && (state.isAir() || block instanceof LiquidBlock || state.canBeReplaced() || block instanceof GrowingPlantBodyBlock || block instanceof FlowerBlock);
 	}
 	
-	public static boolean isValidCornerBlock(World world, BlockPos blockPos) {
+	public static boolean isValidCornerBlock(Level world, BlockPos blockPos) {
 		BlockState state = world.getBlockState(blockPos);
 		Block block = state.getBlock();
-		return state.isSolidBlock(world, blockPos) || block instanceof FluidBlock || block instanceof BlockFlooderBlock;
+		return state.isRedstoneConductor(world, blockPos) || block instanceof LiquidBlock || block instanceof BlockFlooderBlock;
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
-		super.onBlockAdded(state, world, pos, oldState, notify);
-		if (!world.isClient) {
-			world.scheduleBlockTick(pos, state.getBlock(), 4);
+	public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify) {
+		super.onPlace(state, world, pos, oldState, notify);
+		if (!world.isClientSide) {
+			world.scheduleTick(pos, state.getBlock(), 4);
 		}
 	}
 	
 	@Override
-	public BlockRenderType getRenderType(BlockState state) {
-		return BlockRenderType.MODEL;
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 	
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new BlockFlooderBlockEntity(pos, state);
 	}
 	
 	@SuppressWarnings("deprecation")
-	private boolean calculateTargetBlockAndPropagate(BlockState state, World world, BlockPos pos, Random random) {
+	private boolean calculateTargetBlockAndPropagate(BlockState state, Level world, BlockPos pos, RandomSource random) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity instanceof BlockFlooderBlockEntity blockFlooderBlockEntity) {
-			PlayerEntity owner = PlayerOwned.getPlayerEntityIfOnline(blockFlooderBlockEntity.getOwnerUUID());
+			Player owner = PlayerOwned.getPlayerEntityIfOnline(blockFlooderBlockEntity.getOwnerUUID());
 			if (owner == null) {
-				world.setBlockState(pos, DEFAULT_BLOCK_STATE, 3);
+				world.setBlock(pos, DEFAULT_BLOCK_STATE, 3);
 				return false;
 			}
 			
 			Map<Block, Integer> neighboringBlockAmounts = new HashMap<>();
 			for (Direction direction : Direction.values()) {
-				BlockPos targetBlockPos = pos.offset(direction);
+				BlockPos targetBlockPos = pos.relative(direction);
 				BlockState currentBlockState = world.getBlockState(targetBlockPos);
 				BlockEntity currentBlockEntity = world.getBlockEntity(targetBlockPos);
 				
-				if (!currentBlockState.isOf(this) && currentBlockEntity == null) {
+				if (!currentBlockState.is(this) && currentBlockEntity == null) {
 					if (isReplaceableBlock(world, targetBlockPos)) {
-						Vec3i nextPos = new Vec3i(targetBlockPos.offset(direction).getX(), targetBlockPos.offset(direction).getY(), targetBlockPos.offset(direction).getZ());
-						if (blockFlooderBlockEntity.getSourcePos().isWithinDistance(nextPos, MAX_DISTANCE)
+						Vec3i nextPos = new Vec3i(targetBlockPos.relative(direction).getX(), targetBlockPos.relative(direction).getY(), targetBlockPos.relative(direction).getZ());
+						if (blockFlooderBlockEntity.getSourcePos().closerThan(nextPos, MAX_DISTANCE)
 								&& GenericClaimModsCompat.canPlaceBlock(world, targetBlockPos, owner)
 								&& shouldPropagateTo(world, targetBlockPos)) {
 							
-							world.setBlockState(targetBlockPos, state, 3);
+							world.setBlock(targetBlockPos, state, 3);
 							if (world.getBlockEntity(targetBlockPos) instanceof BlockFlooderBlockEntity neighboringBlockFlooderBlockEntity) {
 								neighboringBlockFlooderBlockEntity.setOwnerUUID(blockFlooderBlockEntity.getOwnerUUID());
 								neighboringBlockFlooderBlockEntity.setSourcePos(blockFlooderBlockEntity.getSourcePos());
@@ -100,7 +110,7 @@ public class BlockFlooderBlock extends BlockWithEntity {
 					} else {
 						Block currentBlock = currentBlockState.getBlock();
 						
-						if (currentBlockState.isSolidBlock(world, targetBlockPos)) {
+						if (currentBlockState.isRedstoneConductor(world, targetBlockPos)) {
 							if (neighboringBlockAmounts.containsKey(currentBlock)) {
 								neighboringBlockAmounts.put(currentBlock, neighboringBlockAmounts.get(currentBlock) + 1);
 							} else {
@@ -123,16 +133,16 @@ public class BlockFlooderBlock extends BlockWithEntity {
 					if (blockItem != Items.AIR) {
 						if (currentOccurrences > max || (currentOccurrences == max && random.nextBoolean())) {
 							ItemStack currentItemStack = new ItemStack(blockItem);
-							if (owner.isCreative() || owner.getInventory().contains(currentItemStack) && currentBlock.canPlaceAt(currentBlock.getDefaultState(), world, pos)) {
+							if (owner.isCreative() || owner.getInventory().contains(currentItemStack) && currentBlock.canSurvive(currentBlock.defaultBlockState(), world, pos)) {
 								maxBlock = currentBlock;
 							} else {
-								Optional<TagKey<Block>> tag = Support.getFirstMatchingBlockTag(currentBlock.getDefaultState(), exchangeBlockTags);
+								Optional<TagKey<Block>> tag = Support.getFirstMatchingBlockTag(currentBlock.defaultBlockState(), exchangeBlockTags);
 								if (tag.isPresent()) {
 									currentBlock = exchangeableBlocks.get(tag.get());
 									blockItem = currentBlock.asItem();
 									if (blockItem != Items.AIR) {
 										currentItemStack = new ItemStack(blockItem);
-										if (owner.isCreative() || owner.getInventory().contains(currentItemStack) && currentBlock.canPlaceAt(currentBlock.getDefaultState(), world, pos)) {
+										if (owner.isCreative() || owner.getInventory().contains(currentItemStack) && currentBlock.canSurvive(currentBlock.defaultBlockState(), world, pos)) {
 											maxBlock = currentBlock;
 										}
 									}
@@ -144,7 +154,7 @@ public class BlockFlooderBlock extends BlockWithEntity {
 				
 				if (maxBlock != null) {
 					// and turn this to the leftover block state
-					blockFlooderBlockEntity.setTargetBlockState(maxBlock.getDefaultState());
+					blockFlooderBlockEntity.setTargetBlockState(maxBlock.defaultBlockState());
 				} else {
 					blockFlooderBlockEntity.setTargetBlockState(DEFAULT_BLOCK_STATE);
 				}
@@ -155,24 +165,24 @@ public class BlockFlooderBlock extends BlockWithEntity {
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
-		super.scheduledTick(state, world, pos, random);
+	public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
+		super.tick(state, world, pos, random);
 		
-		if (!world.isClient) {
+		if (!world.isClientSide) {
 			if (world.getBlockEntity(pos) instanceof BlockFlooderBlockEntity blockFlooderBlockEntity) {
 				BlockState targetState = blockFlooderBlockEntity.getTargetBlockState();
 				if (targetState == null || targetState.isAir()) {
 					boolean scheduleUpdate = calculateTargetBlockAndPropagate(state, world, pos, world.getRandom());
 					if (scheduleUpdate) {
-						world.scheduleBlockTick(pos, state.getBlock(), 2 + random.nextInt(5));
+						world.scheduleTick(pos, state.getBlock(), 2 + random.nextInt(5));
 					}
 				} else {
-					world.setBlockState(pos, targetState, 3);
-					PlayerEntity owner = PlayerOwned.getPlayerEntityIfOnline(blockFlooderBlockEntity.getOwnerUUID());
+					world.setBlock(pos, targetState, 3);
+					Player owner = PlayerOwned.getPlayerEntityIfOnline(blockFlooderBlockEntity.getOwnerUUID());
 					if (!owner.isCreative()) {
 						List<ItemStack> remainders = InventoryHelper.removeFromInventoryWithRemainders(new ItemStack(targetState.getBlock().asItem()), owner.getInventory());
 						for (ItemStack remainder : remainders) {
-							owner.getInventory().offerOrDrop(remainder);
+							owner.getInventory().placeItemBackInInventory(remainder);
 						}
 					}
 				}
@@ -181,12 +191,12 @@ public class BlockFlooderBlock extends BlockWithEntity {
 		
 	}
 	
-	private boolean shouldPropagateTo(World world, BlockPos targetBlockPos) {
+	private boolean shouldPropagateTo(Level world, BlockPos targetBlockPos) {
 		if (isReplaceableBlock(world, targetBlockPos)) {
 			int count = 0;
 			for (Direction direction : Direction.values()) {
 				for (int i = 1; i < MAX_DISTANCE / 2; i++) {
-					BlockPos offsetPos = targetBlockPos.offset(direction, i);
+					BlockPos offsetPos = targetBlockPos.relative(direction, i);
 					if (isValidCornerBlock(world, offsetPos)) {
 						count++;
 						break;

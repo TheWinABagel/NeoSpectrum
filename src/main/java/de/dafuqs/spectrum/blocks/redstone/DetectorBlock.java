@@ -1,94 +1,104 @@
 package de.dafuqs.spectrum.blocks.redstone;
 
-import net.minecraft.block.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.server.world.*;
-import net.minecraft.state.StateManager.*;
-import net.minecraft.state.property.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition.Builder;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public abstract class DetectorBlock extends Block {
 	
-	public static final IntProperty POWER = Properties.POWER;
-	public static final BooleanProperty INVERTED = Properties.INVERTED;
-	protected static final VoxelShape SHAPE = Block.createCuboidShape(0.0D, 0.0D, 0.0D, 16.0D, 6.0D, 16.0D);
+	public static final IntegerProperty POWER = BlockStateProperties.POWER;
+	public static final BooleanProperty INVERTED = BlockStateProperties.INVERTED;
+	protected static final VoxelShape SHAPE = Block.box(0.0D, 0.0D, 0.0D, 16.0D, 6.0D, 16.0D);
 	
-	public DetectorBlock(Settings settings) {
+	public DetectorBlock(Properties settings) {
 		super(settings);
-		this.setDefaultState(((this.stateManager.getDefaultState()).with(POWER, 0)).with(INVERTED, false));
+		this.registerDefaultState(((this.stateDefinition.any()).setValue(POWER, 0)).setValue(INVERTED, false));
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		if (player.canModifyBlocks()) {
-			if (world.isClient) {
-				return ActionResult.SUCCESS;
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		if (player.mayBuild()) {
+			if (world.isClientSide) {
+				return InteractionResult.SUCCESS;
 			} else {
 				BlockState blockState = state.cycle(INVERTED);
-				world.setBlockState(pos, blockState, 4);
+				world.setBlock(pos, blockState, 4);
 				updateState(blockState, world, pos);
-				return ActionResult.CONSUME;
+				return InteractionResult.CONSUME;
 			}
 		} else {
-			return super.onUse(state, world, pos, player, hand, hit);
+			return super.use(state, world, pos, player, hand, hit);
 		}
 	}
 	
 	@Override
-	protected void appendProperties(Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(Builder<Block, BlockState> builder) {
 		builder.add(POWER, INVERTED);
 	}
 	
 	@Override
-	public BlockRenderType getRenderType(BlockState state) {
-		return BlockRenderType.MODEL;
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 	
 	@Override
-	public boolean emitsRedstonePower(BlockState state) {
+	public boolean isSignalSource(BlockState state) {
 		return true;
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return SHAPE;
 	}
 	
 	@Override
-	public boolean hasSidedTransparency(BlockState state) {
+	public boolean useShapeForLightOcclusion(BlockState state) {
 		return true;
 	}
 	
 	@Override
-	public int getWeakRedstonePower(BlockState state, BlockView world, BlockPos pos, Direction direction) {
-		return state.get(POWER);
+	public int getSignal(BlockState state, BlockGetter world, BlockPos pos, Direction direction) {
+		return state.getValue(POWER);
 	}
 	
 	@Override
 	@Deprecated
-	public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
+	public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify) {
 		updateState(state, world, pos);
-		world.scheduleBlockTick(pos, state.getBlock(), getUpdateFrequencyTicks());
+		world.scheduleTick(pos, state.getBlock(), getUpdateFrequencyTicks());
 	}
 	
 	@Override
-	public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		updateState(state, world, pos);
-		world.scheduleBlockTick(pos, state.getBlock(), getUpdateFrequencyTicks());
+		world.scheduleTick(pos, state.getBlock(), getUpdateFrequencyTicks());
 	}
 	
-	abstract void updateState(BlockState state, World world, BlockPos pos);
+	abstract void updateState(BlockState state, Level world, BlockPos pos);
 	
 	abstract int getUpdateFrequencyTicks();
 	
-	protected Box getBoxWithRadius(BlockPos blockPos, int radius) {
-		return Box.of(Vec3d.ofCenter(blockPos), radius, radius, radius);
+	protected AABB getBoxWithRadius(BlockPos blockPos, int radius) {
+		return AABB.ofSize(Vec3.atCenterOf(blockPos), radius, radius, radius);
 	}
 	
 }

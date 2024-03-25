@@ -1,29 +1,32 @@
 package de.dafuqs.spectrum.items.tools;
 
-import de.dafuqs.spectrum.api.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.item.*;
+import de.dafuqs.spectrum.api.item.Preenchanted;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ShovelItem;
+import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 
-import java.util.*;
+import java.util.Map;
 
 public class BedrockShovelItem extends ShovelItem implements Preenchanted {
 	
-	public BedrockShovelItem(ToolMaterial material, int attackDamage, float attackSpeed, Settings settings) {
+	public BedrockShovelItem(Tier material, int attackDamage, float attackSpeed, Properties settings) {
 		super(material, attackDamage, attackSpeed, settings);
 	}
 	
 	@Override
-	public boolean isDamageable() {
+	public boolean canBeDepleted() {
 		return false;
 	}
 	
 	@Override
 	public Map<Enchantment, Integer> getDefaultEnchantments() {
-		return Map.of(Enchantments.EFFICIENCY, 6);
+		return Map.of(Enchantments.BLOCK_EFFICIENCY, 6);
 	}
 	
 	@Override
-	public ItemStack getDefaultStack() {
+	public ItemStack getDefaultInstance() {
 		return getDefaultEnchantedStack(this);
 	}
 	

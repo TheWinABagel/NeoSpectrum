@@ -1,26 +1,29 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.recipe.fusion_shrine.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.display.basic.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.minecraft.client.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.compat.REI.GatedSpectrumDisplay;
+import de.dafuqs.spectrum.compat.REI.REIHelper;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.recipe.fusion_shrine.FusionShrineRecipe;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public class FusionShrineDisplay extends GatedSpectrumDisplay {
 	
 	protected final float experience;
 	protected final int craftingTime;
-	protected final Optional<Text> description;
+	protected final Optional<Component> description;
 	
 	public FusionShrineDisplay(@NotNull FusionShrineRecipe recipe) {
-		super(recipe, buildIngredients(recipe), recipe.getOutput(BasicDisplay.registryAccess()));
+		super(recipe, buildIngredients(recipe), recipe.getResultItem(BasicDisplay.registryAccess()));
 		this.experience = recipe.getExperience();
 		this.craftingTime = recipe.getCraftingTime();
 		this.description = recipe.getDescription();
@@ -39,11 +42,11 @@ public class FusionShrineDisplay extends GatedSpectrumDisplay {
 	
 	@Override
     public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return AdvancementHelper.hasAdvancement(client.player, FusionShrineRecipe.UNLOCK_IDENTIFIER) && super.isUnlocked();
 	}
 	
-	public Optional<Text> getDescription() {
+	public Optional<Component> getDescription() {
 		return this.description;
 	}
 	

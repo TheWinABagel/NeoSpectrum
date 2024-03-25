@@ -1,18 +1,22 @@
 package de.dafuqs.spectrum.entity.render;
 
-import de.dafuqs.spectrum.entity.entity.*;
-import de.dafuqs.spectrum.registries.client.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.*;
-import net.minecraft.client.render.item.*;
-import net.minecraft.client.render.model.*;
-import net.minecraft.client.render.model.json.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.item.*;
-import net.minecraft.screen.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import de.dafuqs.spectrum.entity.entity.BidentBaseEntity;
+import de.dafuqs.spectrum.registries.client.SpectrumModelPredicateProviders;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 
 @Environment(EnvType.CLIENT)
 public class BidentEntityRenderer extends EntityRenderer<BidentBaseEntity> {
@@ -21,11 +25,11 @@ public class BidentEntityRenderer extends EntityRenderer<BidentBaseEntity> {
 	private final float scale;
 	private final boolean center;
 	
-	public BidentEntityRenderer(EntityRendererFactory.Context context) {
+	public BidentEntityRenderer(EntityRendererProvider.Context context) {
 		this(context, 2F, false);
 	}
 
-	public BidentEntityRenderer(EntityRendererFactory.Context context, float scale, boolean center) {
+	public BidentEntityRenderer(EntityRendererProvider.Context context, float scale, boolean center) {
 		super(context);
 		this.itemRenderer = context.getItemRenderer();
 		this.scale = scale;
@@ -33,31 +37,31 @@ public class BidentEntityRenderer extends EntityRenderer<BidentBaseEntity> {
 	}
 	
 	@Override
-	public void render(BidentBaseEntity bidentBaseEntity, float yaw, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light) {
+	public void render(BidentBaseEntity bidentBaseEntity, float yaw, float tickDelta, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int light) {
 		ItemStack itemStack = bidentBaseEntity.getTrackedStack();
 		renderAsItemStack(bidentBaseEntity, tickDelta, matrixStack, vertexConsumerProvider, light, itemStack);
 		super.render(bidentBaseEntity, yaw, tickDelta, matrixStack, vertexConsumerProvider, light);
 	}
 	
-	private void renderAsItemStack(BidentBaseEntity entity, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, ItemStack itemStack) {
-		SpectrumModelPredicateProviders.currentItemRenderMode = ModelTransformationMode.NONE;
-		BakedModel bakedModel = this.itemRenderer.getModel(itemStack, entity.getWorld(), null, entity.getId());
+	private void renderAsItemStack(BidentBaseEntity entity, float tickDelta, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int light, ItemStack itemStack) {
+		SpectrumModelPredicateProviders.currentItemRenderMode = ItemDisplayContext.NONE;
+		BakedModel bakedModel = this.itemRenderer.getModel(itemStack, entity.level(), null, entity.getId());
 		
-		matrixStack.push();
-		matrixStack.translate(0, entity.calculateBoundingBox().getAverageSideLength() / 2, 0);
-		matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(MathHelper.lerp(tickDelta, entity.prevYaw, entity.getYaw()) - 90.0F));
-		matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-135 + MathHelper.lerp(tickDelta, entity.prevPitch, entity.getPitch()) + 90.0F));
+		matrixStack.pushPose();
+		matrixStack.translate(0, entity.makeBoundingBox().getSize() / 2, 0);
+		matrixStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(tickDelta, entity.yRotO, entity.getYRot()) - 90.0F));
+		matrixStack.mulPose(Axis.ZP.rotationDegrees(-135 + Mth.lerp(tickDelta, entity.xRotO, entity.getXRot()) + 90.0F));
 
 		matrixStack.scale(scale, scale, scale);
 
-		this.itemRenderer.renderItem(itemStack, ModelTransformationMode.NONE, false, matrixStack, vertexConsumerProvider, light, OverlayTexture.DEFAULT_UV, bakedModel);
+		this.itemRenderer.render(itemStack, ItemDisplayContext.NONE, false, matrixStack, vertexConsumerProvider, light, OverlayTexture.NO_OVERLAY, bakedModel);
 
-		matrixStack.pop();
+		matrixStack.popPose();
 	}
 
 	@Override
-	public Identifier getTexture(BidentBaseEntity entity) {
-		return PlayerScreenHandler.BLOCK_ATLAS_TEXTURE;
+	public ResourceLocation getTexture(BidentBaseEntity entity) {
+		return InventoryMenu.BLOCK_ATLAS;
 	}
 
 }

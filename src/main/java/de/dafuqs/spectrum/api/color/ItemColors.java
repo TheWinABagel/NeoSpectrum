@@ -1,10 +1,12 @@
 package de.dafuqs.spectrum.api.color;
 
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Optional;
 
 public class ItemColors extends ColorRegistry<Item> {
 	

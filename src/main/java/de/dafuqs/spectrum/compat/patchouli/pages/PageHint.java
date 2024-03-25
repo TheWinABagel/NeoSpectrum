@@ -1,42 +1,48 @@
 package de.dafuqs.spectrum.compat.patchouli.pages;
 
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.sound.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.*;
-import net.minecraft.client.resource.language.*;
-import net.minecraft.recipe.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import vazkii.patchouli.api.*;
-import vazkii.patchouli.client.base.*;
-import vazkii.patchouli.client.book.*;
-import vazkii.patchouli.client.book.gui.*;
-import vazkii.patchouli.common.book.*;
+import de.dafuqs.spectrum.helpers.InventoryHelper;
+import de.dafuqs.spectrum.networking.SpectrumC2SPacketSender;
+import de.dafuqs.spectrum.sound.HintRevelationSoundInstance;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import vazkii.patchouli.api.IVariable;
+import vazkii.patchouli.client.base.PersistentData;
+import vazkii.patchouli.client.book.BookContentsBuilder;
+import vazkii.patchouli.client.book.BookEntry;
+import vazkii.patchouli.client.book.BookPage;
+import vazkii.patchouli.client.book.gui.BookTextRenderer;
+import vazkii.patchouli.client.book.gui.GuiBook;
+import vazkii.patchouli.client.book.gui.GuiBookEntry;
+import vazkii.patchouli.common.book.Book;
 
-import java.util.*;
+import java.util.List;
 
 public class PageHint extends BookPage {
 	
-	public static class PaymentButtonWidget extends ButtonWidget {
+	public static class PaymentButtonWidget extends Button {
 		
 		final PageHint pageHint;
 		
-		public PaymentButtonWidget(int x, int y, int width, int height, Text message, PressAction onPress, PageHint pageHint) {
-			super(x, y, width, height, message, onPress, ButtonWidget.DEFAULT_NARRATION_SUPPLIER);
+		public PaymentButtonWidget(int x, int y, int width, int height, Component message, OnPress onPress, PageHint pageHint) {
+			super(x, y, width, height, message, onPress, Button.DEFAULT_NARRATION);
 			this.pageHint = pageHint;
-			setMessage(Text.translatable("spectrum.gui.lexicon.reveal_hint_button.text"));
+			setMessage(Component.translatable("spectrum.gui.lexicon.reveal_hint_button.text"));
 		}
 		
 		@Override
-		public void renderButton(DrawContext drawContext, int mouseX, int mouseY, float delta) {
+		public void renderWidget(GuiGraphics drawContext, int mouseX, int mouseY, float delta) {
 			if (pageHint.revealProgress < 0) {
-				super.renderButton(drawContext, mouseX, mouseY, delta);
+				super.renderWidget(drawContext, mouseX, mouseY, delta);
 			}
 		}
 		
@@ -52,8 +58,8 @@ public class PageHint extends BookPage {
 	transient long lastRevealTick; // advance revealProgress each time this does not match the previous tick
 	transient long revealProgress; // -1: not revealed, 0: fully revealed; 1+: currently revealing (+1 every tick)
 	
-	Text rawText;
-	Text displayedText;
+	Component rawText;
+	Component displayedText;
 	
 	String title;
 	
@@ -62,7 +68,7 @@ public class PageHint extends BookPage {
 	}
 	
 	@Override
-	public void build(World world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
+	public void build(Level world, BookEntry entry, BookContentsBuilder builder, int pageNum) {
 		super.build(world, entry, builder, pageNum);
 		ingredient = cost.as(Ingredient.class);
 	}
@@ -74,14 +80,14 @@ public class PageHint extends BookPage {
 	@Override
 	public void onDisplayed(GuiBookEntry parent, int left, int top) {
 		super.onDisplayed(parent, left, top);
-		rawText = text.as(Text.class);
+		rawText = text.as(Component.class);
 		
 		boolean isDone = isQuestDone(parent.book);
 		if (!isDone) {
 			revealProgress = -1;
 			displayedText = calculateTextToRender(rawText);
 			
-			PaymentButtonWidget paymentButtonWidget = new PaymentButtonWidget(GuiBook.PAGE_WIDTH / 2 - 50, GuiBook.PAGE_HEIGHT - 35, 100, 20, Text.empty(), this::paymentButtonClicked, this);
+			PaymentButtonWidget paymentButtonWidget = new PaymentButtonWidget(GuiBook.PAGE_WIDTH / 2 - 50, GuiBook.PAGE_HEIGHT - 35, 100, 20, Component.empty(), this::paymentButtonClicked, this);
 			addButton(paymentButtonWidget);
 		} else {
 			displayedText = rawText;
@@ -90,18 +96,18 @@ public class PageHint extends BookPage {
 		textRender = new BookTextRenderer(parent, displayedText, 0, getTextHeight());
 	}
 	
-	private Text calculateTextToRender(Text text) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	private Component calculateTextToRender(Component text) {
+		Minecraft client = Minecraft.getInstance();
 		if (revealProgress == 0) {
 			return text;
 		} else if (revealProgress < 0) {
-			return Text.literal("$(obf)" + text.getString());
+			return Component.literal("$(obf)" + text.getString());
 		}
 		
 		// Show a new letter each tick
-		Text calculatedText = Text.literal(text.getString().substring(0, (int) revealProgress) + "$(obf)" + text.getString().substring((int) revealProgress));
+		Component calculatedText = Component.literal(text.getString().substring(0, (int) revealProgress) + "$(obf)" + text.getString().substring((int) revealProgress));
 		
-		long currentTime = client.world.getTime();
+		long currentTime = client.level.getGameTime();
 		if (currentTime != lastRevealTick) {
 			lastRevealTick = currentTime;
 			
@@ -116,13 +122,13 @@ public class PageHint extends BookPage {
 		return calculatedText;
 	}
 	
-	protected Identifier getEntryId() {
-		return new Identifier(entry.getId().getNamespace(), entry.getId().getPath() + "_" + this.pageNum);
+	protected ResourceLocation getEntryId() {
+		return new ResourceLocation(entry.getId().getNamespace(), entry.getId().getPath() + "_" + this.pageNum);
 	}
 	
 	@Environment(EnvType.CLIENT)
-	protected void paymentButtonClicked(ButtonWidget button) {
-		MinecraftClient client = MinecraftClient.getInstance();
+	protected void paymentButtonClicked(Button button) {
+		Minecraft client = Minecraft.getInstance();
 		if (revealProgress > -1) {
 			// has already been paid
 			return;
@@ -134,17 +140,17 @@ public class PageHint extends BookPage {
 			PersistentData.save();
 			entry.markReadStateDirty();
 			
-			MinecraftClient.getInstance().getSoundManager().play(new HintRevelationSoundInstance(mc.player, rawText.getString().length()));
+			Minecraft.getInstance().getSoundManager().play(new HintRevelationSoundInstance(mc.player, rawText.getString().length()));
 			
 			SpectrumC2SPacketSender.sendGuidebookHintBoughtPaket(ingredient);
 			revealProgress = 1;
-			lastRevealTick = client.world.getTime();
-			client.player.playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 1.0F, 1.0F);
+			lastRevealTick = client.level.getGameTime();
+			client.player.playNotifySound(SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 1.0F, 1.0F);
 		}
 	}
 	
 	@Override
-	public void render(DrawContext drawContext, int mouseX, int mouseY, float pticks) {
+	public void render(GuiGraphics drawContext, int mouseX, int mouseY, float pticks) {
 		super.render(drawContext, mouseX, mouseY, pticks);
 		
 		if (revealProgress >= 0) {
@@ -155,7 +161,7 @@ public class PageHint extends BookPage {
 			parent.renderIngredient(drawContext, GuiBook.PAGE_WIDTH / 2 + 23, GuiBook.PAGE_HEIGHT - 34, mouseX, mouseY, ingredient);
 		}
 		
-		parent.drawCenteredStringNoShadow(drawContext, title == null || title.isEmpty() ? I18n.translate("patchouli.gui.lexicon.objective") : i18n(title), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
+		parent.drawCenteredStringNoShadow(drawContext, title == null || title.isEmpty() ? I18n.get("patchouli.gui.lexicon.objective") : i18n(title), GuiBook.PAGE_WIDTH / 2, 0, book.headerColor);
 		GuiBook.drawSeparator(drawContext, book, 0, 12);
 	}
 	

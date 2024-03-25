@@ -1,11 +1,15 @@
 package de.dafuqs.spectrum.blocks.gemstone;
 
-import net.minecraft.block.*;
-import net.minecraft.fluid.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.AmethystClusterBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BuddingAmethystBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.Fluids;
 
 public class SpectrumBuddingBlock extends SpectrumGemstoneBlock {
 
@@ -15,7 +19,7 @@ public class SpectrumBuddingBlock extends SpectrumGemstoneBlock {
 	private final Block largeBlock;
 	private final Block clusterBlock;
 	
-	public SpectrumBuddingBlock(Settings settings, Block smallBlock, Block mediumBlock, Block largeBlock, Block clusterBlock, SoundEvent hitSoundEvent, SoundEvent chimeSoundEvent) {
+	public SpectrumBuddingBlock(Properties settings, Block smallBlock, Block mediumBlock, Block largeBlock, Block clusterBlock, SoundEvent hitSoundEvent, SoundEvent chimeSoundEvent) {
 		super(settings, hitSoundEvent, chimeSoundEvent);
 		
 		this.smallBlock = smallBlock;
@@ -25,24 +29,24 @@ public class SpectrumBuddingBlock extends SpectrumGemstoneBlock {
 	}
 	
 	@Override
-	public void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		if (random.nextInt(5) == 0) {
-			Direction direction = DIRECTIONS[random.nextInt(DIRECTIONS.length)];
-			BlockPos blockPos = pos.offset(direction);
+			Direction direction = UPDATE_SHAPE_ORDER[random.nextInt(UPDATE_SHAPE_ORDER.length)];
+			BlockPos blockPos = pos.relative(direction);
 			BlockState blockState = world.getBlockState(blockPos);
 			Block block = null;
-			if (BuddingAmethystBlock.canGrowIn(blockState)) {
+			if (BuddingAmethystBlock.canClusterGrowAtState(blockState)) {
 				block = smallBlock;
-			} else if (blockState.isOf(smallBlock) && blockState.get(AmethystClusterBlock.FACING) == direction) {
+			} else if (blockState.is(smallBlock) && blockState.getValue(AmethystClusterBlock.FACING) == direction) {
 				block = mediumBlock;
-			} else if (blockState.isOf(mediumBlock) && blockState.get(AmethystClusterBlock.FACING) == direction) {
+			} else if (blockState.is(mediumBlock) && blockState.getValue(AmethystClusterBlock.FACING) == direction) {
 				block = largeBlock;
-			} else if (blockState.isOf(largeBlock) && blockState.get(AmethystClusterBlock.FACING) == direction) {
+			} else if (blockState.is(largeBlock) && blockState.getValue(AmethystClusterBlock.FACING) == direction) {
 				block = clusterBlock;
 			}
 			
 			if (block != null) {
-				world.setBlockState(blockPos, block.getDefaultState().with(AmethystClusterBlock.FACING, direction).with(AmethystClusterBlock.WATERLOGGED, blockState.getFluidState().getFluid() == Fluids.WATER));
+				world.setBlockAndUpdate(blockPos, block.defaultBlockState().setValue(AmethystClusterBlock.FACING, direction).setValue(AmethystClusterBlock.WATERLOGGED, blockState.getFluidState().getType() == Fluids.WATER));
 			}
 		}
 	}

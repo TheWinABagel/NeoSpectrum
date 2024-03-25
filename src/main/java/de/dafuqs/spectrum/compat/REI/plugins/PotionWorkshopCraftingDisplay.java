@@ -1,11 +1,12 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.recipe.potion_workshop.*;
-import me.shedaniel.rei.api.common.category.*;
-import de.dafuqs.matchbooks.recipe.*;
-import net.minecraft.client.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.recipe.potion_workshop.PotionWorkshopCraftingRecipe;
+import de.dafuqs.spectrum.recipe.potion_workshop.PotionWorkshopRecipe;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import net.minecraft.client.Minecraft;
 
 public class PotionWorkshopCraftingDisplay extends PotionWorkshopRecipeDisplay {
 	
@@ -30,7 +31,7 @@ public class PotionWorkshopCraftingDisplay extends PotionWorkshopRecipeDisplay {
 	
 	@Override
     public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		return AdvancementHelper.hasAdvancement(client.player, PotionWorkshopRecipe.UNLOCK_IDENTIFIER) && super.isUnlocked();
 	}
 	

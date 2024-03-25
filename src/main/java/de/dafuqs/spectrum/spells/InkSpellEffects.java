@@ -1,21 +1,29 @@
 package de.dafuqs.spectrum.spells;
 
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.blocks.idols.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.entity.*;
-import net.minecraft.particle.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.blocks.idols.FirestarterIdolBlock;
+import de.dafuqs.spectrum.helpers.BlockVariantHelper;
+import de.dafuqs.spectrum.helpers.Support;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class InkSpellEffects {
 	
@@ -33,9 +41,9 @@ public class InkSpellEffects {
 		
 		registerEffect(new InkSpellEffect(InkColors.PINK) {
 			@Override
-			public void playEffects(World world, Vec3d origin, float potency) {
+			public void playEffects(Level world, Vec3 origin, float potency) {
 				int count = 12 + (int) (potency * 3);
-				Random random = world.random;
+				RandomSource random = world.random;
 				for (int i = 0; i < count; i++) {
 					world.addParticle(ParticleTypes.WAX_OFF,
 							origin.x + potency - random.nextFloat() * potency * 2,
@@ -46,27 +54,27 @@ public class InkSpellEffects {
 			}
 			
 			@Override
-            void affectEntity(Entity entity, Vec3d origin, float potency) {
+            void affectEntity(Entity entity, Vec3 origin, float potency) {
 				// heal living entities
-				World world = entity.getWorld();
-				if (entity instanceof LivingEntity livingEntity && (livingEntity.getHealth() < livingEntity.getMaxHealth() || livingEntity.isUndead())) {
-					float amount = potency - (float) entity.getPos().distanceTo(origin);
+				Level world = entity.level();
+				if (entity instanceof LivingEntity livingEntity && (livingEntity.getHealth() < livingEntity.getMaxHealth() || livingEntity.isInvertedHealAndHarm())) {
+					float amount = potency - (float) entity.position().distanceTo(origin);
 					if (amount >= 1) {
 						livingEntity.heal(amount);
-						entity.getWorld().playSound(null, entity.getBlockPos(), SpectrumSoundEvents.BLOCK_CITRINE_BLOCK_CHIME, SoundCategory.NEUTRAL, 1.0F, 0.9F + world.random.nextFloat() * 0.2F);
-						SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerWorld) entity.getWorld(), entity.getPos(), ParticleTypes.WAX_OFF, 10, new Vec3d(0.5, 0.5, 0.5), new Vec3d(0, 0, 0));
+						entity.level().playSound(null, entity.blockPosition(), SpectrumSoundEvents.BLOCK_CITRINE_BLOCK_CHIME, SoundSource.NEUTRAL, 1.0F, 0.9F + world.random.nextFloat() * 0.2F);
+						SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerLevel) entity.level(), entity.position(), ParticleTypes.WAX_OFF, 10, new Vec3(0.5, 0.5, 0.5), new Vec3(0, 0, 0));
 					}
 				}
 			}
 			
 			@Override
-			void affectArea(World world, BlockPos origin, float potency) {
+			void affectArea(Level world, BlockPos origin, float potency) {
 				// repair damaged blocks
 				int range = Support.getIntFromDecimalWithChance(potency, world.random);
-				for (BlockPos blockPos : BlockPos.iterateOutwards(origin, range, range, range)) {
+				for (BlockPos blockPos : BlockPos.withinManhattan(origin, range, range, range)) {
 					Block repairedBlock = BlockVariantHelper.getCursedRepairedBlockVariant(world, blockPos);
 					if (repairedBlock != Blocks.AIR) {
-						world.setBlockState(blockPos, repairedBlock.getDefaultState());
+						world.setBlockAndUpdate(blockPos, repairedBlock.defaultBlockState());
 					}
 				}
 			}
@@ -74,12 +82,12 @@ public class InkSpellEffects {
 		
 		registerEffect(new InkSpellEffect(InkColors.ORANGE) {
 			@Override
-			public void playEffects(World world, Vec3d origin, float potency) {
+			public void playEffects(Level world, Vec3 origin, float potency) {
 				world.addParticle(ParticleTypes.EXPLOSION_EMITTER, origin.x, origin.y, origin.z, 0, 0, 0);
-				world.playSound(origin.x, origin.y, origin.z, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.BLOCKS, 4.0F, (1.0F + (world.random.nextFloat() - world.random.nextFloat()) * 0.2F) * 0.7F, false);
+				world.playLocalSound(origin.x, origin.y, origin.z, SoundEvents.GENERIC_EXPLODE, SoundSource.BLOCKS, 4.0F, (1.0F + (world.random.nextFloat() - world.random.nextFloat()) * 0.2F) * 0.7F, false);
 				
 				int count = 10 + (int) (potency * 3);
-				Random random = world.random;
+				RandomSource random = world.random;
 				for (int i = 0; i < count; i++) {
 					world.addParticle(ParticleTypes.DRIPPING_LAVA,
 							origin.x + potency - random.nextFloat() * potency * 2,
@@ -90,29 +98,29 @@ public class InkSpellEffects {
 			}
 			
 			@Override
-            void affectEntity(Entity entity, Vec3d origin, float potency) {
-				World world = entity.getWorld();
+            void affectEntity(Entity entity, Vec3 origin, float potency) {
+				Level world = entity.level();
 				// set entities on fire
-				if (!entity.isFireImmune()) {
-					int duration = (int) (10 * potency) - (int) (5 * entity.getPos().distanceTo(origin));
+				if (!entity.fireImmune()) {
+					int duration = (int) (10 * potency) - (int) (5 * entity.position().distanceTo(origin));
 					if (duration >= 1) {
-						entity.setFireTicks(duration);
-						entity.getWorld().playSound(null, entity.getBlockPos(), SoundEvents.BLOCK_FIRE_AMBIENT, SoundCategory.NEUTRAL, 1.0F, 0.9F + world.random.nextFloat() * 0.2F);
-						SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerWorld) entity.getWorld(), entity.getPos(), ParticleTypes.ASH, 10, new Vec3d(0.5, 0.5, 0.5), new Vec3d(0, 0, 0));
+						entity.setRemainingFireTicks(duration);
+						entity.level().playSound(null, entity.blockPosition(), SoundEvents.FIRE_AMBIENT, SoundSource.NEUTRAL, 1.0F, 0.9F + world.random.nextFloat() * 0.2F);
+						SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerLevel) entity.level(), entity.position(), ParticleTypes.ASH, 10, new Vec3(0.5, 0.5, 0.5), new Vec3(0, 0, 0));
 					}
 				}
 			}
 			
 			@Override
-			void affectArea(World world, BlockPos origin, float potency) {
+			void affectArea(Level world, BlockPos origin, float potency) {
 				// burn & cause fires
-				if (world instanceof ServerWorld serverWorld) {
+				if (world instanceof ServerLevel serverWorld) {
 					int range = Support.getIntFromDecimalWithChance(potency, world.random);
-					for (BlockPos blockPos : BlockPos.iterateOutwards(origin, range, range, range)) {
-						int distance = 1 + blockPos.getManhattanDistance(origin);
+					for (BlockPos blockPos : BlockPos.withinManhattan(origin, range, range, range)) {
+						int distance = 1 + blockPos.distManhattan(origin);
 						float div = (float) range / distance;
 						if (div >= 1 || world.random.nextFloat() < div) {
-							FirestarterIdolBlock.causeFire(serverWorld, blockPos, Direction.random(world.random));
+							FirestarterIdolBlock.causeFire(serverWorld, blockPos, Direction.getRandom(world.random));
 						}
 					}
 				}

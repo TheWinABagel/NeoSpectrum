@@ -1,18 +1,21 @@
 package de.dafuqs.spectrum.blocks.pastel_network.network;
 
-import de.dafuqs.spectrum.blocks.pastel_network.*;
-import de.dafuqs.spectrum.blocks.pastel_network.nodes.*;
-import net.fabricmc.api.*;
-import net.fabricmc.fabric.api.client.rendering.v1.*;
-import net.minecraft.client.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jgrapht.*;
-import org.jgrapht.graph.*;
-import org.joml.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import de.dafuqs.spectrum.blocks.pastel_network.PastelRenderHelper;
+import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultEdge;
+import org.joml.Matrix4f;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Environment(EnvType.CLIENT)
 public class ClientPastelNetworkManager implements PastelNetworkManager {
@@ -41,7 +44,7 @@ public class ClientPastelNetworkManager implements PastelNetworkManager {
 			return foundNetwork;
 		}
 		
-		PastelNetwork network = createNetwork(node.getWorld(), uuid);
+		PastelNetwork network = createNetwork(node.getLevel(), uuid);
 		network.addNode(node);
 		return network;
 	}
@@ -57,16 +60,16 @@ public class ClientPastelNetworkManager implements PastelNetworkManager {
 		}
 	}
 	
-	private PastelNetwork createNetwork(World world, UUID uuid) {
+	private PastelNetwork createNetwork(Level world, UUID uuid) {
 		PastelNetwork network = new PastelNetwork(world, uuid);
 		this.networks.add(network);
 		return network;
 	}
 	
 	public void renderLines(WorldRenderContext context) {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		for (PastelNetwork network : this.networks) {
-			if (network.getWorld().getDimension() != context.world().getDimension()) continue;
+			if (network.getWorld().dimensionType() != context.world().dimensionType()) continue;
 			Graph<PastelNodeBlockEntity, DefaultEdge> graph = network.getGraph();
 			int color = network.getColor();
 			float[] colors = PastelRenderHelper.unpackNormalizedColor(color);
@@ -75,20 +78,20 @@ public class ClientPastelNetworkManager implements PastelNetworkManager {
 				PastelNodeBlockEntity source = graph.getEdgeSource(edge);
 				PastelNodeBlockEntity target = graph.getEdgeTarget(edge);
 				
-				final MatrixStack matrices = context.matrixStack();
-				final Vec3d pos = context.camera().getPos();
-				matrices.push();
+				final PoseStack matrices = context.matrixStack();
+				final Vec3 pos = context.camera().getPosition();
+				matrices.pushPose();
 				matrices.translate(-pos.x, -pos.y, -pos.z);
-				PastelRenderHelper.renderLineTo(context.matrixStack(), context.consumers(), colors, source.getPos(), target.getPos());
-				PastelRenderHelper.renderLineTo(context.matrixStack(), context.consumers(), colors, target.getPos(), source.getPos());
+				PastelRenderHelper.renderLineTo(context.matrixStack(), context.consumers(), colors, source.getBlockPos(), target.getBlockPos());
+				PastelRenderHelper.renderLineTo(context.matrixStack(), context.consumers(), colors, target.getBlockPos(), source.getBlockPos());
 				
-				if (client.options.debugEnabled) {
-					Vec3d offset = Vec3d.ofCenter(target.getPos()).subtract(Vec3d.of(source.getPos()));
-					Vec3d normalized = offset.normalize();
-					Matrix4f positionMatrix = context.matrixStack().peek().getPositionMatrix();
+				if (client.options.renderDebug) {
+					Vec3 offset = Vec3.atCenterOf(target.getBlockPos()).subtract(Vec3.atLowerCornerOf(source.getBlockPos()));
+					Vec3 normalized = offset.normalize();
+					Matrix4f positionMatrix = context.matrixStack().last().pose();
 					PastelRenderHelper.renderDebugLine(context.consumers(), color, offset, normalized, positionMatrix);
 				}
-				matrices.pop();
+				matrices.popPose();
 			}
 		}
 	}

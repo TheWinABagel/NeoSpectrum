@@ -1,13 +1,15 @@
 package de.dafuqs.spectrum.blocks.shooting_star;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.random.Random;
-import org.jetbrains.annotations.*;
-import org.joml.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.helpers.ColorHelper;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
 
 public interface ShootingStar {
 
@@ -20,7 +22,7 @@ public interface ShootingStar {
 		PRISTINE("pristine"),
 		GEMSTONE("gemstone");
 
-		public static final Identifier BOUNCE_LOOT_TABLE = SpectrumCommon.locate("entity/shooting_star/shooting_star_bounce");
+		public static final ResourceLocation BOUNCE_LOOT_TABLE = SpectrumCommon.locate("entity/shooting_star/shooting_star_bounce");
 
 		private final String name;
 
@@ -28,7 +30,7 @@ public interface ShootingStar {
 			this.name = name;
 		}
 
-		public static Type getWeightedRandomType(@NotNull Random random) {
+		public static Type getWeightedRandomType(@NotNull RandomSource random) {
 			int r = random.nextInt(8);
 			if (r == 0) {
 				return FIERY;
@@ -65,12 +67,12 @@ public interface ShootingStar {
 		}
 
 		@Contract("_ -> new")
-		public static @NotNull Identifier getLootTableIdentifier(int index) {
+		public static @NotNull ResourceLocation getLootTableIdentifier(int index) {
 			return getLootTableIdentifier(values()[index]);
 		}
 
 		@Contract("_ -> new")
-		public static @NotNull Identifier getLootTableIdentifier(@NotNull ShootingStar.Type type) {
+		public static @NotNull ResourceLocation getLootTableIdentifier(@NotNull ShootingStar.Type type) {
 			switch (type) {
 				case FIERY -> {
 					return SpectrumCommon.locate("entity/shooting_star/fiery_shooting_star");
@@ -114,7 +116,7 @@ public interface ShootingStar {
 			}
 		}
 
-		public @NotNull Vector3f getRandomParticleColor(Random random) {
+		public @NotNull Vector3f getRandomParticleColor(RandomSource random) {
 			switch (this) {
 				case GLISTERING -> {
 					int r = random.nextInt(5);

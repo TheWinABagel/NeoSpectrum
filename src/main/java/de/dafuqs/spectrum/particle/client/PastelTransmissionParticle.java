@@ -1,45 +1,52 @@
 package de.dafuqs.spectrum.particle.client;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.particle.render.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.item.*;
-import net.minecraft.client.render.model.json.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.client.world.*;
-import net.minecraft.item.*;
-import net.minecraft.particle.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.event.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.particle.render.EarlyRenderingParticle;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Camera;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.gameevent.BlockPositionSource;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class PastelTransmissionParticle extends TransmissionParticle implements EarlyRenderingParticle {
 
     private final ItemRenderer itemRenderer;
-    private final List<Vec3d> travelPositions;
+    private final List<Vec3> travelPositions;
     private final ItemStack itemStack;
 
-    public PastelTransmissionParticle(ItemRenderer itemRenderer, ClientWorld world, double x, double y, double z, List<BlockPos> travelPositions, ItemStack stack, int travelTime) {
+    public PastelTransmissionParticle(ItemRenderer itemRenderer, ClientLevel world, double x, double y, double z, List<BlockPos> travelPositions, ItemStack stack, int travelTime) {
         super(world, x, y, z, new BlockPositionSource(travelPositions.get(travelPositions.size()-1)), travelTime);
 
         this.itemRenderer = itemRenderer;
         this.itemStack = stack;
-        this.scale = 0.25F;
+        this.quadSize = 0.25F;
 
         this.travelPositions = new ArrayList<>();
         for (BlockPos p : travelPositions) {
-            this.travelPositions.add(Vec3d.ofCenter(p));
+            this.travelPositions.add(Vec3.atCenterOf(p));
         }
 
         // spawning sound & particles
-        Vec3d startPos = this.travelPositions.get(0);
-        world.playSound(startPos.getX(), startPos.getY() + 0.25, startPos.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS,
+        Vec3 startPos = this.travelPositions.get(0);
+        world.playLocalSound(startPos.x(), startPos.y() + 0.25, startPos.z(), SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS,
                 0.25F * SpectrumCommon.CONFIG.BlockSoundVolume, 0.9F + world.random.nextFloat() * 0.2F, true);
-        world.addParticle(ParticleTypes.BUBBLE_POP, startPos.getX(), startPos.getY() + 0.25, startPos.getZ(), 0, 0, 0);
+        world.addParticle(ParticleTypes.BUBBLE_POP, startPos.x(), startPos.y() + 0.25, startPos.z(), 0, 0, 0);
     }
 
     @Override
@@ -47,48 +54,48 @@ public class PastelTransmissionParticle extends TransmissionParticle implements 
         this.age++;
 
         int vertexCount = this.travelPositions.size() - 1;
-        float travelPercent = (float) this.age / this.maxAge;
+        float travelPercent = (float) this.age / this.lifetime;
         if (travelPercent >= 1.0F) {
-            Vec3d destination = this.travelPositions.get(vertexCount);
-            world.playSound(destination.getX(), destination.getY() + 0.25, destination.getZ(), SoundEvents.ENTITY_ITEM_PICKUP, SoundCategory.BLOCKS,
-                    0.2F * SpectrumCommon.CONFIG.BlockSoundVolume, 0.7F + world.random.nextFloat() * 0.2F, true);
-            world.addParticle(ParticleTypes.BUBBLE_POP, destination.getX(), destination.getY() + 0.25, destination.getZ(), 0, 0, 0);
-            this.markDead();
+            Vec3 destination = this.travelPositions.get(vertexCount);
+            level.playLocalSound(destination.x(), destination.y() + 0.25, destination.z(), SoundEvents.ITEM_PICKUP, SoundSource.BLOCKS,
+                    0.2F * SpectrumCommon.CONFIG.BlockSoundVolume, 0.7F + level.random.nextFloat() * 0.2F, true);
+            level.addParticle(ParticleTypes.BUBBLE_POP, destination.x(), destination.y() + 0.25, destination.z(), 0, 0, 0);
+            this.remove();
             return;
         }
 
         float progress = travelPercent * vertexCount;
         int startNodeID = (int) progress;
-        this.prevPosX = this.x;
-        this.prevPosY = this.y;
-        this.prevPosZ = this.z;
+        this.xo = this.x;
+        this.yo = this.y;
+        this.zo = this.z;
 
-        Vec3d source = this.travelPositions.get(startNodeID);
-        Vec3d destination = this.travelPositions.get(startNodeID + 1);
+        Vec3 source = this.travelPositions.get(startNodeID);
+        Vec3 destination = this.travelPositions.get(startNodeID + 1);
 
         float nodeProgress = progress % 1;
-        this.x = MathHelper.lerp(nodeProgress, source.x, destination.x);
-        this.y = MathHelper.lerp(nodeProgress, source.y, destination.y);
-        this.z = MathHelper.lerp(nodeProgress, source.z, destination.z);
+        this.x = Mth.lerp(nodeProgress, source.x, destination.x);
+        this.y = Mth.lerp(nodeProgress, source.y, destination.y);
+        this.z = Mth.lerp(nodeProgress, source.z, destination.z);
     }
 
     @Override
-    public void renderAsEntity(final MatrixStack matrixStack, final VertexConsumerProvider vertexConsumers, final Camera camera, final float tickDelta) {
-        final Vec3d cameraPos = camera.getPos();
-        final float x = (float) (MathHelper.lerp(tickDelta, prevPosX, this.x));
-        final float y = (float) (MathHelper.lerp(tickDelta, prevPosY, this.y));
-        final float z = (float) (MathHelper.lerp(tickDelta, prevPosZ, this.z));
+    public void renderAsEntity(final PoseStack matrixStack, final MultiBufferSource vertexConsumers, final Camera camera, final float tickDelta) {
+        final Vec3 cameraPos = camera.getPosition();
+        final float x = (float) (Mth.lerp(tickDelta, xo, this.x));
+        final float y = (float) (Mth.lerp(tickDelta, yo, this.y));
+        final float z = (float) (Mth.lerp(tickDelta, zo, this.z));
 
-        matrixStack.push();
+        matrixStack.pushPose();
 
         matrixStack.translate(x - cameraPos.x, y - cameraPos.y, z - cameraPos.z);
-        final int light = getBrightness(tickDelta);
-        matrixStack.multiply(camera.getRotation());
+        final int light = getLightColor(tickDelta);
+        matrixStack.mulPose(camera.rotation());
         matrixStack.scale(0.65F, 0.65F, 0.65F);
         matrixStack.translate(0, -0.15, 0);
-		itemRenderer.renderItem(itemStack, ModelTransformationMode.GROUND, light, OverlayTexture.DEFAULT_UV, matrixStack, vertexConsumers, world, 0);
+		itemRenderer.renderStatic(itemStack, ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY, matrixStack, vertexConsumers, level, 0);
 
-        matrixStack.pop();
+        matrixStack.popPose();
     }
 
 }

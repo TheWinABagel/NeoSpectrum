@@ -1,33 +1,41 @@
 package de.dafuqs.spectrum.blocks.enchanter;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.blocks.*;
-import de.dafuqs.spectrum.progression.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.util.hit.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import vazkii.patchouli.api.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.item.ExperienceStorageItem;
+import de.dafuqs.spectrum.blocks.InWorldInteractionBlock;
+import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import de.dafuqs.spectrum.registries.SpectrumMultiblocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import org.jetbrains.annotations.Nullable;
+import vazkii.patchouli.api.IMultiblock;
+import vazkii.patchouli.api.PatchouliAPI;
 
 public class EnchanterBlock extends InWorldInteractionBlock {
 	
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("midgame/build_enchanting_structure");
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("midgame/build_enchanting_structure");
 	
-	public EnchanterBlock(Settings settings) {
+	public EnchanterBlock(Properties settings) {
 		super(settings);
 	}
 	
-	public static void clearCurrentlyRenderedMultiBlock(World world) {
-		if (world.isClient) {
+	public static void clearCurrentlyRenderedMultiBlock(Level world) {
+		if (world.isClientSide) {
 			IMultiblock currentlyRenderedMultiBlock = PatchouliAPI.get().getCurrentMultiblock();
 			if (currentlyRenderedMultiBlock != null && currentlyRenderedMultiBlock.getID().equals(SpectrumMultiblocks.ENCHANTER_IDENTIFIER)) {
 				PatchouliAPI.get().clearMultiblock();
@@ -35,21 +43,21 @@ public class EnchanterBlock extends InWorldInteractionBlock {
 		}
 	}
 	
-	public static boolean verifyStructure(World world, BlockPos blockPos, @Nullable ServerPlayerEntity serverPlayerEntity) {
+	public static boolean verifyStructure(Level world, BlockPos blockPos, @Nullable ServerPlayer serverPlayerEntity) {
 		IMultiblock multiblock = SpectrumMultiblocks.MULTIBLOCKS.get(SpectrumMultiblocks.ENCHANTER_IDENTIFIER);
-		boolean valid = multiblock.validate(world, blockPos.down(3), BlockRotation.NONE);
+		boolean valid = multiblock.validate(world, blockPos.below(3), Rotation.NONE);
 		
 		if (valid) {
 			if (serverPlayerEntity != null) {
 				SpectrumAdvancementCriteria.COMPLETED_MULTIBLOCK.trigger(serverPlayerEntity, multiblock);
 			}
 		} else {
-			if (world.isClient) {
+			if (world.isClientSide) {
 				IMultiblock currentMultiBlock = PatchouliAPI.get().getCurrentMultiblock();
 				if (currentMultiBlock == multiblock) {
 					PatchouliAPI.get().clearMultiblock();
 				} else {
-					PatchouliAPI.get().showMultiblock(multiblock, Text.translatable("multiblock.spectrum.enchanter.structure"), blockPos.down(4), BlockRotation.NONE);
+					PatchouliAPI.get().showMultiblock(multiblock, Component.translatable("multiblock.spectrum.enchanter.structure"), blockPos.below(4), Rotation.NONE);
 				}
 			}
 		}
@@ -59,64 +67,64 @@ public class EnchanterBlock extends InWorldInteractionBlock {
 	
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new EnchanterBlockEntity(pos, state);
 	}
 	
 	@Nullable
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		if (world.isClient) {
-			return checkType(type, SpectrumBlockEntities.ENCHANTER, EnchanterBlockEntity::clientTick);
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		if (world.isClientSide) {
+			return createTickerHelper(type, SpectrumBlockEntities.ENCHANTER, EnchanterBlockEntity::clientTick);
 		} else {
-			return checkType(type, SpectrumBlockEntities.ENCHANTER, EnchanterBlockEntity::serverTick);
+			return createTickerHelper(type, SpectrumBlockEntities.ENCHANTER, EnchanterBlockEntity::serverTick);
 		}
 	}
 	
 	@Override
-	public void onBroken(WorldAccess world, BlockPos pos, BlockState state) {
-		if (world.isClient()) {
-			clearCurrentlyRenderedMultiBlock((World) world);
+	public void destroy(LevelAccessor world, BlockPos pos, BlockState state) {
+		if (world.isClientSide()) {
+			clearCurrentlyRenderedMultiBlock((Level) world);
 		}
 	}
 	
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
-		if (world.isClient) {
+	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+		if (world.isClientSide) {
 			verifyStructure(world, pos, null);
-			return ActionResult.SUCCESS;
+			return InteractionResult.SUCCESS;
 		} else {
-			if (verifyStructure(world, pos, (ServerPlayerEntity) player)) {
+			if (verifyStructure(world, pos, (ServerPlayer) player)) {
 				
 				// if the structure is valid the player can put / retrieve blocks into the shrine
 				BlockEntity blockEntity = world.getBlockEntity(pos);
 				if (blockEntity instanceof EnchanterBlockEntity enchanterBlockEntity) {
 					
-					ItemStack handStack = player.getStackInHand(hand);
-					if (player.isSneaking() || handStack.isEmpty()) {
+					ItemStack handStack = player.getItemInHand(hand);
+					if (player.isShiftKeyDown() || handStack.isEmpty()) {
 						// sneaking or empty hand: remove items
 						for (int i = 0; i < EnchanterBlockEntity.INVENTORY_SIZE; i++) {
 							if (retrieveStack(world, pos, player, hand, handStack, enchanterBlockEntity, i)) {
-								enchanterBlockEntity.setItemFacingDirection(player.getHorizontalFacing());
+								enchanterBlockEntity.setItemFacingDirection(player.getDirection());
 								enchanterBlockEntity.setOwner(player);
 								enchanterBlockEntity.inventoryChanged();
 								break;
 							}
 						}
-						return ActionResult.CONSUME;
+						return InteractionResult.CONSUME;
 					} else {
 						// hand is full and inventory is empty: add
 						// hand is full and inventory already contains item: exchange them
-						int inputInventorySlotIndex = handStack.getItem() instanceof ExperienceStorageItem ? enchanterBlockEntity.getStack(1).isEmpty() ? 1 : 0 : 0;
+						int inputInventorySlotIndex = handStack.getItem() instanceof ExperienceStorageItem ? enchanterBlockEntity.getItem(1).isEmpty() ? 1 : 0 : 0;
 						if (exchangeStack(world, pos, player, hand, handStack, enchanterBlockEntity, inputInventorySlotIndex)) {
-							enchanterBlockEntity.setItemFacingDirection(player.getHorizontalFacing());
+							enchanterBlockEntity.setItemFacingDirection(player.getDirection());
 							enchanterBlockEntity.setOwner(player);
 							enchanterBlockEntity.inventoryChanged();
 						}
 					}
 				}
 			}
-			return ActionResult.CONSUME;
+			return InteractionResult.CONSUME;
 		}
 	}
 	

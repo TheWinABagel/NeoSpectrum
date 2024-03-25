@@ -1,23 +1,24 @@
 package de.dafuqs.spectrum.blocks.pedestal;
 
-import de.dafuqs.spectrum.api.block.*;
-import net.minecraft.block.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.api.block.PedestalVariant;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 
-import java.util.*;
+import java.util.List;
 
 public class PedestalBlockItem extends BlockItem {
 	
 	private final PedestalVariant pedestalVariant;
-	private final Text tooltipText;
+	private final Component tooltipText;
 	
-	public PedestalBlockItem(Block block, Settings settings, PedestalVariant pedestalVariant, String tooltipTextString) {
+	public PedestalBlockItem(Block block, Properties settings, PedestalVariant pedestalVariant, String tooltipTextString) {
 		super(block, settings);
 		this.pedestalVariant = pedestalVariant;
-		this.tooltipText = Text.translatable(tooltipTextString);
+		this.tooltipText = Component.translatable(tooltipTextString);
 	}
 	
 	public PedestalVariant getVariant() {
@@ -25,8 +26,8 @@ public class PedestalBlockItem extends BlockItem {
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
 		tooltip.add(tooltipText);
 	}
 	

@@ -1,13 +1,14 @@
 package de.dafuqs.spectrum.features;
 
-import com.mojang.serialization.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import net.minecraft.world.gen.feature.*;
-import net.minecraft.world.gen.feature.util.*;
+import com.mojang.serialization.Codec;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.levelgen.feature.Feature;
+import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-import java.util.*;
+import java.util.Optional;
 
 public class WeightedRandomFeature extends Feature<WeightedRandomFeatureConfig> {
 	
@@ -16,14 +17,14 @@ public class WeightedRandomFeature extends Feature<WeightedRandomFeatureConfig> 
 	}
 	
 	@Override
-	public boolean generate(FeatureContext<WeightedRandomFeatureConfig> context) {
-		Random random = context.getRandom();
-		StructureWorldAccess structureWorldAccess = context.getWorld();
-		BlockPos blockPos = context.getOrigin();
+	public boolean place(FeaturePlaceContext<WeightedRandomFeatureConfig> context) {
+		RandomSource random = context.random();
+		WorldGenLevel structureWorldAccess = context.level();
+		BlockPos blockPos = context.origin();
 		
-		WeightedRandomFeatureConfig weightedRandomFeatureConfig = context.getConfig();
-		Optional<PlacedFeature> randomPlacedFeature = weightedRandomFeatureConfig.features().getDataOrEmpty(context.getRandom());
-		return randomPlacedFeature.map(placedFeature -> placedFeature.generateUnregistered(structureWorldAccess, context.getGenerator(), random, blockPos)).orElse(false);
+		WeightedRandomFeatureConfig weightedRandomFeatureConfig = context.config();
+		Optional<PlacedFeature> randomPlacedFeature = weightedRandomFeatureConfig.features().getRandomValue(context.random());
+		return randomPlacedFeature.map(placedFeature -> placedFeature.place(structureWorldAccess, context.chunkGenerator(), random, blockPos)).orElse(false);
 	}
 	
 }

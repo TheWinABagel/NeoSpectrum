@@ -1,8 +1,9 @@
 package de.dafuqs.spectrum.api.predicate.world;
 
-import com.google.gson.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.math.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
 public class MoonPhasePredicate implements WorldConditionPredicate {
 	public static final MoonPhasePredicate ANY = new MoonPhasePredicate(null);
@@ -28,7 +29,7 @@ public class MoonPhasePredicate implements WorldConditionPredicate {
 	}
 	
 	@Override
-	public boolean test(ServerWorld world, BlockPos pos) {
+	public boolean test(ServerLevel world, BlockPos pos) {
 		if (this == ANY) return true;
 		return this.moonPhase == world.getMoonPhase();
 	}

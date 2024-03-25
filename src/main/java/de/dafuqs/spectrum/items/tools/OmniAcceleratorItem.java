@@ -1,74 +1,80 @@
 package de.dafuqs.spectrum.items.tools;
 
-import de.dafuqs.spectrum.api.energy.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.interaction.*;
-import de.dafuqs.spectrum.api.render.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.client.item.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.item.*;
-import net.minecraft.client.render.model.*;
-import net.minecraft.client.render.model.json.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.server.network.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import de.dafuqs.spectrum.api.energy.InkCost;
+import de.dafuqs.spectrum.api.energy.InkPowered;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.energy.color.InkColors;
+import de.dafuqs.spectrum.api.interaction.OmniAcceleratorProjectile;
+import de.dafuqs.spectrum.api.render.DynamicItemRenderer;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.*;
+import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 public class OmniAcceleratorItem extends BundleItem implements InkPowered {
 
 	protected static final InkCost COST = new InkCost(InkColors.YELLOW, 20);
 	
-	public OmniAcceleratorItem(Settings settings) {
+	public OmniAcceleratorItem(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		return ItemUsage.consumeHeldItem(world, user, hand);
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		return ItemUtils.startUsingInstantly(world, user, hand);
 	}
 
 	@Override
-	public UseAction getUseAction(ItemStack stack) {
-		return UseAction.BOW;
+	public UseAnim getUseAnimation(ItemStack stack) {
+		return UseAnim.BOW;
 	}
 
 	@Override
-	public int getMaxUseTime(ItemStack stack) {
+	public int getUseDuration(ItemStack stack) {
 		return 20;
 	}
 
 	@Override
-	public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
-		if (!(user instanceof ServerPlayerEntity player)) {
+	public ItemStack finishUsingItem(ItemStack stack, Level world, LivingEntity user) {
+		if (!(user instanceof ServerPlayer player)) {
 			return stack;
 		}
 
 		Optional<ItemStack> shootStackOptional = getFirstStack(stack);
 		if (shootStackOptional.isEmpty()) {
-			world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.BLOCK_DISPENSER_FAIL, SoundCategory.PLAYERS, 1.0F, 1.0F);
+			world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.DISPENSER_FAIL, SoundSource.PLAYERS, 1.0F, 1.0F);
 			return stack;
 		}
 
 		if (!InkPowered.tryDrainEnergy(player, COST)) {
-			world.playSound(null, user.getX(), user.getY(), user.getZ(), SpectrumSoundEvents.USE_FAIL, SoundCategory.PLAYERS, 1.0F, 1.0F);
+			world.playSound(null, user.getX(), user.getY(), user.getZ(), SpectrumSoundEvents.USE_FAIL, SoundSource.PLAYERS, 1.0F, 1.0F);
 			return stack;
 		}
 
 		ItemStack shootStack = shootStackOptional.get();
 		OmniAcceleratorProjectile projectile = OmniAcceleratorProjectile.get(shootStack);
 		if (projectile.createProjectile(shootStack, user, world) != null) {
-			world.playSound(null, user.getX(), user.getY(), user.getZ(), projectile.getSoundEffect(), SoundCategory.PLAYERS, 0.5F, 0.4F / (world.getRandom().nextFloat() * 0.4F + 0.8F));
+			world.playSound(null, user.getX(), user.getY(), user.getZ(), projectile.getSoundEffect(), SoundSource.PLAYERS, 0.5F, 0.4F / (world.getRandom().nextFloat() * 0.4F + 0.8F));
 			if (!player.isCreative()) {
 				decrementFirstItem(stack);
 			}
@@ -78,18 +84,18 @@ public class OmniAcceleratorItem extends BundleItem implements InkPowered {
 	}
 	
 	public static void decrementFirstItem(ItemStack acceleratorStack) {
-		NbtCompound nbtCompound = acceleratorStack.getOrCreateNbt();
+		CompoundTag nbtCompound = acceleratorStack.getOrCreateTag();
 		if (nbtCompound.contains("Items")) {
-			NbtList itemsList = nbtCompound.getList("Items", NbtElement.COMPOUND_TYPE);
+			ListTag itemsList = nbtCompound.getList("Items", Tag.TAG_COMPOUND);
 			if (!itemsList.isEmpty()) {
-				NbtCompound stackNbt = itemsList.getCompound(0);
+				CompoundTag stackNbt = itemsList.getCompound(0);
 				int count = stackNbt.getByte("Count");
 				if (count > 1) {
 					stackNbt.putByte("Count", (byte) (count - 1));
 				} else {
 					itemsList.remove(0);
 					if (itemsList.isEmpty()) {
-						acceleratorStack.removeSubNbt("Items");
+						acceleratorStack.removeTagKey("Items");
 					}
 				}
 			}
@@ -97,16 +103,16 @@ public class OmniAcceleratorItem extends BundleItem implements InkPowered {
 	}
 	
 	public static Optional<ItemStack> getFirstStack(ItemStack stack) {
-		NbtCompound nbtCompound = stack.getOrCreateNbt();
+		CompoundTag nbtCompound = stack.getOrCreateTag();
 		if (!nbtCompound.contains("Items")) {
 			return Optional.empty();
 		} else {
-			NbtList itemsList = nbtCompound.getList("Items", NbtElement.COMPOUND_TYPE);
+			ListTag itemsList = nbtCompound.getList("Items", Tag.TAG_COMPOUND);
 			if (itemsList.isEmpty()) {
 				return Optional.empty();
 			} else {
-				NbtCompound stackNbt = itemsList.getCompound(0);
-				ItemStack itemStack = ItemStack.fromNbt(stackNbt);
+				CompoundTag stackNbt = itemsList.getCompound(0);
+				ItemStack itemStack = ItemStack.of(stackNbt);
 				return Optional.of(itemStack);
 			}
 		}
@@ -118,8 +124,8 @@ public class OmniAcceleratorItem extends BundleItem implements InkPowered {
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		addInkPoweredTooltip(tooltip);
 	}
 
@@ -127,9 +133,9 @@ public class OmniAcceleratorItem extends BundleItem implements InkPowered {
 	public static class Renderer implements DynamicItemRenderer {
 		public Renderer() {}
 		@Override
-		public void render(ItemRenderer renderer, ItemStack stack, ModelTransformationMode mode, boolean leftHanded, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, int overlay, BakedModel model) {
-			renderer.renderItem(stack, mode, leftHanded, matrices, vertexConsumers, light, overlay, model);
-			if(mode != ModelTransformationMode.GUI) return;
+		public void render(ItemRenderer renderer, ItemStack stack, ItemDisplayContext mode, boolean leftHanded, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, BakedModel model) {
+			renderer.render(stack, mode, leftHanded, matrices, vertexConsumers, light, overlay, model);
+			if(mode != ItemDisplayContext.GUI) return;
 			
 			Optional<ItemStack> optionalStack = getFirstStack(stack);
 			if(optionalStack.isEmpty()) {
@@ -137,14 +143,14 @@ public class OmniAcceleratorItem extends BundleItem implements InkPowered {
 			}
 			ItemStack bundledStack = optionalStack.get();
 			
-			MinecraftClient client = MinecraftClient.getInstance();
-			BakedModel bundledModel = renderer.getModel(bundledStack, client.world, client.player, 0);
+			Minecraft client = Minecraft.getInstance();
+			BakedModel bundledModel = renderer.getModel(bundledStack, client.level, client.player, 0);
 			
-			matrices.push();
+			matrices.pushPose();
 			matrices.scale(0.5F, 0.5F, 0.5F);
 			matrices.translate(0.5F, 0.5F, 0.5F);
-			renderer.renderItem(bundledStack, mode, leftHanded, matrices, vertexConsumers, light, overlay, bundledModel);
-			matrices.pop();
+			renderer.render(bundledStack, mode, leftHanded, matrices, vertexConsumers, light, overlay, bundledModel);
+			matrices.popPose();
 		}
 	}
 

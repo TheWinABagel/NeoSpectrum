@@ -1,29 +1,32 @@
 package de.dafuqs.spectrum.recipe.enchanter;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.item.ExperienceStorageItem;
+import de.dafuqs.spectrum.recipe.GatedSpectrumRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
 
 public class EnchanterRecipe extends GatedSpectrumRecipe {
 	
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("midgame/build_enchanting_structure");
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("midgame/build_enchanting_structure");
 	
-	protected final DefaultedList<Ingredient> inputs; // first input is the center, all others around clockwise
+	protected final NonNullList<Ingredient> inputs; // first input is the center, all others around clockwise
 	protected final ItemStack output;
 	
 	protected final int requiredExperience;
 	protected final int craftingTime;
 	protected final boolean noBenefitsFromYieldAndEfficiencyUpgrades;
 	
-	public EnchanterRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, DefaultedList<Ingredient> inputs, ItemStack output, int craftingTime, int requiredExperience, boolean noBenefitsFromYieldAndEfficiencyUpgrades) {
+	public EnchanterRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, NonNullList<Ingredient> inputs, ItemStack output, int craftingTime, int requiredExperience, boolean noBenefitsFromYieldAndEfficiencyUpgrades) {
 		super(id, group, secret, requiredAdvancementIdentifier);
 		
 		this.inputs = inputs;
@@ -36,19 +39,19 @@ public class EnchanterRecipe extends GatedSpectrumRecipe {
 	}
 	
 	@Override
-	public boolean matches(Inventory inv, World world) {
-		if (inv.size() > 9) {
-			if (!inputs.get(0).test(inv.getStack(0))) {
+	public boolean matches(Container inv, Level world) {
+		if (inv.getContainerSize() > 9) {
+			if (!inputs.get(0).test(inv.getItem(0))) {
 				return false;
 			}
 			if (this.getRequiredExperience() > 0
-					&& !(inv.getStack(1).getItem() instanceof ExperienceStorageItem)
-					&& ExperienceStorageItem.getStoredExperience(inv.getStack(1)) < this.getRequiredExperience()) {
+					&& !(inv.getItem(1).getItem() instanceof ExperienceStorageItem)
+					&& ExperienceStorageItem.getStoredExperience(inv.getItem(1)) < this.getRequiredExperience()) {
 				return false;
 			}
 			
 			for (int i = 1; i < 9; i++) {
-				if (!inputs.get(i).test(inv.getStack(i + 1))) {
+				if (!inputs.get(i).test(inv.getItem(i + 1))) {
 					return false;
 				}
 			}
@@ -59,27 +62,27 @@ public class EnchanterRecipe extends GatedSpectrumRecipe {
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inv, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inv, RegistryAccess drm) {
 		return null;
 	}
 	
 	@Override
-	public boolean fits(int width, int height) {
+	public boolean canCraftInDimensions(int width, int height) {
 		return true;
 	}
 	
 	@Override
-	public ItemStack getOutput(DynamicRegistryManager registryManager) {
+	public ItemStack getResultItem(RegistryAccess registryManager) {
 		return output;
 	}
 	
 	@Override
-	public ItemStack createIcon() {
+	public ItemStack getToastSymbol() {
 		return new ItemStack(SpectrumBlocks.ENCHANTER);
 	}
 	
 	@Override
-	public Identifier getRecipeTypeUnlockIdentifier() {
+	public ResourceLocation getRecipeTypeUnlockIdentifier() {
 		return UNLOCK_IDENTIFIER;
 	}
 	
@@ -94,7 +97,7 @@ public class EnchanterRecipe extends GatedSpectrumRecipe {
 	}
 	
 	@Override
-	public DefaultedList<Ingredient> getIngredients() {
+	public NonNullList<Ingredient> getIngredients() {
 		return inputs;
 	}
 	

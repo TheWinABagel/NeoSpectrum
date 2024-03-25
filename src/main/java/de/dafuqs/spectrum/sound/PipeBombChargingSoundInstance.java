@@ -4,25 +4,25 @@ import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.sound.AbstractSoundInstance;
-import net.minecraft.client.sound.SoundInstance;
-import net.minecraft.client.sound.TickableSoundInstance;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
+import net.minecraft.client.resources.sounds.AbstractSoundInstance;
+import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.TickableSoundInstance;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 @Environment(EnvType.CLIENT)
 public class PipeBombChargingSoundInstance extends AbstractSoundInstance implements TickableSoundInstance {
 
-	private final PlayerEntity player;
+	private final Player player;
 	private boolean done;
 
-	public PipeBombChargingSoundInstance(PlayerEntity player) {
-		super(SpectrumSoundEvents.INCANDESCENT_CHARGE, SoundCategory.NEUTRAL, SoundInstance.createRandom());
-		this.repeat = true;
-		this.repeatDelay = 0;
+	public PipeBombChargingSoundInstance(Player player) {
+		super(SpectrumSoundEvents.INCANDESCENT_CHARGE, SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
+		this.looping = true;
+		this.delay = 0;
 		this.volume = 1F;
 		this.player = player;
 		this.x = player.getX();
@@ -31,18 +31,18 @@ public class PipeBombChargingSoundInstance extends AbstractSoundInstance impleme
 	}
 	
 	@Override
-	public boolean isDone() {
+	public boolean isStopped() {
 		return this.done;
 	}
 	
 	@Override
-	public boolean shouldAlwaysPlay() {
+	public boolean canStartSilent() {
 		return true;
 	}
 	
 	@Override
 	public void tick() {
-		if (player == null || player.getItemUseTimeLeft() <= 0 || player.getItemUseTime() > 54) {
+		if (player == null || player.getUseItemRemainingTicks() <= 0 || player.getTicksUsingItem() > 54) {
 			this.setDone();
 		} else {
 			this.x = this.player.getX();
@@ -54,12 +54,12 @@ public class PipeBombChargingSoundInstance extends AbstractSoundInstance impleme
 	}
 	
 	private void showParticles() {
-		World world = player.getEntityWorld();
-		Vec3d pos = player.getPos();
-		Random random = world.random;
+		Level world = player.getCommandSenderWorld();
+		Vec3 pos = player.position();
+		RandomSource random = world.random;
 		
 		for (int i = 0; i < 2; i++) {
-			player.getEntityWorld().addParticle(
+			player.getCommandSenderWorld().addParticle(
 					SpectrumParticleTypes.PRIMORDIAL_FLAME,
 					pos.x,
 					pos.y + 1,
@@ -72,6 +72,6 @@ public class PipeBombChargingSoundInstance extends AbstractSoundInstance impleme
 	
 	protected final void setDone() {
 		this.done = true;
-		this.repeat = false;
+		this.looping = false;
 	}
 }

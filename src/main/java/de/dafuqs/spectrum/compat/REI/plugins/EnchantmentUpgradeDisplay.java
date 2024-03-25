@@ -1,20 +1,21 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.blocks.enchanter.*;
-import de.dafuqs.spectrum.compat.REI.*;
-import de.dafuqs.spectrum.items.magic_items.*;
-import de.dafuqs.spectrum.recipe.enchanter.*;
-import de.dafuqs.spectrum.recipe.enchantment_upgrade.*;
-import me.shedaniel.rei.api.common.category.*;
-import me.shedaniel.rei.api.common.display.basic.*;
-import me.shedaniel.rei.api.common.entry.*;
-import me.shedaniel.rei.api.common.util.*;
-import net.minecraft.client.*;
-import net.minecraft.enchantment.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.blocks.enchanter.EnchanterBlockEntity;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import de.dafuqs.spectrum.items.magic_items.KnowledgeGemItem;
+import de.dafuqs.spectrum.recipe.enchanter.EnchanterRecipe;
+import de.dafuqs.spectrum.recipe.enchantment_upgrade.EnchantmentUpgradeRecipe;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.basic.BasicDisplay;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.enchantment.Enchantment;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EnchantmentUpgradeDisplay extends EnchanterDisplay {
 	
@@ -25,7 +26,7 @@ public class EnchantmentUpgradeDisplay extends EnchanterDisplay {
 	protected final int requiredItemCount;
 	
 	public EnchantmentUpgradeDisplay(@NotNull EnchantmentUpgradeRecipe recipe) {
-		super(recipe, buildIngredients(recipe), recipe.getOutput(BasicDisplay.registryAccess()));
+		super(recipe, buildIngredients(recipe), recipe.getResultItem(BasicDisplay.registryAccess()));
 		
 		this.enchantment = recipe.getEnchantment();
 		this.enchantmentDestinationLevel = recipe.getEnchantmentDestinationLevel();
@@ -54,7 +55,7 @@ public class EnchantmentUpgradeDisplay extends EnchanterDisplay {
 	
 	@Override
     public boolean isUnlocked() {
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		if (!AdvancementHelper.hasAdvancement(client.player, EnchanterRecipe.UNLOCK_IDENTIFIER) || !super.isUnlocked()) {
 			return false;
 		}

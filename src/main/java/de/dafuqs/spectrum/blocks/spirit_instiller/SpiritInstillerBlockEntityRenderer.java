@@ -1,57 +1,58 @@
 package de.dafuqs.spectrum.blocks.spirit_instiller;
 
-import net.minecraft.client.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.block.entity.*;
-import net.minecraft.client.render.model.json.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Rotation;
 
 public class SpiritInstillerBlockEntityRenderer implements BlockEntityRenderer<SpiritInstillerBlockEntity> {
 	
 	protected final double ITEM_STACK_RENDER_HEIGHT = 0.95F;
 	
-	public SpiritInstillerBlockEntityRenderer(BlockEntityRendererFactory.Context ctx) {
+	public SpiritInstillerBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {
 	
 	}
 	
 	@Override
-	public void render(SpiritInstillerBlockEntity blockEntity, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, int overlay) {
+	public void render(SpiritInstillerBlockEntity blockEntity, float tickDelta, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int light, int overlay) {
 		
 		// The item lying on top of the spirit instiller
-		ItemStack stack = blockEntity.getStack(0);
+		ItemStack stack = blockEntity.getItem(0);
 		if (!stack.isEmpty() && blockEntity.getMultiblockRotation() != null) {
-			BlockRotation itemFacingDirection = blockEntity.getMultiblockRotation();
+			Rotation itemFacingDirection = blockEntity.getMultiblockRotation();
 			
-			matrixStack.push();
+			matrixStack.pushPose();
 			// item stack rotation
 			switch (itemFacingDirection) {
 				case NONE -> {
 					matrixStack.translate(0.5, ITEM_STACK_RENDER_HEIGHT, 0.7);
-					matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(270));
-					matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180));
+					matrixStack.mulPose(Axis.XP.rotationDegrees(270));
+					matrixStack.mulPose(Axis.YP.rotationDegrees(180));
 				}
 				case CLOCKWISE_90 -> {
 					matrixStack.translate(0.3, ITEM_STACK_RENDER_HEIGHT, 0.5);
-					matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90));
-					matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(270));
+					matrixStack.mulPose(Axis.XP.rotationDegrees(90));
+					matrixStack.mulPose(Axis.ZP.rotationDegrees(270));
 				}
 				case CLOCKWISE_180 -> {
 					matrixStack.translate(0.5, ITEM_STACK_RENDER_HEIGHT, 0.3);
-					matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90));
+					matrixStack.mulPose(Axis.XP.rotationDegrees(90));
 				}
 				case COUNTERCLOCKWISE_90 -> {
 					matrixStack.translate(0.7, ITEM_STACK_RENDER_HEIGHT, 0.5);
-					matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(270));
-					matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90));
-					matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180));
+					matrixStack.mulPose(Axis.XP.rotationDegrees(270));
+					matrixStack.mulPose(Axis.ZP.rotationDegrees(90));
+					matrixStack.mulPose(Axis.YP.rotationDegrees(180));
 				}
 			}
 			
-			MinecraftClient.getInstance().getItemRenderer().renderItem(stack, ModelTransformationMode.GROUND, light, overlay, matrixStack, vertexConsumerProvider, blockEntity.getWorld(), 0);
-			matrixStack.pop();
+			Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.GROUND, light, overlay, matrixStack, vertexConsumerProvider, blockEntity.getLevel(), 0);
+			matrixStack.popPose();
 		}
 		
 	}

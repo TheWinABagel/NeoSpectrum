@@ -1,28 +1,30 @@
 package de.dafuqs.spectrum.status_effects;
 
-import net.minecraft.entity.*;
-import net.minecraft.entity.effect.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
 
-public class SpectrumStatusEffect extends StatusEffect {
+public class SpectrumStatusEffect extends MobEffect {
 	
-	public SpectrumStatusEffect(StatusEffectCategory category, int color) {
+	public SpectrumStatusEffect(MobEffectCategory category, int color) {
 		super(category, color);
 	}
 	
 	// no unused super() calls (performance)
 	@Override
-	public boolean canApplyUpdateEffect(int duration, int amplifier) {
+	public boolean isDurationEffectTick(int duration, int amplifier) {
 		return false;
 	}
 	
 	@Override
-	public void applyUpdateEffect(LivingEntity entity, int amplifier) {
+	public void applyEffectTick(LivingEntity entity, int amplifier) {
 	
 	}
 	
 	@Override
-	public void applyInstantEffect(@Nullable Entity source, @Nullable Entity attacker, LivingEntity target, int amplifier, double proximity) {
+	public void applyInstantenousEffect(@Nullable Entity source, @Nullable Entity attacker, LivingEntity target, int amplifier, double proximity) {
 	
 	}
 	

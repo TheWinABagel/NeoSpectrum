@@ -1,19 +1,22 @@
 package de.dafuqs.spectrum.entity;
 
-import com.google.common.collect.*;
-import de.dafuqs.spectrum.entity.type_specific_predicates.*;
-import de.dafuqs.spectrum.mixin.accessors.*;
-import net.minecraft.predicate.entity.*;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import de.dafuqs.spectrum.entity.type_specific_predicates.EggLayingWoolyPigPredicate;
+import de.dafuqs.spectrum.entity.type_specific_predicates.KindlingPredicate;
+import de.dafuqs.spectrum.entity.type_specific_predicates.ShulkerPredicate;
+import de.dafuqs.spectrum.mixin.accessors.TypeSpecificPredicateDeserializerMixin;
+import net.minecraft.advancements.critereon.EntitySubPredicate;
 
 public class SpectrumTypeSpecificPredicates {
 	
-	public static final TypeSpecificPredicate.Deserializer EGG_LAYING_WOOLY_PIG = EggLayingWoolyPigPredicate::fromJson;
-	public static final TypeSpecificPredicate.Deserializer SHULKER = ShulkerPredicate::fromJson;
-	public static final TypeSpecificPredicate.Deserializer KINDLING = KindlingPredicate::fromJson;
+	public static final EntitySubPredicate.Type EGG_LAYING_WOOLY_PIG = EggLayingWoolyPigPredicate::fromJson;
+	public static final EntitySubPredicate.Type SHULKER = ShulkerPredicate::fromJson;
+	public static final EntitySubPredicate.Type KINDLING = KindlingPredicate::fromJson;
 	
 	public static void register() {
 		// creating a new map, in case the previous one was immutable (it usually is)
-		BiMap<String, TypeSpecificPredicate.Deserializer> newMap = HashBiMap.create(TypeSpecificPredicate.Deserializers.TYPES);
+		BiMap<String, EntitySubPredicate.Type> newMap = HashBiMap.create(EntitySubPredicate.Types.TYPES);
 		
 		// TypeSpecificPredicates are not handled via identifiers, but we'll add our mod id anyway,
 		// in case of collisions with future vanilla updates or other mods

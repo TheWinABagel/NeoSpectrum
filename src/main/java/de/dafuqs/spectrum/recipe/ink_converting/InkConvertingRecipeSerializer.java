@@ -1,11 +1,13 @@
 package de.dafuqs.spectrum.recipe.ink_converting;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.api.recipe.*;
-import net.minecraft.network.*;
-import net.minecraft.recipe.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.api.recipe.GatedRecipeSerializer;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public class InkConvertingRecipeSerializer implements GatedRecipeSerializer<InkConvertingRecipe> {
 	
@@ -16,43 +18,43 @@ public class InkConvertingRecipeSerializer implements GatedRecipeSerializer<InkC
 	}
 	
 	public interface RecipeFactory {
-		InkConvertingRecipe create(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, Ingredient inputIngredient, InkColor inkColor, long inkAmount);
+		InkConvertingRecipe create(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, Ingredient inputIngredient, InkColor inkColor, long inkAmount);
 	}
 	
 	@Override
-	public InkConvertingRecipe read(Identifier identifier, JsonObject jsonObject) {
+	public InkConvertingRecipe fromJson(ResourceLocation identifier, JsonObject jsonObject) {
 		String group = readGroup(jsonObject);
 		boolean secret = readSecret(jsonObject);
-		Identifier requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
+		ResourceLocation requiredAdvancementIdentifier = readRequiredAdvancementIdentifier(jsonObject);
 		
-		JsonElement jsonElement = JsonHelper.hasArray(jsonObject, "ingredient") ? JsonHelper.getArray(jsonObject, "ingredient") : JsonHelper.getObject(jsonObject, "ingredient");
+		JsonElement jsonElement = GsonHelper.isArrayNode(jsonObject, "ingredient") ? GsonHelper.getAsJsonArray(jsonObject, "ingredient") : GsonHelper.getAsJsonObject(jsonObject, "ingredient");
 		Ingredient ingredient = Ingredient.fromJson(jsonElement);
 		
-		InkColor inkColor = InkColor.of(JsonHelper.getString(jsonObject, "color"));
-		long inkAmount = JsonHelper.getLong(jsonObject, "amount");
+		InkColor inkColor = InkColor.of(GsonHelper.getAsString(jsonObject, "color"));
+		long inkAmount = GsonHelper.getAsLong(jsonObject, "amount");
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, ingredient, inkColor, inkAmount);
 	}
 	
 	@Override
-	public void write(PacketByteBuf packetByteBuf, InkConvertingRecipe recipe) {
-		packetByteBuf.writeString(recipe.group);
+	public void write(FriendlyByteBuf packetByteBuf, InkConvertingRecipe recipe) {
+		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);
 		
-		recipe.inputIngredient.write(packetByteBuf);
-		packetByteBuf.writeString(recipe.color.toString());
+		recipe.inputIngredient.toNetwork(packetByteBuf);
+		packetByteBuf.writeUtf(recipe.color.toString());
 		packetByteBuf.writeLong(recipe.amount);
 	}
 	
 	@Override
-	public InkConvertingRecipe read(Identifier identifier, PacketByteBuf packetByteBuf) {
-		String group = packetByteBuf.readString();
+	public InkConvertingRecipe fromNetwork(ResourceLocation identifier, FriendlyByteBuf packetByteBuf) {
+		String group = packetByteBuf.readUtf();
 		boolean secret = packetByteBuf.readBoolean();
-		Identifier requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
+		ResourceLocation requiredAdvancementIdentifier = readNullableIdentifier(packetByteBuf);
 		
-		Ingredient ingredient = Ingredient.fromPacket(packetByteBuf);
-		InkColor inkColor = InkColor.of(packetByteBuf.readString());
+		Ingredient ingredient = Ingredient.fromNetwork(packetByteBuf);
+		InkColor inkColor = InkColor.of(packetByteBuf.readUtf());
 		long inkAmount = packetByteBuf.readLong();
 		
 		return this.recipeFactory.create(identifier, group, secret, requiredAdvancementIdentifier, ingredient, inkColor, inkAmount);

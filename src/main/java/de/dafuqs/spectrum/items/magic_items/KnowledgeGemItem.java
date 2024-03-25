@@ -1,23 +1,30 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.client.item.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.entry.*;
-import net.minecraft.server.network.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.api.item.ExperienceStorageItem;
+import de.dafuqs.spectrum.api.item.ExtendedEnchantable;
+import de.dafuqs.spectrum.api.item.LoomPatternProvider;
+import de.dafuqs.spectrum.registries.SpectrumBannerPatterns;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.Holder;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.*;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BannerPattern;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.List;
 
 public class KnowledgeGemItem extends Item implements ExperienceStorageItem, ExtendedEnchantable, LoomPatternProvider {
 	
@@ -27,58 +34,58 @@ public class KnowledgeGemItem extends Item implements ExperienceStorageItem, Ext
 	// and specify the sprite used for its texture
 	protected final int[] displayTiers = {1, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000};
 	
-	public KnowledgeGemItem(Settings settings, int maxStorageBase) {
+	public KnowledgeGemItem(Properties settings, int maxStorageBase) {
 		super(settings);
 		this.maxStorageBase = maxStorageBase;
 	}
 	
 	public static ItemStack getKnowledgeDropStackWithXP(int experience, boolean noStoreTooltip) {
 		ItemStack stack = new ItemStack(SpectrumItems.KNOWLEDGE_GEM);
-		NbtCompound compound = new NbtCompound();
+		CompoundTag compound = new CompoundTag();
 		compound.putInt("stored_experience", experience);
 		if (noStoreTooltip) {
 			compound.putBoolean("do_not_display_store_tooltip", true);
 		}
-		stack.setNbt(compound);
+		stack.setTag(compound);
 		return stack;
 	}
 
 	@Override
 	public int getMaxStoredExperience(ItemStack itemStack) {
-		int efficiencyLevel = EnchantmentHelper.getLevel(Enchantments.EFFICIENCY, itemStack);
+		int efficiencyLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_EFFICIENCY, itemStack);
 		return maxStorageBase * (int) Math.pow(10, Math.min(5, efficiencyLevel)); // to not exceed int max
 	}
 	
 	@Override
-	public UseAction getUseAction(ItemStack stack) {
-		return UseAction.BOW;
+	public UseAnim getUseAnimation(ItemStack stack) {
+		return UseAnim.BOW;
 	}
 	
 	public int getTransferableExperiencePerTick(ItemStack itemStack) {
-		int quickChargeLevel = EnchantmentHelper.getLevel(Enchantments.QUICK_CHARGE, itemStack);
+		int quickChargeLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.QUICK_CHARGE, itemStack);
 		return (int) (2 * Math.pow(2, Math.min(10, quickChargeLevel)));
 	}
 	
 	@Override
-	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-		return ItemUsage.consumeHeldItem(world, user, hand);
+	public InteractionResultHolder<ItemStack> use(Level world, Player user, InteractionHand hand) {
+		return ItemUtils.startUsingInstantly(world, user, hand);
 	}
 	
 	@Override
-	public int getMaxUseTime(ItemStack stack) {
+	public int getUseDuration(ItemStack stack) {
 		return Integer.MAX_VALUE;
 	}
 	
 	@Override
-	public void usageTick(World world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
-		super.usageTick(world, user, stack, remainingUseTicks);
-		if (user instanceof ServerPlayerEntity serverPlayerEntity) {
+	public void onUseTick(Level world, LivingEntity user, ItemStack stack, int remainingUseTicks) {
+		super.onUseTick(world, user, stack, remainingUseTicks);
+		if (user instanceof ServerPlayer serverPlayerEntity) {
 			
 			int playerExperience = serverPlayerEntity.totalExperience;
 			int itemExperience = ExperienceStorageItem.getStoredExperience(stack);
 			int transferableExperience = getTransferableExperiencePerTick(stack);
 			
-			if (serverPlayerEntity.isSneaking()) {
+			if (serverPlayerEntity.isShiftKeyDown()) {
 				int maxStorage = getMaxStoredExperience(stack);
 				int experienceToTransfer = serverPlayerEntity.isCreative() ? Math.min(transferableExperience, maxStorage - itemExperience) : Math.min(Math.min(transferableExperience, playerExperience), maxStorage - itemExperience);
 				
@@ -87,7 +94,7 @@ public class KnowledgeGemItem extends Item implements ExperienceStorageItem, Ext
 					ExperienceStorageItem.addStoredExperience(stack, experienceToTransfer);
 					
 					if (remainingUseTicks % 4 == 0) {
-						world.playSound(null, user.getBlockPos(), SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.3F, 0.8F + world.getRandom().nextFloat() * 0.4F);
+						world.playSound(null, user.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.3F, 0.8F + world.getRandom().nextFloat() * 0.4F);
 					}
 				}
 			} else {
@@ -97,12 +104,12 @@ public class KnowledgeGemItem extends Item implements ExperienceStorageItem, Ext
 					
 					if (experienceToTransfer > 0) {
 						if (!serverPlayerEntity.isCreative()) {
-							serverPlayerEntity.addExperience(experienceToTransfer);
+							serverPlayerEntity.giveExperiencePoints(experienceToTransfer);
 						}
 						ExperienceStorageItem.removeStoredExperience(stack, experienceToTransfer);
 
 						if (remainingUseTicks % 4 == 0) {
-							world.playSound(null, user.getBlockPos(), SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.PLAYERS, 0.3F, 0.8F + world.getRandom().nextFloat() * 0.4F);
+							world.playSound(null, user.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS, 0.3F, 0.8F + world.getRandom().nextFloat() * 0.4F);
 						}
 					}
 				}
@@ -111,34 +118,34 @@ public class KnowledgeGemItem extends Item implements ExperienceStorageItem, Ext
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
 		
 		int maxExperience = getMaxStoredExperience(itemStack);
 		int storedExperience = ExperienceStorageItem.getStoredExperience(itemStack);
 		if (storedExperience == 0) {
-			tooltip.add(Text.literal("0 ").formatted(Formatting.DARK_GRAY).append(Text.translatable("item.spectrum.knowledge_gem.tooltip.stored_experience", maxExperience).formatted(Formatting.GRAY)));
+			tooltip.add(Component.literal("0 ").withStyle(ChatFormatting.DARK_GRAY).append(Component.translatable("item.spectrum.knowledge_gem.tooltip.stored_experience", maxExperience).withStyle(ChatFormatting.GRAY)));
 		} else {
-			tooltip.add(Text.literal(storedExperience + " ").formatted(Formatting.GREEN).append(Text.translatable("item.spectrum.knowledge_gem.tooltip.stored_experience", maxExperience).formatted(Formatting.GRAY)));
+			tooltip.add(Component.literal(storedExperience + " ").withStyle(ChatFormatting.GREEN).append(Component.translatable("item.spectrum.knowledge_gem.tooltip.stored_experience", maxExperience).withStyle(ChatFormatting.GRAY)));
 		}
 		if (shouldDisplayUsageTooltip(itemStack)) {
-			tooltip.add(Text.translatable("item.spectrum.knowledge_gem.tooltip.use", getTransferableExperiencePerTick(itemStack)).formatted(Formatting.GRAY));
+			tooltip.add(Component.translatable("item.spectrum.knowledge_gem.tooltip.use", getTransferableExperiencePerTick(itemStack)).withStyle(ChatFormatting.GRAY));
 			addBannerPatternProviderTooltip(tooltip);
 		}
 	}
 	
 	public boolean shouldDisplayUsageTooltip(ItemStack itemStack) {
-		NbtCompound nbtCompound = itemStack.getNbt();
+		CompoundTag nbtCompound = itemStack.getTag();
 		return nbtCompound == null || !nbtCompound.getBoolean("do_not_display_store_tooltip");
 	}
 	
-	public boolean removePlayerExperience(@NotNull PlayerEntity playerEntity, int experience) {
+	public boolean removePlayerExperience(@NotNull Player playerEntity, int experience) {
 		if (playerEntity.isCreative()) {
 			return true;
 		} else if (playerEntity.totalExperience < experience) {
 			return false;
 		} else {
-			playerEntity.addExperience(-experience);
+			playerEntity.giveExperiencePoints(-experience);
 			return true;
 		}
 	}
@@ -157,7 +164,7 @@ public class KnowledgeGemItem extends Item implements ExperienceStorageItem, Ext
 	}
 	
 	@Override
-	public RegistryEntry<BannerPattern> getPattern() {
+	public Holder<BannerPattern> getPattern() {
 		return SpectrumBannerPatterns.KNOWLEDGE_GEM;
 	}
 	
@@ -168,11 +175,11 @@ public class KnowledgeGemItem extends Item implements ExperienceStorageItem, Ext
 	
 	@Override
 	public boolean acceptsEnchantment(Enchantment enchantment) {
-		return enchantment == Enchantments.EFFICIENCY || enchantment == Enchantments.QUICK_CHARGE;
+		return enchantment == Enchantments.BLOCK_EFFICIENCY || enchantment == Enchantments.QUICK_CHARGE;
 	}
 	
 	@Override
-	public int getEnchantability() {
+	public int getEnchantmentValue() {
 		return 5;
 	}
 

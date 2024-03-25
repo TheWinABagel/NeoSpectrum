@@ -1,25 +1,26 @@
 package de.dafuqs.spectrum.enchantments;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.registries.SpectrumItemTags;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
 
 public class IndestructibleEnchantment extends SpectrumEnchantment {
 	
-	public IndestructibleEnchantment(Rarity weight, Identifier unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
-		super(weight, EnchantmentTarget.BREAKABLE, slotTypes, unlockAdvancementIdentifier);
+	public IndestructibleEnchantment(Rarity weight, ResourceLocation unlockAdvancementIdentifier, EquipmentSlot... slotTypes) {
+		super(weight, EnchantmentCategory.BREAKABLE, slotTypes, unlockAdvancementIdentifier);
 	}
 	
 	@Override
-	public int getMinPower(int level) {
+	public int getMinCost(int level) {
 		return 30;
 	}
 	
 	@Override
-	public int getMaxPower(int level) {
-		return super.getMinPower(level) + 30;
+	public int getMaxCost(int level) {
+		return super.getMinCost(level) + 30;
 	}
 	
 	@Override
@@ -28,13 +29,13 @@ public class IndestructibleEnchantment extends SpectrumEnchantment {
 	}
 	
 	@Override
-	public boolean canAccept(Enchantment other) {
-		return super.canAccept(other);
+	public boolean checkCompatibility(Enchantment other) {
+		return super.checkCompatibility(other);
 	}
 	
 	@Override
-	public boolean isAcceptableItem(ItemStack stack) {
-		return super.isAcceptableItem(stack) && !stack.isIn(SpectrumItemTags.INDESTRUCTIBLE_BLACKLISTED);
+	public boolean canEnchant(ItemStack stack) {
+		return super.canEnchant(stack) && !stack.is(SpectrumItemTags.INDESTRUCTIBLE_BLACKLISTED);
 	}
 	
 }

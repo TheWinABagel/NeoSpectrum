@@ -1,100 +1,109 @@
 package de.dafuqs.spectrum.entity.render;
 
-import de.dafuqs.spectrum.entity.*;
-import de.dafuqs.spectrum.entity.entity.*;
-import net.minecraft.client.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.block.*;
-import net.minecraft.client.render.entity.*;
-import net.minecraft.client.render.item.*;
-import net.minecraft.client.render.model.*;
-import net.minecraft.client.render.model.json.*;
-import net.minecraft.client.util.*;
-import net.minecraft.client.util.math.*;
-import net.minecraft.entity.decoration.*;
-import net.minecraft.item.*;
-import net.minecraft.item.map.*;
-import net.minecraft.util.math.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
+import de.dafuqs.spectrum.entity.SpectrumEntityTypes;
+import de.dafuqs.spectrum.entity.entity.PhantomFrameEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.block.BlockRenderDispatcher;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.ItemFrameRenderer;
+import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.resources.model.ModelManager;
+import net.minecraft.client.resources.model.ModelResourceLocation;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.phys.Vec3;
 
-public class PhantomFrameEntityRenderer<T extends ItemFrameEntity> extends ItemFrameEntityRenderer<PhantomFrameEntity> {
+public class PhantomFrameEntityRenderer<T extends ItemFrame> extends ItemFrameRenderer<PhantomFrameEntity> {
 
-	public static final ModelIdentifier NORMAL_FRAME_MODEL_IDENTIFIER = ModelIdentifier.ofVanilla("item_frame", "map=false");
-	public static final ModelIdentifier MAP_FRAME_MODEL_IDENTIFIER = ModelIdentifier.ofVanilla("item_frame", "map=true");
-	public static final ModelIdentifier GLOW_FRAME_MODEL_IDENTIFIER = ModelIdentifier.ofVanilla("glow_item_frame", "map=false");
-	public static final ModelIdentifier MAP_GLOW_FRAME_MODEL_IDENTIFIER = ModelIdentifier.ofVanilla("glow_item_frame", "map=true");
+	public static final ModelResourceLocation NORMAL_FRAME_MODEL_IDENTIFIER = ModelResourceLocation.vanilla("item_frame", "map=false");
+	public static final ModelResourceLocation MAP_FRAME_MODEL_IDENTIFIER = ModelResourceLocation.vanilla("item_frame", "map=true");
+	public static final ModelResourceLocation GLOW_FRAME_MODEL_IDENTIFIER = ModelResourceLocation.vanilla("glow_item_frame", "map=false");
+	public static final ModelResourceLocation MAP_GLOW_FRAME_MODEL_IDENTIFIER = ModelResourceLocation.vanilla("glow_item_frame", "map=true");
 
-	private final MinecraftClient client = MinecraftClient.getInstance();
+	private final Minecraft client = Minecraft.getInstance();
 	private final ItemRenderer itemRenderer;
 
-	public PhantomFrameEntityRenderer(EntityRendererFactory.Context context) {
+	public PhantomFrameEntityRenderer(EntityRendererProvider.Context context) {
 		super(context);
 		this.itemRenderer = context.getItemRenderer();
 	}
 
 	@Override
 	protected int getBlockLight(PhantomFrameEntity itemFrameEntity, BlockPos blockPos) {
-		return itemFrameEntity.getType() == SpectrumEntityTypes.GLOW_PHANTOM_FRAME ? Math.max(5, super.getBlockLight(itemFrameEntity, blockPos)) : super.getBlockLight(itemFrameEntity, blockPos);
+		return itemFrameEntity.getType() == SpectrumEntityTypes.GLOW_PHANTOM_FRAME ? Math.max(5, super.getBlockLightLevel(itemFrameEntity, blockPos)) : super.getBlockLightLevel(itemFrameEntity, blockPos);
 	}
 
 	@Override
-	public void render(PhantomFrameEntity itemFrameEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light) {
-		matrixStack.push();
+	public void render(PhantomFrameEntity itemFrameEntity, float f, float g, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int light) {
+		matrixStack.pushPose();
 
-		Direction direction = itemFrameEntity.getHorizontalFacing();
-		Vec3d vec3d = this.getPositionOffset(itemFrameEntity, g);
-		matrixStack.translate(-vec3d.getX(), -vec3d.getY(), -vec3d.getZ());
+		Direction direction = itemFrameEntity.getDirection();
+		Vec3 vec3d = this.getRenderOffset(itemFrameEntity, g);
+		matrixStack.translate(-vec3d.x(), -vec3d.y(), -vec3d.z());
 		double d = 0.46875D;
-		matrixStack.translate((double) direction.getOffsetX() * d, (double) direction.getOffsetY() * d, (double) direction.getOffsetZ() * d);
-		matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(itemFrameEntity.getPitch()));
-		matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - itemFrameEntity.getYaw()));
+		matrixStack.translate((double) direction.getStepX() * d, (double) direction.getStepY() * d, (double) direction.getStepZ() * d);
+		matrixStack.mulPose(Axis.XP.rotationDegrees(itemFrameEntity.getXRot()));
+		matrixStack.mulPose(Axis.YP.rotationDegrees(180.0F - itemFrameEntity.getYRot()));
 		boolean isInvisible = itemFrameEntity.isInvisible();
-		ItemStack itemStack = itemFrameEntity.getHeldItemStack();
+		ItemStack itemStack = itemFrameEntity.getItem();
 		if (!isInvisible) {
-			BlockRenderManager blockRenderManager = this.client.getBlockRenderManager();
-			BakedModelManager bakedModelManager = blockRenderManager.getModels().getModelManager();
-			ModelIdentifier modelIdentifier = this.getModelId(itemFrameEntity, itemStack);
-			matrixStack.push();
+			BlockRenderDispatcher blockRenderManager = this.client.getBlockRenderer();
+			ModelManager bakedModelManager = blockRenderManager.getBlockModelShaper().getModelManager();
+			ModelResourceLocation modelIdentifier = this.getModelId(itemFrameEntity, itemStack);
+			matrixStack.pushPose();
 			matrixStack.translate(-0.5D, -0.5D, -0.5D);
-			blockRenderManager.getModelRenderer().render(matrixStack.peek(), vertexConsumerProvider.getBuffer(TexturedRenderLayers.getEntitySolid()), null, bakedModelManager.getModel(modelIdentifier), 1.0F, 1.0F, 1.0F, light, OverlayTexture.DEFAULT_UV);
-			matrixStack.pop();
+			blockRenderManager.getModelRenderer().renderModel(matrixStack.last(), vertexConsumerProvider.getBuffer(Sheets.solidBlockSheet()), null, bakedModelManager.getModel(modelIdentifier), 1.0F, 1.0F, 1.0F, light, OverlayTexture.NO_OVERLAY);
+			matrixStack.popPose();
 		}
 		
 		if (!itemStack.isEmpty()) {
-			boolean isRenderingMap = itemStack.isOf(Items.FILLED_MAP);
+			boolean isRenderingMap = itemStack.is(Items.FILLED_MAP);
 			if (isInvisible) {
 				matrixStack.translate(0.0D, 0.0D, 0.5D);
 			} else {
 				matrixStack.translate(0.0D, 0.0D, 0.4375D);
 			}
 			
-			int renderLight = itemFrameEntity.shouldRenderAtMaxLight() ? LightmapTextureManager.MAX_LIGHT_COORDINATE : light;
+			int renderLight = itemFrameEntity.shouldRenderAtMaxLight() ? LightTexture.FULL_BRIGHT : light;
 
 			int bakedModelManager = isRenderingMap ? itemFrameEntity.getRotation() % 4 * 2 : itemFrameEntity.getRotation();
-			matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) bakedModelManager * 360.0F / 8.0F));
+			matrixStack.mulPose(Axis.ZP.rotationDegrees((float) bakedModelManager * 360.0F / 8.0F));
 			if (isRenderingMap) {
-				matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(180.0F));
+				matrixStack.mulPose(Axis.ZP.rotationDegrees(180.0F));
 				float scale = 0.0078125F;
 				matrixStack.scale(scale, scale, scale);
 				matrixStack.translate(-64.0D, -64.0D, 0.0D);
-				Integer mapId = FilledMapItem.getMapId(itemStack);
-				MapState mapState = FilledMapItem.getMapState(mapId, itemFrameEntity.getWorld());
+				Integer mapId = MapItem.getMapId(itemStack);
+				MapItemSavedData mapState = MapItem.getSavedData(mapId, itemFrameEntity.level());
 				matrixStack.translate(0.0D, 0.0D, -1.0D);
 				if (mapState != null) {
-					this.client.gameRenderer.getMapRenderer().draw(matrixStack, vertexConsumerProvider, mapId, mapState, true, renderLight);
+					this.client.gameRenderer.getMapRenderer().render(matrixStack, vertexConsumerProvider, mapId, mapState, true, renderLight);
 				}
 			} else {
 				float scale = 0.75F;
 				matrixStack.scale(scale, scale, scale);
-				this.itemRenderer.renderItem(itemStack, ModelTransformationMode.FIXED, renderLight, OverlayTexture.DEFAULT_UV, matrixStack, vertexConsumerProvider, itemFrameEntity.getWorld(), itemFrameEntity.getId());
+				this.itemRenderer.renderStatic(itemStack, ItemDisplayContext.FIXED, renderLight, OverlayTexture.NO_OVERLAY, matrixStack, vertexConsumerProvider, itemFrameEntity.level(), itemFrameEntity.getId());
 			}
 		}
 
-		matrixStack.pop();
+		matrixStack.popPose();
 	}
 
-	private ModelIdentifier getModelId(PhantomFrameEntity entity, ItemStack stack) {
+	private ModelResourceLocation getModelId(PhantomFrameEntity entity, ItemStack stack) {
 		boolean bl = entity.getType() == SpectrumEntityTypes.GLOW_PHANTOM_FRAME;
-		if (stack.isOf(Items.FILLED_MAP)) {
+		if (stack.is(Items.FILLED_MAP)) {
 			return bl ? MAP_GLOW_FRAME_MODEL_IDENTIFIER : MAP_FRAME_MODEL_IDENTIFIER;
 		} else {
 			return bl ? GLOW_FRAME_MODEL_IDENTIFIER : NORMAL_FRAME_MODEL_IDENTIFIER;

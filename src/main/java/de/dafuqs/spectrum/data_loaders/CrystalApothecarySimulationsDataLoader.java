@@ -1,19 +1,25 @@
 package de.dafuqs.spectrum.data_loaders;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.recipe.*;
-import net.fabricmc.fabric.api.resource.*;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.registry.*;
-import net.minecraft.resource.*;
-import net.minecraft.util.*;
-import net.minecraft.util.profiler.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonSyntaxException;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.recipe.RecipeUtils;
+import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 
 import java.util.*;
 
-public class CrystalApothecarySimulationsDataLoader extends JsonDataLoader implements IdentifiableResourceReloadListener {
+public class CrystalApothecarySimulationsDataLoader extends SimpleJsonResourceReloadListener implements IdentifiableResourceReloadListener {
 	
 	public static final String ID = "crystal_apothecary_simulations";
 	public static final CrystalApothecarySimulationsDataLoader INSTANCE = new CrystalApothecarySimulationsDataLoader();
@@ -29,13 +35,13 @@ public class CrystalApothecarySimulationsDataLoader extends JsonDataLoader imple
 	}
 	
 	@Override
-	protected void apply(Map<Identifier, JsonElement> prepared, ResourceManager manager, Profiler profiler) {
+	protected void apply(Map<ResourceLocation, JsonElement> prepared, ResourceManager manager, ProfilerFiller profiler) {
 		COMPENSATIONS.clear();
 		prepared.forEach((identifier, jsonElement) -> {
 			JsonObject object = jsonElement.getAsJsonObject();
 			
-			String buddingBlockString = JsonHelper.getString(object, "budding_block");
-			Block buddingBlock = Registries.BLOCK.get(Identifier.tryParse(buddingBlockString));
+			String buddingBlockString = GsonHelper.getAsString(object, "budding_block");
+			Block buddingBlock = BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse(buddingBlockString));
 			if (buddingBlock == Blocks.AIR) {
 				SpectrumCommon.logError("Crystal Apothecary Simulation '" + identifier + "' has a non-existant 'budding_block' entry: '" + buddingBlockString + "'. Ignoring that one.");
 				return;
@@ -43,15 +49,15 @@ public class CrystalApothecarySimulationsDataLoader extends JsonDataLoader imple
 			
 			Set<Block> validNeighbors = new HashSet<>();
 			for (JsonElement entry : object.get("valid_neighbor_blocks").getAsJsonArray()) {
-				Identifier validNeighborBlockId = Identifier.tryParse(entry.getAsString());
-				Block validNeighborBlock = Registries.BLOCK.get(validNeighborBlockId);
-				if (validNeighborBlock == Blocks.AIR && !validNeighborBlockId.equals(new Identifier("air"))) {
+				ResourceLocation validNeighborBlockId = ResourceLocation.tryParse(entry.getAsString());
+				Block validNeighborBlock = BuiltInRegistries.BLOCK.get(validNeighborBlockId);
+				if (validNeighborBlock == Blocks.AIR && !validNeighborBlockId.equals(new ResourceLocation("air"))) {
 					SpectrumCommon.logError("Crystal Apothecary Simulation '" + identifier + "' has a non-existant 'valid_neighbor_block' entry: '" + validNeighborBlockId + "'. Ignoring that one.");
 				} else {
 					validNeighbors.add(validNeighborBlock);
 				}
 			}
-			int ticksForCompensationLootPerValidNeighbor = JsonHelper.getInt(object, "ticks_for_compensation_loot_per_valid_neighbor", 10000);
+			int ticksForCompensationLootPerValidNeighbor = GsonHelper.getAsInt(object, "ticks_for_compensation_loot_per_valid_neighbor", 10000);
 			
 			ItemStack compensatedStack;
 			try {
@@ -66,7 +72,7 @@ public class CrystalApothecarySimulationsDataLoader extends JsonDataLoader imple
 	}
 	
 	@Override
-	public Identifier getFabricId() {
+	public ResourceLocation getFabricId() {
 		return SpectrumCommon.locate(ID);
 	}
 	

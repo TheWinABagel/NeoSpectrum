@@ -1,27 +1,37 @@
 package de.dafuqs.spectrum.helpers;
 
-import de.dafuqs.revelationary.api.advancements.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.advancement.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.server.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.advancements.Advancement;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.PlayerAdvancements;
+import net.minecraft.server.ServerAdvancementManager;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.math.*;
-import java.text.*;
-import java.util.*;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.util.List;
+import java.util.Optional;
 
 public class Support {
 	
-	private static final Identifier PROGRESSION_FINISHED_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("endgame/finish_progression");
+	private static final ResourceLocation PROGRESSION_FINISHED_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("endgame/finish_progression");
 	public static final DecimalFormat DF = new DecimalFormat("0");
 	public static final DecimalFormat DF1 = new DecimalFormat("0.0");
 	public static final DecimalFormat DF2 = new DecimalFormat("0.00");
@@ -39,7 +49,7 @@ public class Support {
 	}
 	
 	public static @NotNull Optional<TagKey<Block>> getFirstMatchingBlockTag(@NotNull BlockState blockState, @NotNull List<TagKey<Block>> tags) {
-		return blockState.streamTags().filter(tags::contains).findFirst();
+		return blockState.getTags().filter(tags::contains).findFirst();
 	}
 	
 	public static String getWithOneDecimalAfterComma(float number) {
@@ -90,7 +100,7 @@ public class Support {
 		}
 	}
 	
-	public static int getIntFromDecimalWithChance(double d, @NotNull Random random) {
+	public static int getIntFromDecimalWithChance(double d, @NotNull RandomSource random) {
 		boolean roundUp = (random.nextFloat() < d % 1);
 		if (roundUp) {
 			return ((int) d) + 1;
@@ -111,16 +121,16 @@ public class Support {
 	public static BlockPos directionalOffset(BlockPos origin, Vec3i forwardUpRight, @NotNull Direction horizontalFacing) {
 		switch (horizontalFacing) {
 			case NORTH -> {
-				return origin.add(forwardUpRight.getZ(), forwardUpRight.getY(), -forwardUpRight.getX());
+				return origin.offset(forwardUpRight.getZ(), forwardUpRight.getY(), -forwardUpRight.getX());
 			}
 			case EAST -> {
-				return origin.add(forwardUpRight.getX(), forwardUpRight.getY(), forwardUpRight.getZ());
+				return origin.offset(forwardUpRight.getX(), forwardUpRight.getY(), forwardUpRight.getZ());
 			}
 			case SOUTH -> {
-				return origin.add(-forwardUpRight.getZ(), forwardUpRight.getY(), forwardUpRight.getX());
+				return origin.offset(-forwardUpRight.getZ(), forwardUpRight.getY(), forwardUpRight.getX());
 			}
 			case WEST -> {
-				return origin.add(-forwardUpRight.getX(), forwardUpRight.getY(), -forwardUpRight.getZ());
+				return origin.offset(-forwardUpRight.getX(), forwardUpRight.getY(), -forwardUpRight.getZ());
 			}
 			default -> {
 				SpectrumCommon.logWarning("Called directionalOffset with facing" + horizontalFacing + " this is not supported.");
@@ -129,24 +139,24 @@ public class Support {
 		}
 	}
 	
-	public static void grantAdvancementCriterion(@NotNull ServerPlayerEntity serverPlayerEntity, Identifier advancementIdentifier, String criterion) {
+	public static void grantAdvancementCriterion(@NotNull ServerPlayer serverPlayerEntity, ResourceLocation advancementIdentifier, String criterion) {
 		if (serverPlayerEntity.getServer() == null) {
 			return;
 		}
-		ServerAdvancementLoader sal = serverPlayerEntity.getServer().getAdvancementLoader();
-		PlayerAdvancementTracker tracker = serverPlayerEntity.getAdvancementTracker();
+		ServerAdvancementManager sal = serverPlayerEntity.getServer().getAdvancements();
+		PlayerAdvancements tracker = serverPlayerEntity.getAdvancements();
 		
-		Advancement advancement = sal.get(advancementIdentifier);
+		Advancement advancement = sal.getAdvancement(advancementIdentifier);
 		if (advancement == null) {
 			SpectrumCommon.logError("Trying to grant a criterion \"" + criterion + "\" for an advancement that does not exist: " + advancementIdentifier);
 		} else {
-			if (!tracker.getProgress(advancement).isDone()) {
-				tracker.grantCriterion(advancement, criterion);
+			if (!tracker.getOrStartProgress(advancement).isDone()) {
+				tracker.award(advancement, criterion);
 			}
 		}
 	}
 	
-	public static void grantAdvancementCriterion(@NotNull ServerPlayerEntity serverPlayerEntity, String advancementString, String criterion) {
+	public static void grantAdvancementCriterion(@NotNull ServerPlayer serverPlayerEntity, String advancementString, String criterion) {
 		grantAdvancementCriterion(serverPlayerEntity, SpectrumCommon.locate(advancementString), criterion);
 	}
 	
@@ -175,7 +185,7 @@ public class Support {
 	}
 	
 	@Contract(pure = true)
-	public static Direction directionFromRotation(@NotNull BlockRotation blockRotation) {
+	public static Direction directionFromRotation(@NotNull Rotation blockRotation) {
 		switch (blockRotation) {
 			case NONE -> {
 				return Direction.NORTH;
@@ -193,40 +203,40 @@ public class Support {
 	}
 	
 	@Contract(pure = true)
-	public static BlockRotation rotationFromDirection(@NotNull Direction direction) {
+	public static Rotation rotationFromDirection(@NotNull Direction direction) {
 		switch (direction) {
 			case EAST -> {
-				return BlockRotation.CLOCKWISE_90;
+				return Rotation.CLOCKWISE_90;
 			}
 			case SOUTH -> {
-				return BlockRotation.CLOCKWISE_180;
+				return Rotation.CLOCKWISE_180;
 			}
 			case WEST -> {
-				return BlockRotation.COUNTERCLOCKWISE_90;
+				return Rotation.COUNTERCLOCKWISE_90;
 			}
 			default -> {
-				return BlockRotation.NONE;
+				return Rotation.NONE;
 			}
 		}
 	}
 	
-	public static boolean hasPlayerFinishedMod(PlayerEntity player) {
+	public static boolean hasPlayerFinishedMod(Player player) {
 		return AdvancementHelper.hasAdvancement(player, PROGRESSION_FINISHED_ADVANCEMENT_IDENTIFIER);
 	}
 	
-	public static Optional<BlockPos> getNexReplaceableBlockPosUpDown(World world, BlockPos blockPos, int maxUpDown) {
-		if (world.getBlockState(blockPos).isReplaceable()) {
+	public static Optional<BlockPos> getNexReplaceableBlockPosUpDown(Level world, BlockPos blockPos, int maxUpDown) {
+		if (world.getBlockState(blockPos).canBeReplaced()) {
 			// search down
 			for (int i = 0; i < maxUpDown; i++) {
-				if (!world.getBlockState(blockPos.down(i + 1)).isReplaceable()) {
-					return Optional.of(blockPos.down(i));
+				if (!world.getBlockState(blockPos.below(i + 1)).canBeReplaced()) {
+					return Optional.of(blockPos.below(i));
 				}
 			}
 		} else {
 			// search up
 			for (int i = 1; i <= maxUpDown; i++) {
-				if (world.getBlockState(blockPos.up(i)).isReplaceable()) {
-					return Optional.of(blockPos.up(i));
+				if (world.getBlockState(blockPos.above(i)).canBeReplaced()) {
+					return Optional.of(blockPos.above(i));
 				}
 			}
 		}

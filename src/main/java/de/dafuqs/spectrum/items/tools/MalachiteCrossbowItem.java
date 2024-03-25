@@ -1,21 +1,24 @@
 package de.dafuqs.spectrum.items.tools;
 
-import de.dafuqs.arrowhead.api.*;
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.item.*;
-import net.minecraft.nbt.*;
-import net.minecraft.registry.tag.*;
+import de.dafuqs.arrowhead.api.ArrowheadCrossbow;
+import de.dafuqs.spectrum.api.item.Preenchanted;
+import de.dafuqs.spectrum.registries.SpectrumItemTags;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.tags.ItemTags;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
 
-import java.util.*;
-import java.util.function.*;
+import java.util.Map;
+import java.util.function.Predicate;
 
 public class MalachiteCrossbowItem extends CrossbowItem implements Preenchanted, ArrowheadCrossbow {
 	
-	public static final Predicate<ItemStack> PROJECTILES = (stack) -> stack.isIn(ItemTags.ARROWS) || stack.isIn(SpectrumItemTags.GLASS_ARROWS);
+	public static final Predicate<ItemStack> PROJECTILES = (stack) -> stack.is(ItemTags.ARROWS) || stack.is(SpectrumItemTags.GLASS_ARROWS);
 	
-	public MalachiteCrossbowItem(Settings settings) {
+	public MalachiteCrossbowItem(Properties settings) {
         super(settings);
     }
 	
@@ -25,24 +28,24 @@ public class MalachiteCrossbowItem extends CrossbowItem implements Preenchanted,
 	}
 	
 	@Override
-	public ItemStack getDefaultStack() {
+	public ItemStack getDefaultInstance() {
 		return getDefaultEnchantedStack(this);
 	}
 	
 	public static ItemStack getFirstProjectile(ItemStack crossbow) {
-		NbtCompound nbtCompound = crossbow.getNbt();
+		CompoundTag nbtCompound = crossbow.getTag();
 		if (nbtCompound != null && nbtCompound.contains("ChargedProjectiles", 9)) {
-			NbtList nbtList = nbtCompound.getList("ChargedProjectiles", 10);
+			ListTag nbtList = nbtCompound.getList("ChargedProjectiles", 10);
 			if (nbtList != null && nbtList.size() > 0) {
-				NbtCompound nbtCompound2 = nbtList.getCompound(0);
-				return ItemStack.fromNbt(nbtCompound2);
+				CompoundTag nbtCompound2 = nbtList.getCompound(0);
+				return ItemStack.of(nbtCompound2);
 			}
 		}
 		return ItemStack.EMPTY;
 	}
 	
 	@Override
-	public Predicate<ItemStack> getProjectiles() {
+	public Predicate<ItemStack> getAllSupportedProjectiles() {
 		return PROJECTILES;
 	}
 

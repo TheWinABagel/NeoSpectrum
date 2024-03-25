@@ -1,9 +1,9 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.spectrum.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.world.biome.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.biome.Biome;
 
 public class SpectrumBiomeTags {
 	
@@ -11,7 +11,7 @@ public class SpectrumBiomeTags {
 	public static final TagKey<Biome> DD_BIOMES = getReference("in_deeper_down");
 	
 	private static TagKey<Biome> getReference(String id) {
-		return TagKey.of(RegistryKeys.BIOME, SpectrumCommon.locate(id));
+		return TagKey.create(Registries.BIOME, SpectrumCommon.locate(id));
 	}
 	
 }

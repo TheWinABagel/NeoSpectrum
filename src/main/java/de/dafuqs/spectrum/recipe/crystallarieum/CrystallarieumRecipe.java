@@ -1,24 +1,29 @@
 package de.dafuqs.spectrum.recipe.crystallarieum;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.api.energy.color.*;
-import de.dafuqs.spectrum.recipe.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.api.energy.color.InkColor;
+import de.dafuqs.spectrum.recipe.GatedSpectrumRecipe;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class CrystallarieumRecipe extends GatedSpectrumRecipe {
 
-	public static final Identifier UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/blocks/crystallarieum");
+	public static final ResourceLocation UNLOCK_IDENTIFIER = SpectrumCommon.locate("unlocks/blocks/crystallarieum");
 
 	protected final Ingredient inputIngredient;
 	protected final List<BlockState> growthStages;
@@ -32,7 +37,7 @@ public class CrystallarieumRecipe extends GatedSpectrumRecipe {
 	protected final static Map<Ingredient, CrystallarieumRecipe> ingredientMap = new HashMap<>();
 	protected final static Map<BlockState, CrystallarieumRecipe> stateMap = new HashMap<>();
 
-	public CrystallarieumRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, Ingredient inputIngredient, List<BlockState> growthStages, int secondsPerGrowthStage, InkColor inkColor, int inkPerSecond, boolean growsWithoutCatalyst, List<CrystallarieumCatalyst> catalysts, List<ItemStack> additionalOutputs) {
+	public CrystallarieumRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, Ingredient inputIngredient, List<BlockState> growthStages, int secondsPerGrowthStage, InkColor inkColor, int inkPerSecond, boolean growsWithoutCatalyst, List<CrystallarieumCatalyst> catalysts, List<ItemStack> additionalOutputs) {
 		super(id, group, secret, requiredAdvancementIdentifier);
 
 		this.inputIngredient = inputIngredient;
@@ -73,28 +78,28 @@ public class CrystallarieumRecipe extends GatedSpectrumRecipe {
 	}
 	
 	@Override
-	public boolean matches(Inventory inv, World world) {
-		return this.inputIngredient.test(inv.getStack(0));
+	public boolean matches(Container inv, Level world) {
+		return this.inputIngredient.test(inv.getItem(0));
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inv, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inv, RegistryAccess drm) {
 		return ItemStack.EMPTY;
 	}
 	
 	@Override
-	public boolean fits(int width, int height) {
+	public boolean canCraftInDimensions(int width, int height) {
 		return true;
 	}
 	
 	@Override
-	public ItemStack getOutput(DynamicRegistryManager registryManager) {
+	public ItemStack getResultItem(RegistryAccess registryManager) {
 		List<BlockState> states = getGrowthStages();
-		return states.get(states.size() - 1).getBlock().asItem().getDefaultStack();
+		return states.get(states.size() - 1).getBlock().asItem().getDefaultInstance();
 	}
 	
 	@Override
-	public ItemStack createIcon() {
+	public ItemStack getToastSymbol() {
 		return new ItemStack(SpectrumBlocks.CRYSTALLARIEUM);
 	}
 	
@@ -109,7 +114,7 @@ public class CrystallarieumRecipe extends GatedSpectrumRecipe {
 	}
 	
 	@Override
-	public Identifier getRecipeTypeUnlockIdentifier() {
+	public ResourceLocation getRecipeTypeUnlockIdentifier() {
 		return UNLOCK_IDENTIFIER;
 	}
 	
@@ -119,8 +124,8 @@ public class CrystallarieumRecipe extends GatedSpectrumRecipe {
 	}
 	
 	@Override
-	public DefaultedList<Ingredient> getIngredients() {
-		DefaultedList<Ingredient> defaultedList = DefaultedList.of();
+	public NonNullList<Ingredient> getIngredients() {
+		NonNullList<Ingredient> defaultedList = NonNullList.create();
 		defaultedList.add(this.inputIngredient);
 		return defaultedList;
 	}
@@ -162,7 +167,7 @@ public class CrystallarieumRecipe extends GatedSpectrumRecipe {
 		return this.catalysts;
 	}
 	
-	public List<ItemStack> getAdditionalOutputs(DynamicRegistryManager registryManager) {
+	public List<ItemStack> getAdditionalOutputs(RegistryAccess registryManager) {
 		return additionalOutputs;
 	}
 

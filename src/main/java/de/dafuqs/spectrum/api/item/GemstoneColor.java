@@ -1,7 +1,7 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
 
 public interface GemstoneColor {
 	

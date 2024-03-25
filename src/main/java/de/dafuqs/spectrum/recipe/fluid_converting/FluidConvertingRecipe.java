@@ -1,49 +1,49 @@
 package de.dafuqs.spectrum.recipe.fluid_converting;
 
-import de.dafuqs.spectrum.recipe.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import net.minecraft.util.collection.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.recipe.GatedSpectrumRecipe;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class FluidConvertingRecipe extends GatedSpectrumRecipe {
 	
 	protected final Ingredient inputIngredient;
 	protected final ItemStack outputItemStack;
 	
-	public FluidConvertingRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, @NotNull Ingredient inputIngredient, ItemStack outputItemStack) {
+	public FluidConvertingRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, @NotNull Ingredient inputIngredient, ItemStack outputItemStack) {
 		super(id, group, secret, requiredAdvancementIdentifier);
 		this.inputIngredient = inputIngredient;
 		this.outputItemStack = outputItemStack;
 	}
 	
 	@Override
-	public boolean matches(@NotNull Inventory inv, World world) {
-		return this.inputIngredient.test(inv.getStack(0));
+	public boolean matches(@NotNull Container inv, Level world) {
+		return this.inputIngredient.test(inv.getItem(0));
 	}
 	
 	@Override
-	public ItemStack craft(Inventory inv, DynamicRegistryManager drm) {
+	public ItemStack assemble(Container inv, RegistryAccess drm) {
 		return null;
 	}
 	
 	@Override
-	public boolean fits(int width, int height) {
+	public boolean canCraftInDimensions(int width, int height) {
 		return true;
 	}
 	
 	@Override
-	public ItemStack getOutput(DynamicRegistryManager registryManager) {
+	public ItemStack getResultItem(RegistryAccess registryManager) {
 		return outputItemStack.copy();
 	}
 	
 	@Override
-	public DefaultedList<Ingredient> getIngredients() {
-		DefaultedList<Ingredient> defaultedList = DefaultedList.of();
+	public NonNullList<Ingredient> getIngredients() {
+		NonNullList<Ingredient> defaultedList = NonNullList.create();
 		defaultedList.add(this.inputIngredient);
 		return defaultedList;
 	}

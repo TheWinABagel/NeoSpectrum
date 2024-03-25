@@ -1,69 +1,69 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.entity.entity.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.loot.context.*;
-import net.minecraft.predicate.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.predicate.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.entity.entity.SpectrumFishingBobberEntity;
+import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.loot.LootContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 
-import java.util.*;
+import java.util.Collection;
 
 /**
  * Advanced fishing criterion that can also:
  * - match the fluid that was fished in
  * - fished entities
  */
-public class SpectrumFishingRodHookedCriterion extends AbstractCriterion<SpectrumFishingRodHookedCriterion.Conditions> {
+public class SpectrumFishingRodHookedCriterion extends SimpleCriterionTrigger<SpectrumFishingRodHookedCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("fishing_rod_hooked");
+	static final ResourceLocation ID = SpectrumCommon.locate("fishing_rod_hooked");
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
 	@Override
-	protected Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate playerPredicate, AdvancementEntityPredicateDeserializer predicateDeserializer) {
+	protected Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate playerPredicate, DeserializationContext predicateDeserializer) {
 		ItemPredicate rod = ItemPredicate.fromJson(jsonObject.get("rod"));
-		LootContextPredicate bobber = EntityPredicate.contextPredicateFromJson(jsonObject, "bobber", predicateDeserializer);
-		LootContextPredicate fishing = EntityPredicate.contextPredicateFromJson(jsonObject, "fishing", predicateDeserializer);
-		LootContextPredicate fishedEntity = EntityPredicate.contextPredicateFromJson(jsonObject, "fished_entity", predicateDeserializer);
+		ContextAwarePredicate bobber = EntityPredicate.fromJson(jsonObject, "bobber", predicateDeserializer);
+		ContextAwarePredicate fishing = EntityPredicate.fromJson(jsonObject, "fishing", predicateDeserializer);
+		ContextAwarePredicate fishedEntity = EntityPredicate.fromJson(jsonObject, "fished_entity", predicateDeserializer);
 		ItemPredicate fishedItem = ItemPredicate.fromJson(jsonObject.get("item"));
 		FluidPredicate fluidPredicate = FluidPredicate.fromJson(jsonObject.get("fluid"));
 		return new SpectrumFishingRodHookedCriterion.Conditions(playerPredicate, rod, bobber, fishing, fishedEntity, fishedItem, fluidPredicate);
 	}
 	
-	public void trigger(ServerPlayerEntity player, ItemStack rod, SpectrumFishingBobberEntity bobber, Entity fishedEntity, Collection<ItemStack> fishingLoots) {
-		LootContext bobberContext = EntityPredicate.createAdvancementEntityLootContext(player, bobber);
-		LootContext hookedEntityContext = bobber.getHookedEntity() == null ? null : EntityPredicate.createAdvancementEntityLootContext(player, bobber.getHookedEntity());
-		LootContext fishedEntityContext = fishedEntity == null ? null : EntityPredicate.createAdvancementEntityLootContext(player, fishedEntity);
-		this.trigger(player, (conditions) -> conditions.matches(rod, bobberContext, hookedEntityContext, fishedEntityContext, fishingLoots, (ServerWorld) bobber.getWorld(), bobber.getBlockPos()));
+	public void trigger(ServerPlayer player, ItemStack rod, SpectrumFishingBobberEntity bobber, Entity fishedEntity, Collection<ItemStack> fishingLoots) {
+		LootContext bobberContext = EntityPredicate.createContext(player, bobber);
+		LootContext hookedEntityContext = bobber.getHookedEntity() == null ? null : EntityPredicate.createContext(player, bobber.getHookedEntity());
+		LootContext fishedEntityContext = fishedEntity == null ? null : EntityPredicate.createContext(player, fishedEntity);
+		this.trigger(player, (conditions) -> conditions.matches(rod, bobberContext, hookedEntityContext, fishedEntityContext, fishingLoots, (ServerLevel) bobber.level(), bobber.blockPosition()));
 		
 		// also trigger vanilla fishing criterion
 		// since that one requires a FishingBobberEntity and SpectrumFishingBobberEntity
 		// does not extend that we have to do some hacky shenanigans running trigger() directly
-		LootContext hookedEntityOrBobberContext = EntityPredicate.createAdvancementEntityLootContext(player, (bobber.getHookedEntity() != null ? bobber.getHookedEntity() : bobber));
-		Criteria.FISHING_ROD_HOOKED.trigger(player, (conditions) -> conditions.matches(rod, hookedEntityOrBobberContext, fishingLoots));
+		LootContext hookedEntityOrBobberContext = EntityPredicate.createContext(player, (bobber.getHookedEntity() != null ? bobber.getHookedEntity() : bobber));
+		CriteriaTriggers.FISHING_ROD_HOOKED.trigger(player, (conditions) -> conditions.matches(rod, hookedEntityOrBobberContext, fishingLoots));
 	}
 
-	public static class Conditions extends AbstractCriterionConditions {
+	public static class Conditions extends AbstractCriterionTriggerInstance {
 		private final ItemPredicate rod;
-		private final LootContextPredicate bobber;
-		private final LootContextPredicate hookedEntity;
-		private final LootContextPredicate fishedEntity;
+		private final ContextAwarePredicate bobber;
+		private final ContextAwarePredicate hookedEntity;
+		private final ContextAwarePredicate fishedEntity;
 		private final ItemPredicate caughtItem;
 		private final FluidPredicate fluidPredicate;
 		
-		public Conditions(LootContextPredicate player, ItemPredicate rod, LootContextPredicate bobber, LootContextPredicate hookedEntity, LootContextPredicate fishedEntity, ItemPredicate caughtItem, FluidPredicate fluidPredicate) {
+		public Conditions(ContextAwarePredicate player, ItemPredicate rod, ContextAwarePredicate bobber, ContextAwarePredicate hookedEntity, ContextAwarePredicate fishedEntity, ItemPredicate caughtItem, FluidPredicate fluidPredicate) {
 			super(SpectrumFishingRodHookedCriterion.ID, player);
 			this.rod = rod;
 			this.bobber = bobber;
@@ -73,27 +73,27 @@ public class SpectrumFishingRodHookedCriterion extends AbstractCriterion<Spectru
 			this.fluidPredicate = fluidPredicate;
 		}
 		
-		public static SpectrumFishingRodHookedCriterion.Conditions create(ItemPredicate rod, LootContextPredicate bobber, LootContextPredicate hookedEntity, LootContextPredicate fishedEntity, ItemPredicate item, FluidPredicate fluidPredicate) {
-			return new SpectrumFishingRodHookedCriterion.Conditions(LootContextPredicate.EMPTY, rod, bobber, hookedEntity, fishedEntity, item, fluidPredicate);
+		public static SpectrumFishingRodHookedCriterion.Conditions create(ItemPredicate rod, ContextAwarePredicate bobber, ContextAwarePredicate hookedEntity, ContextAwarePredicate fishedEntity, ItemPredicate item, FluidPredicate fluidPredicate) {
+			return new SpectrumFishingRodHookedCriterion.Conditions(ContextAwarePredicate.ANY, rod, bobber, hookedEntity, fishedEntity, item, fluidPredicate);
 		}
 		
-		public boolean matches(ItemStack rod, LootContext bobberContext, LootContext hookedEntityContext, LootContext fishedEntityContext, Collection<ItemStack> fishingLoots, ServerWorld world, BlockPos blockPos) {
-			if (!this.rod.test(rod)) return false;
-			if (!this.bobber.test(bobberContext)) return false;
-			if (!this.fluidPredicate.test(world, blockPos)) return false;
-			if (fishedEntityContext == null && !fishedEntity.equals(LootContextPredicate.EMPTY) ||
-					!this.fishedEntity.test(fishedEntityContext)) return false;
-			if (hookedEntityContext == null && !hookedEntity.equals(LootContextPredicate.EMPTY) ||
-					!this.hookedEntity.test(hookedEntityContext)) return false;
+		public boolean matches(ItemStack rod, LootContext bobberContext, LootContext hookedEntityContext, LootContext fishedEntityContext, Collection<ItemStack> fishingLoots, ServerLevel world, BlockPos blockPos) {
+			if (!this.rod.matches(rod)) return false;
+			if (!this.bobber.matches(bobberContext)) return false;
+			if (!this.fluidPredicate.matches(world, blockPos)) return false;
+			if (fishedEntityContext == null && !fishedEntity.equals(ContextAwarePredicate.ANY) ||
+					!this.fishedEntity.matches(fishedEntityContext)) return false;
+			if (hookedEntityContext == null && !hookedEntity.equals(ContextAwarePredicate.ANY) ||
+					!this.hookedEntity.matches(hookedEntityContext)) return false;
 			
 			if (this.caughtItem != ItemPredicate.ANY) {
 				if (hookedEntityContext != null) {
-					Entity entity = hookedEntityContext.get(LootContextParameters.THIS_ENTITY);
+					Entity entity = hookedEntityContext.getParamOrNull(LootContextParams.THIS_ENTITY);
 					if (entity instanceof ItemEntity itemEntity &&
-							this.caughtItem.test(itemEntity.getStack())) return true;
+							this.caughtItem.matches(itemEntity.getItem())) return true;
 				}
 				for (ItemStack itemStack : fishingLoots) {
-					if (this.caughtItem.test(itemStack)) return true;
+					if (this.caughtItem.matches(itemStack)) return true;
 				}
 				
 				return false;
@@ -103,14 +103,14 @@ public class SpectrumFishingRodHookedCriterion extends AbstractCriterion<Spectru
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
-			jsonObject.add("rod", this.rod.toJson());
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
+			jsonObject.add("rod", this.rod.serializeToJson());
 			jsonObject.add("bobber", this.bobber.toJson(predicateSerializer));
 			jsonObject.add("hooked_entity", this.hookedEntity.toJson(predicateSerializer));
 			jsonObject.add("fished_entity", this.fishedEntity.toJson(predicateSerializer));
-			jsonObject.add("item", this.caughtItem.toJson());
-			jsonObject.add("fluid", this.fluidPredicate.toJson());
+			jsonObject.add("item", this.caughtItem.serializeToJson());
+			jsonObject.add("fluid", this.fluidPredicate.serializeToJson());
 			return jsonObject;
 		}
 	}

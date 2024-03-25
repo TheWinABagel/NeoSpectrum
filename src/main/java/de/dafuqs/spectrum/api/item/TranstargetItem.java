@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.api.item;
 
-import net.minecraft.enchantment.EnchantmentTarget;
+import net.minecraft.world.item.enchantment.EnchantmentCategory;
 
 /**
  * Items deserve the ability to be seen
@@ -13,5 +13,5 @@ import net.minecraft.enchantment.EnchantmentTarget;
  */
 public interface TranstargetItem {
 
-    EnchantmentTarget getRealTarget();
+    EnchantmentCategory getRealTarget();
 }

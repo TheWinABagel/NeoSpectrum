@@ -1,26 +1,35 @@
 package de.dafuqs.spectrum.blocks.upgrade;
 
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.particle.*;
-import de.dafuqs.spectrum.particle.effect.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.ai.pathing.*;
-import net.minecraft.server.world.*;
-import net.minecraft.sound.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.util.shape.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
+import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
+import de.dafuqs.spectrum.particle.effect.ColoredTransmission;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Vec3i;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.BlockPositionSource;
+import net.minecraft.world.level.pathfinder.PathComputationType;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class UpgradeBlock extends BlockWithEntity {
+public class UpgradeBlock extends BaseEntityBlock {
 
-	protected static final VoxelShape SHAPE_UP = Block.createCuboidShape(2.0D, 0.0D, 2.0D, 14.0D, 10.0D, 14.0D);
+	protected static final VoxelShape SHAPE_UP = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 10.0D, 14.0D);
 	private static final List<Block> upgradeBlocks = new ArrayList<>();
 	// Positions to check on place / destroy to upgrade those blocks upgrade counts
 	private final List<Vec3i> possibleUpgradeBlockOffsets = new ArrayList<>() {{
@@ -64,7 +73,7 @@ public class UpgradeBlock extends BlockWithEntity {
 	private final int upgradeMod;
 	private final DyeColor effectColor;
 
-	public UpgradeBlock(Settings settings, Upgradeable.UpgradeType upgradeType, int upgradeMod, DyeColor effectColor) {
+	public UpgradeBlock(Properties settings, Upgradeable.UpgradeType upgradeType, int upgradeMod, DyeColor effectColor) {
 		super(settings);
 		this.upgradeType = upgradeType;
 		this.upgradeMod = upgradeMod;
@@ -78,30 +87,30 @@ public class UpgradeBlock extends BlockWithEntity {
 	}
 	
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		return SHAPE_UP;
 	}
 	
 	@Override
-	public boolean canPathfindThrough(BlockState state, BlockView world, BlockPos pos, NavigationType type) {
+	public boolean isPathfindable(BlockState state, BlockGetter world, BlockPos pos, PathComputationType type) {
 		return false;
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onBlockAdded(BlockState state, World world, BlockPos pos, BlockState oldState, boolean notify) {
-		super.onBlockAdded(state, world, pos, oldState, notify);
-		if (!world.isClient) {
-			updateConnectedUpgradeBlock((ServerWorld) world, pos);
+	public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify) {
+		super.onPlace(state, world, pos, oldState, notify);
+		if (!world.isClientSide) {
+			updateConnectedUpgradeBlock((ServerLevel) world, pos);
 		}
 	}
 	
 	@Override
 	@SuppressWarnings("deprecation")
-	public void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
-		super.onStateReplaced(state, world, pos, newState, moved);
-		if (!world.isClient) {
-			updateConnectedUpgradeBlock((ServerWorld) world, pos);
+	public void onRemove(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
+		super.onRemove(state, world, pos, newState, moved);
+		if (!world.isClientSide) {
+			updateConnectedUpgradeBlock((ServerLevel) world, pos);
 		}
 	}
 
@@ -109,9 +118,9 @@ public class UpgradeBlock extends BlockWithEntity {
 	 * When placed or removed the upgrade block searches for a valid Upgradeable block
 	 * and triggers it to update its upgrades
 	 */
-	private void updateConnectedUpgradeBlock(@NotNull ServerWorld world, @NotNull BlockPos pos) {
+	private void updateConnectedUpgradeBlock(@NotNull ServerLevel world, @NotNull BlockPos pos) {
 		for (Vec3i possibleUpgradeBlockOffset : possibleUpgradeBlockOffsets) {
-			BlockPos currentPos = pos.add(possibleUpgradeBlockOffset);
+			BlockPos currentPos = pos.offset(possibleUpgradeBlockOffset);
 			BlockEntity blockEntity = world.getBlockEntity(currentPos);
 			if (blockEntity instanceof Upgradeable upgradeable) {
 				upgradeable.resetUpgrades();
@@ -120,18 +129,18 @@ public class UpgradeBlock extends BlockWithEntity {
 		}
 	}
 
-	private void playConnectedParticles(@NotNull ServerWorld world, @NotNull BlockPos pos, BlockPos currentPos) {
+	private void playConnectedParticles(@NotNull ServerLevel world, @NotNull BlockPos pos, BlockPos currentPos) {
 		DyeColor particleColor = getEffectColor();
-		world.playSound(null, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, SpectrumSoundEvents.ENCHANTER_DING, SoundCategory.BLOCKS, 1.0F, 1.0F);
+		world.playSound(null, pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D, SpectrumSoundEvents.ENCHANTER_DING, SoundSource.BLOCKS, 1.0F, 1.0F);
 		SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity(
-				world, Vec3d.ofCenter(pos),
+				world, Vec3.atCenterOf(pos),
 				SpectrumParticleTypes.getSparkleRisingParticle(particleColor),
-				10, new Vec3d(0.5, 0.5, 0.5),
-				new Vec3d(0.1, 0.1, 0.1));
+				10, new Vec3(0.5, 0.5, 0.5),
+				new Vec3(0.1, 0.1, 0.1));
 		SpectrumS2CPacketSender.playColorTransmissionParticle(
 				world,
 				new ColoredTransmission(
-						new Vec3d(pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D),
+						new Vec3(pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D),
 						new BlockPositionSource(currentPos), 6,
 						particleColor)
 		);
@@ -150,13 +159,13 @@ public class UpgradeBlock extends BlockWithEntity {
 	}
 	
 	@Override
-	public BlockRenderType getRenderType(BlockState state) {
-		return BlockRenderType.MODEL;
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.MODEL;
 	}
 	
 	@Nullable
 	@Override
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new UpgradeBlockEntity(pos, state);
 	}
 	

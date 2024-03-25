@@ -1,8 +1,8 @@
 package de.dafuqs.spectrum.explosion;
 
-import net.minecraft.text.*;
+import net.minecraft.network.chat.Component;
 
-import java.util.*;
+import java.util.Locale;
 
 public enum ExplosionArchetype {
 	COSMETIC("cosmetic", false, false),
@@ -10,14 +10,14 @@ public enum ExplosionArchetype {
 	DAMAGE_ENTITIES("damage_entities", false, true),
 	ALL("all", true, true);
 	
-	private final Text name;
+	private final Component name;
 	public final boolean affectsBlocks;
 	public final boolean affectsEntities;
 	
 	ExplosionArchetype(String id, boolean affectsBlocks, boolean affectsEntities) {
 		this.affectsBlocks = affectsBlocks;
 		this.affectsEntities = affectsEntities;
-		this.name = Text.translatable("explosion_archetype.spectrum." + id);
+		this.name = Component.translatable("explosion_archetype.spectrum." + id);
 	}
 	
 	public static ExplosionArchetype tryParse(String name) {
@@ -35,7 +35,7 @@ public enum ExplosionArchetype {
 		return affectsEntities ? DAMAGE_ENTITIES : COSMETIC;
 	}
 	
-	public Text getName() {
+	public Component getName() {
 		return name;
 	}
 	

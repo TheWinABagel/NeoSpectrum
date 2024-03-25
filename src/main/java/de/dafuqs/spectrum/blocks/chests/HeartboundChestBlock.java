@@ -1,36 +1,40 @@
 package de.dafuqs.spectrum.blocks.chests;
 
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.entity.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 public class HeartboundChestBlock extends SpectrumChestBlock {
 	
-	public HeartboundChestBlock(Settings settings) {
+	public HeartboundChestBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
 	@Nullable
-	public BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new HeartboundChestBlockEntity(pos, state);
 	}
 	
 	@Override
 	@Nullable
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		return world.isClient ? checkType(type, SpectrumBlockEntities.HEARTBOUND_CHEST, HeartboundChestBlockEntity::clientTick) : null;
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		return world.isClientSide ? createTickerHelper(type, SpectrumBlockEntities.HEARTBOUND_CHEST, HeartboundChestBlockEntity::clientTick) : null;
 	}
 	
 	@Override
-	public void openScreen(World world, BlockPos pos, PlayerEntity player) {
+	public void openScreen(Level world, BlockPos pos, Player player) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity instanceof HeartboundChestBlockEntity heartboundChestBlockEntity) {
 			
@@ -41,26 +45,26 @@ public class HeartboundChestBlock extends SpectrumChestBlock {
 			if (!isChestBlocked(world, pos)) {
 				// Permissions are handled with vanilla lock()
 				// => TileEntities "checkUnlocked" function
-				player.openHandledScreen(heartboundChestBlockEntity);
+				player.openMenu(heartboundChestBlockEntity);
 			}
 		}
 	}
 	
 	@Override
-	public void onPlaced(World world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
+	public void setPlacedBy(Level world, BlockPos pos, BlockState state, LivingEntity placer, ItemStack itemStack) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity instanceof HeartboundChestBlockEntity heartboundChestBlockEntity) {
-			if (placer instanceof ServerPlayerEntity serverPlayerEntity) {
+			if (placer instanceof ServerPlayer serverPlayerEntity) {
 				heartboundChestBlockEntity.setOwner(serverPlayerEntity);
 			}
-			if (itemStack.hasCustomName()) {
-				heartboundChestBlockEntity.setCustomName(itemStack.getName());
+			if (itemStack.hasCustomHoverName()) {
+				heartboundChestBlockEntity.setCustomName(itemStack.getHoverName());
 			}
 		}
 	}
 	
 	@Override
-	public boolean emitsRedstonePower(BlockState state) {
+	public boolean isSignalSource(BlockState state) {
 		return true;
 	}
 	
@@ -70,7 +74,7 @@ public class HeartboundChestBlock extends SpectrumChestBlock {
 	15: if it was tried to open by a non-owner in the last 20 ticks
 	 */
 	@Override
-	public int getWeakRedstonePower(BlockState state, BlockView world, BlockPos pos, Direction direction) {
+	public int getSignal(BlockState state, BlockGetter world, BlockPos pos, Direction direction) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity instanceof HeartboundChestBlockEntity) {
 			if (((HeartboundChestBlockEntity) blockEntity).wasRecentlyTriedToOpenByNonOwner()) {
@@ -85,29 +89,29 @@ public class HeartboundChestBlock extends SpectrumChestBlock {
 	}
 	
 	@Override
-	public int getStrongRedstonePower(BlockState state, BlockView world, BlockPos pos, Direction direction) {
-		return direction == Direction.UP ? state.getWeakRedstonePower(world, pos, direction) : 0;
+	public int getDirectSignal(BlockState state, BlockGetter world, BlockPos pos, Direction direction) {
+		return direction == Direction.UP ? state.getSignal(world, pos, direction) : 0;
 	}
 	
 	/*
 	Only the chest owner may break it
 	 */
 	@Override
-	public float calcBlockBreakingDelta(BlockState state, PlayerEntity player, BlockView world, BlockPos pos) {
+	public float getDestroyProgress(BlockState state, Player player, BlockGetter world, BlockPos pos) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		
 		if (blockEntity instanceof HeartboundChestBlockEntity heartboundChestBlockEntity) {
-			if (heartboundChestBlockEntity.canBreak(player.getUuid())) {
+			if (heartboundChestBlockEntity.canBreak(player.getUUID())) {
 				float hardness = 20.0F;
-				int i = player.canHarvest(state) ? 30 : 100;
-				return player.getBlockBreakingSpeed(state) / hardness / (float) i;
+				int i = player.hasCorrectToolForDrops(state) ? 30 : 100;
+				return player.getDestroySpeed(state) / hardness / (float) i;
 			}
 		}
 		return -1;
 	}
 	
 	@Override
-	public float getHardness() {
+	public float defaultDestroyTime() {
 		return -1;
 	}
 	

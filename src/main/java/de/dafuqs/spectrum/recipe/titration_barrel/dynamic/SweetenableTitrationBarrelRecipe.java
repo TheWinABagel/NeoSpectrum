@@ -1,22 +1,25 @@
 package de.dafuqs.spectrum.recipe.titration_barrel.dynamic;
 
-import de.dafuqs.matchbooks.recipe.*;
-import de.dafuqs.spectrum.api.recipe.*;
+import de.dafuqs.matchbooks.recipe.IngredientStack;
+import de.dafuqs.spectrum.api.recipe.FluidIngredient;
+import de.dafuqs.spectrum.helpers.InventoryHelper;
+import de.dafuqs.spectrum.helpers.Support;
 import de.dafuqs.spectrum.helpers.TimeHelper;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.items.food.beverages.properties.*;
-import de.dafuqs.spectrum.recipe.titration_barrel.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.entity.effect.*;
-import net.minecraft.inventory.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.items.food.beverages.properties.JadeWineBeverageProperties;
+import de.dafuqs.spectrum.recipe.titration_barrel.FermentationData;
+import de.dafuqs.spectrum.recipe.titration_barrel.TitrationBarrelRecipe;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.Container;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
-import java.util.*;
+import java.util.List;
 
 public abstract class SweetenableTitrationBarrelRecipe extends TitrationBarrelRecipe {
 	
-	public SweetenableTitrationBarrelRecipe(Identifier id, String group, boolean secret, Identifier requiredAdvancementIdentifier, List<IngredientStack> inputStacks, FluidIngredient fluid, ItemStack outputItemStack, Item tappingItem, int minFermentationTimeHours, FermentationData fermentationData) {
+	public SweetenableTitrationBarrelRecipe(ResourceLocation id, String group, boolean secret, ResourceLocation requiredAdvancementIdentifier, List<IngredientStack> inputStacks, FluidIngredient fluid, ItemStack outputItemStack, Item tappingItem, int minFermentationTimeHours, FermentationData fermentationData) {
 		super(id, group, secret, requiredAdvancementIdentifier, inputStacks, fluid, outputItemStack, tappingItem, minFermentationTimeHours, fermentationData);
 	}
 	
@@ -25,10 +28,10 @@ public abstract class SweetenableTitrationBarrelRecipe extends TitrationBarrelRe
 		return tapWith(1, 3, false, 1.0F, this.minFermentationTimeHours * 60L * 60L * timeMultiplier, 0.4F);
 	}
 	
-	protected abstract List<StatusEffectInstance> getEffects(boolean nectar, double bloominess, double alcPercent);
+	protected abstract List<MobEffectInstance> getEffects(boolean nectar, double bloominess, double alcPercent);
 	
 	@Override
-	public ItemStack tap(Inventory inventory, long secondsFermented, float downfall) {
+	public ItemStack tap(Container inventory, long secondsFermented, float downfall) {
 		int bulbCount = InventoryHelper.getItemCountInInventory(inventory, SpectrumItems.JADEITE_LOTUS_BULB);
 		int petalCount = InventoryHelper.getItemCountInInventory(inventory, SpectrumItems.JADEITE_PETALS);
 		boolean nectar = InventoryHelper.getItemCountInInventory(inventory, SpectrumItems.MOONSTRUCK_NECTAR) > 0;
@@ -49,9 +52,9 @@ public abstract class SweetenableTitrationBarrelRecipe extends TitrationBarrelRe
 		}
 		double alcPercent = getAlcPercentWithBloominess(ageIngameDays, downfall, bloominess, thickness);
 		if (alcPercent >= 100) {
-			return SpectrumItems.CHRYSOCOLLA.getDefaultStack();
+			return SpectrumItems.CHRYSOCOLLA.getDefaultInstance();
 		} else {
-			List<StatusEffectInstance> effects = getEffects(nectar, bloominess, alcPercent);
+			List<MobEffectInstance> effects = getEffects(nectar, bloominess, alcPercent);
 			
 			ItemStack outputStack = outputItemStack.copy();
 			outputStack.setCount(1);

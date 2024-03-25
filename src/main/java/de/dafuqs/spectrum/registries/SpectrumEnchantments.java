@@ -1,10 +1,11 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.spectrum.*;
+import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.enchantments.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.*;
-import net.minecraft.registry.*;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.enchantment.Enchantment;
 
 public class SpectrumEnchantments {
 	
@@ -86,7 +87,7 @@ public class SpectrumEnchantments {
 	}
 	
 	private static SpectrumEnchantment register(String name, SpectrumEnchantment enchantment) {
-		return Registry.register(Registries.ENCHANTMENT, SpectrumCommon.locate(name), enchantment);
+		return Registry.register(BuiltInRegistries.ENCHANTMENT, SpectrumCommon.locate(name), enchantment);
 	}
 	
 }

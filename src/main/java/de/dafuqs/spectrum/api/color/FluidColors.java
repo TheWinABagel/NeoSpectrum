@@ -1,9 +1,11 @@
 package de.dafuqs.spectrum.api.color;
 
-import net.minecraft.fluid.*;
-import net.minecraft.util.*;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Optional;
 
 public class FluidColors extends ColorRegistry<Fluid> {
 	

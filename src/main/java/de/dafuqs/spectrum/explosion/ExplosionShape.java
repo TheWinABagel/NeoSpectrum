@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.explosion;
 
-import net.minecraft.util.math.*;
+import net.minecraft.core.BlockPos;
 
 public enum ExplosionShape {
 	DEFAULT,

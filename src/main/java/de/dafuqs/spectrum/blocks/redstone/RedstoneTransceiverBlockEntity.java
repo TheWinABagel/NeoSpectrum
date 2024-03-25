@@ -1,17 +1,23 @@
 package de.dafuqs.spectrum.blocks.redstone;
 
-import de.dafuqs.spectrum.events.*;
-import de.dafuqs.spectrum.events.listeners.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.*;
-import net.minecraft.nbt.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.*;
-import net.minecraft.world.event.*;
-import net.minecraft.world.event.listener.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.events.RedstoneTransferGameEvent;
+import de.dafuqs.spectrum.events.SpectrumGameEvents;
+import de.dafuqs.spectrum.events.listeners.WirelessRedstoneSignalEventQueue;
+import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.gameevent.BlockPositionSource;
+import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.gameevent.GameEventListener;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class RedstoneTransceiverBlockEntity extends BlockEntity implements WirelessRedstoneSignalEventQueue.Callback<WirelessRedstoneSignalEventQueue.EventEntry> {
 	
@@ -22,44 +28,44 @@ public class RedstoneTransceiverBlockEntity extends BlockEntity implements Wirel
 	
 	public RedstoneTransceiverBlockEntity(BlockPos blockPos, BlockState blockState) {
 		super(SpectrumBlockEntities.REDSTONE_TRANSCEIVER, blockPos, blockState);
-		this.listener = new WirelessRedstoneSignalEventQueue(new BlockPositionSource(this.pos), RANGE, this);
+		this.listener = new WirelessRedstoneSignalEventQueue(new BlockPositionSource(this.worldPosition), RANGE, this);
 	}
 	
-	private static boolean isSender(World world, BlockPos blockPos) {
+	private static boolean isSender(Level world, BlockPos blockPos) {
 		if (world == null) {
 			return false;
 		}
-		return world.getBlockState(blockPos).get(RedstoneTransceiverBlock.SENDER);
+		return world.getBlockState(blockPos).getValue(RedstoneTransceiverBlock.SENDER);
 	}
 	
-	public static void serverTick(@NotNull World world, BlockPos pos, BlockState state, @NotNull RedstoneTransceiverBlockEntity blockEntity) {
+	public static void serverTick(@NotNull Level world, BlockPos pos, BlockState state, @NotNull RedstoneTransceiverBlockEntity blockEntity) {
 		if (isSender(world, pos)) {
 			if (blockEntity.currentSignal != blockEntity.cachedSignal) {
 				blockEntity.currentSignal = blockEntity.cachedSignal;
-				blockEntity.getWorld().emitGameEvent(null, SpectrumGameEvents.WIRELESS_REDSTONE_SIGNALS.get(state.get(RedstoneTransceiverBlock.CHANNEL)).get(blockEntity.currentSignal), blockEntity.getPos());
+				blockEntity.getLevel().gameEvent(null, SpectrumGameEvents.WIRELESS_REDSTONE_SIGNALS.get(state.getValue(RedstoneTransceiverBlock.CHANNEL)).get(blockEntity.currentSignal), blockEntity.getBlockPos());
 			}
 		} else {
 			blockEntity.listener.tick(world);
 		}
 	}
 	
-	public static DyeColor getChannel(World world, BlockPos pos) {
+	public static DyeColor getChannel(Level world, BlockPos pos) {
 		if (world == null) {
 			return DyeColor.RED;
 		}
-		return world.getBlockState(pos).get(RedstoneTransceiverBlock.CHANNEL);
+		return world.getBlockState(pos).getValue(RedstoneTransceiverBlock.CHANNEL);
 	}
 	
 	@Override
-	public void writeNbt(NbtCompound tag) {
-		super.writeNbt(tag);
+	public void saveAdditional(CompoundTag tag) {
+		super.saveAdditional(tag);
 		tag.putInt("signal", this.currentSignal);
 		tag.putInt("cached_signal", this.cachedSignal);
 	}
 	
 	@Override
-	public void readNbt(NbtCompound tag) {
-		super.readNbt(tag);
+	public void load(CompoundTag tag) {
+		super.load(tag);
 		this.currentSignal = tag.getInt("output_signal");
 		this.cachedSignal = tag.getInt("cached_signal");
 	}
@@ -73,26 +79,26 @@ public class RedstoneTransceiverBlockEntity extends BlockEntity implements Wirel
 	}
 	
 	@Override
-	public boolean canAcceptEvent(World world, GameEventListener listener, GameEvent.Message message, Vec3d sourcePos) {
+	public boolean canAcceptEvent(Level world, GameEventListener listener, GameEvent.ListenerInfo message, Vec3 sourcePos) {
 		return !this.isRemoved()
-				&& message.getEvent() instanceof RedstoneTransferGameEvent redstoneTransferGameEvent
-				&& !isSender(this.getWorld(), this.pos)
-				&& redstoneTransferGameEvent.getDyeColor() == getChannel(this.getWorld(), this.pos);
+				&& message.gameEvent() instanceof RedstoneTransferGameEvent redstoneTransferGameEvent
+				&& !isSender(this.getLevel(), this.worldPosition)
+				&& redstoneTransferGameEvent.getDyeColor() == getChannel(this.getLevel(), this.worldPosition);
 	}
 	
 	@Override
-	public void triggerEvent(World world, GameEventListener listener, WirelessRedstoneSignalEventQueue.EventEntry redstoneEvent) {
-		if (!isSender(this.getWorld(), this.pos) && redstoneEvent.gameEvent.getDyeColor() == getChannel(this.getWorld(), this.pos)) {
+	public void triggerEvent(Level world, GameEventListener listener, WirelessRedstoneSignalEventQueue.EventEntry redstoneEvent) {
+		if (!isSender(this.getLevel(), this.worldPosition) && redstoneEvent.gameEvent.getDyeColor() == getChannel(this.getLevel(), this.worldPosition)) {
 			int receivedSignal = redstoneEvent.gameEvent.getPower();
 			this.currentSignal = receivedSignal;
 			// trigger a block update in all cases, even when powered does not change. That way connected blocks
 			// can react on the strength change of the block, since we store the power in the block entity, not the block state
 			if (receivedSignal == 0) {
-				world.setBlockState(pos, world.getBlockState(pos).with(RedstoneTransceiverBlock.POWERED, false), Block.NOTIFY_LISTENERS);
+				world.setBlock(worldPosition, world.getBlockState(worldPosition).setValue(RedstoneTransceiverBlock.POWERED, false), Block.UPDATE_CLIENTS);
 			} else {
-				world.setBlockState(pos, world.getBlockState(pos).with(RedstoneTransceiverBlock.POWERED, true), Block.NOTIFY_LISTENERS);
+				world.setBlock(worldPosition, world.getBlockState(worldPosition).setValue(RedstoneTransceiverBlock.POWERED, true), Block.UPDATE_CLIENTS);
 			}
-			world.updateNeighbors(pos, SpectrumBlocks.REDSTONE_TRANSCEIVER);
+			world.blockUpdated(worldPosition, SpectrumBlocks.REDSTONE_TRANSCEIVER);
 		}
 	}
 	
@@ -101,7 +107,7 @@ public class RedstoneTransceiverBlockEntity extends BlockEntity implements Wirel
 	// multiple times a tick (because neighboring redstone updates > 1/tick)
 	// and therefore receivers receiving a wrong (because old) signal
 	public void setSignalStrength(int newSignal) {
-		if (isSender(this.getWorld(), this.pos)) {
+		if (isSender(this.getLevel(), this.worldPosition)) {
 			this.cachedSignal = newSignal;
 		} else {
 			this.currentSignal = newSignal;
@@ -109,7 +115,7 @@ public class RedstoneTransceiverBlockEntity extends BlockEntity implements Wirel
 	}
 	
 	public int getCurrentSignal() {
-		if (isSender(this.getWorld(), this.pos)) {
+		if (isSender(this.getLevel(), this.worldPosition)) {
 			return 0;
 		}
 		return this.currentSignal;

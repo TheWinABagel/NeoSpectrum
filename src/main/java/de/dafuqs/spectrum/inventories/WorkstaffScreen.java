@@ -1,25 +1,31 @@
 package de.dafuqs.spectrum.inventories;
 
-import de.dafuqs.spectrum.items.tools.*;
-import de.dafuqs.spectrum.networking.*;
-import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.*;
-import net.minecraft.enchantment.*;
-import net.minecraft.entity.player.*;
-import net.minecraft.item.*;
-import net.minecraft.sound.*;
-import net.minecraft.text.*;
+import de.dafuqs.spectrum.items.tools.GlassCrestWorkstaffItem;
+import de.dafuqs.spectrum.items.tools.WorkstaffItem;
+import de.dafuqs.spectrum.networking.SpectrumC2SPacketSender;
+import de.dafuqs.spectrum.registries.SpectrumBlocks;
+import de.dafuqs.spectrum.registries.SpectrumItems;
+import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 
 @Environment(EnvType.CLIENT)
 public class WorkstaffScreen extends QuickNavigationGridScreen<WorkstaffScreenHandler> {
 
 	private static final Grid RANGE_GRID = new Grid(
 			GridEntry.EMPTY,
-			GridEntry.text(Text.literal("1x1"), "item.spectrum.workstaff.gui.1x1", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.SELECT_1x1)),
-			GridEntry.text(Text.literal("5x5"), "item.spectrum.workstaff.gui.5x5", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.SELECT_5x5)),
+			GridEntry.text(Component.literal("1x1"), "item.spectrum.workstaff.gui.1x1", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.SELECT_1x1)),
+			GridEntry.text(Component.literal("5x5"), "item.spectrum.workstaff.gui.5x5", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.SELECT_5x5)),
 			GridEntry.BACK,
-			GridEntry.text(Text.literal("3x3"), "item.spectrum.workstaff.gui.3x3", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.SELECT_3x3))
+			GridEntry.text(Component.literal("3x3"), "item.spectrum.workstaff.gui.3x3", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.SELECT_3x3))
 	);
 
 	private static final Grid ENCHANTMENT_GRID = new Grid(
@@ -30,11 +36,11 @@ public class WorkstaffScreen extends QuickNavigationGridScreen<WorkstaffScreenHa
 			GridEntry.item(SpectrumBlocks.FOUR_LEAF_CLOVER.asItem(), "item.spectrum.workstaff.gui.fortune", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.SELECT_FORTUNE))
 	);
 
-	public WorkstaffScreen(WorkstaffScreenHandler handler, PlayerInventory playerInventory, Text title) {
+	public WorkstaffScreen(WorkstaffScreenHandler handler, Inventory playerInventory, Component title) {
 		super(handler, playerInventory, title);
 
 		GridEntry rightClickGridEntry;
-		ItemStack mainHandStack = playerInventory.player.getMainHandStack();
+		ItemStack mainHandStack = playerInventory.player.getMainHandItem();
 		if (mainHandStack.getItem() instanceof WorkstaffItem workstaffItem && workstaffItem.canTill(mainHandStack)) {
 			rightClickGridEntry = GridEntry.item(Items.WOODEN_HOE, "item.spectrum.workstaff.gui.disable_right_click_actions", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.DISABLE_RIGHT_CLICK_ACTIONS));
 		} else {
@@ -54,7 +60,7 @@ public class WorkstaffScreen extends QuickNavigationGridScreen<WorkstaffScreenHa
 					GridEntry.item(Items.ENCHANTED_BOOK, "item.spectrum.workstaff.gui.enchantment_group", (screen) -> screen.selectGrid(ENCHANTMENT_GRID))
 			));
 		} else {
-			GridEntry enchantmentEntry = EnchantmentHelper.getLevel(Enchantments.FORTUNE, mainHandStack) > 0
+			GridEntry enchantmentEntry = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.BLOCK_FORTUNE, mainHandStack) > 0
 					? GridEntry.item(Items.FEATHER, "item.spectrum.workstaff.gui.silk_touch", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.SELECT_SILK_TOUCH))
 					: GridEntry.item(SpectrumBlocks.FOUR_LEAF_CLOVER.asItem(), "item.spectrum.workstaff.gui.fortune", (screen) -> WorkstaffScreen.select(WorkstaffItem.GUIToggle.SELECT_FORTUNE));
 
@@ -71,9 +77,9 @@ public class WorkstaffScreen extends QuickNavigationGridScreen<WorkstaffScreenHa
 
 	protected static void select(WorkstaffItem.GUIToggle toggle) {
 		SpectrumC2SPacketSender.sendWorkstaffToggle(toggle);
-		MinecraftClient client = MinecraftClient.getInstance();
-		client.world.playSound(null, client.player.getBlockPos(), SpectrumSoundEvents.PAINTBRUSH_SELECT, SoundCategory.NEUTRAL, 0.6F, 1.0F);
-		client.player.closeHandledScreen();
+		Minecraft client = Minecraft.getInstance();
+		client.level.playSound(null, client.player.blockPosition(), SpectrumSoundEvents.PAINTBRUSH_SELECT, SoundSource.NEUTRAL, 0.6F, 1.0F);
+		client.player.closeContainer();
 	}
 	
 }

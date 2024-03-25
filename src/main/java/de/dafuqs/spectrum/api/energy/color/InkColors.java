@@ -1,18 +1,19 @@
 package de.dafuqs.spectrum.api.energy.color;
 
-import de.dafuqs.spectrum.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.registry.*;
-import net.minecraft.util.*;
-import org.joml.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.registries.SpectrumRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
+import org.joml.Vector3f;
 
-import java.util.*;
+import java.util.HashMap;
 
 public class InkColors {
 	
-	public static final Identifier BASE_ADVANCEMENT_ID = SpectrumCommon.locate("midgame/spectrum_midgame");
-	public static final Identifier BLACK_ADVANCEMENT_ID = SpectrumCommon.locate("midgame/spectrum_midgame");
-	public static final Identifier WHITE_ADVANCEMENT_ID = SpectrumCommon.locate("lategame/collect_moonstone_shard");
+	public static final ResourceLocation BASE_ADVANCEMENT_ID = SpectrumCommon.locate("midgame/spectrum_midgame");
+	public static final ResourceLocation BLACK_ADVANCEMENT_ID = SpectrumCommon.locate("midgame/spectrum_midgame");
+	public static final ResourceLocation WHITE_ADVANCEMENT_ID = SpectrumCommon.locate("lategame/collect_moonstone_shard");
 	
 	public static final ElementalColor CYAN = registerElemental("cyan", new ElementalColor(DyeColor.CYAN, new Vector3f(0.36f, 1f, 0.93f), BASE_ADVANCEMENT_ID));
 	public static final ElementalColor MAGENTA = registerElemental("magenta", new ElementalColor(DyeColor.MAGENTA, new Vector3f(0.92f, 0.25f, 0.94f), BASE_ADVANCEMENT_ID));
@@ -76,11 +77,11 @@ public class InkColors {
 	}
 	
 	protected static ElementalColor registerElemental(String name, ElementalColor inkColor) {
-		return Registry.register(SpectrumRegistries.INK_COLORS, new Identifier(SpectrumCommon.MOD_ID, name), inkColor);
+		return Registry.register(SpectrumRegistries.INK_COLORS, new ResourceLocation(SpectrumCommon.MOD_ID, name), inkColor);
 	}
 
 	protected static CompoundColor registerCompound(String name, CompoundColor inkColor) {
-		return Registry.register(SpectrumRegistries.INK_COLORS, new Identifier(SpectrumCommon.MOD_ID, name), inkColor);
+		return Registry.register(SpectrumRegistries.INK_COLORS, new ResourceLocation(SpectrumCommon.MOD_ID, name), inkColor);
 	}
 
 }

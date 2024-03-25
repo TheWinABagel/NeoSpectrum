@@ -1,11 +1,14 @@
 package de.dafuqs.spectrum.entity.models;
 
-import de.dafuqs.spectrum.entity.entity.*;
-import net.fabricmc.api.*;
-import net.minecraft.client.model.*;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.model.*;
-import net.minecraft.client.util.math.*;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import de.dafuqs.spectrum.entity.entity.EggLayingWoolyPigEntity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.*;
 
 @Environment(EnvType.CLIENT)
 public class EggLayingWoolyPigWoolEntityModel extends EntityModel<EggLayingWoolyPigEntity> {
@@ -17,14 +20,14 @@ public class EggLayingWoolyPigWoolEntityModel extends EntityModel<EggLayingWooly
 		this.torso = root.getChild("torso");
 	}
 	
-	public static TexturedModelData getTexturedModelData() {
-		ModelData modelData = new ModelData();
-		ModelPartData modelPartData = modelData.getRoot();
+	public static LayerDefinition getTexturedModelData() {
+		MeshDefinition modelData = new MeshDefinition();
+		PartDefinition modelPartData = modelData.getRoot();
 		
-		modelPartData.addChild("torso", ModelPartBuilder.create()
-				.uv(0, 0).cuboid(-6.5F, -15.5F, -9.5F, 13.0F, 13.0F, 19.0F, new Dilation(0.0F)), ModelTransform.pivot(0.0F, 24.0F, 0.0F));
+		modelPartData.addOrReplaceChild("torso", CubeListBuilder.create()
+				.texOffs(0, 0).addBox(-6.5F, -15.5F, -9.5F, 13.0F, 13.0F, 19.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 24.0F, 0.0F));
 		
-		return TexturedModelData.of(modelData, 128, 128);
+		return LayerDefinition.create(modelData, 128, 128);
 	}
 	
 	@Override
@@ -33,8 +36,8 @@ public class EggLayingWoolyPigWoolEntityModel extends EntityModel<EggLayingWooly
 	}
 	
 	@Override
-	public void render(MatrixStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
-		if (child) {
+	public void renderToBuffer(PoseStack matrices, VertexConsumer vertexConsumer, int light, int overlay, float red, float green, float blue, float alpha) {
+		if (young) {
 			matrices.scale(0.6f, 0.6f, 0.6f);
 			matrices.translate(0, 1, 0);
 		}

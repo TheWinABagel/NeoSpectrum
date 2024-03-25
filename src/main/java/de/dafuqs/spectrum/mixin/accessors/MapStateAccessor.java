@@ -1,15 +1,15 @@
 package de.dafuqs.spectrum.mixin.accessors;
 
-import net.minecraft.item.map.MapBannerMarker;
-import net.minecraft.item.map.MapIcon;
-import net.minecraft.item.map.MapState;
+import net.minecraft.world.level.saveddata.maps.MapBanner;
+import net.minecraft.world.level.saveddata.maps.MapDecoration;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 import java.util.Map;
 
-@Mixin(MapState.class)
+@Mixin(MapItemSavedData.class)
 public interface MapStateAccessor {
 
     @Accessor(value = "showIcons")
@@ -19,10 +19,10 @@ public interface MapStateAccessor {
     boolean getUnlimitedTracking();
 
     @Accessor(value = "banners")
-    Map<String, MapBannerMarker> getBanners();
+    Map<String, MapBanner> getBanners();
 
     @Accessor(value = "icons")
-    Map<String, MapIcon> getIcons();
+    Map<String, MapDecoration> getIcons();
 
     @Accessor(value = "iconCount")
     int getIconCount();

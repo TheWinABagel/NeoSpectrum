@@ -1,10 +1,10 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.spectrum.*;
-import net.minecraft.item.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 
 public class SpectrumItemTags {
 	
@@ -37,11 +37,11 @@ public class SpectrumItemTags {
 	public static final TagKey<Item> COLORED_FENCE_GATES = of("colored_fence_gates");
 
 	private static TagKey<Item> of(String id) {
-		return TagKey.of(RegistryKeys.ITEM, SpectrumCommon.locate(id));
+		return TagKey.create(Registries.ITEM, SpectrumCommon.locate(id));
 	}
 	
 	private static TagKey<Item> common(String id) {
-		return TagKey.of(RegistryKeys.ITEM, new Identifier("c", id));
+		return TagKey.create(Registries.ITEM, new ResourceLocation("c", id));
 	}
 
 }

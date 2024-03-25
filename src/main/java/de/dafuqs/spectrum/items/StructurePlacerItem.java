@@ -1,43 +1,47 @@
 package de.dafuqs.spectrum.items;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.helpers.*;
-import de.dafuqs.spectrum.registries.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
-import vazkii.patchouli.api.*;
+import de.dafuqs.spectrum.api.item.CreativeOnlyItem;
+import de.dafuqs.spectrum.helpers.Support;
+import de.dafuqs.spectrum.registries.SpectrumMultiblocks;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Rotation;
+import org.jetbrains.annotations.Nullable;
+import vazkii.patchouli.api.IMultiblock;
 
-import java.util.*;
+import java.util.List;
 
 public class StructurePlacerItem extends Item implements CreativeOnlyItem {
 	
-	protected final Identifier multiBlockIdentifier;
+	protected final ResourceLocation multiBlockIdentifier;
 	
-	public StructurePlacerItem(Settings settings, Identifier multiBlockIdentifier) {
+	public StructurePlacerItem(Properties settings, ResourceLocation multiBlockIdentifier) {
 		super(settings);
 		this.multiBlockIdentifier = multiBlockIdentifier;
 	}
 	
 	@Override
-	public ActionResult useOnBlock(ItemUsageContext context) {
+	public InteractionResult useOn(UseOnContext context) {
 		if (context.getPlayer() != null && context.getPlayer().isCreative()) {
 			IMultiblock iMultiblock = SpectrumMultiblocks.MULTIBLOCKS.get(multiBlockIdentifier);
 			if (iMultiblock != null) {
-				BlockRotation blockRotation = Support.rotationFromDirection(context.getHorizontalPlayerFacing());
-				iMultiblock.place(context.getWorld(), context.getBlockPos().up(), blockRotation);
-				return ActionResult.CONSUME;
+				Rotation blockRotation = Support.rotationFromDirection(context.getHorizontalDirection());
+				iMultiblock.place(context.getLevel(), context.getClickedPos().above(), blockRotation);
+				return InteractionResult.CONSUME;
 			}
 		}
-		return ActionResult.PASS;
+		return InteractionResult.PASS;
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
 		CreativeOnlyItem.appendTooltip(tooltip);
 	}
 	

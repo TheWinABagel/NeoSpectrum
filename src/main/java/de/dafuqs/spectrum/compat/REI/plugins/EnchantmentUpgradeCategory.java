@@ -1,10 +1,11 @@
 package de.dafuqs.spectrum.compat.REI.plugins;
 
-import de.dafuqs.spectrum.compat.REI.*;
-import me.shedaniel.rei.api.common.category.*;
-import net.fabricmc.api.*;
-import net.minecraft.text.*;
-import org.jetbrains.annotations.*;
+import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 
 @Environment(EnvType.CLIENT)
 public class EnchantmentUpgradeCategory extends EnchanterCategory<EnchantmentUpgradeDisplay> {
@@ -15,8 +16,8 @@ public class EnchantmentUpgradeCategory extends EnchanterCategory<EnchantmentUpg
 	}
 	
 	@Override
-	public Text getTitle() {
-		return Text.translatable("container.spectrum.rei.enchantment_upgrading.title");
+	public Component getTitle() {
+		return Component.translatable("container.spectrum.rei.enchantment_upgrading.title");
 	}
 	
 	@Override
@@ -25,11 +26,11 @@ public class EnchantmentUpgradeCategory extends EnchanterCategory<EnchantmentUpg
 	}
 	
 	@Override
-	public Text getDescriptionText(@NotNull EnchantmentUpgradeDisplay display) {
+	public Component getDescriptionText(@NotNull EnchantmentUpgradeDisplay display) {
 		if (display.requiredItemCount == 0) {
-			return Text.empty();
+			return Component.empty();
 		}
-		return Text.translatable("container.spectrum.rei.enchantment_upgrade.required_item_count", display.requiredItemCount);
+		return Component.translatable("container.spectrum.rei.enchantment_upgrade.required_item_count", display.requiredItemCount);
 	}
 	
 }

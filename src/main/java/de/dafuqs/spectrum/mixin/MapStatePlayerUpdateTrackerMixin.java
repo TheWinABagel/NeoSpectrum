@@ -4,15 +4,15 @@ import de.dafuqs.spectrum.items.map.ArtisansAtlasState;
 import de.dafuqs.spectrum.networking.SpectrumS2CPackets;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.map.MapIcon;
-import net.minecraft.item.map.MapState;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.MapUpdateS2CPacket;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundMapItemDataPacket;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.maps.MapDecoration;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,12 +23,12 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
 import java.util.Collection;
 
-@Mixin(MapState.PlayerUpdateTracker.class)
+@Mixin(MapItemSavedData.HoldingPlayer.class)
 public class MapStatePlayerUpdateTrackerMixin {
 
     @Shadow
     @Final
-    public PlayerEntity player;
+    public Player player;
 
     @Inject(
             method = "getPacket",
@@ -36,20 +36,20 @@ public class MapStatePlayerUpdateTrackerMixin {
             locals = LocalCapture.CAPTURE_FAILHARD,
             cancellable = true
     )
-    private void spectrum$getArtisansAtlasPacket(int mapId, CallbackInfoReturnable<Packet<?>> cir, MapState.UpdateData updateData, Collection<MapIcon> icons) {
-        World world = player.getWorld();
+    private void spectrum$getArtisansAtlasPacket(int mapId, CallbackInfoReturnable<Packet<?>> cir, MapItemSavedData.MapPatch updateData, Collection<MapDecoration> icons) {
+        Level world = player.level();
         if (world != null) {
-            String mapStr = FilledMapItem.getMapName(mapId);
-            MapState state = world.getMapState(mapStr);
+            String mapStr = MapItem.makeKey(mapId);
+            MapItemSavedData state = world.getMapData(mapStr);
             if (state instanceof ArtisansAtlasState artisansAtlasState) {
-                MapUpdateS2CPacket mapUpdateS2CPacket = new MapUpdateS2CPacket(mapId, state.scale, state.locked, icons, updateData);
-                PacketByteBuf buf = PacketByteBufs.create();
+                ClientboundMapItemDataPacket mapUpdateS2CPacket = new ClientboundMapItemDataPacket(mapId, state.scale, state.locked, icons, updateData);
+                FriendlyByteBuf buf = PacketByteBufs.create();
 
-                Identifier targetId = artisansAtlasState.getTargetId();
+                ResourceLocation targetId = artisansAtlasState.getTargetId();
                 if (targetId == null) {
-                    buf.writeString("");
+                    buf.writeUtf("");
                 } else {
-                    buf.writeString(targetId.toString());
+                    buf.writeUtf(targetId.toString());
                 }
 
                 mapUpdateS2CPacket.write(buf);

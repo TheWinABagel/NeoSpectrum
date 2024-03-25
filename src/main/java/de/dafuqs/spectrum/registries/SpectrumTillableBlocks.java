@@ -1,13 +1,13 @@
 package de.dafuqs.spectrum.registries;
 
-import net.fabricmc.fabric.api.registry.*;
-import net.minecraft.item.*;
+import net.fabricmc.fabric.api.registry.TillableBlockRegistry;
+import net.minecraft.world.item.HoeItem;
 
 public class SpectrumTillableBlocks {
 	
 	public static void register() {
-		TillableBlockRegistry.register(SpectrumBlocks.SLUSH, HoeItem::canTillFarmland, SpectrumBlocks.TILLED_SLUSH.getDefaultState());
-		TillableBlockRegistry.register(SpectrumBlocks.SHALE_CLAY, HoeItem::canTillFarmland, SpectrumBlocks.TILLED_SHALE_CLAY.getDefaultState());
+		TillableBlockRegistry.register(SpectrumBlocks.SLUSH, HoeItem::onlyIfAirAbove, SpectrumBlocks.TILLED_SLUSH.defaultBlockState());
+		TillableBlockRegistry.register(SpectrumBlocks.SHALE_CLAY, HoeItem::onlyIfAirAbove, SpectrumBlocks.TILLED_SHALE_CLAY.defaultBlockState());
 	}
 	
 }

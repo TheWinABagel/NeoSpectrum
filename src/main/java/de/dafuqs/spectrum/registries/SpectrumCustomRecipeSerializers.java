@@ -1,21 +1,27 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.spectrum.*;
+import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.recipe.crafting.*;
-import de.dafuqs.spectrum.recipe.fluid_converting.dynamic.*;
-import de.dafuqs.spectrum.recipe.fusion_shrine.dynamic.*;
-import de.dafuqs.spectrum.recipe.pedestal.dynamic.*;
-import de.dafuqs.spectrum.recipe.primordial_fire_burning.dynamic.*;
-import de.dafuqs.spectrum.recipe.spirit_instiller.*;
+import de.dafuqs.spectrum.recipe.fluid_converting.dynamic.MeatToRottenFleshRecipe;
+import de.dafuqs.spectrum.recipe.fusion_shrine.dynamic.ShootingStarHardeningRecipe;
+import de.dafuqs.spectrum.recipe.pedestal.dynamic.ExplosionModificationRecipe;
+import de.dafuqs.spectrum.recipe.pedestal.dynamic.StarCandyRecipe;
+import de.dafuqs.spectrum.recipe.primordial_fire_burning.dynamic.EnchantedBookUnsoulingRecipe;
+import de.dafuqs.spectrum.recipe.primordial_fire_burning.dynamic.MemoryDementiaRecipe;
+import de.dafuqs.spectrum.recipe.spirit_instiller.HardcorePlayerRevivalRecipe;
 import de.dafuqs.spectrum.recipe.spirit_instiller.spawner.*;
-import de.dafuqs.spectrum.recipe.titration_barrel.dynamic.*;
-import net.minecraft.recipe.*;
-import net.minecraft.registry.*;
+import de.dafuqs.spectrum.recipe.titration_barrel.dynamic.AquaRegiaRecipe;
+import de.dafuqs.spectrum.recipe.titration_barrel.dynamic.JadeWineRecipe;
+import de.dafuqs.spectrum.recipe.titration_barrel.dynamic.NecteredViognierRecipe;
+import de.dafuqs.spectrum.recipe.titration_barrel.dynamic.SuspiciousBrewRecipe;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 
 public class SpectrumCustomRecipeSerializers {
 	
 	private static void register(RecipeSerializer<?> recipeSerializer, String id) {
-		Registry.register(Registries.RECIPE_SERIALIZER, SpectrumCommon.locate(id), recipeSerializer);
+		Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, SpectrumCommon.locate(id), recipeSerializer);
 	}
 	
 	public static void registerRecipeSerializers() {

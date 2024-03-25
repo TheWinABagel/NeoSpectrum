@@ -1,17 +1,17 @@
 package de.dafuqs.spectrum.blocks.decoration;
 
-import net.minecraft.block.*;
-import net.minecraft.item.*;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class SpectrumLineFacingBlock extends SpectrumFacingBlock {
 	
-	public SpectrumLineFacingBlock(Settings settings) {
+	public SpectrumLineFacingBlock(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		return this.getDefaultState().with(FACING, ctx.getPlayerLookDirection());
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		return this.defaultBlockState().setValue(FACING, ctx.getNearestLookingDirection());
 	}
 	
 }

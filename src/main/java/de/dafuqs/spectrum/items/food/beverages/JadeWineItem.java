@@ -1,18 +1,19 @@
 package de.dafuqs.spectrum.items.food.beverages;
 
-import de.dafuqs.spectrum.api.item.*;
-import de.dafuqs.spectrum.items.food.beverages.properties.*;
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.api.item.FermentedItem;
+import de.dafuqs.spectrum.items.food.beverages.properties.BeverageProperties;
+import de.dafuqs.spectrum.items.food.beverages.properties.JadeWineBeverageProperties;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 
-import java.util.*;
+import java.util.List;
 
 public class JadeWineItem extends BeverageItem {
 	
-	public JadeWineItem(Settings settings) {
+	public JadeWineItem(Properties settings) {
 		super(settings);
 	}
 	
@@ -22,13 +23,13 @@ public class JadeWineItem extends BeverageItem {
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack itemStack, World world, List<Text> tooltip, TooltipContext tooltipContext) {
-		super.appendTooltip(itemStack, world, tooltip, tooltipContext);
+	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
+		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
 		if (FermentedItem.isPreviewStack(itemStack)) {
-			String translationKey = getTranslationKey();
-			tooltip.add(Text.translatable(translationKey + ".tooltip.preview").formatted(Formatting.GRAY));
-			tooltip.add(Text.translatable(translationKey + ".tooltip.preview2").formatted(Formatting.GRAY));
-			tooltip.add(Text.translatable(translationKey + ".tooltip.preview3").formatted(Formatting.GRAY));
+			String translationKey = getDescriptionId();
+			tooltip.add(Component.translatable(translationKey + ".tooltip.preview").withStyle(ChatFormatting.GRAY));
+			tooltip.add(Component.translatable(translationKey + ".tooltip.preview2").withStyle(ChatFormatting.GRAY));
+			tooltip.add(Component.translatable(translationKey + ".tooltip.preview3").withStyle(ChatFormatting.GRAY));
 		}
 	}
 	

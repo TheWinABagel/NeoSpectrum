@@ -1,27 +1,27 @@
 package de.dafuqs.spectrum.items.food;
 
-import de.dafuqs.spectrum.items.*;
-import net.minecraft.entity.*;
-import net.minecraft.item.*;
-import net.minecraft.world.*;
+import de.dafuqs.spectrum.items.ItemWithTooltip;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 
 public class ClottedCreamItem extends ItemWithTooltip {
 	
-	public ClottedCreamItem(Settings settings, String[] tooltips) {
+	public ClottedCreamItem(Properties settings, String[] tooltips) {
 		super(settings, tooltips);
 	}
 	
 	@Override
-	public ItemStack finishUsing(ItemStack stack, World world, LivingEntity user) {
-		if (!world.isClient) {
-			user.clearStatusEffects();
+	public ItemStack finishUsingItem(ItemStack stack, Level world, LivingEntity user) {
+		if (!world.isClientSide) {
+			user.removeAllEffects();
 		}
 		
-		return super.finishUsing(stack, world, user);
+		return super.finishUsingItem(stack, world, user);
 	}
 	
 	@Override
-	public int getMaxUseTime(ItemStack stack) {
+	public int getUseDuration(ItemStack stack) {
 		return 52;
 	}
 }

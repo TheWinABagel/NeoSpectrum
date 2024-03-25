@@ -1,13 +1,17 @@
 package de.dafuqs.spectrum.api.predicate.block;
 
-import com.google.gson.*;
-import net.minecraft.registry.*;
-import net.minecraft.registry.tag.*;
-import net.minecraft.server.world.*;
-import net.minecraft.util.*;
-import net.minecraft.util.math.*;
-import net.minecraft.world.biome.*;
-import org.jetbrains.annotations.*;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.data.registries.VanillaRegistries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.TagKey;
+import net.minecraft.util.GsonHelper;
+import net.minecraft.world.level.biome.Biome;
+import org.jetbrains.annotations.Nullable;
 
 public class BiomePredicate {
     public static final BiomePredicate ANY = new BiomePredicate(null, null);
@@ -21,11 +25,11 @@ public class BiomePredicate {
         this.biome = biome;
     }
 
-    public boolean test(ServerWorld world, BlockPos pos) {
+    public boolean test(ServerLevel world, BlockPos pos) {
         if (this == ANY) {
             return true;
         }
-        if (this.tag != null && world.getBiome(pos).isIn(this.tag)) {
+        if (this.tag != null && world.getBiome(pos).is(this.tag)) {
             return true;
         }
         if (this.biome != null && world.getBiome(pos).value() == this.biome) {
@@ -39,18 +43,18 @@ public class BiomePredicate {
             return ANY;
         }
         
-        JsonObject biomeObject = JsonHelper.asObject(json, "biome");
+        JsonObject biomeObject = GsonHelper.convertToJsonObject(json, "biome");
         
         Biome biome = null;
         if (biomeObject.has("biome")) {
-            Identifier biomeId = new Identifier(JsonHelper.getString(biomeObject, "biome"));
-            biome = BuiltinRegistries.createWrapperLookup().getWrapperOrThrow(RegistryKeys.BIOME).getOrThrow(RegistryKey.of(RegistryKeys.BIOME, biomeId)).value();
+            ResourceLocation biomeId = new ResourceLocation(GsonHelper.getAsString(biomeObject, "biome"));
+            biome = VanillaRegistries.createLookup().lookupOrThrow(Registries.BIOME).getOrThrow(ResourceKey.create(Registries.BIOME, biomeId)).value();
         }
         
         TagKey<Biome> tagKey = null;
         if (biomeObject.has("tag")) {
-            Identifier tagId = new Identifier(JsonHelper.getString(biomeObject, "tag"));
-            tagKey = TagKey.of(RegistryKeys.BIOME, tagId);
+            ResourceLocation tagId = new ResourceLocation(GsonHelper.getAsString(biomeObject, "tag"));
+            tagKey = TagKey.create(Registries.BIOME, tagId);
         }
         
         return new BiomePredicate(tagKey, biome);

@@ -1,48 +1,47 @@
 package de.dafuqs.spectrum.progression.advancement;
 
-import com.google.gson.*;
-import de.dafuqs.spectrum.*;
-import net.minecraft.advancement.criterion.*;
-import net.minecraft.entity.*;
-import net.minecraft.loot.context.*;
-import net.minecraft.predicate.entity.*;
-import net.minecraft.server.network.*;
-import net.minecraft.util.*;
+import com.google.gson.JsonObject;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.advancements.critereon.*;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.storage.loot.LootContext;
 
-public class MemoryManifestingCriterion extends AbstractCriterion<MemoryManifestingCriterion.Conditions> {
+public class MemoryManifestingCriterion extends SimpleCriterionTrigger<MemoryManifestingCriterion.Conditions> {
 	
-	static final Identifier ID = SpectrumCommon.locate("memory_manifesting");
+	static final ResourceLocation ID = SpectrumCommon.locate("memory_manifesting");
 	
 	@Override
-	public Identifier getId() {
+	public ResourceLocation getId() {
 		return ID;
 	}
 	
 	@Override
-	public MemoryManifestingCriterion.Conditions conditionsFromJson(JsonObject jsonObject, LootContextPredicate extended, AdvancementEntityPredicateDeserializer predicateDeserializer) {
-		return new MemoryManifestingCriterion.Conditions(ID, extended, EntityPredicate.contextPredicateFromJson(jsonObject, "manifested_entity", predicateDeserializer));
+	public MemoryManifestingCriterion.Conditions createInstance(JsonObject jsonObject, ContextAwarePredicate extended, DeserializationContext predicateDeserializer) {
+		return new MemoryManifestingCriterion.Conditions(ID, extended, EntityPredicate.fromJson(jsonObject, "manifested_entity", predicateDeserializer));
 	}
 	
-	public void trigger(ServerPlayerEntity player, Entity manifestedEntity) {
-		LootContext lootContext = EntityPredicate.createAdvancementEntityLootContext(player, manifestedEntity);
+	public void trigger(ServerPlayer player, Entity manifestedEntity) {
+		LootContext lootContext = EntityPredicate.createContext(player, manifestedEntity);
 		this.trigger(player, (conditions) -> conditions.matches(lootContext));
 	}
 	
-	public static class Conditions extends AbstractCriterionConditions {
-		private final LootContextPredicate manifestedEntity;
+	public static class Conditions extends AbstractCriterionTriggerInstance {
+		private final ContextAwarePredicate manifestedEntity;
 		
-		public Conditions(Identifier id, LootContextPredicate player, LootContextPredicate manifestedEntity) {
+		public Conditions(ResourceLocation id, ContextAwarePredicate player, ContextAwarePredicate manifestedEntity) {
 			super(id, player);
 			this.manifestedEntity = manifestedEntity;
 		}
 		
 		public boolean matches(LootContext context) {
-			return this.manifestedEntity.test(context);
+			return this.manifestedEntity.matches(context);
 		}
 		
 		@Override
-		public JsonObject toJson(AdvancementEntityPredicateSerializer predicateSerializer) {
-			JsonObject jsonObject = super.toJson(predicateSerializer);
+		public JsonObject serializeToJson(SerializationContext predicateSerializer) {
+			JsonObject jsonObject = super.serializeToJson(predicateSerializer);
 			jsonObject.add("manifested_entity", this.manifestedEntity.toJson(predicateSerializer));
 			return jsonObject;
 		}

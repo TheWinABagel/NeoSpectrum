@@ -1,31 +1,33 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import net.minecraft.client.item.*;
-import net.minecraft.item.*;
-import net.minecraft.text.*;
-import net.minecraft.util.*;
-import net.minecraft.world.*;
-import org.jetbrains.annotations.*;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.BookItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.List;
 
 public class GildedBookItem extends BookItem {
 	
-	public GildedBookItem(Settings settings) {
+	public GildedBookItem(Properties settings) {
 		super(settings);
 	}
 	
 	@Override
-	public int getEnchantability() {
-		return Items.GOLDEN_PICKAXE.getEnchantability();
+	public int getEnchantmentValue() {
+		return Items.GOLDEN_PICKAXE.getEnchantmentValue();
 	}
 	
 	@Override
-	public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-		super.appendTooltip(stack, world, tooltip, context);
-		tooltip.add(Text.translatable("item.spectrum.gilded_book.tooltip.enchantability").formatted(Formatting.GRAY));
-		tooltip.add(Text.translatable("item.spectrum.gilded_book.tooltip.copy_enchantments").formatted(Formatting.GRAY));
-		tooltip.add(Text.translatable("item.spectrum.gilded_book.tooltip.copy_enchantments2").formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
+		super.appendHoverText(stack, world, tooltip, context);
+		tooltip.add(Component.translatable("item.spectrum.gilded_book.tooltip.enchantability").withStyle(ChatFormatting.GRAY));
+		tooltip.add(Component.translatable("item.spectrum.gilded_book.tooltip.copy_enchantments").withStyle(ChatFormatting.GRAY));
+		tooltip.add(Component.translatable("item.spectrum.gilded_book.tooltip.copy_enchantments2").withStyle(ChatFormatting.GRAY));
 	}
 	
 }

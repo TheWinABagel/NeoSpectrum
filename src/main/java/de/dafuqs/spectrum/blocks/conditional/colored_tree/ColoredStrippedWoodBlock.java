@@ -1,19 +1,23 @@
 package de.dafuqs.spectrum.blocks.conditional.colored_tree;
 
-import com.google.common.collect.*;
-import de.dafuqs.revelationary.api.revelations.*;
-import net.minecraft.block.*;
-import net.minecraft.item.*;
-import net.minecraft.util.*;
+import com.google.common.collect.Maps;
+import de.dafuqs.revelationary.api.revelations.RevelationAware;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.*;
+import java.util.Map;
 
-public class ColoredStrippedWoodBlock extends PillarBlock implements RevelationAware, ColoredTree {
+public class ColoredStrippedWoodBlock extends RotatedPillarBlock implements RevelationAware, ColoredTree {
 	
 	private static final Map<DyeColor, ColoredStrippedWoodBlock> WOOD = Maps.newEnumMap(DyeColor.class);
 	protected final DyeColor color;
 	
-	public ColoredStrippedWoodBlock(Settings settings, DyeColor color) {
+	public ColoredStrippedWoodBlock(Properties settings, DyeColor color) {
 		super(settings);
 		this.color = color;
 		WOOD.put(color, this);
@@ -21,18 +25,18 @@ public class ColoredStrippedWoodBlock extends PillarBlock implements RevelationA
 	}
 	
 	@Override
-	public Identifier getCloakAdvancementIdentifier() {
+	public ResourceLocation getCloakAdvancementIdentifier() {
 		return ColoredTree.getTreeCloakAdvancementIdentifier(TreePart.STRIPPED_WOOD, this.color);
 	}
 	
 	@Override
 	public Map<BlockState, BlockState> getBlockStateCloaks() {
-		return Map.of(this.getDefaultState(), Blocks.STRIPPED_OAK_WOOD.getDefaultState());
+		return Map.of(this.defaultBlockState(), Blocks.STRIPPED_OAK_WOOD.defaultBlockState());
 	}
 	
 	@Override
-	public Pair<Item, Item> getItemCloak() {
-		return new Pair<>(this.asItem(), Blocks.STRIPPED_OAK_WOOD.asItem());
+	public Tuple<Item, Item> getItemCloak() {
+		return new Tuple<>(this.asItem(), Blocks.STRIPPED_OAK_WOOD.asItem());
 	}
 	
 	@Override

@@ -1,14 +1,15 @@
 package de.dafuqs.spectrum.blocks.conditional.colored_tree;
 
-import de.dafuqs.spectrum.*;
-import net.minecraft.util.*;
+import de.dafuqs.spectrum.SpectrumCommon;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.DyeColor;
 
 public interface ColoredTree {
 	
-	Identifier SAPLING_CMY_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("milestones/reveal_colored_saplings_cmy");
-	Identifier TREES_CMY_IDENTIFIER = SpectrumCommon.locate("milestones/reveal_colored_trees_cmy");
-	Identifier TREES_B_IDENTIFIER = SpectrumCommon.locate("milestones/reveal_colored_trees_k");
-	Identifier TREES_W_IDENTIFIER = SpectrumCommon.locate("milestones/reveal_colored_trees_w");
+	ResourceLocation SAPLING_CMY_ADVANCEMENT_IDENTIFIER = SpectrumCommon.locate("milestones/reveal_colored_saplings_cmy");
+	ResourceLocation TREES_CMY_IDENTIFIER = SpectrumCommon.locate("milestones/reveal_colored_trees_cmy");
+	ResourceLocation TREES_B_IDENTIFIER = SpectrumCommon.locate("milestones/reveal_colored_trees_k");
+	ResourceLocation TREES_W_IDENTIFIER = SpectrumCommon.locate("milestones/reveal_colored_trees_w");
 	
 	enum TreePart {
 		SAPLING,
@@ -19,7 +20,7 @@ public interface ColoredTree {
 		STRIPPED_WOOD
 	}
 	
-	static Identifier getTreeCloakAdvancementIdentifier(TreePart treePart, DyeColor color) {
+	static ResourceLocation getTreeCloakAdvancementIdentifier(TreePart treePart, DyeColor color) {
 		switch (color) {
 			case WHITE, LIGHT_GRAY, GRAY -> {
 				return TREES_W_IDENTIFIER;
