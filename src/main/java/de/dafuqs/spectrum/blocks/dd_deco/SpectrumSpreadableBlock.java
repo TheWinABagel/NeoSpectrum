@@ -27,12 +27,12 @@ public class SpectrumSpreadableBlock extends SnowyDirtBlock {
 	
 	private static boolean canSpread(BlockState state, LevelReader world, BlockPos pos) {
 		BlockPos blockPos = pos.above();
-		return canSurvive(state, world, pos) && !world.getFluidState(blockPos).is(FluidTags.WATER);
+		return ableToSurvive(state, world, pos) && !world.getFluidState(blockPos).is(FluidTags.WATER);
 	}
 	
 	@Override
 	public void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
-		if (!canSurvive(state, world, pos)) {
+		if (!ableToSurvive(state, world, pos)) {
 			world.setBlockAndUpdate(pos, deadState);
 		} else {
 			if (world.getMaxLocalRawBrightness(pos.above()) >= 9) {
@@ -47,8 +47,8 @@ public class SpectrumSpreadableBlock extends SnowyDirtBlock {
 			}
 		}
 	}
-	
-	private static boolean canSurvive(BlockState state, LevelReader world, BlockPos pos) {
+
+	private static boolean ableToSurvive(BlockState state, LevelReader world, BlockPos pos) {
 		BlockPos blockPos = pos.above();
 		BlockState blockState = world.getBlockState(blockPos);
 		if (blockState.is(Blocks.SNOW) && blockState.getValue(SnowLayerBlock.LAYERS) == 1) {

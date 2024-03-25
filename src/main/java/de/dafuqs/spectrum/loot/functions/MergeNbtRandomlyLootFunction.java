@@ -75,7 +75,7 @@ public class MergeNbtRandomlyLootFunction extends LootItemConditionalFunction {
 	public static class Serializer extends LootItemConditionalFunction.Serializer<MergeNbtRandomlyLootFunction> {
 		
 		@Override
-		public void toJson(JsonObject jsonObject, MergeNbtRandomlyLootFunction lootFunction, JsonSerializationContext jsonSerializationContext) {
+		public void serialize(JsonObject jsonObject, MergeNbtRandomlyLootFunction lootFunction, JsonSerializationContext jsonSerializationContext) {
 			super.serialize(jsonObject, lootFunction, jsonSerializationContext);
 			if (!lootFunction.nbts.isEmpty()) {
 				JsonArray jsonArray = new JsonArray();

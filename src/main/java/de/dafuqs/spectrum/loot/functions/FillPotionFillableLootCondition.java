@@ -128,7 +128,7 @@ public class FillPotionFillableLootCondition extends LootItemConditionalFunction
 	public static class Serializer extends LootItemConditionalFunction.Serializer<FillPotionFillableLootCondition> {
 		
 		@Override
-		public void toJson(JsonObject jsonObject, FillPotionFillableLootCondition lootFunction, JsonSerializationContext jsonSerializationContext) {
+		public void serialize(JsonObject jsonObject, FillPotionFillableLootCondition lootFunction, JsonSerializationContext jsonSerializationContext) {
 			super.serialize(jsonObject, lootFunction, jsonSerializationContext);
 			lootFunction.template.toJson(jsonObject, jsonSerializationContext);
 		}

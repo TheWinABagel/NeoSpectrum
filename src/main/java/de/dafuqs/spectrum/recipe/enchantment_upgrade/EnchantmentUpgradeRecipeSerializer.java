@@ -66,7 +66,7 @@ public class EnchantmentUpgradeRecipeSerializer implements GatedRecipeSerializer
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, EnchantmentUpgradeRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, EnchantmentUpgradeRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

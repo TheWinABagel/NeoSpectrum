@@ -33,11 +33,14 @@ public class KindlingCoughEntityModel extends HierarchicalModel<KindlingCoughEnt
 		
 		return LayerDefinition.create(modelData, 64, 32);
 	}
-	
-	public void setAngles(KindlingCoughEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+
+	@Override
+	public void setupAnim(KindlingCoughEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+
 	}
 	
 	public ModelPart root() {
 		return this.root;
 	}
+
 }

@@ -64,7 +64,7 @@ public class MagicProjectileEntityRenderer extends EntityRenderer<MagicProjectil
 	}
 
 	@Override
-	public ResourceLocation getTexture(MagicProjectileEntity entity) {
+	public ResourceLocation getTextureLocation(MagicProjectileEntity entity) {
 		return InventoryMenu.BLOCK_ATLAS;
 	}
 	

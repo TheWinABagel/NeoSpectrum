@@ -16,7 +16,7 @@ public class MoltenFishingBobberEntityRenderer extends SpectrumFishingBobberEnti
 	}
 	
 	@Override
-	public ResourceLocation getTexture(SpectrumFishingBobberEntity fishingBobberEntity) {
+	public ResourceLocation getTextureLocation(SpectrumFishingBobberEntity fishingBobberEntity) {
 		return TEXTURE;
 	}
 	

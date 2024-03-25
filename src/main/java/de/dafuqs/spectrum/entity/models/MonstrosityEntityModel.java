@@ -29,7 +29,7 @@ public class MonstrosityEntityModel extends EntityModel<MonstrosityEntity> {
 	}
 	
 	@Override
-	public void setAngles(MonstrosityEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+	public void setupAnim(MonstrosityEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 	
 	}
 	

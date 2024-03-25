@@ -1,6 +1,5 @@
 package de.dafuqs.spectrum.blocks.lava_sponge;
 
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -8,6 +7,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.GameRules;
@@ -19,7 +19,7 @@ import java.util.List;
 
 public class WetLavaSpongeItem extends BlockItem {
 	
-	public WetLavaSpongeItem(Block block, FabricItemSettings fabricItemSettings) {
+	public WetLavaSpongeItem(Block block, Item.Properties fabricItemSettings) {
 		super(block, fabricItemSettings);
 	}
 	

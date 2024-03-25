@@ -95,7 +95,6 @@ import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.recipe.pedestal.BuiltinGemstoneColor;
 import de.dafuqs.spectrum.registries.SpectrumItems.IS;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
@@ -115,10 +114,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.projectile.*;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Rarity;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
@@ -1440,7 +1436,7 @@ public class SpectrumBlocks {
 		ItemColors.ITEM_COLORS.registerColorMapping(blockItem, dyeColor);
 	}
 	
-	public static void registerBlockWithItem(String name, Block block, FabricItemSettings itemSettings, DyeColor dyeColor) {
+	public static void registerBlockWithItem(String name, Block block, Item.Properties itemSettings, DyeColor dyeColor) {
 		Registry.register(BuiltInRegistries.BLOCK, locate(name), block);
 		BlockItem blockItem = new BlockItem(block, itemSettings);
 		Registry.register(BuiltInRegistries.ITEM, locate(name), blockItem);
@@ -1572,7 +1568,7 @@ public class SpectrumBlocks {
 		registerMobHeads(IS.of());
 	}
 	
-	private static void registerDDFlora(FabricItemSettings settings) {
+	private static void registerDDFlora(Item.Properties settings) {
 		registerBlockWithItem("sawblade_grass", SAWBLADE_GRASS, settings, DyeColor.LIME);
 		registerBlockWithItem("overgrown_blackslag", OVERGROWN_BLACKSLAG, settings, DyeColor.LIME);
 		registerBlockWithItem("shimmel", SHIMMEL, settings, DyeColor.LIME);
@@ -1693,7 +1689,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("clear_hummingstone_glass", CLEAR_HUMMINGSTONE_GLASS, settings, DyeColor.LIME);
 	}
 	
-	private static void registerCrystallarieumGrowingBlocks(FabricItemSettings settings) {
+	private static void registerCrystallarieumGrowingBlocks(Item.Properties settings) {
 		// vanilla
 		registerBlockWithItem("small_coal_bud", SMALL_COAL_BUD, settings, DyeColor.BROWN);
 		registerBlockWithItem("large_coal_bud", LARGE_COAL_BUD, settings, DyeColor.BROWN);
@@ -1748,7 +1744,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("prismarine_cluster", PRISMARINE_CLUSTER, settings, DyeColor.CYAN);
 	}
 	
-	private static void registerRedstone(FabricItemSettings settings) {
+	private static void registerRedstone(Item.Properties settings) {
 		registerBlockWithItem("light_level_detector", LIGHT_LEVEL_DETECTOR, settings, DyeColor.RED);
 		registerBlockWithItem("weather_detector", WEATHER_DETECTOR, settings, DyeColor.RED);
 		registerBlockWithItem("item_detector", ITEM_DETECTOR, settings, DyeColor.RED);
@@ -1767,7 +1763,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("block_breaker", BLOCK_BREAKER, settings, DyeColor.CYAN);
 	}
 	
-	private static void registerMagicalBlocks(FabricItemSettings settings) {
+	private static void registerMagicalBlocks(Item.Properties settings) {
 		registerBlockWithItem("heartbound_chest", HEARTBOUND_CHEST, settings, DyeColor.BLUE);
 		registerBlockWithItem("compacting_chest", COMPACTING_CHEST, settings, DyeColor.YELLOW);
 		registerBlockWithItem("restocking_chest", RESTOCKING_CHEST, settings, DyeColor.YELLOW);
@@ -1792,7 +1788,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("threat_conflux", THREAT_CONFLUX, new ThreatConfluxItem(THREAT_CONFLUX, IS.of(8)), DyeColor.RED);
 	}
 	
-	private static void registerPigmentStorageBlocks(FabricItemSettings settings) {
+	private static void registerPigmentStorageBlocks(Item.Properties settings) {
 		registerBlockWithItem("white_block", WHITE_BLOCK, settings, DyeColor.WHITE);
 		registerBlockWithItem("orange_block", ORANGE_BLOCK, settings, DyeColor.ORANGE);
 		registerBlockWithItem("magenta_block", MAGENTA_BLOCK, settings, DyeColor.MAGENTA);
@@ -1811,7 +1807,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("black_block", BLACK_BLOCK, settings, DyeColor.BLACK);
 	}
 	
-	private static void registerSpiritTree(FabricItemSettings settings) {
+	private static void registerSpiritTree(Item.Properties settings) {
 		registerBlockWithItem("ominous_sapling", OMINOUS_SAPLING, new OminousSaplingBlockItem(OMINOUS_SAPLING, settings), DyeColor.GREEN);
 		
 		registerBlockWithItem("spirit_sallow_roots", SPIRIT_SALLOW_ROOTS, settings, DyeColor.GREEN);
@@ -1834,7 +1830,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("sacred_soil", SACRED_SOIL, settings, DyeColor.LIME);
 	}
 	
-	private static void registerOreBlocks(FabricItemSettings settings, FabricItemSettings settingsFireproof) {
+	private static void registerOreBlocks(Item.Properties settings, Item.Properties settingsFireproof) {
 		registerBlockWithItem("shimmerstone_ore", SHIMMERSTONE_ORE, settings, DyeColor.YELLOW);
 		registerBlockWithItem("deepslate_shimmerstone_ore", DEEPSLATE_SHIMMERSTONE_ORE, settings, DyeColor.YELLOW);
 		registerBlockWithItem("blackslag_shimmerstone_ore", BLACKSLAG_SHIMMERSTONE_ORE, settings, DyeColor.YELLOW);
@@ -1882,7 +1878,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("effulgent_carpet", EFFULGENT_CARPET, settings.rarity(Rarity.UNCOMMON), DyeColor.YELLOW);
 	}
 	
-	private static void registerOreStorageBlocks(FabricItemSettings settings, FabricItemSettings settingsFireproof) {
+	private static void registerOreStorageBlocks(Item.Properties settings, Item.Properties settingsFireproof) {
 		registerBlockWithItem("topaz_storage_block", TOPAZ_STORAGE_BLOCK, settings, DyeColor.CYAN);
 		registerBlockWithItem("amethyst_storage_block", AMETHYST_STORAGE_BLOCK, settings, DyeColor.MAGENTA);
 		registerBlockWithItem("citrine_storage_block", CITRINE_STORAGE_BLOCK, settings, DyeColor.YELLOW);
@@ -1918,7 +1914,7 @@ public class SpectrumBlocks {
 		}, DyeColor.GREEN);
 	}
 	
-	private static void registerColoredLamps(FabricItemSettings settings) {
+	private static void registerColoredLamps(Item.Properties settings) {
 		registerBlockWithItem("white_lamp", WHITE_LAMP, settings, DyeColor.WHITE);
 		registerBlockWithItem("orange_lamp", ORANGE_LAMP, settings, DyeColor.ORANGE);
 		registerBlockWithItem("magenta_lamp", MAGENTA_LAMP, settings, DyeColor.MAGENTA);
@@ -1937,7 +1933,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("black_lamp", BLACK_LAMP, settings, DyeColor.BLACK);
 	}
 	
-	private static void registerGemstoneGlass(FabricItemSettings settings) {
+	private static void registerGemstoneGlass(Item.Properties settings) {
 		registerBlockWithItem("topaz_glass", TOPAZ_GLASS, settings, DyeColor.CYAN);
 		registerBlockWithItem("amethyst_glass", AMETHYST_GLASS, settings, DyeColor.MAGENTA);
 		registerBlockWithItem("citrine_glass", CITRINE_GLASS, settings, DyeColor.YELLOW);
@@ -1947,7 +1943,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("radiant_glass", RADIANT_GLASS, settings, DyeColor.WHITE);
 	}
 	
-	private static void registerPlayerOnlyGlass(FabricItemSettings settings) {
+	private static void registerPlayerOnlyGlass(Item.Properties settings) {
 		registerBlockWithItem("semi_permeable_glass", SEMI_PERMEABLE_GLASS, settings, DyeColor.WHITE);
 		registerBlockWithItem("tinted_semi_permeable_glass", TINTED_SEMI_PERMEABLE_GLASS, settings, DyeColor.BLACK);
 		registerBlockWithItem("radiant_semi_permeable_glass", RADIANT_SEMI_PERMEABLE_GLASS, settings, DyeColor.YELLOW);
@@ -1959,7 +1955,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("moonstone_semi_permeable_glass", MOONSTONE_SEMI_PERMEABLE_GLASS, settings, DyeColor.WHITE);
 	}
 	
-	private static void registerGemstoneChimes(FabricItemSettings settings) {
+	private static void registerGemstoneChimes(Item.Properties settings) {
 		registerBlockWithItem("topaz_chime", TOPAZ_CHIME, settings, DyeColor.CYAN);
 		registerBlockWithItem("amethyst_chime", AMETHYST_CHIME, settings, DyeColor.MAGENTA);
 		registerBlockWithItem("citrine_chime", CITRINE_CHIME, settings, DyeColor.YELLOW);
@@ -1967,7 +1963,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("moonstone_chime", MOONSTONE_CHIME, settings, DyeColor.WHITE);
 	}
 	
-	private static void registerDecoStones(FabricItemSettings settings) {
+	private static void registerDecoStones(Item.Properties settings) {
 		registerBlockWithItem("amethyst_decostone", AMETHYST_DECOSTONE, settings, DyeColor.MAGENTA);
 		registerBlockWithItem("topaz_decostone", TOPAZ_DECOSTONE, settings, DyeColor.CYAN);
 		registerBlockWithItem("citrine_decostone", CITRINE_DECOSTONE, settings, DyeColor.YELLOW);
@@ -1975,7 +1971,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("moonstone_decostone", MOONSTONE_DECOSTONE, settings, DyeColor.WHITE);
 	}
 	
-	private static void registerStoneBlocks(FabricItemSettings settings) {
+	private static void registerStoneBlocks(Item.Properties settings) {
 		registerBlockWithItem("smooth_basalt_slab", SMOOTH_BASALT_SLAB, settings, DyeColor.BROWN);
 		registerBlockWithItem("smooth_basalt_wall", SMOOTH_BASALT_WALL, settings, DyeColor.BROWN);
 		registerBlockWithItem("smooth_basalt_stairs", SMOOTH_BASALT_STAIRS, settings, DyeColor.BROWN);
@@ -2140,7 +2136,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("cracked_dragonbone", CRACKED_DRAGONBONE, settings, DyeColor.GREEN);
 	}
 	
-	private static void registerRunes(FabricItemSettings settings) {
+	private static void registerRunes(Item.Properties settings) {
 		registerBlockWithItem("topaz_chiseled_basalt", TOPAZ_CHISELED_BASALT, settings, DyeColor.CYAN);
 		registerBlockWithItem("amethyst_chiseled_basalt", AMETHYST_CHISELED_BASALT, settings, DyeColor.MAGENTA);
 		registerBlockWithItem("citrine_chiseled_basalt", CITRINE_CHISELED_BASALT, settings, DyeColor.YELLOW);
@@ -2154,7 +2150,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("moonstone_chiseled_calcite", MOONSTONE_CHISELED_CALCITE, settings, DyeColor.WHITE);
 	}
 	
-	private static void registerGemstoneLamps(FabricItemSettings settings) {
+	private static void registerGemstoneLamps(Item.Properties settings) {
 		registerBlockWithItem("topaz_calcite_lamp", TOPAZ_CALCITE_LAMP, settings, DyeColor.CYAN);
 		registerBlockWithItem("amethyst_calcite_lamp", AMETHYST_CALCITE_LAMP, settings, DyeColor.MAGENTA);
 		registerBlockWithItem("citrine_calcite_lamp", CITRINE_CALCITE_LAMP, settings, DyeColor.YELLOW);
@@ -2168,7 +2164,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("moonstone_basalt_lamp", MOONSTONE_BASALT_LAMP, settings, DyeColor.WHITE);
 	}
 	
-	private static void registerColoredWood(FabricItemSettings settings) {
+	private static void registerColoredWood(Item.Properties settings) {
 		registerBlockWithItem("white_log", WHITE_LOG, settings, DyeColor.WHITE);
 		registerBlockWithItem("orange_log", ORANGE_LOG, settings, DyeColor.ORANGE);
 		registerBlockWithItem("magenta_log", MAGENTA_LOG, settings, DyeColor.MAGENTA);
@@ -2408,7 +2404,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("black_slab", BLACK_SLAB, settings, DyeColor.BLACK);
 	}
 	
-	private static void registerGlowBlocks(FabricItemSettings settings) {
+	private static void registerGlowBlocks(Item.Properties settings) {
 		registerBlockWithItem("white_glowblock", WHITE_GLOWBLOCK, settings, DyeColor.WHITE);
 		registerBlockWithItem("orange_glowblock", ORANGE_GLOWBLOCK, settings, DyeColor.ORANGE);
 		registerBlockWithItem("magenta_glowblock", MAGENTA_GLOWBLOCK, settings, DyeColor.MAGENTA);
@@ -2427,7 +2423,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("black_glowblock", BLACK_GLOWBLOCK, settings, DyeColor.BLACK);
 	}
 	
-	public static void registerShimmerstoneLights(FabricItemSettings settings) {
+	public static void registerShimmerstoneLights(Item.Properties settings) {
 		registerBlockWithItem("basalt_shimmerstone_light", BASALT_SHIMMERSTONE_LIGHT, settings, DyeColor.YELLOW);
 		registerBlockWithItem("calcite_shimmerstone_light", CALCITE_SHIMMERSTONE_LIGHT, settings, DyeColor.YELLOW);
 		registerBlockWithItem("stone_shimmerstone_light", STONE_SHIMMERSTONE_LIGHT, settings, DyeColor.YELLOW);
@@ -2438,7 +2434,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("blackslag_shimmerstone_light", BLACKSLAG_SHIMMERSTONE_LIGHT, settings, DyeColor.YELLOW);
 	}
 	
-	public static void registerShootingStarBlocks(FabricItemSettings settings) {
+	public static void registerShootingStarBlocks(Item.Properties settings) {
 		registerBlockWithItem("glistering_shooting_star", GLISTERING_SHOOTING_STAR, new ShootingStarItem(GLISTERING_SHOOTING_STAR, settings), DyeColor.PURPLE);
 		registerBlockWithItem("fiery_shooting_star", FIERY_SHOOTING_STAR, new ShootingStarItem(FIERY_SHOOTING_STAR, settings), DyeColor.PURPLE);
 		registerBlockWithItem("colorful_shooting_star", COLORFUL_SHOOTING_STAR, new ShootingStarItem(COLORFUL_SHOOTING_STAR, settings), DyeColor.PURPLE);
@@ -2448,7 +2444,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("stardust_block", STARDUST_BLOCK, settings, DyeColor.BLACK);
 	}
 	
-	public static void registerPastelNetworkNodes(FabricItemSettings settings) {
+	public static void registerPastelNetworkNodes(Item.Properties settings) {
 		registerBlockWithItem("connection_node", CONNECTION_NODE, settings, DyeColor.GREEN);
 		registerBlockWithItem("provider_node", PROVIDER_NODE, settings, DyeColor.GREEN);
 		registerBlockWithItem("storage_node", STORAGE_NODE, settings, DyeColor.GREEN);
@@ -2456,7 +2452,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("gather_node", GATHER_NODE, settings, DyeColor.GREEN);
 	}
 	
-	public static void registerSporeBlossoms(FabricItemSettings settings) {
+	public static void registerSporeBlossoms(Item.Properties settings) {
 		registerBlockWithItem("white_spore_blossom", WHITE_SPORE_BLOSSOM, settings, DyeColor.WHITE);
 		registerBlockWithItem("orange_spore_blossom", ORANGE_SPORE_BLOSSOM, settings, DyeColor.ORANGE);
 		registerBlockWithItem("magenta_spore_blossom", MAGENTA_SPORE_BLOSSOM, settings, DyeColor.MAGENTA);
@@ -2475,7 +2471,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("black_spore_blossom", BLACK_SPORE_BLOSSOM, settings, DyeColor.BLACK);
 	}
 	
-	private static void registerGemBlocks(FabricItemSettings settings) {
+	private static void registerGemBlocks(Item.Properties settings) {
 		registerBlockWithItem("topaz_block", TOPAZ_BLOCK, settings, DyeColor.CYAN);
 		registerBlockWithItem("budding_topaz", BUDDING_TOPAZ, settings, DyeColor.CYAN);
 		registerBlockWithItem("small_topaz_bud", SMALL_TOPAZ_BUD, settings, DyeColor.CYAN);
@@ -2505,7 +2501,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("moonstone_cluster", MOONSTONE_CLUSTER, settings, DyeColor.WHITE);
 	}
 	
-	private static void registerGemOreBlocks(FabricItemSettings settings) {
+	private static void registerGemOreBlocks(Item.Properties settings) {
 		// stone ores
 		registerBlockWithItem("topaz_ore", TOPAZ_ORE, settings, DyeColor.CYAN);
 		registerBlockWithItem("amethyst_ore", AMETHYST_ORE, settings, DyeColor.MAGENTA);
@@ -2528,7 +2524,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("blackslag_moonstone_ore", BLACKSLAG_MOONSTONE_ORE, settings, DyeColor.WHITE);
 	}
 	
-	private static void registerStructureBlocks(FabricItemSettings settings) {
+	private static void registerStructureBlocks(Item.Properties settings) {
 		registerBlockWithItem("downstone", DOWNSTONE, settings, DyeColor.BLUE);
 		
 		registerBlockWithItem("preservation_stone", PRESERVATION_STONE, settings, DyeColor.BLUE);
@@ -2568,7 +2564,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("preservation_chest", PRESERVATION_CHEST, settings, DyeColor.BLUE);
 	}
 	
-	private static void registerJadeVineBlocks(FabricItemSettings settings) {
+	private static void registerJadeVineBlocks(Item.Properties settings) {
 		registerBlock("jade_vine_roots", JADE_VINE_ROOTS);
 		registerBlock("jade_vine_bulb", JADE_VINE_BULB);
 		registerBlock("jade_vines", JADE_VINES);
@@ -2586,7 +2582,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("jadeite_petal_carpet", JADEITE_PETAL_CARPET, settings, DyeColor.LIME);
 	}
 	
-	private static void registerSugarSticks(FabricItemSettings settings) {
+	private static void registerSugarSticks(Item.Properties settings) {
 		registerBlockWithItem("sugar_stick", SUGAR_STICK, settings, DyeColor.PINK);
 		registerBlockWithItem("topaz_sugar_stick", TOPAZ_SUGAR_STICK, settings, DyeColor.PINK);
 		registerBlockWithItem("amethyst_sugar_stick", AMETHYST_SUGAR_STICK, settings, DyeColor.PINK);
@@ -2595,7 +2591,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("moonstone_sugar_stick", MOONSTONE_SUGAR_STICK, settings, DyeColor.PINK);
 	}
 	
-	private static void registerPureOreBlocks(FabricItemSettings settings) {
+	private static void registerPureOreBlocks(Item.Properties settings) {
 		registerBlockWithItem("pure_coal_block", PURE_COAL_BLOCK, settings, DyeColor.BROWN);
 		registerBlockWithItem("pure_iron_block", PURE_IRON_BLOCK, settings, DyeColor.BROWN);
 		registerBlockWithItem("pure_gold_block", PURE_GOLD_BLOCK, settings, DyeColor.BROWN);
@@ -2611,7 +2607,7 @@ public class SpectrumBlocks {
 		registerBlockWithItem("pure_echo_block", PURE_ECHO_BLOCK, settings, DyeColor.BROWN);
 	}
 	
-	private static void registerMobBlocks(FabricItemSettings settings) {
+	private static void registerMobBlocks(Item.Properties settings) {
 		registerBlockWithItem("axolotl_idol", AXOLOTL_IDOL, settings, DyeColor.PINK);
 		registerBlockWithItem("bat_idol", BAT_IDOL, settings, DyeColor.PINK);
 		registerBlockWithItem("bee_idol", BEE_IDOL, settings, DyeColor.PINK);
@@ -2658,7 +2654,7 @@ public class SpectrumBlocks {
 	}
 	
 	// Most mob heads vanilla is missing (vanilla only has: skeleton, wither skeleton, zombie, player, creeper, ender dragon)
-	private static void registerMobHeads(FabricItemSettings settings) {
+	private static void registerMobHeads(Item.Properties settings) {
 		MOB_HEADS = EnumHashBiMap.create(SpectrumSkullBlockType.class);
 		MOB_WALL_HEADS = EnumHashBiMap.create(SpectrumSkullBlockType.class);
 		

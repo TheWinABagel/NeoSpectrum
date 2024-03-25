@@ -72,7 +72,7 @@ public class FermentRandomlyLootFunction extends LootItemConditionalFunction {
 		if (fermentationData != null) {
 			BlockPos pos = BlockPos.containing(context.getParamOrNull(LootContextParams.ORIGIN));
 			Biome biome = context.getLevel().getBiome(pos).value();
-			float downfall = ((BiomeAccessor)(Object) biome).getWeather().downfall();
+			float downfall = ((BiomeAccessor)(Object) biome).getClimateSettings().downfall();
 			return TitrationBarrelRecipe.getFermentedStack(fermentationData, this.thickness.getInt(context), TimeHelper.secondsFromMinecraftDays(this.daysFermented.getInt(context)), downfall, stack);
 		}
 		return stack;
@@ -94,7 +94,7 @@ public class FermentRandomlyLootFunction extends LootItemConditionalFunction {
 		private static final String THICKNESS_STRING = "thickness";
 
 		@Override
-		public void toJson(JsonObject jsonObject, FermentRandomlyLootFunction lootFunction, JsonSerializationContext jsonSerializationContext) {
+		public void serialize(JsonObject jsonObject, FermentRandomlyLootFunction lootFunction, JsonSerializationContext jsonSerializationContext) {
 			super.serialize(jsonObject, lootFunction, jsonSerializationContext);
 			
 			if (lootFunction.fermentationRecipeIdentifier != null) {

@@ -114,7 +114,7 @@ public class HardcorePlayerRevivalRecipe extends SpiritInstillerRecipe {
 		}
 		
 		@Override
-		public void write(FriendlyByteBuf buf, HardcorePlayerRevivalRecipe recipe) {
+		public void toNetwork(FriendlyByteBuf buf, HardcorePlayerRevivalRecipe recipe) {
 		
 		}
 	}

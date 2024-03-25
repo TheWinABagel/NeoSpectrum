@@ -399,7 +399,7 @@ public class InventoryHelper {
 		}
 		
 		if (inventory == null) {
-			List<Entity> list = world.getEntities(null, new AABB(x - 0.5D, y - 0.5D, z - 0.5D, x + 0.5D, y + 0.5D, z + 0.5D), EntitySelector.CONTAINER_ENTITY_SELECTOR);
+			List<Entity> list = world.getEntities((Entity) null, new AABB(x - 0.5D, y - 0.5D, z - 0.5D, x + 0.5D, y + 0.5D, z + 0.5D), EntitySelector.CONTAINER_ENTITY_SELECTOR);
 			if (!list.isEmpty()) {
 				inventory = (Container) list.get(world.random.nextInt(list.size()));
 			}

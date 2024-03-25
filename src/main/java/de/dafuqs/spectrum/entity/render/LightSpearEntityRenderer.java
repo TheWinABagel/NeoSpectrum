@@ -36,7 +36,7 @@ public class LightSpearEntityRenderer extends EntityRenderer<LightShardBaseEntit
 		matrices.scale(scaleFactor, scaleFactor, 1);
 		matrices.translate(-0.5F, -0.5F, 0);
 	
-		var consumer = vertexConsumers.getBuffer(RenderType.entityTranslucentCull(getTexture(shard)));
+		var consumer = vertexConsumers.getBuffer(RenderType.entityTranslucentCull(getTextureLocation(shard)));
 		var matrix = matrices.last();
 		var positions = matrix.pose();
 		var normals = matrix.normal();
@@ -52,7 +52,7 @@ public class LightSpearEntityRenderer extends EntityRenderer<LightShardBaseEntit
     }
     
     @Override
-    public ResourceLocation getTexture(LightShardBaseEntity entity) {
+    public ResourceLocation getTextureLocation(LightShardBaseEntity entity) {
         return entity.getTexture();
     }
 }

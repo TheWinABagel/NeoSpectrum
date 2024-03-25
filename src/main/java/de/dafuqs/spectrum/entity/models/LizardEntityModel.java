@@ -119,7 +119,7 @@ public class LizardEntityModel<T extends LivingEntity> extends AgeableListModel<
 	}
 	
 	@Override
-	public void setAngles(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+	public void setupAnim(T entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
 		this.head.xRot = headPitch * 0.017453292F;
 		this.head.yRot = headYaw * 0.017453292F;
 		this.rightHindLeg.xRot = Mth.cos(limbAngle * 0.6662F) * 1.4F * limbDistance;

@@ -51,7 +51,7 @@ public class CinderhearthRecipeSerializer implements GatedRecipeSerializer<Cinde
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, CinderhearthRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, CinderhearthRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

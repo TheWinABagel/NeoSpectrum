@@ -47,7 +47,7 @@ public class AnvilCrushingRecipeSerializer implements GatedRecipeSerializer<Anvi
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, AnvilCrushingRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, AnvilCrushingRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

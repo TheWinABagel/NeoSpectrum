@@ -21,7 +21,7 @@ public class EraserEntityRenderer extends MobRenderer<EraserEntity, EraserEntity
 	}
 	
 	@Override
-	public ResourceLocation getTexture(EraserEntity entity) {
+	public ResourceLocation getTextureLocation(EraserEntity entity) {
 		return TEXTURE;
 	}
 	

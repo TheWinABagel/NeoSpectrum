@@ -21,7 +21,7 @@ public class PreservationTurretEntityRenderer extends MobRenderer<PreservationTu
 	}
 	
 	@Override
-	public ResourceLocation getTexture(PreservationTurretEntity turretEntity) {
+	public ResourceLocation getTextureLocation(PreservationTurretEntity turretEntity) {
 		return TEXTURE;
 	}
 	

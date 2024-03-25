@@ -36,7 +36,7 @@ public class FluidConvertingRecipeSerializer<R extends FluidConvertingRecipe> im
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, R recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, R recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

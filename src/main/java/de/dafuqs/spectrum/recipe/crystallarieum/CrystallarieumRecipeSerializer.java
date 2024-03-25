@@ -77,7 +77,7 @@ public class CrystallarieumRecipeSerializer implements GatedRecipeSerializer<Cry
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, CrystallarieumRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, CrystallarieumRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

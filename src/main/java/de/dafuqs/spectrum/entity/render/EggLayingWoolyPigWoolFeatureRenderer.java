@@ -64,7 +64,7 @@ public class EggLayingWoolyPigWoolFeatureRenderer extends RenderLayer<EggLayingW
 	}
 	
 	@Override
-	public ResourceLocation getTexture(EggLayingWoolyPigEntity entity) {
+	public ResourceLocation getTextureLocation(EggLayingWoolyPigEntity entity) {
 		return EggLayingWoolyPigEntityRenderer.TEXTURE;
 	}
 	

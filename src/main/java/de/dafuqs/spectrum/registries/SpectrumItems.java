@@ -14,6 +14,7 @@ import de.dafuqs.spectrum.entity.SpectrumEntityTypes;
 import de.dafuqs.spectrum.items.*;
 import de.dafuqs.spectrum.items.armor.BedrockArmorItem;
 import de.dafuqs.spectrum.items.armor.GemstoneArmorItem;
+import de.dafuqs.spectrum.items.conditional.CloakedItem;
 import de.dafuqs.spectrum.items.conditional.CloakedItemWithLoomPattern;
 import de.dafuqs.spectrum.items.conditional.GemstonePowderItem;
 import de.dafuqs.spectrum.items.conditional.StormStoneItem;
@@ -31,7 +32,6 @@ import de.dafuqs.spectrum.items.tools.*;
 import de.dafuqs.spectrum.items.trinkets.*;
 import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.recipe.pedestal.BuiltinGemstoneColor;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.fabricmc.fabric.api.registry.FuelRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -52,20 +52,20 @@ public class SpectrumItems {
 	
 	public static class IS {
 		
-		public static FabricItemSettings of() {
-			return new FabricItemSettings();
+		public static Item.Properties of() {
+			return new Item.Properties();
 		}
 		
-		public static FabricItemSettings of(int maxCount) {
-			return new FabricItemSettings().stacksTo(maxCount);
+		public static Item.Properties of(int maxCount) {
+			return new Item.Properties().stacksTo(maxCount);
 		}
 		
-		public static FabricItemSettings of(Rarity rarity) {
-			return new FabricItemSettings().rarity(rarity);
+		public static Item.Properties of(Rarity rarity) {
+			return new Item.Properties().rarity(rarity);
 		}
 		
-		public static FabricItemSettings of(int maxCount, Rarity rarity) {
-			return new FabricItemSettings().stacksTo(maxCount).rarity(rarity);
+		public static Item.Properties of(int maxCount, Rarity rarity) {
+			return new Item.Properties().stacksTo(maxCount).rarity(rarity);
 		}
 		
 	}

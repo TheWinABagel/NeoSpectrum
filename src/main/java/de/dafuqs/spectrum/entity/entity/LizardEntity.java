@@ -39,7 +39,6 @@ import net.minecraft.world.entity.ai.village.poi.PoiTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.EntityGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.Vec3;
@@ -409,10 +408,4 @@ public class LizardEntity extends TamableAnimal implements PackEntity<LizardEnti
 		}
 
 	}
-
-	@Override
-	public EntityGetter level() {
-		return this.level();
-	}
-
 }

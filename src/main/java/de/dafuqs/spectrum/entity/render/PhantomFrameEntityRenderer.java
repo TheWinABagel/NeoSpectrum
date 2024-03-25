@@ -41,7 +41,7 @@ public class PhantomFrameEntityRenderer<T extends ItemFrame> extends ItemFrameRe
 	}
 
 	@Override
-	protected int getBlockLight(PhantomFrameEntity itemFrameEntity, BlockPos blockPos) {
+	protected int getBlockLightLevel(PhantomFrameEntity itemFrameEntity, BlockPos blockPos) {
 		return itemFrameEntity.getType() == SpectrumEntityTypes.GLOW_PHANTOM_FRAME ? Math.max(5, super.getBlockLightLevel(itemFrameEntity, blockPos)) : super.getBlockLightLevel(itemFrameEntity, blockPos);
 	}
 

@@ -27,7 +27,7 @@ public class MonstrosityEntityRenderer extends MobRenderer<MonstrosityEntity, Mo
 	}
 	
 	@Override
-	public ResourceLocation getTexture(MonstrosityEntity entity) {
+	public ResourceLocation getTextureLocation(MonstrosityEntity entity) {
 		return TEXTURE;
 	}
 	

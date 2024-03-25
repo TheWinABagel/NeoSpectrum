@@ -73,7 +73,7 @@ public class TitrationBarrelRecipeSerializer implements GatedRecipeSerializer<Ti
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, TitrationBarrelRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, TitrationBarrelRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

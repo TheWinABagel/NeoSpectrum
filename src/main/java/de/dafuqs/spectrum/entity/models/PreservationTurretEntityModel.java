@@ -40,7 +40,7 @@ public class PreservationTurretEntityModel<T extends PreservationTurretEntity> e
 	}
 	
 	@Override
-	public void setAngles(T turretEntity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+	public void setupAnim(T turretEntity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
 		float k = animationProgress - (float) turretEntity.tickCount;
 		float l = (float) ((0.5F + turretEntity.getOpenProgress(k)) * Math.PI);
 		float coverOffset = 0.0F;

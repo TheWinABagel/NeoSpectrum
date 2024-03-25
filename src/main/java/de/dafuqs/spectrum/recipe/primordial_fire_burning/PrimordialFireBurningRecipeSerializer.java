@@ -36,7 +36,7 @@ public class PrimordialFireBurningRecipeSerializer implements GatedRecipeSeriali
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, PrimordialFireBurningRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, PrimordialFireBurningRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

@@ -54,7 +54,7 @@ public class PotionWorkshopReactingRecipeSerializer implements GatedRecipeSerial
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, PotionWorkshopReactingRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, PotionWorkshopReactingRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

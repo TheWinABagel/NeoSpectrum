@@ -46,7 +46,7 @@ public class SpiritInstillerRecipeSerializer implements GatedRecipeSerializer<Sp
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, SpiritInstillerRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, SpiritInstillerRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

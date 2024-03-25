@@ -32,14 +32,14 @@ public class KindlingCoughEntityRenderer extends EntityRenderer<KindlingCoughEnt
 		matrixStack.translate(0.0, 0.15000000596046448, 0.0);
 		matrixStack.mulPose(Axis.YP.rotationDegrees(Mth.lerp(g, kindlingCoughEntity.yRotO, kindlingCoughEntity.getYRot()) - 90.0F));
 		matrixStack.mulPose(Axis.ZP.rotationDegrees(Mth.lerp(g, kindlingCoughEntity.xRotO, kindlingCoughEntity.getXRot())));
-		this.model.setAngles(kindlingCoughEntity, g, 0.0F, -0.1F, 0.0F, 0.0F);
+		this.model.setupAnim(kindlingCoughEntity, g, 0.0F, -0.1F, 0.0F, 0.0F);
 		VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(this.model.renderType(TEXTURE));
 		this.model.renderToBuffer(matrixStack, vertexConsumer, i, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
 		matrixStack.popPose();
 		super.render(kindlingCoughEntity, f, g, matrixStack, vertexConsumerProvider, i);
 	}
 	
-	public ResourceLocation getTexture(KindlingCoughEntity kindlingCoughEntity) {
+	public ResourceLocation getTextureLocation(KindlingCoughEntity kindlingCoughEntity) {
 		return TEXTURE;
 	}
 }

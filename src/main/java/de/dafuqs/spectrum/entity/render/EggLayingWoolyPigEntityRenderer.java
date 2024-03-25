@@ -22,7 +22,7 @@ public class EggLayingWoolyPigEntityRenderer extends MobRenderer<EggLayingWoolyP
 	}
 	
 	@Override
-	public ResourceLocation getTexture(EggLayingWoolyPigEntity entity) {
+	public ResourceLocation getTextureLocation(EggLayingWoolyPigEntity entity) {
 		return (entity.getId() - entity.level().getGameTime()) % 120 == 0 ? TEXTURE_BLINKING : TEXTURE; // based on the entities' id, so not all blink at the same time
 	}
 	

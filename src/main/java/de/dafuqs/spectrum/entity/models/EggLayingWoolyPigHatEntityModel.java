@@ -36,14 +36,14 @@ public class EggLayingWoolyPigHatEntityModel extends EntityModel<EggLayingWoolyP
 	private float headPitchModifier;
 	
 	@Override
-	public void animateModel(EggLayingWoolyPigEntity entity, float limbAngle, float limbDistance, float tickDelta) {
+	public void prepareMobModel(EggLayingWoolyPigEntity entity, float limbAngle, float limbDistance, float tickDelta) {
 		super.prepareMobModel(entity, limbAngle, limbDistance, tickDelta);
 		this.head.y = -13.0F + entity.getNeckAngle(tickDelta) * 9.0F;
 		this.headPitchModifier = entity.getHeadAngle(tickDelta);
 	}
 	
 	@Override
-	public void setAngles(EggLayingWoolyPigEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+	public void setupAnim(EggLayingWoolyPigEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 		this.head.xRot = this.headPitchModifier;
 		this.head.yRot = netHeadYaw * 0.017453292F;
 	}

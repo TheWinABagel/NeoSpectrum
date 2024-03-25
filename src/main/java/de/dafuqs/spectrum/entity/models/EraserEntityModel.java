@@ -127,7 +127,7 @@ public class EraserEntityModel extends HierarchicalModel<EraserEntity> {
 	private static final float PI = (float) Math.PI;
 	
 	@Override
-	public void setAngles(EraserEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
+	public void setupAnim(EraserEntity entity, float limbAngle, float limbDistance, float animationProgress, float headYaw, float headPitch) {
 		this.head.yRot = headYaw * 0.017453292F;
 		this.head.xRot = headPitch * 0.017453292F;
 

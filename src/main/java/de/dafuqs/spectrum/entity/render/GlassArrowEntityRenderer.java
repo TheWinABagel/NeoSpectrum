@@ -77,7 +77,7 @@ public class GlassArrowEntityRenderer extends EntityRenderer<GlassArrowEntity> {
     }
 	
 	@Override
-    public ResourceLocation getTexture(GlassArrowEntity itemEntity) {
+    public ResourceLocation getTextureLocation(GlassArrowEntity itemEntity) {
 		return InventoryMenu.BLOCK_ATLAS;
     }
     

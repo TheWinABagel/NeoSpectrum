@@ -14,9 +14,10 @@ public class BedrockFishingBobberEntityRenderer extends SpectrumFishingBobberEnt
 	public BedrockFishingBobberEntityRenderer(EntityRendererProvider.Context context) {
 		super(context);
 	}
-	
+
+
 	@Override
-	public ResourceLocation getTexture(SpectrumFishingBobberEntity fishingBobberEntity) {
+	public ResourceLocation getTextureLocation(SpectrumFishingBobberEntity fishingBobberEntity) {
 		return TEXTURE;
 	}
 	

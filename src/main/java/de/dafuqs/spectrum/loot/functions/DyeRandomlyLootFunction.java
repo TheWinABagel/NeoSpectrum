@@ -76,7 +76,7 @@ public class DyeRandomlyLootFunction extends LootItemConditionalFunction {
 	public static class Serializer extends LootItemConditionalFunction.Serializer<DyeRandomlyLootFunction> {
 		
 		@Override
-		public void toJson(JsonObject jsonObject, DyeRandomlyLootFunction lootFunction, JsonSerializationContext jsonSerializationContext) {
+		public void serialize(JsonObject jsonObject, DyeRandomlyLootFunction lootFunction, JsonSerializationContext jsonSerializationContext) {
 			super.serialize(jsonObject, lootFunction, jsonSerializationContext);
 			if (!lootFunction.colors.isEmpty()) {
 				JsonArray jsonArray = new JsonArray();

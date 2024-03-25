@@ -50,7 +50,7 @@ public class ShootingStarEntityRenderer extends EntityRenderer<ShootingStarEntit
 	}
 	
 	@Override
-	public ResourceLocation getTexture(ShootingStarEntity entityIn) {
+	public ResourceLocation getTextureLocation(ShootingStarEntity entityIn) {
 		return InventoryMenu.BLOCK_ATLAS;
 	}
 }

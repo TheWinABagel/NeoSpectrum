@@ -36,7 +36,7 @@ public class LightMineEntityRenderer extends EntityRenderer<LightMineEntity> {
 		matrices.scale(scaleFactor, scaleFactor, 1);
 		matrices.translate(-0.5F, -0.5F, 0);
 	
-		var consumer = vertexConsumers.getBuffer(RenderType.entityTranslucentCull(getTexture(mine)));
+		var consumer = vertexConsumers.getBuffer(RenderType.entityTranslucentCull(getTextureLocation(mine)));
 		var matrix = matrices.last();
 		var positions = matrix.pose();
 		var normals = matrix.normal();
@@ -53,7 +53,7 @@ public class LightMineEntityRenderer extends EntityRenderer<LightMineEntity> {
 	}
     
     @Override
-    public ResourceLocation getTexture(LightMineEntity entity) {
+    public ResourceLocation getTextureLocation(LightMineEntity entity) {
         return entity.getTexture();
     }
     

@@ -60,7 +60,7 @@ public class BidentEntityRenderer extends EntityRenderer<BidentBaseEntity> {
 	}
 
 	@Override
-	public ResourceLocation getTexture(BidentBaseEntity entity) {
+	public ResourceLocation getTextureLocation(BidentBaseEntity entity) {
 		return InventoryMenu.BLOCK_ATLAS;
 	}
 

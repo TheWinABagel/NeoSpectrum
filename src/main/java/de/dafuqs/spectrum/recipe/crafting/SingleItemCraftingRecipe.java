@@ -39,7 +39,7 @@ public abstract class SingleItemCraftingRecipe extends CustomRecipe {
 	}
 	
 	@Override
-	public ItemStack craft(CraftingContainer craftingInventory, RegistryAccess drm) {
+	public ItemStack assemble(CraftingContainer craftingInventory, RegistryAccess ra) {
 		ItemStack stack;
 		for (int slot = 0; slot < craftingInventory.getContainerSize(); ++slot) {
 			stack = craftingInventory.getItem(slot);

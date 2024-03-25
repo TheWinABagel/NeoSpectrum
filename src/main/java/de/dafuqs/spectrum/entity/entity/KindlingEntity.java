@@ -17,7 +17,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.util.RandomSource;
 import net.minecraft.util.TimeUtil;
 import net.minecraft.util.valueproviders.UniformInt;
 import net.minecraft.world.DifficultyInstance;
@@ -43,7 +42,6 @@ import net.minecraft.world.entity.monster.RangedAttackMob;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.level.EntityGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -96,10 +94,6 @@ public class KindlingEntity extends Horse implements RangedAttackMob, NeutralMob
 				.add(Attributes.ATTACK_DAMAGE, 25F)
 				.add(Attributes.ATTACK_KNOCKBACK, 1.5F)
 				.add(Attributes.JUMP_STRENGTH, 12.0D);
-	}
-	
-	@Override
-	protected void randomizeReinforcementsChance(RandomSource random) {
 	}
 	
 	@Nullable
@@ -535,10 +529,7 @@ public class KindlingEntity extends Horse implements RangedAttackMob, NeutralMob
 		return other != this && other instanceof KindlingEntity otherKindling && this.canParent() && otherKindling.canParent();
 	}
 	
-	@Override
-	public EntityGetter level() {
-		return this.level();
-	}
+
 	
 	protected class CoughRevengeGoal extends HurtByTargetGoal {
 		

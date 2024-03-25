@@ -49,7 +49,7 @@ public class EnchanterRecipeSerializer implements GatedRecipeSerializer<Enchante
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, EnchanterRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, EnchanterRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

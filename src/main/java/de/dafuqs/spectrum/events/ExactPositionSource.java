@@ -40,7 +40,7 @@ public class ExactPositionSource implements PositionSource {
 		}
 		
 		@Override
-		public void writeToBuf(FriendlyByteBuf packetByteBuf, ExactPositionSource blockPositionSource) {
+		public void write(FriendlyByteBuf packetByteBuf, ExactPositionSource blockPositionSource) {
 			packetByteBuf.writeDouble(blockPositionSource.pos.x);
 			packetByteBuf.writeDouble(blockPositionSource.pos.y);
 			packetByteBuf.writeDouble(blockPositionSource.pos.z);

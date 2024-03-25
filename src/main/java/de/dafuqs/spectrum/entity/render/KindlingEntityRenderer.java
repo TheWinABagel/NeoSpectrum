@@ -35,7 +35,7 @@ public static final ResourceLocation TEXTURE_CLIPPED = SpectrumCommon.locate("te
 	}
 	
 	@Override
-	public ResourceLocation getTexture(@NotNull KindlingEntity entity) {
+	public ResourceLocation getTextureLocation(@NotNull KindlingEntity entity) {
 		boolean isClipped = entity.isClipped();
 		if (entity.getRemainingPersistentAngerTime() > 0) {
 			return isClipped ? TEXTURE_ANGRY_CLIPPED : TEXTURE_ANGRY;

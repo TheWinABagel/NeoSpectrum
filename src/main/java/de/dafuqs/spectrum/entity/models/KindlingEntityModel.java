@@ -102,7 +102,7 @@ public class KindlingEntityModel extends HierarchicalModel<KindlingEntity> {
 	}
 	
 	@Override
-	public void setAngles(KindlingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+	public void setupAnim(KindlingEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 		this.root().getAllParts().forEach(ModelPart::resetPose);
 
 		this.setHeadAngle(netHeadYaw, headPitch);

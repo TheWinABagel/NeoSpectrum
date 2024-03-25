@@ -57,7 +57,7 @@ public class ShapedPedestalRecipeSerializer extends PedestalRecipeSerializer<Sha
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, ShapedPedestalRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, ShapedPedestalRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

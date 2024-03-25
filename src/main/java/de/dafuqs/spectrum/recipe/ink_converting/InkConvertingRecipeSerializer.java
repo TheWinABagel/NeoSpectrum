@@ -37,7 +37,7 @@ public class InkConvertingRecipeSerializer implements GatedRecipeSerializer<InkC
 	}
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, InkConvertingRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, InkConvertingRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

@@ -103,7 +103,7 @@ public class FusionShrineRecipeSerializer implements GatedRecipeSerializer<Fusio
 	
 	
 	@Override
-	public void write(FriendlyByteBuf packetByteBuf, FusionShrineRecipe recipe) {
+	public void toNetwork(FriendlyByteBuf packetByteBuf, FusionShrineRecipe recipe) {
 		packetByteBuf.writeUtf(recipe.group);
 		packetByteBuf.writeBoolean(recipe.secret);
 		writeNullableIdentifier(packetByteBuf, recipe.requiredAdvancementIdentifier);

@@ -50,7 +50,7 @@ public class FloatBlockEntityRenderer extends EntityRenderer<FloatBlockEntity> {
 
     @SuppressWarnings("deprecation")
     @Override
-    public ResourceLocation getTexture(FloatBlockEntity entityIn) {
+    public ResourceLocation getTextureLocation(FloatBlockEntity entityIn) {
         return TextureAtlas.LOCATION_BLOCKS;
     }
 }

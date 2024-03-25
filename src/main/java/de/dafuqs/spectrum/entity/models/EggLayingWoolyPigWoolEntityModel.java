@@ -31,7 +31,7 @@ public class EggLayingWoolyPigWoolEntityModel extends EntityModel<EggLayingWooly
 	}
 	
 	@Override
-	public void setAngles(EggLayingWoolyPigEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+	public void setupAnim(EggLayingWoolyPigEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
 	
 	}
 	

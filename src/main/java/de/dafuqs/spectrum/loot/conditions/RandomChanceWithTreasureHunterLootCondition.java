@@ -81,7 +81,7 @@ public class RandomChanceWithTreasureHunterLootCondition implements LootItemCond
 		}
 		
 		@Override
-		public void toJson(JsonObject jsonObject, RandomChanceWithTreasureHunterLootCondition randomChanceWithLootingLootCondition, JsonSerializationContext jsonSerializationContext) {
+		public void serialize(JsonObject jsonObject, RandomChanceWithTreasureHunterLootCondition randomChanceWithLootingLootCondition, JsonSerializationContext jsonSerializationContext) {
 			jsonObject.addProperty("chance", randomChanceWithLootingLootCondition.chance);
 			jsonObject.addProperty("advancement_trigger_itemstack", BuiltInRegistries.ITEM.getKey(randomChanceWithLootingLootCondition.advancementTriggerItemStack.getItem()).toString());
 		}
