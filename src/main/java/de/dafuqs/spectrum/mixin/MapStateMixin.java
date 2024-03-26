@@ -22,7 +22,7 @@ public class MapStateMixin {
     @Nullable
     private static ArtisansAtlasState atlasState = null;
 
-    @Inject(method = "fromNbt", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/map/MapState;<init>(IIBZZZLnet/minecraft/registry/RegistryKey;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
+    @Inject(method = "load", at = @At(value = "INVOKE", target = "net/minecraft/world/level/saveddata/maps/MapItemSavedData.<init> (IIBZZZLnet/minecraft/resources/ResourceKey;)V"), locals = LocalCapture.CAPTURE_FAILHARD)
     private static void spectrum$fromNbt_newMapState(CompoundTag nbt, CallbackInfoReturnable<MapItemSavedData> cir, ResourceKey<Level> dimension, int centerX, int centerZ, byte scale, boolean showIcons, boolean unlimitedTracking, boolean locked) {
         if (nbt.contains("isArtisansAtlas", Tag.TAG_BYTE) && nbt.getBoolean("isArtisansAtlas")) {
             atlasState = new ArtisansAtlasState(centerX, centerZ, scale, showIcons, unlimitedTracking, locked, dimension, nbt);
@@ -30,9 +30,9 @@ public class MapStateMixin {
     }
 
     @ModifyVariable(
-            method = "fromNbt",
+            method = "load",
             slice = @Slice(
-                    from = @At(value = "INVOKE", target = "Lnet/minecraft/item/map/MapState;<init>(IIBZZZLnet/minecraft/registry/RegistryKey;)V"),
+                    from = @At(value = "INVOKE", target = "net/minecraft/world/level/saveddata/maps/MapItemSavedData.<init> (IIBZZZLnet/minecraft/resources/ResourceKey;)V"),
                     to = @At(value = "TAIL")
             ),
             at = @At(value = "STORE")

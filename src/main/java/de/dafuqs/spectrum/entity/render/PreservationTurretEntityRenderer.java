@@ -26,7 +26,7 @@ public class PreservationTurretEntityRenderer extends MobRenderer<PreservationTu
 	}
 	
 	@Override
-	protected void setupTransforms(PreservationTurretEntity turretEntity, PoseStack matrixStack, float f, float g, float h) {
+	protected void setupRotations(PreservationTurretEntity turretEntity, PoseStack matrixStack, float f, float g, float h) {
 		super.setupRotations(turretEntity, matrixStack, f, g + 180.0F, h);
 		matrixStack.translate(0.0, 0.5, 0.0);
 		matrixStack.mulPose(turretEntity.getAttachedFace().getOpposite().getRotation());

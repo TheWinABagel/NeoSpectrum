@@ -21,16 +21,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class LightningEntityMixin {
 	
 	@Shadow
-	protected abstract BlockPos getAffectedBlockPos();
+	protected abstract BlockPos getStrikePosition();
 	
-	@Inject(method = "tick()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LightningEntity;cleanOxidation(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)V"))
+	@Inject(method = "tick()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LightningBolt;clearCopperOnLightningStrike(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V"))
 	private void spawnLightningStoneAtImpact(CallbackInfo ci) {
 		Level world = ((LightningBolt) (Object) this).level();
 		
 		// do not spawn storm stones when using other forms of
 		// spawning thunder, like magic, ... in clear weather. Only when it is actually thundering
 		if (world.isThundering() && SpectrumCommon.CONFIG.StormStonesWorlds.contains(world.dimension().location().toString())) {
-			spawnLightningStone(world, this.getAffectedBlockPos());
+			spawnLightningStone(world, this.getStrikePosition());
 		}
 	}
 	

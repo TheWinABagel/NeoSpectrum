@@ -12,28 +12,28 @@ import java.util.Map;
 @Mixin(MapItemSavedData.class)
 public interface MapStateAccessor {
 
-    @Accessor(value = "showIcons")
+    @Accessor(value = "trackingPosition")
     boolean getShowIcons();
 
     @Accessor(value = "unlimitedTracking")
     boolean getUnlimitedTracking();
 
-    @Accessor(value = "banners")
+    @Accessor(value = "bannerMarkers")
     Map<String, MapBanner> getBanners();
 
-    @Accessor(value = "icons")
+    @Accessor(value = "decorations")
     Map<String, MapDecoration> getIcons();
 
-    @Accessor(value = "iconCount")
+    @Accessor(value = "trackedDecorationCount")
     int getIconCount();
 
-    @Accessor(value = "iconCount")
+    @Accessor(value = "trackedDecorationCount")
     void setIconCount(int iconCount);
 
-    @Invoker("markIconsDirty")
+    @Invoker("setDecorationsDirty")
     void invokeMarkIconsDirty();
 
-    @Invoker("removeIcon")
+    @Invoker("removeDecoration")
     void invokeRemoveIcon(String id);
 
 }

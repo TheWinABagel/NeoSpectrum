@@ -30,10 +30,10 @@ import java.util.List;
 public abstract class GlassBottleItemMixin {
 	
 	@Shadow
-	protected abstract ItemStack fill(ItemStack stack, Player player, ItemStack outputStack);
+	protected abstract ItemStack turnBottleIntoItem(ItemStack stack, Player player, ItemStack outputStack);
 	
-	@Inject(method = "use(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Hand;)Lnet/minecraft/util/TypedActionResult;",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/fluid/FluidState;isIn(Lnet/minecraft/registry/tag/TagKey;)Z"),
+	@Inject(method = "use",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getFluidState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;"),
 			cancellable = true,
 			locals = LocalCapture.CAPTURE_FAILHARD)
 	public void onUse(Level world, Player user, InteractionHand hand, CallbackInfoReturnable<InteractionResultHolder<ItemStack>> cir, List<AreaEffectCloud> list, ItemStack handStack, BlockHitResult areaEffectCloudEntity, BlockPos blockPos) {
@@ -45,7 +45,7 @@ public abstract class GlassBottleItemMixin {
 			
 			world.setBlockAndUpdate(blockPos, Blocks.AIR.defaultBlockState());
 			world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.BOTTLE_FILL_DRAGONBREATH, SoundSource.NEUTRAL, 1.0F, 1.0F);
-			cir.setReturnValue(InteractionResultHolder.sidedSuccess(this.fill(handStack, user, SpectrumItems.BOTTLE_OF_FADING.getDefaultInstance()), world.isClientSide()));
+			cir.setReturnValue(InteractionResultHolder.sidedSuccess(this.turnBottleIntoItem(handStack, user, SpectrumItems.BOTTLE_OF_FADING.getDefaultInstance()), world.isClientSide()));
 			
 		} else if (blockState.is(SpectrumBlocks.FAILING)
 				&& SpectrumCommon.CONFIG.CanBottleUpFailing
@@ -53,7 +53,7 @@ public abstract class GlassBottleItemMixin {
 			
 			world.setBlockAndUpdate(blockPos, Blocks.AIR.defaultBlockState());
 			world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.BOTTLE_FILL_DRAGONBREATH, SoundSource.NEUTRAL, 1.0F, 1.0F);
-			cir.setReturnValue(InteractionResultHolder.sidedSuccess(this.fill(handStack, user, SpectrumItems.BOTTLE_OF_FAILING.getDefaultInstance()), world.isClientSide()));
+			cir.setReturnValue(InteractionResultHolder.sidedSuccess(this.turnBottleIntoItem(handStack, user, SpectrumItems.BOTTLE_OF_FAILING.getDefaultInstance()), world.isClientSide()));
 			
 		} else if (blockState.is(SpectrumBlocks.RUIN)
 				&& SpectrumCommon.CONFIG.CanBottleUpRuin
@@ -61,7 +61,7 @@ public abstract class GlassBottleItemMixin {
 			
 			world.setBlockAndUpdate(blockPos, Blocks.AIR.defaultBlockState());
 			world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.BOTTLE_FILL_DRAGONBREATH, SoundSource.NEUTRAL, 1.0F, 1.0F);
-			cir.setReturnValue(InteractionResultHolder.sidedSuccess(this.fill(handStack, user, SpectrumItems.BOTTLE_OF_RUIN.getDefaultInstance()), world.isClientSide()));
+			cir.setReturnValue(InteractionResultHolder.sidedSuccess(this.turnBottleIntoItem(handStack, user, SpectrumItems.BOTTLE_OF_RUIN.getDefaultInstance()), world.isClientSide()));
 			
 		} else if (blockState.is(SpectrumBlocks.FORFEITURE)
 				&& SpectrumCommon.CONFIG.CanBottleUpForfeiture
@@ -69,7 +69,7 @@ public abstract class GlassBottleItemMixin {
 			
 			world.setBlockAndUpdate(blockPos, Blocks.AIR.defaultBlockState());
 			world.playSound(null, user.getX(), user.getY(), user.getZ(), SoundEvents.BOTTLE_FILL_DRAGONBREATH, SoundSource.NEUTRAL, 1.0F, 1.0F);
-			cir.setReturnValue(InteractionResultHolder.sidedSuccess(this.fill(handStack, user, SpectrumItems.BOTTLE_OF_FORFEITURE.getDefaultInstance()), world.isClientSide()));
+			cir.setReturnValue(InteractionResultHolder.sidedSuccess(this.turnBottleIntoItem(handStack, user, SpectrumItems.BOTTLE_OF_FORFEITURE.getDefaultInstance()), world.isClientSide()));
 		}
 	}
 	

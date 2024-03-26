@@ -34,9 +34,9 @@ import java.util.Optional;
 public abstract class ProjectileEntityMixin {
 	
 	@Shadow
-	public abstract void setVelocity(double x, double y, double z, float speed, float divergence);
+	public abstract void shoot(double x, double y, double z, float speed, float divergence);
 	
-	@Inject(at = @At("HEAD"), method = "onEntityHit(Lnet/minecraft/util/hit/EntityHitResult;)V", cancellable = true)
+	@Inject(method = "onHitEntity", at = @At("HEAD"), cancellable = true)
 	protected void onProjectileHit(EntityHitResult entityHitResult, CallbackInfo ci) {
 		// if the target has a Puff circlet equipped
 		// protect it from this projectile
@@ -65,7 +65,7 @@ public abstract class ProjectileEntityMixin {
 				}
 				
 				if (protect) {
-					this.setVelocity(0, 0, 0, 0, 0);
+					this.shoot(0, 0, 0, 0, 0);
 					
 					SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity((ServerLevel) world, thisEntity.position(),
 							SpectrumParticleTypes.WHITE_CRAFTING, 6,

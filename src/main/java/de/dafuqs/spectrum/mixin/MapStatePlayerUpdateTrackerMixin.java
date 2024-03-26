@@ -31,8 +31,8 @@ public class MapStatePlayerUpdateTrackerMixin {
     public Player player;
 
     @Inject(
-            method = "getPacket",
-            at = @At(value = "NEW", target = "(IBZLjava/util/Collection;Lnet/minecraft/item/map/MapState$UpdateData;)Lnet/minecraft/network/packet/s2c/play/MapUpdateS2CPacket;"),
+            method = "nextUpdatePacket",
+            at = @At(value = "NEW", target = "net/minecraft/network/protocol/game/ClientboundMapItemDataPacket"), //fixme Probably breaks
             locals = LocalCapture.CAPTURE_FAILHARD,
             cancellable = true
     )

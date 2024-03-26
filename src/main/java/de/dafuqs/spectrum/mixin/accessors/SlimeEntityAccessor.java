@@ -12,7 +12,7 @@ public interface SlimeEntityAccessor {
 	@Invoker("setSize")
 	void invokeSetSize(int newSize, boolean heal);
 	
-	@Invoker("getParticles")
+	@Invoker("getParticleType")
 	ParticleOptions invokeGetParticles();
 	
 	@Invoker("getSquishSound")

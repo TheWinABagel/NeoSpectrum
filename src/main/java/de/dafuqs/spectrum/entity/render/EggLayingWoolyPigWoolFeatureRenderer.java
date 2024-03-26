@@ -38,14 +38,14 @@ public class EggLayingWoolyPigWoolFeatureRenderer extends RenderLayer<EggLayingW
 				VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(RenderType.outline(EggLayingWoolyPigEntityRenderer.TEXTURE));
 				if (!entity.isHatless()) {
 					this.getParentModel().copyPropertiesTo(this.hat);
-					this.hat.animateModel(entity, f, g, h);
-					this.hat.setAngles(entity, f, g, j, k, l);
+					this.hat.prepareMobModel(entity, f, g, h);
+					this.hat.setupAnim(entity, f, g, j, k, l);
 					this.hat.renderToBuffer(matrixStack, vertexConsumer, i, LivingEntityRenderer.getOverlayCoords(entity, 0.0F), 0.0F, 0.0F, 0.0F, 1.0F);
 				}
 				if (!entity.isSheared()) {
 					this.getParentModel().copyPropertiesTo(this.wool);
 					this.wool.prepareMobModel(entity, f, g, h);
-					this.wool.setAngles(entity, f, g, j, k, l);
+					this.wool.setupAnim(entity, f, g, j, k, l);
 					this.wool.renderToBuffer(matrixStack, vertexConsumer, i, LivingEntityRenderer.getOverlayCoords(entity, 0.0F), 0.0F, 0.0F, 0.0F, 1.0F);
 				}
 			}
@@ -53,12 +53,12 @@ public class EggLayingWoolyPigWoolFeatureRenderer extends RenderLayer<EggLayingW
 			float[] rgbColor = EggLayingWoolyPigEntity.getRgbColor(entity.getColor());
 			if (!entity.isHatless()) {
 				this.getParentModel().copyPropertiesTo(this.hat);
-				this.hat.animateModel(entity, f, g, h);
-				this.hat.setAngles(entity, f, g, j, k, l);
-				coloredCutoutModelCopyLayerRender(this.getParentModel(), this.hat, getTexture(entity), matrixStack, vertexConsumerProvider, i, entity, f, g, j, k, l, h, rgbColor[0], rgbColor[1], rgbColor[2]);
+				this.hat.prepareMobModel(entity, f, g, h);
+				this.hat.setupAnim(entity, f, g, j, k, l);
+				coloredCutoutModelCopyLayerRender(this.getParentModel(), this.hat, getTextureLocation(entity), matrixStack, vertexConsumerProvider, i, entity, f, g, j, k, l, h, rgbColor[0], rgbColor[1], rgbColor[2]);
 			}
 			if (!entity.isSheared()) {
-				coloredCutoutModelCopyLayerRender(this.getParentModel(), this.wool, getTexture(entity), matrixStack, vertexConsumerProvider, i, entity, f, g, j, k, l, h, rgbColor[0], rgbColor[1], rgbColor[2]);
+				coloredCutoutModelCopyLayerRender(this.getParentModel(), this.wool, getTextureLocation(entity), matrixStack, vertexConsumerProvider, i, entity, f, g, j, k, l, h, rgbColor[0], rgbColor[1], rgbColor[2]);
 			}
 		}
 	}

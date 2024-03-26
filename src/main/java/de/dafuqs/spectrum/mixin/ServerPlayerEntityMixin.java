@@ -22,6 +22,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -32,16 +33,17 @@ import java.util.Optional;
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayerEntityMixin {
 
-	@Shadow public abstract ServerLevel getServerWorld();
+	@Shadow public abstract ServerLevel serverLevel();
 
+	@Unique
 	private long spectrum$lastGleamingPinTriggerTick = 0;
 	
-	@Inject(at = @At("HEAD"), method = "onDeath(Lnet/minecraft/entity/damage/DamageSource;)V")
+	@Inject(method = "die", at = @At("HEAD"))
 	protected void spectrum$dropPlayerHeadWithTreasureHunt(DamageSource source, CallbackInfo ci) {
 		TreasureHunterEnchantment.doTreasureHunterForPlayer((ServerPlayer) (Object) this, source);
 	}
 	
-	@Inject(at = @At("TAIL"), method = "onDeath(Lnet/minecraft/entity/damage/DamageSource;)V")
+	@Inject(at = @At("TAIL"), method = "die")
 	protected void spectrum$onDeath(DamageSource source, CallbackInfo ci) {
 		ServerPlayer player = (ServerPlayer) (Object) this;
 		if (player.level().getLevelData().isHardcore() || HardcoreDeathComponent.isInHardcore(player)) {
@@ -49,7 +51,7 @@ public abstract class ServerPlayerEntityMixin {
 		}
 	}
 	
-	@Inject(at = @At("HEAD"), method = "damage(Lnet/minecraft/entity/damage/DamageSource;F)Z", cancellable = true)
+	@Inject(at = @At("HEAD"), method = "hurt", cancellable = true)
 	public void spectrum$damageHead(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
 		// If the player is damaged by lava and wears an ashen circlet:
 		// cancel damage and grant fire resistance
@@ -67,9 +69,9 @@ public abstract class ServerPlayerEntityMixin {
 		}
 	}
 	
-	@Inject(at = @At("RETURN"), method = "damage(Lnet/minecraft/entity/damage/DamageSource;F)Z")
+	@Inject(at = @At("RETURN"), method = "hurt")
 	public void spectrum$damageReturn(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
-		ServerLevel world = this.getServerWorld();
+		ServerLevel world = this.serverLevel();
 		if (!world.isClientSide) {
 			// true if the entity got hurt
 			if (cir.getReturnValue() != null && cir.getReturnValue()) {
@@ -91,7 +93,7 @@ public abstract class ServerPlayerEntityMixin {
 		}
 	}
 	
-	@Inject(at = @At("RETURN"), method = "updateKilledAdvancementCriterion(Lnet/minecraft/entity/Entity;ILnet/minecraft/entity/damage/DamageSource;)V")
+	@Inject(at = @At("RETURN"), method = "awardKillScore")
 	public void spectrum$triggerJeopardantKillAdvancementCriterion(Entity killed, int score, DamageSource damageSource, CallbackInfo ci) {
 		if (killed != (Object) this && SpectrumTrinketItem.hasEquipped(this, SpectrumItems.JEOPARDANT)) {
 			SpectrumAdvancementCriteria.JEOPARDANT_KILL.trigger((ServerPlayer) (Object) this, killed, damageSource);

@@ -20,7 +20,7 @@ public abstract class ServerPlayerInteractionManagerMixin {
 	
 	// If someone puts players out of spectator manually
 	// forget about their hardcore death
-	@Inject(at = @At("HEAD"), method = "setGameMode(Lnet/minecraft/world/GameMode;Lnet/minecraft/world/GameMode;)V")
+	@Inject(at = @At("HEAD"), method = "setGameModeForPlayer")
 	public void spectrum$mitigateFallDamageWithPuffCirclet(GameType gameMode, GameType previousGameMode, CallbackInfo ci) {
 		if (gameMode != GameType.SPECTATOR && previousGameMode == GameType.SPECTATOR && HardcoreDeathComponent.hasHardcoreDeath(player.getGameProfile())) {
 			HardcoreDeathComponent.removeHardcoreDeath(player.getGameProfile());

@@ -28,7 +28,7 @@ public abstract class LoomScreenHandlerMixin extends AbstractContainerMenu {
 		super(null, 0);
 	}
 	
-	@Inject(method = "getPatternsFor(Lnet/minecraft/item/ItemStack;)Ljava/util/List;", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "getSelectablePatterns(Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;", at = @At("HEAD"), cancellable = true)
 	private void spectrum$getPatternsFor(ItemStack stack, CallbackInfoReturnable<List<Holder<BannerPattern>>> cir) {
 		if (stack.getItem() instanceof LoomPatternProvider loomPatternProvider) {
 			cir.setReturnValue(loomPatternProvider.getPatterns());
@@ -36,10 +36,10 @@ public abstract class LoomScreenHandlerMixin extends AbstractContainerMenu {
 	}
 	
 	@Inject(
-			method = "quickMove",
+			method = "quickMoveStack",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/item/ItemStack;getItem()Lnet/minecraft/item/Item;",
+					target = "Lnet/minecraft/world/item/ItemStack;getItem()Lnet/minecraft/world/item/Item;",
 					ordinal = 0,
 					shift = At.Shift.BEFORE
 			),

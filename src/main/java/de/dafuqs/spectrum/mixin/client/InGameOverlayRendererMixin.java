@@ -5,6 +5,8 @@ import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ScreenEffectRenderer;
@@ -18,10 +20,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@Environment(EnvType.CLIENT)
 @Mixin(ScreenEffectRenderer.class)
 public class InGameOverlayRendererMixin {
     
-    @Inject(method = "renderOverlays(Lnet/minecraft/client/MinecraftClient;Lnet/minecraft/client/util/math/MatrixStack;)V", at = @At(value = "HEAD"))
+    @Inject(method = "renderScreenEffect", at = @At(value = "HEAD"))
     private static void spectrum$renderPrimordialFire(Minecraft client, PoseStack matrices, CallbackInfo ci) {
         if (!client.player.isSpectator()) {
             if (OnPrimordialFireComponent.isOnPrimordialFire(client.player)) {
@@ -30,7 +33,7 @@ public class InGameOverlayRendererMixin {
         }
     }
     
-    @Inject(method = "renderFireOverlay(Lnet/minecraft/client/MinecraftClient;Lnet/minecraft/client/util/math/MatrixStack;)V", at = @At(value = "HEAD"), cancellable = true)
+    @Inject(method = "renderScreenEffect", at = @At(value = "HEAD"), cancellable = true)
     private static void spectrum$cancelFireOverlayWithPrimordialFire(Minecraft client, PoseStack matrices, CallbackInfo ci) {
         if (OnPrimordialFireComponent.isOnPrimordialFire(client.player)) {
             ci.cancel();

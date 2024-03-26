@@ -16,13 +16,13 @@ public class ExplosionMixin {
 
     @Shadow
     @Final
-    private Level world;
-    @ModifyArg(method = "affectWorld(Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z"), index = 1)
+    private Level level;
+    @ModifyArg(method = "finalizeExplosion", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z"), index = 1)
     private BlockState spectrum$modifyExplosion(BlockPos pos, BlockState state, int flags) {
-        BlockState stateAtPos = world.getBlockState(pos);
+        BlockState stateAtPos = level.getBlockState(pos);
         if(stateAtPos.getBlock() instanceof ExplosionAware explosionAware) {
-            explosionAware.beforeDestroyedByExplosion(world, pos, stateAtPos, (Explosion) (Object) this);
-            return explosionAware.getStateForExplosion(this.world, pos, stateAtPos);
+            explosionAware.beforeDestroyedByExplosion(level, pos, stateAtPos, (Explosion) (Object) this);
+            return explosionAware.getStateForExplosion(this.level, pos, stateAtPos);
         }
         return state;
     }

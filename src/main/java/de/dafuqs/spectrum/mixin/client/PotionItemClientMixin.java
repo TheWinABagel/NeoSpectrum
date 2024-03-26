@@ -18,7 +18,7 @@ import java.util.List;
 @Mixin({PotionItem.class, LingeringPotionItem.class, TippedArrowItem.class})
 public abstract class PotionItemClientMixin {
 	
-	@Inject(method = "appendTooltip(Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;Ljava/util/List;Lnet/minecraft/client/item/TooltipContext;)V", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "appendHoverText", at = @At("HEAD"), cancellable = true)
 	private void spectrum$makePotionUnidentifiable(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag context, CallbackInfo ci) {
 		CompoundTag nbtCompound = stack.getTag();
 		if (nbtCompound != null && nbtCompound.contains("spectrum_unidentifiable", Tag.TAG_BYTE) && nbtCompound.getBoolean("spectrum_unidentifiable")) {

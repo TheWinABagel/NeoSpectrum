@@ -24,7 +24,7 @@ public class ServerPlayNetworkHandlerMixin {
 
     @Shadow public ServerPlayer player;
 
-    @Inject(method = "onPlayerAction", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerPlayerEntity;getStackInHand(Lnet/minecraft/util/Hand;)Lnet/minecraft/item/ItemStack;", ordinal = 0), cancellable = true)
+    @Inject(method = "handlePlayerAction", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerPlayer;getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;", ordinal = 0), cancellable = true)
     private void handleSwapInteractions(ServerboundPlayerActionPacket packet, CallbackInfo ci) {
 
         var mainStack = player.getItemInHand(InteractionHand.MAIN_HAND);
@@ -46,7 +46,7 @@ public class ServerPlayNetworkHandlerMixin {
         }
     }
 
-    @Mixin(targets = "net/minecraft/server/network/ServerPlayNetworkHandler$1")
+    @Mixin(targets = "net/minecraft/server/network/ServerGamePacketListenerImpl$1")
     static class NetworkEntityValidationMixin {
 
         @Final
@@ -57,7 +57,7 @@ public class ServerPlayNetworkHandlerMixin {
         @Shadow(aliases = "field_28962")
         private Entity innerEntity;
 
-        @Inject(method = "attack", at = @At(value = "HEAD"), cancellable = true)
+        @Inject(method = "onAttack", at = @At(value = "HEAD"), cancellable = true)
         public void allowNonLivingEntityAttack(CallbackInfo ci) {
             if (innerEntity instanceof NonLivingAttackable) {
                 this$0.player.attack(innerEntity);

@@ -18,28 +18,28 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin({StemBlock.class, CropBlock.class})
 public abstract class CropAndStemBlockMixin {
 	
-	@Inject(method = "canGrow", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "isBonemealSuccess", at = @At("HEAD"), cancellable = true)
 	private void spectrum$markUnableToGrow(Level world, RandomSource random, BlockPos pos, BlockState state, CallbackInfoReturnable<Boolean> cir) {
 		if (world.getBlockState(pos.below()).is(SpectrumBlocks.TILLED_SHALE_CLAY)) {
 			cir.setReturnValue(false);
 		}
 	}
 	
-	@Inject(at = @At("HEAD"), method = "grow", cancellable = true)
+	@Inject(method = "performBonemeal", at = @At("HEAD"), cancellable = true)
 	public void spectrum$preventGrowthOnShaleClay(ServerLevel world, RandomSource random, BlockPos pos, BlockState state, CallbackInfo ci) {
 		if (world.getBlockState(pos.below()).is(SpectrumBlocks.TILLED_SHALE_CLAY)) {
 			ci.cancel();
 		}
 	}
 	
-	@Inject(at = @At("HEAD"), method = "isFertilizable", cancellable = true)
+	@Inject(method = "isValidBonemealTarget", at = @At("HEAD"), cancellable = true)
 	public void spectrum$isFertilizable(LevelReader world, BlockPos pos, BlockState state, boolean isClient, CallbackInfoReturnable<Boolean> cir) {
 		if (world.getBlockState(pos.below()).is(SpectrumBlocks.TILLED_SHALE_CLAY)) {
 			cir.cancel();
 		}
 	}
 	
-	@Inject(at = @At("HEAD"), method = "randomTick", cancellable = true)
+	@Inject(method = "randomTick", at = @At("HEAD"), cancellable = true)
 	public void spectrum$isFertilizable(BlockState state, ServerLevel world, BlockPos pos, RandomSource random, CallbackInfo ci) {
 		if (world.getBlockState(pos.below()).is(SpectrumBlocks.TILLED_SHALE_CLAY)) {
 			ci.cancel();

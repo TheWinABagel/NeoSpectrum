@@ -8,16 +8,16 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(MushroomCow.class)
 public interface MooshroomEntityAccessor {
 	
-	@Accessor("stewEffect")
+	@Accessor("effect")
 	MobEffect getStewEffect();
 	
-	@Accessor("stewEffect")
+	@Accessor("effect")
 	void setStewEffect(MobEffect statusEffect);
 	
-	@Accessor("stewEffectDuration")
+	@Accessor("effectDuration")
 	int getStewEffectDuration();
 	
-	@Accessor("stewEffectDuration")
+	@Accessor("effectDuration")
 	void setStewEffectDuration(int stewEffectDuration);
 	
 }

@@ -10,6 +10,6 @@ import java.util.Map;
 
 @Mixin(ParticleEngine.class)
 public interface ParticleManagerAccessor {
-    @Accessor("spriteAwareFactories")
+    @Accessor("spriteSets")
     Map<ResourceLocation, SpriteSet> getSpriteAwareFactories();
 }

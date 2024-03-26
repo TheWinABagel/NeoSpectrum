@@ -25,19 +25,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ItemEntityMixin {
 	
 	@Shadow
-	public abstract ItemStack getStack();
+	public abstract ItemStack getItem();
 	
 	@Shadow
-	public abstract void setNeverDespawn();
+	public abstract void setUnlimitedLifetime();
 	
 	@Shadow
-	public abstract boolean damage(DamageSource source, float amount);
+	public abstract boolean hurt(DamageSource source, float amount);
 	
-	@Inject(at = @At("TAIL"), method = "<init>(Lnet/minecraft/world/World;DDDLnet/minecraft/item/ItemStack;DDD)V")
+	@Inject(at = @At("TAIL"), method = "<init>(Lnet/minecraft/world/level/Level;DDDLnet/minecraft/world/item/ItemStack;DDD)V")
 	public void ItemEntity(Level world, double x, double y, double z, ItemStack stack, double velocityX, double velocityY, double velocityZ, CallbackInfo ci) {
 		// item stacks that are enchanted with damage proof should never despawn
 		if (EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.STEADFAST, stack) > 0) {
-			setNeverDespawn();
+			setUnlimitedLifetime();
 		}
 	}
 	
@@ -65,14 +65,14 @@ public abstract class ItemEntityMixin {
 		}
 	}
 	
-	@Inject(at = @At("HEAD"), method = "damage(Lnet/minecraft/entity/damage/DamageSource;F)Z")
+	@Inject(at = @At("HEAD"), method = "hurt")
 	public void spectrumItemStackDamageActions(DamageSource source, float amount, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
-		if (amount > 0 && this.getStack().getItem() instanceof DamageAwareItem damageAwareItem) {
+		if (amount > 0 && this.getItem().getItem() instanceof DamageAwareItem damageAwareItem) {
 			damageAwareItem.onItemEntityDamaged(source, amount, (ItemEntity) (Object) this);
 		}
 	}
 	
-	@Inject(method = "damage(Lnet/minecraft/entity/damage/DamageSource;F)Z", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "hurt", at = @At("HEAD"), cancellable = true)
 	private void isDamageProof(DamageSource source, float amount, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
 		if (ItemDamageImmunity.isImmuneTo(((ItemEntity) (Object) this).getItem(), source)) {
 			callbackInfoReturnable.setReturnValue(true);
@@ -87,7 +87,7 @@ public abstract class ItemEntityMixin {
 		}
 	}
 	
-	@Inject(method = "isFireImmune()Z", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "fireImmune", at = @At("HEAD"), cancellable = true)
 	private void isFireProof(CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
 		if (ItemDamageImmunity.isImmuneTo(((ItemEntity) (Object) this).getItem(), DamageTypeTags.IS_FIRE)) {
 			callbackInfoReturnable.setReturnValue(true);

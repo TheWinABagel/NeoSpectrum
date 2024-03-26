@@ -1,24 +1,24 @@
 package de.dafuqs.spectrum.mixin.client;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.ClientLanguage;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.*;
 
+@Environment(EnvType.CLIENT)
 @Mixin(ClientLanguage.class)
-public class TranslationStorageMixin {
+public abstract class TranslationStorageMixin {
 
     @Mutable
     @Shadow
     @Final
-    private Map<String, String> translations;
+    private Map<String, String> storage;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void addTranslations(Map<String, String> translations, boolean rightToLeft, CallbackInfo ci) {
@@ -29,9 +29,10 @@ public class TranslationStorageMixin {
         builder.put("block.spectrum.crystallarieum", getCrystallarieuaeuieueum());
         builder.put("item.spectrum.ring_of_pursuit", "Ring of Fursuit");
 
-        this.translations = builder;
+        this.storage = builder;
     }
     
+    @Unique
     private static String getCrystallarieuaeuieueum() {
         List<String> possibilities = new ArrayList<>() {{
             add("Crystallarieum");

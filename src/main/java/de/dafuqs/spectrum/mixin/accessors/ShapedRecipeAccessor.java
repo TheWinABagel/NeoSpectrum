@@ -13,22 +13,22 @@ import java.util.Map;
 @Mixin(ShapedRecipe.class)
 public interface ShapedRecipeAccessor {
 	
-	@Invoker(value = "createPatternMatrix")
+	@Invoker(value = "dissolvePattern")
 	static NonNullList<Ingredient> invokeCreatePatternMatrix(String[] pattern, Map<String, Ingredient> key, int width, int height) {
 		throw new AssertionError();
 	}
 	
-	@Invoker(value = "removePadding")
+	@Invoker(value = "shrink")
 	static String[] invokeRemovePadding(String... lines) {
 		throw new AssertionError();
 	}
 	
-	@Invoker(value = "getPattern")
+	@Invoker(value = "patternFromJson")
 	static String[] invokeGetPattern(JsonArray json) {
 		throw new AssertionError();
 	}
 	
-	@Invoker(value = "readSymbols")
+	@Invoker(value = "keyFromJson")
 	static Map<String, Ingredient> invokeReadSymbols(JsonObject json) {
 		throw new AssertionError();
 	}

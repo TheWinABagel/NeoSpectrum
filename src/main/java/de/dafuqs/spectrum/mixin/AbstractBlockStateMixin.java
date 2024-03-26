@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(BlockBehaviour.BlockStateBase.class)
 public abstract class AbstractBlockStateMixin {
 	
-	@ModifyVariable(method = "onStacksDropped", at = @At("HEAD"), ordinal = 0, argsOnly = true)
+	@ModifyVariable(method = "spawnAfterBreak", at = @At("HEAD"), ordinal = 0, argsOnly = true)
 	public boolean spectrum$preventXPDropsWhenUsingResonance(boolean dropExperience, ServerLevel world, BlockPos pos, ItemStack stack) {
 		if (ResonanceDropsDataLoader.preventNextXPDrop && EnchantmentHelper.getItemEnchantmentLevel(SpectrumEnchantments.RESONANCE, stack) > 0) {
 			ResonanceDropsDataLoader.preventNextXPDrop = false;

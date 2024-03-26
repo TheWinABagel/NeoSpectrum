@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Entity.class)
 public abstract class EntityMixin {
 	
-	@Inject(method = "onKilledOther", at = @At("HEAD"))
+	@Inject(method = "killedEntity", at = @At("HEAD"))
 	private void spectrum$rememberKillOther(ServerLevel world, LivingEntity other, CallbackInfoReturnable<Boolean> cir) {
 		Entity entity = (Entity) (Object) this;
 		if (entity instanceof LivingEntity livingEntity) {
@@ -40,7 +40,7 @@ public abstract class EntityMixin {
 		}
 	}
 
-	@ModifyVariable(method = "slowMovement", at = @At(value = "LOAD"), argsOnly = true)
+	@ModifyVariable(method = "makeStuckInBlock", at = @At(value = "LOAD"), argsOnly = true)
 	private Vec3 spectrum$applyInexorableAntiBlockSlowdown(Vec3 multiplier) {
 		if ((Object) this instanceof LivingEntity livingEntity && InexorableEnchantment.isArmorActive(livingEntity)) {
 			return Vec3.ZERO;
@@ -48,14 +48,14 @@ public abstract class EntityMixin {
 		return multiplier;
 	}
 	
-	@Inject(method = "getVelocityMultiplier", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "getBlockSpeedFactor", at = @At("RETURN"), cancellable = true)
 	private void spectrum$applyInexorableAntiSlowdown(CallbackInfoReturnable<Float> cir) {
 		if ((Object) this instanceof LivingEntity livingEntity && InexorableEnchantment.isArmorActive(livingEntity)) {
 			cir.setReturnValue(Math.max(cir.getReturnValue(), 1F));
 		}
 	}
 	
-	@Inject(method = "dropStack(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/entity/ItemEntity;", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "spawnAtLocation(Lnet/minecraft/world/item/ItemStack;)Lnet/minecraft/world/entity/item/ItemEntity;", at = @At("HEAD"), cancellable = true)
 	public void spectrum$dropStack(ItemStack stack, CallbackInfoReturnable<ItemEntity> cir) {
 		if ((Object) this instanceof LivingEntity thisLivingEntity) {
 			if (thisLivingEntity.isDeadOrDying() && thisLivingEntity.getLastHurtByMob() instanceof Player killer) {

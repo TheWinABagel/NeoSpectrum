@@ -9,20 +9,20 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(ThrownTrident.class)
 public interface TridentEntityAccessor {
 
-    @Accessor("LOYALTY")
+    @Accessor("ID_LOYALTY")
     static EntityDataAccessor<Byte> spectrum$getLoyalty() {
         return null;
     }
 
-    @Accessor("ENCHANTED")
+    @Accessor("ID_FOIL")
     static EntityDataAccessor<Boolean> spectrum$getEnchanted() {
         return null;
     }
 
-    @Accessor("tridentStack")
+    @Accessor("tridentItem")
     ItemStack spectrum$getTridentStack();
 
-    @Accessor("tridentStack")
+    @Accessor("tridentItem")
     void spectrum$setTridentStack(ItemStack stack);
 
     @Accessor("dealtDamage")

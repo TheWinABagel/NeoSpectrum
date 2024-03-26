@@ -14,14 +14,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(WalkNodeEvaluator.class)
 public class MixinWalkNodeProcessor {
 	
-	@Inject(method = "inflictsFireDamage(Lnet/minecraft/block/BlockState;)Z", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "isBurningBlock", at = @At("HEAD"), cancellable = true)
 	private static void spectrum$burningBlockPathfinding(BlockState state, CallbackInfoReturnable<Boolean> cir) {
 		if (state.is(SpectrumBlockTags.FIRE_LAND_NODE_MARKERS)) {
 			cir.setReturnValue(true);
 		}
 	}
 	
-	@Inject(method = "getCommonNodeType(Lnet/minecraft/world/BlockView;Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/entity/ai/pathing/PathNodeType;", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "getBlockPathTypeRaw", at = @At("RETURN"), cancellable = true)
 	private static void spectrum$addBlockNodeTypes(BlockGetter world, BlockPos pos, CallbackInfoReturnable<BlockPathTypes> cir) {
 		BlockState blockState = world.getBlockState(pos);
 		if (blockState.is(SpectrumBlockTags.DAMAGING_LAND_NODE_MARKERS)) {

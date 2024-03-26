@@ -26,7 +26,7 @@ import static de.dafuqs.spectrum.enchantments.InertiaEnchantment.INERTIA_COUNT;
 @Mixin(DiggerItem.class)
 public abstract class MiningToolItemMixin {
 
-	@Inject(at = @At("HEAD"), method = "postMine(Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/LivingEntity;)Z")
+	@Inject(method = "mineBlock", at = @At("HEAD"))
 	public void countInertiaBlocks(ItemStack stack, Level world, BlockState state, BlockPos pos, LivingEntity miner, CallbackInfoReturnable<Boolean> cir) {
 		if (stack != null) { // thank you, gobber
 			long inertiaAmount = 0;
@@ -51,7 +51,7 @@ public abstract class MiningToolItemMixin {
 		}
 	}
 	
-	@ModifyReturnValue(method = "getMiningSpeedMultiplier(Lnet/minecraft/item/ItemStack;Lnet/minecraft/block/BlockState;)F", at = @At("RETURN"))
+	@ModifyReturnValue(method = "getDestroySpeed", at = @At("RETURN"))
 	public float applyMiningSpeedMultipliers(float original, ItemStack stack, BlockState state) {
 		if (stack != null) { // thank you, gobber
 			

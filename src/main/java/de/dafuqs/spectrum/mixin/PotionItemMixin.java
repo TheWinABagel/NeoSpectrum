@@ -18,7 +18,7 @@ import java.util.List;
 @Mixin(PotionItem.class)
 public abstract class PotionItemMixin {
 
-	@ModifyReturnValue(method = "getMaxUseTime(Lnet/minecraft/item/ItemStack;)I", at = @At("RETURN"))
+	@ModifyReturnValue(method = "getUseDuration", at = @At("RETURN"))
 	private int spectrum$modifyDrinkTime(int drinkTime, ItemStack stack) {
 		CompoundTag compound = stack.getTag();
 		if (compound != null && compound.contains("SpectrumAdditionalDrinkDuration", Tag.TAG_ANY_NUMERIC)) {
@@ -28,7 +28,7 @@ public abstract class PotionItemMixin {
 		return drinkTime;
 	}
 
-	@Inject(method = "appendTooltip(Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;Ljava/util/List;Lnet/minecraft/client/item/TooltipContext;)V", at = @At("TAIL"))
+	@Inject(method = "appendHoverText", at = @At("TAIL"))
 	public void spectrum$appendTooltip(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag context, CallbackInfo ci) {
 		CompoundTag compound = stack.getTag();
 		if (compound != null && compound.contains("SpectrumAdditionalDrinkDuration", Tag.TAG_ANY_NUMERIC)) {

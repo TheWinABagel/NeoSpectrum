@@ -15,12 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ServerLevel.class)
 public abstract class ServerWorldMixin {
 
-	@Inject(at = @At("TAIL"), method = "spawnEntity")
+	@Inject(at = @At("TAIL"), method = "addFreshEntity")
 	private void spectrum$emitSpawnEntityEvent(Entity entity, final CallbackInfoReturnable<Boolean> info) {
 		entity.gameEvent(SpectrumGameEvents.ENTITY_SPAWNED);
 	}
 
-	@Inject(method = "onBlockChanged(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/block/BlockState;)V", at = @At("HEAD"))
+	@Inject(method = "onBlockStateChange", at = @At("HEAD"))
 	private void spectrum$emitBlockChangedEvent(BlockPos pos, BlockState oldBlock, BlockState newBlock, CallbackInfo ci) {
 		((ServerLevel) (Object) this).gameEvent(SpectrumGameEvents.BLOCK_CHANGED, pos, GameEvent.Context.of(newBlock));
 	}

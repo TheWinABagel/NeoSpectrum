@@ -23,7 +23,7 @@ public abstract class MinecraftClientMixin {
 	@Nullable
 	public LocalPlayer player;
 
-	@Inject(at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getRegistryKey()Lnet/minecraft/registry/RegistryKey;"), method = "getMusicType()Lnet/minecraft/sound/MusicSound;", cancellable = true)
+	@Inject(method = "getSituationalMusic", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;dimension()Lnet/minecraft/resources/ResourceKey;"), cancellable = true)
 	public void spectrum$getMusicType(CallbackInfoReturnable<Music> cir) {
 		if (player.level().dimension() == SpectrumDimensions.DIMENSION_KEY) {
 			if (Support.hasPlayerFinishedMod(player)) {

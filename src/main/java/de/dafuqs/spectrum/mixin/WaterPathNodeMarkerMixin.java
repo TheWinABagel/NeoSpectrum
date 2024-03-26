@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 @Mixin(SwimNodeEvaluator.class)
 public class WaterPathNodeMarkerMixin {
 	
-	@ModifyArg(method = "getNodeType", at = @At(value = "INVOKE", target = "Lnet/minecraft/fluid/FluidState;isIn(Lnet/minecraft/registry/tag/TagKey;)Z"))
+	@ModifyArg(method = "getBlockPathType(Lnet/minecraft/world/level/BlockGetter;IIILnet/minecraft/world/entity/Mob;)Lnet/minecraft/world/level/pathfinder/BlockPathTypes;", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/material/FluidState;is(Lnet/minecraft/tags/TagKey;)Z"))
 	private TagKey<Fluid> spectrum$tagBasedWaterNavigation(TagKey<Fluid> tag) {
 		return SpectrumFluidTags.USES_WATER_PATHFINDING;
 	}

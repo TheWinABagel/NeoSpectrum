@@ -23,7 +23,7 @@ public abstract class FarmlandBlockMixin extends Block {
 		super(settings);
 	}
 	
-	@Inject(method = {"onLandedUpon(Lnet/minecraft/world/World;Lnet/minecraft/block/BlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/Entity;F)V"},
+	@Inject(method = {"fallOn"},
 			at = {@At("HEAD")}, cancellable = true)
 	private void spectrum$onLandedUpon(Level world, BlockState state, BlockPos pos, Entity entity, float fallDistance, CallbackInfo info) {
 		super.fallOn(world, state, pos, entity, fallDistance); // fall damage

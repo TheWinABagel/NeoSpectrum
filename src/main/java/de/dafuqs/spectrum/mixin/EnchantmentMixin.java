@@ -15,14 +15,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Enchantment.class)
 public abstract class EnchantmentMixin {
 
-	@Shadow @Final public EnchantmentCategory target;
+	@Shadow @Final public EnchantmentCategory category;
 
-	@Inject(method = "isAcceptableItem(Lnet/minecraft/item/ItemStack;)Z", at = @At("RETURN"), cancellable = true)
+	@Inject(method = "canEnchant", at = @At("RETURN"), cancellable = true)
 	public void isAcceptableItem(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
 		var accepted = cir.getReturnValue();
 
 		if (stack.getItem() instanceof TranstargetItem spoofer) {
-			accepted = this.target == spoofer.getRealTarget();
+			accepted = this.category == spoofer.getRealTarget();
 		}
 
 		if (!accepted) {

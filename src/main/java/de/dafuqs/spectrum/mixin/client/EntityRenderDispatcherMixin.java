@@ -5,6 +5,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -21,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@Environment(EnvType.CLIENT)
 @Mixin(EntityRenderDispatcher.class)
 public abstract class EntityRenderDispatcherMixin {
 	
@@ -28,10 +31,10 @@ public abstract class EntityRenderDispatcherMixin {
 	public Camera camera;
 	
 	@Shadow
-	private static void drawFireVertex(PoseStack.Pose entry, VertexConsumer vertices, float x, float y, float z, float u, float v) {
+	private static void fireVertex(PoseStack.Pose entry, VertexConsumer vertices, float x, float y, float z, float u, float v) {
 	}
 	
-	@Inject(method = "renderFire(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/entity/Entity;)V", at = @At(value = "HEAD"), cancellable = true)
+	@Inject(method = "renderFlame", at = @At(value = "HEAD"), cancellable = true)
 	public void spectrum$render(PoseStack matrices, MultiBufferSource vertexConsumers, Entity entity, CallbackInfo ci) {
 		if (entity instanceof LivingEntity livingEntity && OnPrimordialFireComponent.isOnPrimordialFire(livingEntity)) {
 			ci.cancel();
@@ -39,7 +42,7 @@ public abstract class EntityRenderDispatcherMixin {
 	}
 	
 	
-	@Inject(method = "render(Lnet/minecraft/entity/Entity;DDDFFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/EntityRenderer;render(Lnet/minecraft/entity/Entity;FFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", shift = At.Shift.AFTER))
+	@Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/EntityRenderer;render(Lnet/minecraft/world/entity/Entity;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", shift = At.Shift.AFTER))
 	public <E extends Entity> void spectrum$render(E entity, double x, double y, double z, float yaw, float tickDelta, PoseStack matrices, MultiBufferSource vertexConsumers, int light, CallbackInfo ci) {
 		if (entity instanceof LivingEntity livingEntity && OnPrimordialFireComponent.isOnPrimordialFire(livingEntity)) {
 			spectrum$renderPrimordialFire(matrices, vertexConsumers, entity);
@@ -74,10 +77,10 @@ public abstract class EntityRenderDispatcherMixin {
 				m = q;
 			}
 			
-			drawFireVertex(entry, vertexConsumer, g - 0.0F, 0.0F - j, k, o, p);
-			drawFireVertex(entry, vertexConsumer, -g - 0.0F, 0.0F - j, k, m, p);
-			drawFireVertex(entry, vertexConsumer, -g - 0.0F, 1.4F - j, k, m, n);
-			drawFireVertex(entry, vertexConsumer, g - 0.0F, 1.4F - j, k, o, n);
+			fireVertex(entry, vertexConsumer, g - 0.0F, 0.0F - j, k, o, p);
+			fireVertex(entry, vertexConsumer, -g - 0.0F, 0.0F - j, k, m, p);
+			fireVertex(entry, vertexConsumer, -g - 0.0F, 1.4F - j, k, m, n);
+			fireVertex(entry, vertexConsumer, g - 0.0F, 1.4F - j, k, o, n);
 			i -= 0.45F;
 			j -= 0.45F;
 			g *= 0.9F;

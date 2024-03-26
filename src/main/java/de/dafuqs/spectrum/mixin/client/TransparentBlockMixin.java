@@ -21,7 +21,7 @@ public abstract class TransparentBlockMixin extends Block {
 		super(settings);
 	}
 
-	@Inject(method = "isSideInvisible", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "skipRendering", at = @At("HEAD"), cancellable = true)
 	public void dontRenderVanillaPlayerOnlyGlass(BlockState state, BlockState stateFrom, Direction direction, CallbackInfoReturnable<Boolean> callbackInfoReturnable) {
 		Block thisBlock = (Block) (Object) this;
 		if (thisBlock == Blocks.GLASS && stateFrom.getBlock() == SpectrumBlocks.SEMI_PERMEABLE_GLASS ||

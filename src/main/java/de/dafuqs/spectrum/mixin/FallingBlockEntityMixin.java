@@ -22,8 +22,8 @@ public class FallingBlockEntityMixin {
 	 * By default, falling blocks only damage living entities
 	 * This mixin runs a second check if we are dealing anvil damage and if yes, triggers anvil crushing
 	 */
-	@Inject(method = "handleFallDamage(FFLnet/minecraft/entity/damage/DamageSource;)Z",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/block/BlockState;isIn(Lnet/minecraft/registry/tag/TagKey;)Z"),
+	@Inject(method = "causeFallDamage",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;is(Lnet/minecraft/tags/TagKey;)Z"),
 			locals = LocalCapture.CAPTURE_FAILHARD)
 	private void spectrum$processAnvilCrushing(float fallDistance, float damageMultiplier, DamageSource damageSource, CallbackInfoReturnable<Boolean> cir, int hurtDistance, Predicate<Entity> predicate, DamageSource damageSource2, float fallHurt) {
 		if (damageSource2.is(DamageTypes.FALLING_ANVIL)) {

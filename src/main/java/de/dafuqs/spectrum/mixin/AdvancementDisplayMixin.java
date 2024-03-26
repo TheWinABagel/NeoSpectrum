@@ -17,10 +17,10 @@ import java.util.Optional;
 @Mixin(DisplayInfo.class)
 public class AdvancementDisplayMixin {
 	@Inject(
-			method = "iconFromJson(Lcom/google/gson/JsonObject;)Lnet/minecraft/item/ItemStack;",
+			method = "getIcon(Lcom/google/gson/JsonObject;)Lnet/minecraft/world/item/ItemStack;",
 			at = @At(
 					value = "INVOKE",
-					target = "Lnet/minecraft/item/ItemStack;<init>(Lnet/minecraft/item/ItemConvertible;)V",
+					target = "net/minecraft/world/item/ItemStack.<init> (Lnet/minecraft/world/level/ItemLike;)V",
 					ordinal = 0),
 			locals = LocalCapture.CAPTURE_FAILSOFT,
 			cancellable = true)

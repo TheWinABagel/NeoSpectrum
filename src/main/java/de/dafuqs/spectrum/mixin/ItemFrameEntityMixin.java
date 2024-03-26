@@ -19,12 +19,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ItemFrameEntityMixin {
 	
 	@Shadow
-	public abstract ItemStack getHeldItemStack();
+	public abstract ItemStack getItem();
 	
-	@Inject(method = "interact(Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Hand;)Lnet/minecraft/util/ActionResult;",
-			at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/decoration/ItemFrameEntity;setRotation(I)V"))
+	@Inject(method = "interact",
+			at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/decoration/ItemFrame;setRotation(I)V"))
 	public void interact(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
-		if (getHeldItemStack().is(SpectrumItems.CELESTIAL_POCKETWATCH) && (((ItemFrame) (Object) this).level() instanceof ServerLevel serverWorld)) {
+		if (getItem().is(SpectrumItems.CELESTIAL_POCKETWATCH) && (((ItemFrame) (Object) this).level() instanceof ServerLevel serverWorld)) {
 			CelestialPocketWatchItem.tryAdvanceTime(serverWorld, (ServerPlayer) player);
 		}
 	}

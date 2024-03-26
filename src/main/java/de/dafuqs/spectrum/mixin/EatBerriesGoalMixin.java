@@ -32,7 +32,7 @@ public abstract class EatBerriesGoalMixin extends MoveToBlockGoal {
 		super(mob, speed, range);
 	}
 	
-	@Inject(method = "isTargetPos(Lnet/minecraft/world/WorldView;Lnet/minecraft/util/math/BlockPos;)Z", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "isValidTarget", at = @At("HEAD"), cancellable = true)
 	private void spectrum$isTargetPos(LevelReader world, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
 		BlockState blockState = world.getBlockState(pos);
 		if (blockState.is(SpectrumBlocks.SAWBLADE_HOLLY_BUSH) && blockState.getValue(SawbladeHollyBushBlock.AGE) == SawbladeHollyBushBlock.MAX_AGE) {
@@ -40,7 +40,7 @@ public abstract class EatBerriesGoalMixin extends MoveToBlockGoal {
 		}
 	}
 	
-	@Inject(method = "eatBerries()V", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "onReachedTarget", at = @At("HEAD"), cancellable = true)
 	private void spectrum$eatBerries(CallbackInfo ci) {
 		if (foxEntity.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) {
 			BlockState blockState = foxEntity.level().getBlockState(this.blockPos);
@@ -51,6 +51,7 @@ public abstract class EatBerriesGoalMixin extends MoveToBlockGoal {
 		}
 	}
 	
+	@Unique
 	private void spectrum$pickSawbladeHollyBerries(BlockState state) {
 		Level world = foxEntity.level();
 		int age = state.getValue(SawbladeHollyBushBlock.AGE);

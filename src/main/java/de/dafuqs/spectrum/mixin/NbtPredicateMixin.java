@@ -15,10 +15,10 @@ import java.util.Optional;
 @Mixin(NbtPredicate.class)
 public class NbtPredicateMixin {
 	@Inject(
-		method = "fromJson(Lcom/google/gson/JsonElement;)Lnet/minecraft/predicate/NbtPredicate;",
+		method = "fromJson",
 		at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/util/JsonHelper;asString(Lcom/google/gson/JsonElement;Ljava/lang/String;)Ljava/lang/String;",
+			target = "Lnet/minecraft/util/GsonHelper;convertToString(Lcom/google/gson/JsonElement;Ljava/lang/String;)Ljava/lang/String;",
 			ordinal = 0),
 		cancellable = true)
 	private static void fromJson(@Nullable JsonElement json, CallbackInfoReturnable<NbtPredicate> info) {

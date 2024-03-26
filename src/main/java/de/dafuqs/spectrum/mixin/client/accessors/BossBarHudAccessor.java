@@ -11,7 +11,7 @@ import java.util.UUID;
 @Mixin(BossHealthOverlay.class)
 public interface BossBarHudAccessor {
 	
-	@Accessor(value = "bossBars")
+	@Accessor(value = "events")
 	Map<UUID, LerpingBossEvent> getBossBars();
 	
 }

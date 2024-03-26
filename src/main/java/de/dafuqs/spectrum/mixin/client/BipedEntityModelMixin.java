@@ -3,6 +3,8 @@ package de.dafuqs.spectrum.mixin.client;
 import de.dafuqs.spectrum.registries.SpectrumItems;
 import dev.emi.trinkets.api.TrinketComponent;
 import dev.emi.trinkets.api.TrinketsApi;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Optional;
 
+@Environment(EnvType.CLIENT)
 @Mixin(HumanoidModel.class)
 public class BipedEntityModelMixin {
 
@@ -31,7 +34,7 @@ public class BipedEntityModelMixin {
 	@Final
 	public ModelPart leftLeg;
 
-	@Inject(method = {"setAngles(Lnet/minecraft/entity/LivingEntity;FFFFF)V"}, at = @At("TAIL"), cancellable = true)
+	@Inject(method = {"setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V"}, at = @At("TAIL"), cancellable = true)
 	public void poseArms(LivingEntity livingEntity, float f, float g, float h, float i, float j, CallbackInfo ci) {
 		Optional<TrinketComponent> trinketComponent = TrinketsApi.getTrinketComponent(livingEntity);
 		if (trinketComponent.isPresent() && trinketComponent.get().isEquipped(SpectrumItems.NEAT_RING)) {

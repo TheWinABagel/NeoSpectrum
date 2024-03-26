@@ -40,7 +40,7 @@ public abstract class BlockMixin {
 	@Unique
 	@Nullable Player spectrum$breakingPlayer;
 	
-	@ModifyReturnValue(method = "getDroppedStacks(Lnet/minecraft/block/BlockState;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/entity/BlockEntity;Lnet/minecraft/entity/Entity;Lnet/minecraft/item/ItemStack;)Ljava/util/List;", at = @At("RETURN"))
+	@ModifyReturnValue(method = "getDrops(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;", at = @At("RETURN"))
 	private static List<ItemStack> spectrum$getDroppedStacks(List<ItemStack> original, BlockState state, ServerLevel world, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack stack) {
 		List<ItemStack> droppedStacks = original;
 		Map<Enchantment, Integer> enchantmentMap = EnchantmentHelper.getEnchantments(stack);
@@ -96,7 +96,7 @@ public abstract class BlockMixin {
 		return droppedStacks;
 	}
 	
-	@ModifyArg(method = "dropExperience", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/ExperienceOrbEntity;spawn(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/util/math/Vec3d;I)V"), index = 2)
+	@ModifyArg(method = "popExperience", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ExperienceOrb;award(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;I)V"), index = 2)
 	private int spectrum$applyExuberance(int originalXP) {
 		if (spectrum$breakingPlayer == null) {
 			return originalXP;
@@ -104,7 +104,7 @@ public abstract class BlockMixin {
 		return (int) (originalXP * ExuberanceEnchantment.getExuberanceMod(spectrum$breakingPlayer));
 	}
 	
-	@Inject(method = "afterBreak", at = @At("HEAD"))
+	@Inject(method = "playerDestroy", at = @At("HEAD"))
 	public void spectrum$afterBreak(Level world, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack, CallbackInfo callbackInfo) {
 		spectrum$breakingPlayer = player;
 	}

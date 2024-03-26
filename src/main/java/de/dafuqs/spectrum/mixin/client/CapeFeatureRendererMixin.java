@@ -37,7 +37,7 @@ public abstract class CapeFeatureRendererMixin extends RenderLayer<AbstractClien
     /**
      * Renders a custom flap on the front of the Bedrock Armor, as well as a custom cape render
      */
-	@Inject(method = "render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;ILnet/minecraft/client/network/AbstractClientPlayerEntity;FFFFFF)V", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/client/player/AbstractClientPlayer;FFFFFF)V", at = @At("HEAD"), cancellable = true)
 	public void spectrum$renderBedrockCape(PoseStack ms, MultiBufferSource vertices, int light, AbstractClientPlayer player, float f, float g, float h, float j, float k, float l, CallbackInfo ci) {
 		// If the player has disabled their cape from rendering, do not render
 		if (!player.isModelPartShown(PlayerModelPart.CAPE)) return;

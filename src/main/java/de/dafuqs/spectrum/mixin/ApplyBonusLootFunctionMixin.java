@@ -27,7 +27,7 @@ public abstract class ApplyBonusLootFunctionMixin {
 	ApplyBonusCount.Formula formula;
 	
 	@ModifyVariable(
-			method = "process(Lnet/minecraft/item/ItemStack;Lnet/minecraft/loot/context/LootContext;)Lnet/minecraft/item/ItemStack;",
+			method = "run",
 			at = @At("STORE"),
 			ordinal = 1)
 	public int spectrum$rerollBonusLoot(int oldValue, ItemStack stack, LootContext context) {

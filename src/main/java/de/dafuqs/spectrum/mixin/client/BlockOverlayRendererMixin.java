@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(ScreenEffectRenderer.class)
 public abstract class BlockOverlayRendererMixin {
 
-	@Inject(method = "renderOverlays(Lnet/minecraft/client/MinecraftClient;Lnet/minecraft/client/util/math/MatrixStack;)V", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILSOFT)
+	@Inject(method = "renderScreenEffect", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILSOFT)
 	private static void spectrum$renderFluidOverlay(Minecraft minecraftClient, PoseStack matrixStack, CallbackInfo ci) {
 		if (!minecraftClient.player.isSpectator()) {
 			if (minecraftClient.player.isEyeInFluid(SpectrumFluidTags.LIQUID_CRYSTAL)) {

@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin({CropBlock.class, StemBlock.class, AttachedStemBlock.class})
 public abstract class PlantOnCustomFarmlandMixin {
 	
-	@ModifyReturnValue(method = "canPlantOnTop(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/BlockView;Lnet/minecraft/util/math/BlockPos;)Z", at = @At("RETURN"))
+	@ModifyReturnValue(method = "mayPlaceOn", at = @At("RETURN"))
 	public boolean spectrum$canPlantOnTopOfCustomFarmland(boolean original, @NotNull BlockState floor, BlockGetter world, BlockPos pos) {
 		return original || floor.getBlock() instanceof SpectrumFarmlandBlock;
 	}

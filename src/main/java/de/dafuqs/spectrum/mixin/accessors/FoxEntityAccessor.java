@@ -10,7 +10,7 @@ import java.util.UUID;
 @Mixin(Fox.class)
 public interface FoxEntityAccessor {
 	
-	@Invoker("addTrustedUuid")
-	void invokeAddTrustedUuid(@Nullable UUID uuid);
+	@Invoker("addTrustedUUID")
+	void invokeAddTrustedUUID(@Nullable UUID uuid);
 	
 }

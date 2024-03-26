@@ -173,7 +173,7 @@ public class ModularExplosion {
 						.withParameter(LootContextParams.TOOL, miningStack)
 						.withOptionalParameter(LootContextParams.BLOCK_ENTITY, blockEntity)
 						.withOptionalParameter(LootContextParams.THIS_ENTITY, owner));
-				builder.withParameter(LootContextParams.EXPLOSION_RADIUS, ((ExplosionAccessor) explosion).getPower());
+				builder.withParameter(LootContextParams.EXPLOSION_RADIUS, ((ExplosionAccessor) explosion).getRadius());
 				state.spawnAfterBreak(world, pos, miningStack, true);
 				state.getDrops(builder).forEach((stack) -> tryMergeStack(drops, stack, pos.immutable()));
 			}

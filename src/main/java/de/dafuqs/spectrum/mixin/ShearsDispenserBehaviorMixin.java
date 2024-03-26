@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ShearsDispenseItemBehavior.class)
 public class ShearsDispenserBehaviorMixin {
 
-    @Inject(at = @At("HEAD"), method = "tryShearBlock(Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/util/math/BlockPos;)Z", cancellable = true)
+    @Inject(at = @At("HEAD"), method = "tryShearBeehive", cancellable = true)
     private static void spectrum$shearsShearSawbladeHollyBushes(ServerLevel world, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         BlockState blockState = world.getBlockState(pos);
         if (blockState.is(SpectrumBlocks.SAWBLADE_HOLLY_BUSH)) {

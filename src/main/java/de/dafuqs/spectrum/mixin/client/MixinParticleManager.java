@@ -3,6 +3,8 @@ package de.dafuqs.spectrum.mixin.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import de.dafuqs.spectrum.particle.render.EarlyRenderingParticleContainer;
 import de.dafuqs.spectrum.particle.render.ExtendedParticleManager;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Camera;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
@@ -14,8 +16,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
+@Environment(EnvType.CLIENT)
 @Mixin(ParticleEngine.class)
-public class MixinParticleManager implements ExtendedParticleManager {
+public abstract class MixinParticleManager implements ExtendedParticleManager {
 
     @Unique
     private final EarlyRenderingParticleContainer spectrum$earlyRenderingParticleContainer = new EarlyRenderingParticleContainer();

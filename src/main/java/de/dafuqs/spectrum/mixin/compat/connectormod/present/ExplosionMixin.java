@@ -20,7 +20,7 @@ public class ExplosionMixin {
 
     @Shadow
     @Final
-    private Level world;
+    private Level level;
 
     @Unique
     private BlockState blockState;
@@ -28,21 +28,21 @@ public class ExplosionMixin {
     private BlockPos blockPos;
 
 
-    @ModifyVariable(method = "affectWorld(Z)V", at = @At(value = "STORE"), ordinal = 0)
+    @ModifyVariable(method = "finalizeExplosion", at = @At(value = "STORE"), ordinal = 0)
     public BlockState snagBlockState(BlockState state){
         return blockState = state;
     }
 
-    @ModifyVariable(method = "affectWorld(Z)V", at = @At(value = "STORE"), ordinal = 0)
+    @ModifyVariable(method = "finalizeExplosion", at = @At(value = "STORE"), ordinal = 0)
     public BlockPos snagBlockPos(BlockPos pos){
         return blockPos = pos;
     }
 
-    @Inject(method = "affectWorld(Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiler/Profiler;pop()V", shift = At.Shift.BEFORE))
+    @Inject(method = "finalizeExplosion", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;pop()V", shift = At.Shift.BEFORE))
     public void applyExplosionEffects(boolean particles, CallbackInfo ci){
         if(blockState.getBlock() instanceof ExplosionAware explosionAware) {
-            explosionAware.beforeDestroyedByExplosion(world, blockPos, blockState, (Explosion) (Object) this);
-            this.world.setBlock(blockPos, explosionAware.getStateForExplosion(this.world, blockPos, blockState), 3);
+            explosionAware.beforeDestroyedByExplosion(level, blockPos, blockState, (Explosion) (Object) this);
+            this.level.setBlock(blockPos, explosionAware.getStateForExplosion(this.level, blockPos, blockState), 3);
         }
     }
 

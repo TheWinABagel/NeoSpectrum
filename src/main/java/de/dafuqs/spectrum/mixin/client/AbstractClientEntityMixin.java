@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(AbstractClientPlayer.class)
 public abstract class AbstractClientEntityMixin {
     @Inject(
-            method = "getCapeTexture",
+            method = "getCloakTextureLocation",
             at = @At("HEAD"),
             cancellable = true
     )

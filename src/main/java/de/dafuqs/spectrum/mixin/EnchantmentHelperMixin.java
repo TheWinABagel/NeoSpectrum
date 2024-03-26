@@ -18,7 +18,7 @@ import java.util.List;
 @Mixin(EnchantmentHelper.class)
 public class EnchantmentHelperMixin {
 	
-	@Inject(method = "getPossibleEntries(ILnet/minecraft/item/ItemStack;Z)Ljava/util/List;", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "getAvailableEnchantmentResults", at = @At("HEAD"), cancellable = true)
 	private static void getPossibleEntries(int power, ItemStack stack, boolean treasureAllowed, CallbackInfoReturnable<List<EnchantmentInstance>> cir) {
 		if (stack.getItem() instanceof ExtendedEnchantable) {
 			List<EnchantmentInstance> list = Lists.newArrayList();

@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class AbstractHorseEntityMixin {
 	
 	@Shadow
-	protected SimpleContainer items;
+	protected SimpleContainer inventory;
 	
 	/**
 	 * This pretty much implements inventoryTick() for Donkeys
@@ -34,7 +34,7 @@ public abstract class AbstractHorseEntityMixin {
 				&& thisEntity.level() instanceof ServerLevel serverWorld) {
 			
 			double addedGravity = 0;
-			for (ItemStack stack : this.items.items) {
+			for (ItemStack stack : this.inventory.items) {
 				if (stack.getItem() instanceof GravitableItem gravitableItem) {
 					addedGravity += gravitableItem.applyGravity(stack, serverWorld, thisEntity);
 				}

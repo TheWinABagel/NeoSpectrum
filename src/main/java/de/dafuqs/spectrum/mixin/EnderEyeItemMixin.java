@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(EnderEyeItem.class)
 public abstract class EnderEyeItemMixin {
 	
-	@Inject(method = "useOnBlock(Lnet/minecraft/item/ItemUsageContext;)Lnet/minecraft/util/ActionResult;", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "useOn", at = @At("HEAD"), cancellable = true)
 	public void useOnBlock(UseOnContext context, CallbackInfoReturnable<InteractionResult> callbackInfoReturnable) {
 		Level world = context.getLevel();
 		BlockPos blockPos = context.getClickedPos();

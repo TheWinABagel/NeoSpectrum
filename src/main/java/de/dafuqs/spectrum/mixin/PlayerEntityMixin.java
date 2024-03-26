@@ -59,9 +59,10 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 	@Shadow
 	public abstract Iterable<ItemStack> getHandSlots();
 
+	@Unique
 	public SpectrumFishingBobberEntity spectrum$fishingBobber;
 	
-	@Inject(method = "onKilledOther", at = @At("HEAD"))
+	@Inject(method = "killedEntity", at = @At("HEAD"))
 	private void spectrum$rememberKillOther(ServerLevel world, LivingEntity other, CallbackInfoReturnable<Boolean> cir) {
 		Player entity = (Player) (Object) this;
 		LastKillComponent.rememberKillTick(entity, entity.level().getGameTime());
@@ -72,7 +73,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		}
 	}
 	
-	@Inject(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerEntity;getAttributeValue(Lnet/minecraft/entity/attribute/EntityAttribute;)D"))
+	@Inject(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;getAttributeValue(Lnet/minecraft/world/entity/ai/attributes/Attribute;)D"))
 	protected void spectrum$calculateModifiers(Entity target, CallbackInfo ci) {
 		Player player = (Player) (Object) this;
 		
@@ -95,7 +96,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		player.getAttributes().addTransientAttributeModifiers(map);
 	}
 
-	@ModifyExpressionValue(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getNonSpectatingEntities(Ljava/lang/Class;Lnet/minecraft/util/math/Box;)Ljava/util/List;"))
+	@ModifyExpressionValue(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;getEntitiesOfClass(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;"))
 	protected List<LivingEntity> spectrum$increaseSweepRadius(List<LivingEntity> original, Entity target) {
 		var stack = this.getItemInHand(InteractionHand.MAIN_HAND);
 		if (stack.getItem() == SpectrumItems.DRACONIC_TWINSWORD)
@@ -103,7 +104,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		return original;
 	}
 
-	@ModifyExpressionValue(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerEntity;squaredDistanceTo(Lnet/minecraft/entity/Entity;)D", shift = At.Shift.AFTER))
+	@ModifyExpressionValue(method = "attack", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;distanceToSqr(Lnet/minecraft/world/entity/Entity;)D", shift = At.Shift.AFTER))
 	protected double spectrum$increaseSweepMaxDistance(double original) {
 		var stack = this.getItemInHand(InteractionHand.MAIN_HAND);
 		if (stack.getItem() == SpectrumItems.DRACONIC_TWINSWORD)
@@ -111,7 +112,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		return original;
 	}
 
-	@Inject(at = @At("TAIL"), method = "jump()V")
+	@Inject(method = "jumpFromGround", at = @At("TAIL"))
 	protected void spectrum$jumpAdvancementCriterion(CallbackInfo ci) {
 
 		if ((Object) this instanceof ServerPlayer serverPlayerEntity) {
@@ -119,7 +120,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		}
 	}
 	
-	@Inject(at = @At("TAIL"), method = "isInvulnerableTo(Lnet/minecraft/entity/damage/DamageSource;)Z", cancellable = true)
+	@Inject(method = "isInvulnerableTo", at = @At("TAIL"), cancellable = true)
 	public void spectrum$isInvulnerableTo(DamageSource damageSource, CallbackInfoReturnable<Boolean> cir) {
 		if (!cir.getReturnValue() && damageSource.is(DamageTypeTags.IS_FIRE) && SpectrumTrinketItem.hasEquipped((Player) (Object) this, SpectrumItems.ASHEN_CIRCLET)) {
 			cir.setReturnValue(true);
@@ -136,7 +137,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		return this.spectrum$fishingBobber;
 	}
 	
-	@Inject(at = @At("HEAD"), method = "canFoodHeal()Z", cancellable = true)
+	@Inject(method = "isHurt", at = @At("HEAD"), cancellable = true)
 	public void canFoodHeal(CallbackInfoReturnable<Boolean> cir) {
 		Player player = (Player) (Object) this;
 		if (player.hasEffect(SpectrumStatusEffects.SCARRED)) {
@@ -146,9 +147,9 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 	
 	// If the player holds an ExperienceStorageItem in their hands
 	// experience is tried to get put in there first
-	@ModifyVariable(at = @At("HEAD"), method = "addExperience(I)V", argsOnly = true)
+	@ModifyVariable(at = @At("HEAD"), method = "giveExperiencePoints", argsOnly = true)
 	public int addExperience(int experience) {
-		if (experience < 0) { // draining XP, like Botanias Rosa Arcana
+		if (experience < 0) { // draining XP, like Botania's Rosa Arcana
 			return experience;
 		}
 		
@@ -166,8 +167,8 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		return experience;
 	}
 	
-	@ModifyVariable(method = "getBlockBreakingSpeed",
-			slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerEntity;hasStatusEffect(Lnet/minecraft/entity/effect/StatusEffect;)Z"),
+	@ModifyVariable(method = "getDestroySpeed",
+			slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;hasEffect(Lnet/minecraft/world/effect/MobEffect;)Z"),
 					to = @At("TAIL")
 			),
 			at = @At(value = "LOAD"),
@@ -180,7 +181,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		return value;
 	}
 
-	@ModifyReturnValue(method = "getBlockBreakingSpeed", at = @At("RETURN"))
+	@ModifyReturnValue(method = "getDestroySpeed", at = @At("RETURN"))
 	public float applyInexorableAntiSlowdowns(float original) {
 		if (isInexorableActive()) {
 			var player = (Player) (Object) this;

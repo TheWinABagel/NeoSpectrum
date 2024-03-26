@@ -18,23 +18,23 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(CropBlock.class)
 public abstract class CropBlockMixin {
 
-	@ModifyExpressionValue(method = "getAvailableMoisture", at = @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/world/BlockView;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/BlockState;"))
+	@ModifyExpressionValue(method = "getGrowthSpeed", at = @At(value = "INVOKE", ordinal = 0, target = "Lnet/minecraft/world/level/BlockGetter;getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;"))
 	private static BlockState spectrum$getAvailableMoisture(BlockState original) {
 		Block originalBlock = original.getBlock();
-		if (originalBlock instanceof SpectrumFarmlandBlock spectrumFarmlandBlock) {
+		if (originalBlock instanceof SpectrumFarmlandBlock) {
 			return Blocks.FARMLAND.defaultBlockState().setValue(FarmBlock.MOISTURE, original.getValue(FarmBlock.MOISTURE));
 		}
 		return original;
 	}
 	
-	@Inject(method = "applyGrowth", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "growCrops", at = @At("HEAD"), cancellable = true)
 	private void spectrum$cancelGrowthAttempts(Level world, BlockPos pos, BlockState state, CallbackInfo ci) {
 		if (world.getBlockState(pos.below()).is(SpectrumBlocks.TILLED_SHALE_CLAY)) {
 			ci.cancel();
 		}
 	}
 	
-	@Inject(method = "applyGrowth", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "growCrops", at = @At("HEAD"), cancellable = true)
 	public void spectrum$hasRandomTicks(Level world, BlockPos pos, BlockState state, CallbackInfo ci) {
 		if (world.getBlockState(pos.below()).is(SpectrumBlocks.TILLED_SHALE_CLAY)) {
 			ci.cancel();

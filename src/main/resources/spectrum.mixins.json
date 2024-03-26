@@ -88,7 +88,7 @@
   ],
   "client": [
     "accessors.DimensionEffectsAccessor",
-    "accessors.InGameHudAccessor",
+    "client.accessors.InGameHudAccessor",
     "accessors.WorldRendererAccessor",
     "client.AbstractClientEntityMixin",
     "client.BipedEntityModelMixin",

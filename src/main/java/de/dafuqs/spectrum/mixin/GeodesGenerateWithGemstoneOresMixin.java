@@ -13,6 +13,7 @@ import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
 import net.minecraft.world.level.levelgen.feature.GeodeFeature;
 import net.minecraft.world.level.levelgen.feature.configurations.GeodeConfiguration;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -20,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(GeodeFeature.class)
 public abstract class GeodesGenerateWithGemstoneOresMixin {
 	
-	@Inject(at = @At("TAIL"), method = "generate(Lnet/minecraft/world/gen/feature/util/FeatureContext;)Z")
+	@Inject(at = @At("TAIL"), method = "place")
 	public void generate(FeaturePlaceContext<GeodeConfiguration> context, CallbackInfoReturnable<Boolean> cir) {
 		generateGemstoneOres(context);
 	}
@@ -32,6 +33,7 @@ public abstract class GeodesGenerateWithGemstoneOresMixin {
 	 *
 	 * @param context The GeodeFeatures feature config
 	 */
+	@Unique
 	private void generateGemstoneOres(FeaturePlaceContext<GeodeConfiguration> context) {
 		BlockState gemBlock = context.config().geodeBlockSettings.innerLayerProvider.getState(context.random(), context.origin());
 		if (gemBlock != null) {

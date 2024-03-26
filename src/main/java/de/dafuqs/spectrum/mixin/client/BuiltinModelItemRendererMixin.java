@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(BlockEntityWithoutLevelRenderer.class)
 public abstract class BuiltinModelItemRendererMixin {
 	
-	@Inject(method = "render", at = @At("HEAD"), cancellable = true)
+	@Inject(method = "renderByItem", at = @At("HEAD"), cancellable = true)
 	private void getModel(ItemStack stack, ItemDisplayContext mode, PoseStack matrices, MultiBufferSource vertexConsumers, int light, int overlay, CallbackInfo ci) {
 		Item item = stack.getItem();
 		if (item instanceof BlockItem blockItem) {

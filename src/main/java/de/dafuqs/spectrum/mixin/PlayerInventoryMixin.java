@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(Inventory.class)
 public abstract class PlayerInventoryMixin {
 	
-	@Inject(at = @At("HEAD"), method = "addStack(Lnet/minecraft/item/ItemStack;)I", cancellable = true)
+	@Inject(at = @At("HEAD"), method = "addResource(Lnet/minecraft/world/item/ItemStack;)I", cancellable = true)
 	private void addStack(ItemStack stack, CallbackInfoReturnable<Integer> callbackInfoReturnable) {
 		Inventory playerInventory = (Inventory) (Object) this;
 		
@@ -31,7 +31,7 @@ public abstract class PlayerInventoryMixin {
 		}
 	}
 	
-	@Inject(at = @At("HEAD"), method = "offer(Lnet/minecraft/item/ItemStack;Z)V", cancellable = true)
+	@Inject(at = @At("HEAD"), method = "placeItemBackInInventory(Lnet/minecraft/world/item/ItemStack;Z)V", cancellable = true)
 	private void offer(ItemStack stack, boolean notifiesClient, CallbackInfo ci) {
 		Inventory playerInventory = (Inventory) (Object) this;
 		
