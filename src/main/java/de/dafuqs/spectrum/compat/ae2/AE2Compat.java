@@ -45,7 +45,7 @@ public class AE2Compat extends SpectrumIntegrationPacks.ModIntegrationPack {
 		PURE_CERTUS_QUARTZ_BLOCK = new Block(FabricBlockSettings.of().mapColor(MapColor.SAND).strength(0.3F).sound(SoundType.GLASS));
 		PURE_FLUIX_BLOCK = new Block(FabricBlockSettings.of().mapColor(MapColor.SAND).strength(0.3F).sound(SoundType.GLASS));
 		
-		FabricItemSettings settings = SpectrumItems.IS.of();
+		Item.Properties settings = SpectrumItems.IS.of();
 		registerBlockWithItem("small_certus_quartz_bud", SMALL_CERTUS_QUARTZ_BUD, settings, DyeColor.YELLOW);
 		registerBlockWithItem("large_certus_quartz_bud", LARGE_CERTUS_QUARTZ_BUD, settings, DyeColor.YELLOW);
 		registerBlockWithItem("certus_quartz_cluster", CERTUS_QUARTZ_CLUSTER, settings, DyeColor.YELLOW);

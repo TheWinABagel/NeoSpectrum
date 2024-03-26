@@ -40,10 +40,10 @@ public interface InkStorageItem<PStorage extends InkStorage> {
 	
 	void setEnergyStorage(ItemStack itemStack, InkStorage storage);
 	
-	ItemStack getDefaultStack();
+	ItemStack getDefaultInstance();
 	
 	default ItemStack getFullStack() {
-		ItemStack stack = this.getDefaultStack();
+		ItemStack stack = this.getDefaultInstance();
 		PStorage storage = getEnergyStorage(stack);
 		storage.fillCompletely();
 		setEnergyStorage(stack, storage);

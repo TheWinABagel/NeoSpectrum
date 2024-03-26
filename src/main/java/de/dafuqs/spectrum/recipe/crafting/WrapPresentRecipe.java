@@ -67,7 +67,7 @@ public class WrapPresentRecipe extends CustomRecipe {
 	}
 	
 	@Override
-	public ItemStack craft(@NotNull CraftingContainer craftingInventory, RegistryAccess drm) {
+	public ItemStack assemble(@NotNull CraftingContainer craftingInventory, RegistryAccess drm) {
 		ItemStack presentStack = ItemStack.EMPTY;
 		PresentBlock.WrappingPaper wrappingPaper = PresentBlock.WrappingPaper.RED;
 		Map<DyeColor, Integer> colors = new HashMap<>();

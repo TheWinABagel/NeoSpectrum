@@ -45,7 +45,7 @@ public class RepairAnythingRecipe extends CustomRecipe {
 	}
 	
 	@Override
-	public ItemStack craft(CraftingContainer craftingInventory, RegistryAccess drm) {
+	public ItemStack assemble(CraftingContainer craftingInventory, RegistryAccess drm) {
 		ItemStack itemStack = ItemStack.EMPTY;
 		for (int j = 0; j < craftingInventory.getContainerSize(); ++j) {
 			itemStack = craftingInventory.getItem(j);

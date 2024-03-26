@@ -43,13 +43,13 @@ public abstract class SpectrumChestBlockEntity extends RandomizableContainerBloc
 			@Override
 			protected void onOpen(Level world, BlockPos pos, BlockState state) {
 				playSound(world, pos, state, getOpenSound());
-				onOpen();
+				SpectrumChestBlockEntity.this.onOpen();
 			}
 			
 			@Override
 			protected void onClose(Level world, BlockPos pos, BlockState state) {
 				playSound(world, pos, state, getCloseSound());
-				onClose();
+				SpectrumChestBlockEntity.this.onClose();
 			}
 			
 			@Override

@@ -57,7 +57,7 @@ public class ColorEverpromiseRibbonRecipe extends CustomRecipe {
 	}
 	
 	@Override
-	public ItemStack craft(CraftingContainer craftingInventory, RegistryAccess drm) {
+	public ItemStack assemble(CraftingContainer craftingInventory, RegistryAccess drm) {
 		ItemStack ribbon = null;
 		PigmentItem pigment = null;
 		

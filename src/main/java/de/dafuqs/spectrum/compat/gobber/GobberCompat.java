@@ -52,7 +52,7 @@ public class GobberCompat extends SpectrumIntegrationPacks.ModIntegrationPack {
 		PURE_GLOBETTE_NETHER_BLOCK = new Block(FabricBlockSettings.copyOf(Blocks.QUARTZ_BLOCK));
 		PURE_GLOBETTE_END_BLOCK = new Block(FabricBlockSettings.copyOf(Blocks.QUARTZ_BLOCK));
 		
-		FabricItemSettings settings = SpectrumItems.IS.of();
+		Item.Properties settings = SpectrumItems.IS.of();
 		registerBlockWithItem("small_globette_bud", SMALL_GLOBETTE_BUD, settings, DyeColor.BLUE);
 		registerBlockWithItem("large_globette_bud", LARGE_GLOBETTE_BUD, settings, DyeColor.BLUE);
 		registerBlockWithItem("globette_cluster", GLOBETTE_CLUSTER, settings, DyeColor.BLUE);

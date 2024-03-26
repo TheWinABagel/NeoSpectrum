@@ -42,7 +42,7 @@ public class KindlingEntityArmorFeatureRenderer extends RenderLayer<KindlingEnti
 		if (itemStack.getItem() instanceof HorseArmorItem horseArmorItem) {
 			this.getParentModel().copyPropertiesTo(this.model);
 			this.model.prepareMobModel(kindlingEntity, f, g, h);
-			this.model.setAngles(kindlingEntity, f, g, j, k, l);
+			this.model.setupAnim(kindlingEntity, f, g, j, k, l);
 			float red;
 			float green;
 			float blue;

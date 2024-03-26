@@ -80,7 +80,7 @@ public class InkDrainTrinketItem extends SpectrumTrinketItem implements InkStora
 	public ItemStack getDefaultInstance() {
 		return super.getDefaultInstance();
 	}
-	
+
 	@Override
 	public Drainability getDrainability() {
 		return Drainability.NEVER;
@@ -102,7 +102,7 @@ public class InkDrainTrinketItem extends SpectrumTrinketItem implements InkStora
 			compound.put("EnergyStore", fixedSingleInkStorage.toNbt());
 		}
 	}
-	
+
 	@Override
 	public ItemStack getFullStack() {
 		return InkStorageItem.super.getFullStack();
