@@ -20,9 +20,8 @@ bin/
 .classpath
 .project
 
-# fabric
-
-run/
-backup/
-/deps/
-/remappedSrc/
+# other
+eclipse
+run
+runs
+run-data

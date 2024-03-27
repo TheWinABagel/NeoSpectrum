@@ -96,12 +96,14 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.fml.common.Mod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
-public class SpectrumCommon implements ModInitializer {
+@Mod(SpectrumCommon.MOD_ID)
+public class SpectrumCommon {
 	
 	public static final String MOD_ID = "spectrum";
 	
