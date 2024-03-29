@@ -32,7 +32,7 @@ public class MapStatePlayerUpdateTrackerMixin {
 
     @Inject(
             method = "nextUpdatePacket",
-            at = @At(value = "NEW", target = "net/minecraft/network/protocol/game/ClientboundMapItemDataPacket"), //fixme Probably breaks
+            at = @At(value = "NEW", target = "net/minecraft/network/protocol/game/ClientboundMapItemDataPacket"), //todoforge Probably breaks
             locals = LocalCapture.CAPTURE_FAILHARD,
             cancellable = true
     )

@@ -68,6 +68,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.NotNull;
 import oshi.util.tuples.Triplet;
 
@@ -81,6 +83,7 @@ import static de.dafuqs.spectrum.SpectrumCommon.*;
 public class SpectrumClient implements ClientModInitializer, RevealingCallback, ClientAdvancementPacketCallback {
 
 	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static final SkyLerper skyLerper = new SkyLerper();
 	public static final boolean foodEffectsTooltipsModLoaded = FabricLoader.getInstance().isModLoaded("foodeffecttooltips");
 

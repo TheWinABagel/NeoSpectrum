@@ -7,8 +7,6 @@ import de.dafuqs.spectrum.entity.variants.LizardHornVariant;
 import de.dafuqs.spectrum.explosion.ExplosionModifier;
 import de.dafuqs.spectrum.explosion.ExplosionModifierType;
 import de.dafuqs.spectrum.items.tools.GlassArrowVariant;
-import net.fabricmc.fabric.api.event.registry.FabricRegistryBuilder;
-import net.fabricmc.fabric.api.event.registry.RegistryAttribute;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;

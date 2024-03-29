@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class NaturesStaffConversionDataLoader extends SimpleJsonResourceReloadListener implements IdentifiableResourceReloadListener {
+public class NaturesStaffConversionDataLoader extends SimpleJsonResourceReloadListener {
 	
 	public static final String ID = "natures_staff_conversions";
 	public static final NaturesStaffConversionDataLoader INSTANCE = new NaturesStaffConversionDataLoader();
@@ -55,11 +55,6 @@ public class NaturesStaffConversionDataLoader extends SimpleJsonResourceReloadLi
 				}
 			}
 		});
-	}
-	
-	@Override
-	public ResourceLocation getFabricId() {
-		return SpectrumCommon.locate(ID);
 	}
 	
 	public static @Nullable BlockState getConvertedBlockState(Block block) {
