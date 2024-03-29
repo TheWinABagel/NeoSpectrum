@@ -16,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import org.joml.Vector3f;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class LightMineEntityRenderer extends EntityRenderer<LightMineEntity> {
 
     public LightMineEntityRenderer(EntityRendererProvider.Context ctx) {

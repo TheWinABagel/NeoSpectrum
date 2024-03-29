@@ -6,7 +6,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.MultiBufferSource;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public interface ExtendedParticleManager {
     void render(PoseStack matrices, MultiBufferSource vertexConsumers, Camera camera, float tickDelta);
 }

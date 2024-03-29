@@ -94,7 +94,7 @@ public class PedestalBlock extends BaseEntityBlock implements RedstonePoweredBlo
 	 *
 	 * @param newPedestalRecipeTier The tier the pedestal has been upgraded to
 	 */
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
     public static void spawnUpgradeParticleEffectsForTier(BlockPos blockPos, @NotNull PedestalRecipeTier newPedestalRecipeTier) {
 		Minecraft client = Minecraft.getInstance();
 		Level world = client.level;
@@ -275,7 +275,7 @@ public class PedestalBlock extends BaseEntityBlock implements RedstonePoweredBlo
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void animateTick(@NotNull BlockState state, Level world, BlockPos pos, RandomSource random) {
 		if (state.getValue(PedestalBlock.POWERED)) {
 			Vector3f color = new Vector3f(0.5F, 0.5F, 0.5F);

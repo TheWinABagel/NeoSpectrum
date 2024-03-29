@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class LightShardEntityRenderer extends EntityRenderer<LightShardEntity> {
 
     public LightShardEntityRenderer(EntityRendererProvider.Context ctx) {

@@ -4,7 +4,7 @@ import de.dafuqs.spectrum.items.tooltip.*;
 import net.fabricmc.api.*;
 import net.fabricmc.fabric.api.client.rendering.v1.*;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class SpectrumTooltipComponents {
 	
 	public static void registerTooltipComponents() {

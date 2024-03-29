@@ -10,7 +10,7 @@ import net.minecraft.client.particle.*;
 import net.minecraft.core.particles.SimpleParticleType;
 
 // See ParticleManager for vanilla
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class SpectrumParticleFactories {
 	
 	public static void register() {

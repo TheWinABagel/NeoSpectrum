@@ -8,7 +8,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.gameevent.PositionSource;
 import org.joml.Vector3f;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class ColoredTransmissionParticle extends TransmissionParticle {
 	
 	public ColoredTransmissionParticle(ClientLevel world, double x, double y, double z, PositionSource positionSource, int maxAge, DyeColor dyeColor) {

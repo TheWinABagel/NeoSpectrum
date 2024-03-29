@@ -10,7 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class IdwtialsimmoedmCompat {
     public static void register() {
         GatherDescriptionCallback.ENCHANTMENT.register(ench -> {

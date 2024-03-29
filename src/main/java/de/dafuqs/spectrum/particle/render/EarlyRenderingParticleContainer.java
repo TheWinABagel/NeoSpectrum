@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import java.util.Map;
 import java.util.Queue;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class EarlyRenderingParticleContainer {
     
     private static final int MAX_PARTICLES = 16384;

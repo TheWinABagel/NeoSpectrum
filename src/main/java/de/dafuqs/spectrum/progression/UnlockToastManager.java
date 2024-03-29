@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class UnlockToastManager {
 	// Advancement Identifier + Recipe Type => Recipe
 	public static final Map<ResourceLocation, Map<RecipeType<?>, List<GatedRecipe>>> gatedRecipes = new HashMap<>();

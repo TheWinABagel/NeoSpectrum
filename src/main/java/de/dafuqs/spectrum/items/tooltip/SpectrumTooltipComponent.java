@@ -62,7 +62,7 @@ public class SpectrumTooltipComponent implements ClientTooltipComponent {
 		context.blit(TEXTURE, x, y, sprite.u, sprite.v, sprite.width, sprite.height, 128, 128);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public enum Sprite {
 		SLOT(0, 0, 18, 20),
 		DOTTED_SLOT(18, 0, 18 + 18, 20),

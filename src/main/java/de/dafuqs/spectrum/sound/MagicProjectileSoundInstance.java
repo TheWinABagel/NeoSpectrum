@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Objects;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class MagicProjectileSoundInstance extends AbstractSoundInstance implements TickableSoundInstance {
 
     private final ResourceKey<Level> worldKey;
@@ -45,7 +45,7 @@ public class MagicProjectileSoundInstance extends AbstractSoundInstance implemen
         this.volume = 1.0F;
     }
 
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public static void startSoundInstance(MagicProjectileEntity inkProjectile) {
 		Minecraft client = Minecraft.getInstance();
         MagicProjectileSoundInstance newInstance = new MagicProjectileSoundInstance(client.level.dimension(), inkProjectile);

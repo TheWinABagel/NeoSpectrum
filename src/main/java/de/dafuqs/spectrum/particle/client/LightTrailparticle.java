@@ -32,7 +32,7 @@ public class LightTrailparticle extends SimpleAnimatedParticle {
         quadSize = Mth.lerp(fadeProgress, 0.2F, 0.1F);
     }
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static class Factory implements ParticleProvider<SimpleParticleType> {
 		private final SpriteSet spriteProvider;
 		

@@ -250,7 +250,7 @@ public class TotalCappedElementalInkStorage implements InkStorage {
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void addTooltip(List<Component> tooltip, boolean includeHeader) {
 		if (includeHeader) {
 			tooltip.add(Component.translatable("item.spectrum.artists_palette.tooltip", getShortenedNumberString(this.maxEnergyTotal)));

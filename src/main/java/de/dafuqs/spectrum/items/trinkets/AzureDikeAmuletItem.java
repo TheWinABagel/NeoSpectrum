@@ -21,7 +21,7 @@ public class AzureDikeAmuletItem extends InkDrainTrinketItem implements AzureDik
 		super(settings, UNLOCK_IDENTIFIER, InkColors.BLUE);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		tooltip.add(Component.translatable("item.spectrum.azure_dike_provider.tooltip", maxAzureDike(stack)));

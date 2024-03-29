@@ -155,7 +155,7 @@ public class IndividualCappedInkStorage implements InkStorage {
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void addTooltip(List<Component> tooltip, boolean includeHeader) {
 		if (includeHeader) {
 			tooltip.add(Component.translatable("item.spectrum.pigment_palette.tooltip", getShortenedNumberString(maxEnergyPerColor)));

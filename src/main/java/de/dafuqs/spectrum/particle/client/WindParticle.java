@@ -9,7 +9,7 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class WindParticle extends TextureSheetParticle {
 	
 	private static final WindStrength wind = new WindStrength();

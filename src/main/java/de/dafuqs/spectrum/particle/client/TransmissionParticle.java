@@ -12,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class TransmissionParticle extends VibrationSignalParticle {
 
 	public TransmissionParticle(ClientLevel world, double x, double y, double z, PositionSource positionSource, int maxAge) {

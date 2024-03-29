@@ -9,7 +9,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class BottomlessBundleTooltipComponent extends SpectrumTooltipComponent {
 	
 	private static final int MAX_DISPLAYED_SLOTS = 5;

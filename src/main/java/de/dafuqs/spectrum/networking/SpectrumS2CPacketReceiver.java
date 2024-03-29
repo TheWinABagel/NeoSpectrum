@@ -60,7 +60,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class SpectrumS2CPacketReceiver {
 	
 	@SuppressWarnings("deprecation")

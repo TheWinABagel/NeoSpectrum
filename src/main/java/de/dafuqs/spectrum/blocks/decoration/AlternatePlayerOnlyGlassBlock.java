@@ -62,7 +62,7 @@ public class AlternatePlayerOnlyGlassBlock extends GlassBlock {
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public boolean skipRendering(BlockState state, BlockState stateFrom, Direction direction) {
 		if (stateFrom.is(this) || stateFrom.getBlock() == alternateBlock) {
 			return true;

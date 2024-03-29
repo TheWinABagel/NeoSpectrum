@@ -542,7 +542,7 @@ public class BottomlessBundleItem extends BundleItem implements InventoryInserti
 		}
 	}
 
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static class Renderer implements DynamicItemRenderer {
 		public Renderer() {}
 		@Override

@@ -7,7 +7,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class EnchanterEnchantingCategory extends EnchanterCategory<EnchanterEnchantingDisplay> {
 	
 	@Override

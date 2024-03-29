@@ -31,7 +31,7 @@ public interface GatedRecipe extends Recipe<Container> {
 		}
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private void registerInToastManagerClient(RecipeType<?> recipeType, GatedRecipe gatedRecipe) {
 		UnlockToastManager.registerGatedRecipe(recipeType, gatedRecipe);
 	}

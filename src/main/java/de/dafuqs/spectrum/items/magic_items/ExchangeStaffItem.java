@@ -168,7 +168,7 @@ public class ExchangeStaffItem extends BuildingStaffItem implements ExtendedEnch
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
     public void appendHoverText(ItemStack stack, Level world, List<Component> tooltip, TooltipFlag context) {
 		Minecraft client = Minecraft.getInstance();
 		super.appendHoverText(stack, world, tooltip, context);

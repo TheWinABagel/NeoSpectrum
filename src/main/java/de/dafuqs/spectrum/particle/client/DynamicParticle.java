@@ -11,7 +11,7 @@ import net.minecraft.client.particle.*;
 import net.minecraft.client.renderer.LightTexture;
 import org.jetbrains.annotations.NotNull;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class DynamicParticle extends TextureSheetParticle {
 	
 	protected boolean glowInTheDark = false;

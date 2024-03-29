@@ -9,7 +9,7 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class CraftingTabletTooltipComponent extends SpectrumTooltipComponent {
 	
 	private final ItemStack itemStack;

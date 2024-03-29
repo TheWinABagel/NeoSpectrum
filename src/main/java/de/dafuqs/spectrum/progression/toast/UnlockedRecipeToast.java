@@ -26,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class UnlockedRecipeToast implements Toast {
 	
 	private final ResourceLocation TEXTURE = SpectrumCommon.locate("textures/gui/toasts.png");

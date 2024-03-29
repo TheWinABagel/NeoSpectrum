@@ -13,7 +13,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class HudRenderers {
 	
 	private static final Component missingInkText = Component.translatable("item.spectrum.constructors_staff.tooltip.missing_ink");

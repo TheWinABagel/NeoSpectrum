@@ -8,7 +8,7 @@ import net.minecraft.client.model.SkullModelBase;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartNames;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public abstract class SpectrumHeadModel extends SkullModelBase {
 	
 	private final ModelPart head;

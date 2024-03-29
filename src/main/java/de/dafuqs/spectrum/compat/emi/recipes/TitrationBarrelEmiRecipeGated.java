@@ -42,7 +42,7 @@ public class TitrationBarrelEmiRecipeGated extends GatedSpectrumEmiRecipe<ITitra
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void addUnlockedWidgets(WidgetHolder widgets) {
 		// input slots
 		int startX = Math.max(10, 40 - inputs.size() * 10);

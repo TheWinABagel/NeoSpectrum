@@ -674,7 +674,7 @@ public class EnchanterBlockEntity extends InWorldInteractionBlockEntity implemen
 		}
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	protected void stopCraftingMusic() {
 		CraftingBlockSoundInstance.stopPlayingOnPos(this.worldPosition);
 	}

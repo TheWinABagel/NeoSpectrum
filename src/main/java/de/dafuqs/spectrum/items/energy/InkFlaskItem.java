@@ -58,7 +58,7 @@ public class InkFlaskItem extends Item implements InkStorageItem<SingleInkStorag
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		super.appendHoverText(stack, world, tooltip, context);
 		getEnergyStorage(stack).addTooltip(tooltip, true);

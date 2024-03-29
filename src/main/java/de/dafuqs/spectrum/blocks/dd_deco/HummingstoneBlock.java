@@ -50,7 +50,7 @@ public class HummingstoneBlock extends BaseEntityBlock {
 		return RenderShape.MODEL;
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
 		super.animateTick(state, world, pos, random);

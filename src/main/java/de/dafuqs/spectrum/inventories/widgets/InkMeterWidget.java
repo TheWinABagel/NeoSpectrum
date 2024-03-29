@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class InkMeterWidget implements Renderable, GuiEventListener, NarratableEntry {
 	
 	public static final int WIDTH_PER_COLOR = 4;

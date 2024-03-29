@@ -12,7 +12,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
 // Similar to FAPIs DynamicItemRenderer, except with a little more information.
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 @FunctionalInterface
 public interface DynamicItemRenderer {
     

@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.entity.MobRenderer;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class KindlingEntityRenderer extends MobRenderer<KindlingEntity, KindlingEntityModel> {
 	
 	public static final ResourceLocation TEXTURE = SpectrumCommon.locate("textures/entity/kindling/kindling.png");

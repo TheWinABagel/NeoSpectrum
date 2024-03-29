@@ -25,7 +25,7 @@ import java.util.function.Consumer;
 
 import static de.dafuqs.spectrum.helpers.RenderHelper.fillQuad;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class ColorSelectionWidget extends AbstractWidget {
 	
 	protected final ColorPickerBlockEntity colorPicker;

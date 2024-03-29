@@ -19,7 +19,7 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 import java.util.Optional;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class StackedInkMeterWidget implements Renderable, GuiEventListener, NarratableEntry {
 	
 	public final int x;

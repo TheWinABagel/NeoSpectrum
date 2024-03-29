@@ -88,7 +88,7 @@ public class RadianceStaffItem extends Item implements InkPowered {
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
 		if (InkPowered.canUseClient()) {
 			tooltip.add(Component.translatable("item.spectrum.radiance_staff.tooltip.ink"));

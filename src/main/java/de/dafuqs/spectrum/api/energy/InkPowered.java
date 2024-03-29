@@ -29,7 +29,7 @@ public interface InkPowered {
 	 */
 	ResourceLocation REQUIRED_ADVANCEMENT = SpectrumCommon.locate("milestones/unlock_ink_use");
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
     static boolean canUseClient() {
 		Minecraft client = Minecraft.getInstance();
 		return canUse(client.player);
@@ -49,7 +49,7 @@ public interface InkPowered {
 	 * The colors that the object requires for working.
 	 * These are added as the player facing tooltip
 	 **/
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	default void addInkPoweredTooltip(List<Component> tooltip) {
 		if (canUseClient()) {
 			if (getUsedColors().size() > 1) {

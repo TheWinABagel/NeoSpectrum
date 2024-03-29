@@ -51,7 +51,7 @@ public class GlassCrestCrossbowItem extends MalachiteCrossbowItem implements Ext
         return super.use(world, user, hand);
     }
     
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public void startSoundInstance(Player user) {
         Minecraft.getInstance().getSoundManager().play(new OverchargingSoundInstance(user));
     }
@@ -114,7 +114,7 @@ public class GlassCrestCrossbowItem extends MalachiteCrossbowItem implements Ext
     }
     
     @Override
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public void appendHoverText(ItemStack itemStack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
         super.appendHoverText(itemStack, world, tooltip, context);
         float overcharge = getOvercharge(itemStack);

@@ -6,7 +6,7 @@ import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class DeeperDownDimensionEffects extends DimensionSpecialEffects {
 	
 	public DeeperDownDimensionEffects() {

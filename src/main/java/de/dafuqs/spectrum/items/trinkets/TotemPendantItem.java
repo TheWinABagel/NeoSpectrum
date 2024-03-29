@@ -18,7 +18,7 @@ public class TotemPendantItem extends SpectrumTrinketItem {
 		super(settings, SpectrumCommon.locate("unlocks/trinkets/totem_pendant"));
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		super.appendHoverText(stack, world, tooltip, context);

@@ -18,7 +18,7 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class GlassArrowEntityRenderer extends EntityRenderer<GlassArrowEntity> {
 
     private final ItemRenderer itemRenderer;

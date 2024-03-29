@@ -129,7 +129,7 @@ public class CraftingTabletItem extends Item implements LoomPatternProvider {
 		addBannerPatternProviderTooltip(tooltip);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
     public Optional<TooltipComponent> getTooltipImage(ItemStack stack) {
 		Minecraft client = Minecraft.getInstance();

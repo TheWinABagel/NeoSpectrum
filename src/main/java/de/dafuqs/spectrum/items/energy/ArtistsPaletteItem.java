@@ -64,7 +64,7 @@ public class ArtistsPaletteItem extends SpectrumTrinketItem implements InkStorag
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		super.appendHoverText(stack, world, tooltip, context);
 		tooltip.add(Component.translatable("item.spectrum.pigment_palette.tooltip.target").withStyle(ChatFormatting.GRAY));

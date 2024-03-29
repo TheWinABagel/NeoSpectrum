@@ -79,7 +79,7 @@ public class GlowVisionGogglesItem extends SpectrumTrinketItem implements InkPow
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
 		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
 		if (InkPowered.canUseClient()) {

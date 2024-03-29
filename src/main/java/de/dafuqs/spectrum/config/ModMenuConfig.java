@@ -4,7 +4,7 @@ import com.terraformersmc.modmenu.api.*;
 import me.shedaniel.autoconfig.*;
 import net.fabricmc.api.*;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class ModMenuConfig implements ModMenuApi {
 	
 	@Override

@@ -49,7 +49,7 @@ import net.minecraft.world.level.block.Blocks;
 import java.util.List;
 import java.util.stream.Stream;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class REIClientIntegration implements REIClientPlugin {
 	
 	@Override

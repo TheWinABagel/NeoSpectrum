@@ -38,7 +38,7 @@ public abstract class SpectrumEnchantment extends Enchantment {
 		return false;
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
     public Component getFullname(int level) {
 		Minecraft client = Minecraft.getInstance();

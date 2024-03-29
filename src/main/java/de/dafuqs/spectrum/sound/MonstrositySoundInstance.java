@@ -10,7 +10,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class MonstrositySoundInstance extends AbstractTickableSoundInstance {
 	
 	private static int instances = 0;

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class ClientPastelNetworkManager implements PastelNetworkManager {
 	
 	private final List<PastelNetwork> networks = new ArrayList<>();

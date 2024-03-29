@@ -126,7 +126,7 @@ public class PageHint extends BookPage {
 		return new ResourceLocation(entry.getId().getNamespace(), entry.getId().getPath() + "_" + this.pageNum);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	protected void paymentButtonClicked(Button button) {
 		Minecraft client = Minecraft.getInstance();
 		if (revealProgress > -1) {

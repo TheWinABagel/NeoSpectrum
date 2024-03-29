@@ -8,7 +8,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class PresentTooltipComponent extends SpectrumTooltipComponent {
 	
 	private final List<ItemStack> itemStacks;

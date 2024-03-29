@@ -13,7 +13,7 @@ import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.resources.sounds.TickableSoundInstance;
 import net.minecraft.sounds.SoundSource;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class DivinitySoundInstance extends AbstractSoundInstance implements TickableSoundInstance {
 	
 	private static int instances = 0;

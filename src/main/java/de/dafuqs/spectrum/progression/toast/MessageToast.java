@@ -21,7 +21,7 @@ import net.minecraft.world.item.ItemStack;
 import java.util.Iterator;
 import java.util.List;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class MessageToast implements Toast {
 	
 	private final ResourceLocation TEXTURE = SpectrumCommon.locate("textures/gui/toasts.png");

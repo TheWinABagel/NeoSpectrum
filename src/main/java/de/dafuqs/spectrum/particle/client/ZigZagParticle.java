@@ -66,7 +66,7 @@ public class ZigZagParticle extends TextureSheetParticle {
 		return j | k << 16;
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static class Factory implements ParticleProvider<SimpleParticleType> {
 		
 		private final SpriteSet spriteProvider;

@@ -7,7 +7,7 @@ import net.minecraft.client.model.geom.PartNames;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class EraserHeadModel extends SpectrumHeadModel {
 
 	public EraserHeadModel(ModelPart root) {

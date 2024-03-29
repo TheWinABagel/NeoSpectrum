@@ -51,7 +51,7 @@ public abstract class LiquidCrystalFluid extends SpectrumFluid {
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void animateTick(Level world, BlockPos pos, FluidState state, RandomSource random) {
 		BlockPos topPos = pos.above();
 		BlockState topState = world.getBlockState(topPos);

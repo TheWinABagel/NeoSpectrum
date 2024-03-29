@@ -181,7 +181,7 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 		}
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
     public void interactWithEntityClient() {
 		// If aiming at an entity: trigger entity interaction
 		Minecraft client = Minecraft.getInstance();
@@ -236,7 +236,7 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 		return ItemUtils.startUsingInstantly(world, user, hand);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void startSoundInstance(Player user) {
 		Minecraft.getInstance().getSoundManager().play(new EnderSpliceChargingSoundInstance(user));
 	}
@@ -252,7 +252,7 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void appendHoverText(ItemStack itemStack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		// If Dimension & Pos stored => Teleport to that position
 		Optional<Tuple<String, Vec3>> teleportTargetPos = getTeleportTargetPos(itemStack);

@@ -53,7 +53,7 @@ public class PaintbrushItem extends Item {
 		super(settings);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		super.appendHoverText(stack, world, tooltip, context);

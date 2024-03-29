@@ -76,7 +76,7 @@ public class SpiritVinesHeadBlock extends GrowingPlantHeadBlock implements Spiri
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public ItemStack getCloneItemStack(BlockGetter world, BlockPos pos, BlockState state) {
 		return new ItemStack(SpiritVine.getYieldItem(state, true));
 	}

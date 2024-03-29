@@ -7,7 +7,7 @@ import net.minecraft.client.particle.*;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class FixedVelocityParticle extends TextureSheetParticle {
 
 	protected FixedVelocityParticle(ClientLevel clientWorld, double x, double y, double z, double velocityX, double velocityY, double velocityZ) {
@@ -43,7 +43,7 @@ public class FixedVelocityParticle extends TextureSheetParticle {
 		return j | k << 16;
 	}
 
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static class Factory implements ParticleProvider<SimpleParticleType> {
 
 		private final SpriteSet spriteProvider;

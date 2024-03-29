@@ -83,7 +83,7 @@ public class ShootingStarEntity extends Entity {
 		this(world, 0, 0, 0);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private ShootingStarEntity(@NotNull ShootingStarEntity entity) {
 		super(entity.getType(), entity.level());
 		this.setShootingStarType(entity.getShootingStarType(), false, false);
@@ -507,7 +507,7 @@ public class ShootingStarEntity extends Entity {
 		return ShootingStarItem.getWithRemainingHits((ShootingStarItem) this.asItem(), this.availableHits, this.entityData.get(HARDENED));
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public int getAge() {
 		return this.tickCount;
 	}

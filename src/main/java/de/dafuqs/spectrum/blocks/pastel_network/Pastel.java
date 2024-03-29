@@ -10,11 +10,11 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class Pastel {
 
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     private static ClientPastelNetworkManager clientManager;
     private static ServerPastelNetworkManager serverManager;
 
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public static ClientPastelNetworkManager getClientInstance() {
         if (clientManager == null) {
             clientManager = new ClientPastelNetworkManager();
@@ -37,7 +37,7 @@ public class Pastel {
         }
     }
     
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public static void clearClientInstance() {
         clientManager = null;
         EarlyRenderingParticleContainer.clear();

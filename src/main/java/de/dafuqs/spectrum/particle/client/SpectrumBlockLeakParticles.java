@@ -11,7 +11,7 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.core.particles.SimpleParticleType;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class SpectrumBlockLeakParticles {
 
 	public static class LandingMudFactory implements ParticleProvider<SimpleParticleType> {

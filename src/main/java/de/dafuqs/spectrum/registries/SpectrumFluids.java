@@ -69,7 +69,7 @@ public class SpectrumFluids {
 		ItemColors.FLUID_COLORS.registerColorMapping(flowingFluid, dyeColor);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static void registerClient() {
 		setupFluidRendering(LIQUID_CRYSTAL, FLOWING_LIQUID_CRYSTAL, "liquid_crystal", LIQUID_CRYSTAL_TINT);
 		setupFluidRendering(MUD, FLOWING_MUD, "mud", MUD_TINT);
@@ -77,7 +77,7 @@ public class SpectrumFluids {
 		setupFluidRendering(DRAGONROT, FLOWING_DRAGONROT, "dragonrot", DRAGONROT_TINT);
 	}
 
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private static void setupFluidRendering(final Fluid stillFluid, final Fluid flowingFluid, final String name, int tint) {
 		FluidRenderHandlerRegistry.INSTANCE.register(stillFluid, flowingFluid, new SimpleFluidRenderHandler(
 				SpectrumCommon.locate("block/" + name + "_still"),

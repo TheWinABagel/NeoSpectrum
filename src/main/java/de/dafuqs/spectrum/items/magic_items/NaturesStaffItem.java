@@ -142,7 +142,7 @@ public class NaturesStaffItem extends Item implements ExtendedEnchantable, InkPo
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
 		super.appendHoverText(itemStack, world, tooltip, tooltipContext);
 		
@@ -176,7 +176,7 @@ public class NaturesStaffItem extends Item implements ExtendedEnchantable, InkPo
 		return super.use(world, user, hand);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void startSoundInstance(Player user) {
 		Minecraft.getInstance().getSoundManager().play(new NaturesStaffUseSoundInstance(user));
 	}
@@ -213,7 +213,7 @@ public class NaturesStaffItem extends Item implements ExtendedEnchantable, InkPo
 		}
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void usageTickClient() {
 		Minecraft client = Minecraft.getInstance();
 		if (client.hitResult.getType() == HitResult.Type.BLOCK) {

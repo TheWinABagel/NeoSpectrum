@@ -49,7 +49,7 @@ public class StaffOfRemembranceItem extends Item implements InkPowered, Prioriti
 		super(settings);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
 		super.appendHoverText(itemStack, world, tooltip, tooltipContext);

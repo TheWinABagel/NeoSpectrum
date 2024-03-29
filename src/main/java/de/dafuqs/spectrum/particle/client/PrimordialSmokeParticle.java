@@ -17,7 +17,7 @@ public class PrimordialSmokeParticle extends BaseAshSmokeParticle {
         bCol = 1;
     }
 
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public static class Factory implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet spriteProvider;
 

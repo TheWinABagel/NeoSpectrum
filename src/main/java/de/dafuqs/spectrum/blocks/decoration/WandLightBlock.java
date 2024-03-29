@@ -51,7 +51,7 @@ public class WandLightBlock extends LightBlock {
 		return false;
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private boolean holdsRadianceStaffClient() {
 		return holdsRadianceStaff(Minecraft.getInstance().player);
 	}

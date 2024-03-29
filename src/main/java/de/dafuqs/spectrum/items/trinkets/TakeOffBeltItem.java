@@ -52,7 +52,7 @@ public class TakeOffBeltItem extends SpectrumTrinketItem implements ExtendedEnch
 		return 0;
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		super.appendHoverText(stack, world, tooltip, context);

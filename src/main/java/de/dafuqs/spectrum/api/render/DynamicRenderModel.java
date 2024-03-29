@@ -11,14 +11,15 @@ import net.minecraft.client.resources.model.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.client.model.BakedModelWrapper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-@Environment(EnvType.CLIENT)
-public class DynamicRenderModel extends ForwardingBakedModel implements UnbakedModel {
+@OnlyIn(Dist.CLIENT)
+public class DynamicRenderModel extends BakedModelWrapper<DynamicRenderModel> /*ForwardingBakedModel*/ implements UnbakedModel {
     private static class WrappingOverridesList extends ItemOverrides {
         private final ItemOverrides wrapped;
         private WrappingOverridesList(ItemOverrides orig) {

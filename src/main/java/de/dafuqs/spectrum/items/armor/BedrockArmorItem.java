@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Map;
 
 public class BedrockArmorItem extends ArmorItem implements Preenchanted {
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	private HumanoidModel<LivingEntity> model;
 	
 	public BedrockArmorItem(ArmorMaterial material, ArmorItem.Type type, Properties settings) {
@@ -51,7 +51,7 @@ public class BedrockArmorItem extends ArmorItem implements Preenchanted {
 		return false;
 	}
 
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	protected HumanoidModel<LivingEntity> provideArmorModelForSlot(EquipmentSlot slot) {
 		var models = Minecraft.getInstance().getEntityModels();
 		var feet = models.bakeLayer(SpectrumModelLayers.FEET_BEDROCK_LAYER);
@@ -62,7 +62,7 @@ public class BedrockArmorItem extends ArmorItem implements Preenchanted {
 			return new FullArmorModel(root, slot);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public HumanoidModel<LivingEntity> getArmorModel() {
 		if (model == null) {
 			model = provideArmorModelForSlot(getEquipmentSlot());

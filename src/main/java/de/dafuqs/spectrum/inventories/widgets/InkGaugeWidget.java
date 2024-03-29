@@ -21,7 +21,7 @@ import java.util.Optional;
 
 import static de.dafuqs.spectrum.helpers.Support.getShortenedNumberString;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class InkGaugeWidget implements Renderable, GuiEventListener, NarratableEntry {
 	
 	public final int x;

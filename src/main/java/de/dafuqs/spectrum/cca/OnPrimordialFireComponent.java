@@ -180,7 +180,7 @@ public class OnPrimordialFireComponent implements AutoSyncedComponent, ServerTic
 	}
 
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void clientTick() {
 		if (this.primordialFireTicks > 0) {
 			double fluidHeight = this.provider.getFluidHeight(FluidTags.WATER);

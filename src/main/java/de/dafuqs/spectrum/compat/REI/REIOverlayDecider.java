@@ -7,7 +7,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.world.InteractionResult;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class REIOverlayDecider implements OverlayDecider {
 	
 	public static final OverlayDecider INSTANCE = new REIOverlayDecider();

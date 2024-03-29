@@ -9,7 +9,7 @@ import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class HeartboundChestBlockEntityRenderer extends SpectrumChestBlockEntityRenderer<HeartboundChestBlockEntity> {
 	
 	public HeartboundChestBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {

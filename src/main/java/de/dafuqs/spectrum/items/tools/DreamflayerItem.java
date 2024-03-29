@@ -157,7 +157,7 @@ public class DreamflayerItem extends SwordItem implements InkPowered, Activatabl
 		return List.of(USED_COLOR);
 	}
 
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	@Override
 	public void addInkPoweredTooltip(List<Component> tooltip) {
 		InkPowered.super.addInkPoweredTooltip(tooltip);

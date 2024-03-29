@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 @Mixin({PotionItem.class, LingeringPotionItem.class, TippedArrowItem.class})
 public abstract class PotionItemClientMixin {
 	

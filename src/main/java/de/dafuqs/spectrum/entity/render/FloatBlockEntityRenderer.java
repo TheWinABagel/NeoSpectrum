@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.state.BlockState;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class FloatBlockEntityRenderer extends EntityRenderer<FloatBlockEntity> {
     private final RandomSource random = RandomSource.create();
     

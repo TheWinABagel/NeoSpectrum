@@ -51,7 +51,7 @@ public class WetLavaSpongeBlock extends WetSpongeBlock {
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
 		Direction direction = Direction.getRandom(random);
 		if (direction != Direction.UP) {

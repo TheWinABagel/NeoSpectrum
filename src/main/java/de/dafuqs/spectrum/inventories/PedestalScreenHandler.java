@@ -159,7 +159,7 @@ public class PedestalScreenHandler extends RecipeBookMenu<Container> {
 		return this.inventory.stillValid(player);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public int getCraftingProgress() {
 		int craftingTime = this.propertyDelegate.get(0); // craftingTime
 		int craftingTimeTotal = this.propertyDelegate.get(1); // craftingTimeTotal
@@ -171,7 +171,7 @@ public class PedestalScreenHandler extends RecipeBookMenu<Container> {
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public RecipeBookType getRecipeBookType() {
 		return this.category;
 	}

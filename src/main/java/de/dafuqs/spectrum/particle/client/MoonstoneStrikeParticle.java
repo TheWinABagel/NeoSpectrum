@@ -12,7 +12,7 @@ import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.world.phys.Vec3;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class MoonstoneStrikeParticle extends NoRenderParticle {
 	
 	private final static int MAX_AGE = 40;
@@ -40,7 +40,7 @@ public class MoonstoneStrikeParticle extends NoRenderParticle {
 		}
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static class Factory implements ParticleProvider<SimpleParticleType> {
 		public Factory() {
 		}

@@ -129,7 +129,7 @@ public class OmniAcceleratorItem extends BundleItem implements InkPowered {
 		addInkPoweredTooltip(tooltip);
 	}
 
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public static class Renderer implements DynamicItemRenderer {
 		public Renderer() {}
 		@Override

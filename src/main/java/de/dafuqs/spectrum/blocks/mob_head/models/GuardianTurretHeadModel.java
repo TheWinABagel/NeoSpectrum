@@ -10,7 +10,7 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class GuardianTurretHeadModel extends SpectrumHeadModel {
 	
 	public GuardianTurretHeadModel(ModelPart root) {

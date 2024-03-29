@@ -44,7 +44,7 @@ public class PipeBombItem extends Item implements DamageAwareItem, TickAwareItem
         return ItemUtils.startUsingInstantly(world, user, hand);
     }
 
-    @Environment(EnvType.CLIENT)
+    @OnlyIn(Dist.CLIENT)
     public void startSoundInstance(Player user) {
         Minecraft.getInstance().getSoundManager().play(new PipeBombChargingSoundInstance(user));
     }

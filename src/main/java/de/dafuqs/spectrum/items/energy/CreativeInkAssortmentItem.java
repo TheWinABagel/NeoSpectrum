@@ -65,7 +65,7 @@ public class CreativeInkAssortmentItem extends Item implements InkStorageItem<Cr
 	}
 	
 	@Override
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		super.appendHoverText(stack, world, tooltip, context);
 		CreativeOnlyItem.appendTooltip(tooltip);

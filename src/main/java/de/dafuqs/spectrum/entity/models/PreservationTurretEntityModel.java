@@ -12,7 +12,7 @@ import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class PreservationTurretEntityModel<T extends PreservationTurretEntity> extends ListModel<T> {
 	
 	private final ModelPart body;

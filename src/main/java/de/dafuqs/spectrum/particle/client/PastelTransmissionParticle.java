@@ -23,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.List;
 
-@Environment(EnvType.CLIENT)
+@OnlyIn(Dist.CLIENT)
 public class PastelTransmissionParticle extends TransmissionParticle implements EarlyRenderingParticle {
 
     private final ItemRenderer itemRenderer;

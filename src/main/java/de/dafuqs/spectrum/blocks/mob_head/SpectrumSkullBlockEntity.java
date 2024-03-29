@@ -22,7 +22,7 @@ public class SpectrumSkullBlockEntity extends BlockEntity {
 		super.load(tag);
 	}
 	
-	@Environment(EnvType.CLIENT)
+	@OnlyIn(Dist.CLIENT)
 	public SpectrumSkullBlockType getSkullType() {
 		return SpectrumBlocks.getSkullType(level.getBlockState(this.worldPosition).getBlock());
 	}
