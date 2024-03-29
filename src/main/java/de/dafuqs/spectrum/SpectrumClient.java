@@ -36,8 +36,8 @@ import de.dafuqs.spectrum.render.SkyLerper;
 import de.dafuqs.spectrum.render.capes.WorthinessChecker;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
@@ -68,8 +68,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.fml.ModList;
 import org.jetbrains.annotations.NotNull;
 import oshi.util.tuples.Triplet;
 
@@ -82,10 +81,9 @@ import static de.dafuqs.spectrum.SpectrumCommon.*;
 
 public class SpectrumClient implements ClientModInitializer, RevealingCallback, ClientAdvancementPacketCallback {
 
-	@Environment(EnvType.CLIENT)
 	@OnlyIn(Dist.CLIENT)
 	public static final SkyLerper skyLerper = new SkyLerper();
-	public static final boolean foodEffectsTooltipsModLoaded = FabricLoader.getInstance().isModLoaded("foodeffecttooltips");
+	public static final boolean foodEffectsTooltipsModLoaded = ModList.get().isLoaded("foodeffecttooltips");
 
 	// initial impl
 	public static final ObjectOpenHashSet<ModelResourceLocation> CUSTOM_ITEM_MODELS = new ObjectOpenHashSet<>();
@@ -172,12 +170,12 @@ public class SpectrumClient implements ClientModInitializer, RevealingCallback, 
 		WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> Pastel.getClientInstance().renderLines(context));
 		WorldRenderEvents.BLOCK_OUTLINE.register(this::renderExtendedBlockOutline);
 
-		if (FabricLoader.getInstance().isModLoaded("ears")) {
+		if (ModList.get().isLoaded("ears")) {
 			logInfo("Registering Ears Compat...");
 			EarsCompat.register();
 		}
 
-		if (FabricLoader.getInstance().isModLoaded("idwtialsimmoedm")) {
+		if (ModList.get().isLoaded("idwtialsimmoedm")) {
 			logInfo("Registering idwtialsimmoedm Compat...");
 			IdwtialsimmoedmCompat.register();
 		}

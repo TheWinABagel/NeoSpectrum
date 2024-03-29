@@ -2,8 +2,8 @@ package de.dafuqs.spectrum.compat.REI.plugins;
 
 import de.dafuqs.spectrum.compat.REI.SpectrumPlugins;
 import me.shedaniel.rei.api.common.category.CategoryIdentifier;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 

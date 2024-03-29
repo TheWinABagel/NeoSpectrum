@@ -2,8 +2,8 @@ package de.dafuqs.spectrum.particle;
 
 import de.dafuqs.spectrum.blocks.pastel_network.PastelRenderHelper;
 import de.dafuqs.spectrum.particle.client.*;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.*;

@@ -2,8 +2,8 @@ package de.dafuqs.spectrum.networking;
 
 import de.dafuqs.spectrum.api.energy.color.InkColor;
 import de.dafuqs.spectrum.items.tools.WorkstaffItem;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.network.FriendlyByteBuf;

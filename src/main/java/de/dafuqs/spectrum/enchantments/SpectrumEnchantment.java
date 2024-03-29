@@ -1,8 +1,8 @@
 package de.dafuqs.spectrum.enchantments;
 
 import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;

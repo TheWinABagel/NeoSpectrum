@@ -1,8 +1,8 @@
 package de.dafuqs.spectrum.mixin.client;
 
 import de.dafuqs.spectrum.render.HudRenderers;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.player.Player;

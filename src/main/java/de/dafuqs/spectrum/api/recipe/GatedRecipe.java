@@ -1,8 +1,8 @@
 package de.dafuqs.spectrum.api.recipe;
 
 import de.dafuqs.spectrum.progression.UnlockToastManager;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;

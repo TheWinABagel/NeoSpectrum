@@ -20,7 +20,7 @@ public class GoFishCompat {
 	public static final ResourceLocation DEEPFRY_ENCHANTMENT_ID = new ResourceLocation("gofish", "deepfry");
 	
 	public static boolean isLoaded() {
-		return FabricLoader.getInstance().isModLoaded("go-fish");
+		return ModList.get().isLoaded("go-fish");
 	}
 	
 	public static boolean hasDeepfry(ItemStack itemStack) {

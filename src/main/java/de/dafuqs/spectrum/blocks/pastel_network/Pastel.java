@@ -5,8 +5,8 @@ import de.dafuqs.spectrum.blocks.pastel_network.network.ClientPastelNetworkManag
 import de.dafuqs.spectrum.blocks.pastel_network.network.PastelNetworkManager;
 import de.dafuqs.spectrum.blocks.pastel_network.network.ServerPastelNetworkManager;
 import de.dafuqs.spectrum.particle.render.EarlyRenderingParticleContainer;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 public class Pastel {
 

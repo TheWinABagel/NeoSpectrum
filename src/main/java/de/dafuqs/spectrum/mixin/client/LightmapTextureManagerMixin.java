@@ -2,8 +2,8 @@ package de.dafuqs.spectrum.mixin.client;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import de.dafuqs.spectrum.registries.SpectrumDimensions;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import org.spongepowered.asm.mixin.Mixin;

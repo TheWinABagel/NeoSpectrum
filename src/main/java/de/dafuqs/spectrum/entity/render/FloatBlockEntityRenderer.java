@@ -2,8 +2,8 @@ package de.dafuqs.spectrum.entity.render;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import de.dafuqs.spectrum.entity.entity.FloatBlockEntity;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.MultiBufferSource;

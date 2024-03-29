@@ -23,7 +23,7 @@ public class SpectrumIntegrationPacks {
 	}
 	
 	protected static void registerIntegrationPack(String modId, ModIntegrationPack container) {
-		if (!SpectrumCommon.CONFIG.IntegrationPacksToSkipLoading.contains(modId) && FabricLoader.getInstance().isModLoaded(modId)) {
+		if (!SpectrumCommon.CONFIG.IntegrationPacksToSkipLoading.contains(modId) && ModList.get().isLoaded(modId)) {
 			INTEGRATION_PACKS.put(modId, container);
 		}
 	}
