@@ -12,6 +12,7 @@
     "AnvilBlockMixin",
     "ApplyBonusLootFunctionMixin",
     "BlockMixin",
+    "accessors.BlocksAccessor",
     "BrewingRecipeRegistryMixin",
     "ChunkNoiseSamplerMixin",
     "CropAndStemBlockMixin",
@@ -88,7 +89,6 @@
   ],
   "client": [
     "accessors.DimensionEffectsAccessor",
-    "client.accessors.InGameHudAccessor",
     "accessors.WorldRendererAccessor",
     "client.AbstractClientEntityMixin",
     "client.BipedEntityModelMixin",
@@ -113,6 +113,7 @@
     "client.TransparentBlockMixin",
     "client.accessors.BakedOverrideAccessor",
     "client.accessors.BossBarHudAccessor",
+    "client.accessors.InGameHudAccessor",
     "client.accessors.ModelOverrideListAccessor",
     "client.accessors.ParticleManagerAccessor",
     "client.accessors.RenderLayerAccessor",

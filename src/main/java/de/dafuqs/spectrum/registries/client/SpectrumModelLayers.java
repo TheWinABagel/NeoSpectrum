@@ -6,10 +6,12 @@ import de.dafuqs.spectrum.entity.models.*;
 import de.dafuqs.spectrum.render.armor.BedrockArmorModel;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.client.event.EntityRenderersEvent;
+import net.minecraftforge.client.event.ModelEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 @OnlyIn(Dist.CLIENT)
 public class SpectrumModelLayers {
@@ -50,32 +52,32 @@ public class SpectrumModelLayers {
 	public static final ModelLayerLocation FEET_BEDROCK_LAYER = new ModelLayerLocation(SpectrumCommon.locate("bedrock_armor"), "feet");
 	public static final ModelLayerLocation MAIN_BEDROCK_LAYER = new ModelLayerLocation(SpectrumCommon.locate("bedrock_armor"), "main");
 	public static final ResourceLocation BEDROCK_ARMOR_LOCATION = SpectrumCommon.locate("textures/armor/bedrock_armor_main.png");
-	
-	public static void register() {
-		EntityModelLayerRegistry.registerModelLayer(WOOLY_PIG, EggLayingWoolyPigEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(WOOLY_PIG_HAT, EggLayingWoolyPigHatEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(WOOLY_PIG_WOOL, EggLayingWoolyPigWoolEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(PRESERVATION_TURRET, PreservationTurretEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(MONSTROSITY, MonstrosityEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(LIZARD_SCALES, LizardEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(LIZARD_FRILLS, LizardEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(LIZARD_HORNS, LizardEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(KINDLING, KindlingEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(KINDLING_SADDLE, KindlingEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(KINDLING_ARMOR, KindlingEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(KINDLING_COUGH, KindlingCoughEntityModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(ERASER, EraserEntityModel::getTexturedModelData);
-		
-		EntityModelLayerRegistry.registerModelLayer(EGG_LAYING_WOOLY_PIG_HEAD, EggLayingWoolyPigHeadModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(MONSTROSITY_HEAD, MonstrosityHeadModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(KINDLING_HEAD, KindlingHeadModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(ERASER_HEAD, EraserHeadModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(LIZARD_HEAD, LizardHeadModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(PRESERVATION_TURRET_HEAD, GuardianTurretHeadModel::getTexturedModelData);
-		EntityModelLayerRegistry.registerModelLayer(WARDEN_HEAD, WardenHeadModel::getTexturedModelData);
-		
-		EntityModelLayerRegistry.registerModelLayer(FEET_BEDROCK_LAYER, () -> LayerDefinition.create(BedrockArmorModel.getModelData(), 128, 128));
-		EntityModelLayerRegistry.registerModelLayer(MAIN_BEDROCK_LAYER, () -> LayerDefinition.create(BedrockArmorModel.getModelData(), 128, 128));
+
+	@SubscribeEvent
+	public static void register(EntityRenderersEvent.RegisterLayerDefinitions e) {
+		e.registerLayerDefinition(WOOLY_PIG, EggLayingWoolyPigEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(WOOLY_PIG_HAT, EggLayingWoolyPigHatEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(WOOLY_PIG_WOOL, EggLayingWoolyPigWoolEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(PRESERVATION_TURRET, PreservationTurretEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(MONSTROSITY, MonstrosityEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(LIZARD_SCALES, LizardEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(LIZARD_FRILLS, LizardEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(LIZARD_HORNS, LizardEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(KINDLING, KindlingEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(KINDLING_SADDLE, KindlingEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(KINDLING_ARMOR, KindlingEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(KINDLING_COUGH, KindlingCoughEntityModel::getTexturedModelData);
+		e.registerLayerDefinition(ERASER, EraserEntityModel::getTexturedModelData);
+
+		e.registerLayerDefinition(EGG_LAYING_WOOLY_PIG_HEAD, EggLayingWoolyPigHeadModel::getTexturedModelData);
+		e.registerLayerDefinition(MONSTROSITY_HEAD, MonstrosityHeadModel::getTexturedModelData);
+		e.registerLayerDefinition(KINDLING_HEAD, KindlingHeadModel::getTexturedModelData);
+		e.registerLayerDefinition(ERASER_HEAD, EraserHeadModel::getTexturedModelData);
+		e.registerLayerDefinition(LIZARD_HEAD, LizardHeadModel::getTexturedModelData);
+		e.registerLayerDefinition(PRESERVATION_TURRET_HEAD, GuardianTurretHeadModel::getTexturedModelData);
+		e.registerLayerDefinition(WARDEN_HEAD, WardenHeadModel::getTexturedModelData);
+
+		e.registerLayerDefinition(FEET_BEDROCK_LAYER, () -> LayerDefinition.create(BedrockArmorModel.getModelData(), 128, 128));
+		e.registerLayerDefinition(MAIN_BEDROCK_LAYER, () -> LayerDefinition.create(BedrockArmorModel.getModelData(), 128, 128));
 	}
-	
 }

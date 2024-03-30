@@ -75,7 +75,7 @@ public class BottomlessBundleItem extends BundleItem implements InventoryInserti
 	}
 	
 	public static int getMaxStoredAmount(ItemStack itemStack) {
-		int powerLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, itemStack);
+		int powerLevel = itemStack.getEnchantmentLevel(Enchantments.POWER_ARROWS);
 		return MAX_STORED_AMOUNT_BASE * (int) Math.pow(10, Math.min(5, powerLevel)); // to not exceed int max
 	}
 	

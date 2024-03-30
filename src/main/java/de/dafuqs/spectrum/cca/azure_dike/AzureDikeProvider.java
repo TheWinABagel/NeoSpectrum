@@ -1,14 +1,13 @@
 package de.dafuqs.spectrum.cca.azure_dike;
 
 import de.dafuqs.spectrum.SpectrumCommon;
-import dev.onyxstudios.cca.api.v3.component.ComponentKey;
-import dev.onyxstudios.cca.api.v3.component.ComponentRegistry;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 public class AzureDikeProvider {
-	
-	public static final ComponentKey<AzureDikeComponent> AZURE_DIKE_COMPONENT = ComponentRegistry.getOrCreate(SpectrumCommon.locate("azure_dike"), AzureDikeComponent.class); // See the "Registering your component" section
-	
+	public static final ComponentKey<AzureDikeCapability> AZURE_DIKE_COMPONENT = ComponentRegistry.getOrCreate(SpectrumCommon.locate("azure_dike"), AzureDikeCapability.class); // See the "Registering your component" section
+
 	/**
 	 * Uses as much Azure Dike as possible to protect the Provider from incoming damage
 	 *
@@ -17,7 +16,11 @@ public class AzureDikeProvider {
 	 * @return All damage that could not be protected from
 	 */
 	public static float absorbDamage(LivingEntity provider, float incomingDamage) {
-		return AZURE_DIKE_COMPONENT.get(provider).absorbDamage(incomingDamage);
+		var cap = provider.getCapability(DefaultAzureDikeCapability.AZURE_DIKE_CAPABILITY);
+		if (cap.isPresent() && cap.resolve().isPresent()) {
+			return cap.resolve().get().absorbDamage(incomingDamage);
+		}
+		return incomingDamage;
 	}
 	
 	public static int getAzureDikeCharges(LivingEntity provider) {
@@ -28,7 +31,7 @@ public class AzureDikeProvider {
 		return AZURE_DIKE_COMPONENT.get(provider).getMaxProtection();
 	}
 	
-	public static AzureDikeComponent getAzureDikeComponent(LivingEntity provider) {
+	public static AzureDikeCapability getAzureDikeComponent(LivingEntity provider) {
 		return AZURE_DIKE_COMPONENT.get(provider);
 	}
 	

@@ -3,9 +3,9 @@ package de.dafuqs.spectrum.blocks.pastel_network.network;
 import com.mojang.blaze3d.vertex.PoseStack;
 import de.dafuqs.spectrum.blocks.pastel_network.PastelRenderHelper;
 import de.dafuqs.spectrum.blocks.pastel_network.nodes.PastelNodeBlockEntity;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -66,10 +66,10 @@ public class ClientPastelNetworkManager implements PastelNetworkManager {
 		return network;
 	}
 	
-	public void renderLines(WorldRenderContext context) {
+	public void renderLines(final PoseStack matrices, final Vec3 pos, MultiBufferSource.BufferSource consumers) {
 		Minecraft client = Minecraft.getInstance();
 		for (PastelNetwork network : this.networks) {
-			if (network.getWorld().dimensionType() != context.world().dimensionType()) continue;
+			if (network.getWorld().dimensionType() != client.level.dimensionType()) continue;
 			Graph<PastelNodeBlockEntity, DefaultEdge> graph = network.getGraph();
 			int color = network.getColor();
 			float[] colors = PastelRenderHelper.unpackNormalizedColor(color);
@@ -77,19 +77,16 @@ public class ClientPastelNetworkManager implements PastelNetworkManager {
 			for (DefaultEdge edge : graph.edgeSet()) {
 				PastelNodeBlockEntity source = graph.getEdgeSource(edge);
 				PastelNodeBlockEntity target = graph.getEdgeTarget(edge);
-				
-				final PoseStack matrices = context.matrixStack();
-				final Vec3 pos = context.camera().getPosition();
 				matrices.pushPose();
 				matrices.translate(-pos.x, -pos.y, -pos.z);
-				PastelRenderHelper.renderLineTo(context.matrixStack(), context.consumers(), colors, source.getBlockPos(), target.getBlockPos());
-				PastelRenderHelper.renderLineTo(context.matrixStack(), context.consumers(), colors, target.getBlockPos(), source.getBlockPos());
+				PastelRenderHelper.renderLineTo(matrices, consumers, colors, source.getBlockPos(), target.getBlockPos());
+				PastelRenderHelper.renderLineTo(matrices, consumers, colors, target.getBlockPos(), source.getBlockPos());
 				
 				if (client.options.renderDebug) {
 					Vec3 offset = Vec3.atCenterOf(target.getBlockPos()).subtract(Vec3.atLowerCornerOf(source.getBlockPos()));
 					Vec3 normalized = offset.normalize();
-					Matrix4f positionMatrix = context.matrixStack().last().pose();
-					PastelRenderHelper.renderDebugLine(context.consumers(), color, offset, normalized, positionMatrix);
+					Matrix4f positionMatrix = matrices.last().pose();
+					PastelRenderHelper.renderDebugLine(consumers, color, offset, normalized, positionMatrix);
 				}
 				matrices.popPose();
 			}

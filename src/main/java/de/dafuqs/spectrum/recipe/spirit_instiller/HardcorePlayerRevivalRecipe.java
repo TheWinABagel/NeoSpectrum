@@ -5,7 +5,7 @@ import com.mojang.authlib.GameProfile;
 import de.dafuqs.matchbooks.recipe.IngredientStack;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.blocks.spirit_instiller.SpiritInstillerBlockEntity;
-import de.dafuqs.spectrum.cca.HardcoreDeathComponent;
+import de.dafuqs.spectrum.cca.hardcore_death.HardcoreDeathComponent;
 import de.dafuqs.spectrum.recipe.EmptyRecipeSerializer;
 import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.core.RegistryAccess;

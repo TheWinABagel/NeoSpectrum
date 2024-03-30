@@ -2,6 +2,7 @@ package de.dafuqs.spectrum.items.trinkets;
 
 import de.dafuqs.spectrum.api.item.AzureDikeItem;
 import dev.emi.trinkets.api.SlotReference;
+import net.minecraft.world.item.Item;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.network.chat.Component;
@@ -15,7 +16,7 @@ import java.util.List;
 
 public abstract class AzureDikeTrinketItem extends SpectrumTrinketItem implements AzureDikeItem {
 	
-	public AzureDikeTrinketItem(Properties settings) {
+	public AzureDikeTrinketItem(Item.Properties settings) {
 		super(settings, UNLOCK_IDENTIFIER);
 	}
 	

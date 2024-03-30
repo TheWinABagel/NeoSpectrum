@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.recipe.RecipeUtils;
-import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -19,7 +18,7 @@ import net.minecraft.world.level.block.Blocks;
 
 import java.util.*;
 
-public class CrystalApothecarySimulationsDataLoader extends SimpleJsonResourceReloadListener implements IdentifiableResourceReloadListener {
+public class CrystalApothecarySimulationsDataLoader extends SimpleJsonResourceReloadListener {
 	
 	public static final String ID = "crystal_apothecary_simulations";
 	public static final CrystalApothecarySimulationsDataLoader INSTANCE = new CrystalApothecarySimulationsDataLoader();
@@ -69,11 +68,6 @@ public class CrystalApothecarySimulationsDataLoader extends SimpleJsonResourceRe
 			
 			COMPENSATIONS.put(buddingBlock, new SimulatedBlockGrowthEntry(validNeighbors, ticksForCompensationLootPerValidNeighbor, compensatedStack));
 		});
-	}
-	
-	@Override
-	public ResourceLocation getFabricId() {
-		return SpectrumCommon.locate(ID);
 	}
 	
 }

@@ -1,4 +1,4 @@
-package de.dafuqs.spectrum.cca;
+package de.dafuqs.spectrum.cca.last_kill;
 
 import de.dafuqs.spectrum.SpectrumCommon;
 import dev.onyxstudios.cca.api.v3.component.Component;

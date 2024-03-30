@@ -1,6 +1,7 @@
 package de.dafuqs.spectrum.items.trinkets;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
@@ -13,7 +14,7 @@ public class PuffCircletItem extends AzureDikeTrinketItem {
 	public static final float PROJECTILE_DEFLECTION_COST = 2;
 	public static final float FALL_DAMAGE_NEGATING_COST = 2;
 
-	public PuffCircletItem(Properties settings) {
+	public PuffCircletItem(Item.Properties settings) {
 		super(settings);
 	}
 

@@ -21,7 +21,7 @@ public abstract class SpectrumTrinketItem extends TrinketItem {
 	
 	private final ResourceLocation unlockIdentifier;
 	
-	public SpectrumTrinketItem(Properties settings, ResourceLocation unlockIdentifier) {
+	public SpectrumTrinketItem(Item.Properties settings, ResourceLocation unlockIdentifier) {
 		super(settings);
 		this.unlockIdentifier = unlockIdentifier;
 	}

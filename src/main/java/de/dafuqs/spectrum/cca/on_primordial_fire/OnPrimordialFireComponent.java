@@ -1,4 +1,4 @@
-package de.dafuqs.spectrum.cca;
+package de.dafuqs.spectrum.cca.on_primordial_fire;
 
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
-public class OnPrimordialFireComponent implements AutoSyncedComponent, ServerTickingComponent, ClientTickingComponent {
+public class OnPrimordialFireComponent { //todoforge should sync, should tick on both client and server
 
 	// 1% of max health as damage every tick as a base.
 	public static final float BASE_PERCENT_DAMAGE = 0.01F;

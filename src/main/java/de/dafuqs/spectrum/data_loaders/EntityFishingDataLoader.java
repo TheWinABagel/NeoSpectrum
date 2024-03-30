@@ -7,7 +7,6 @@ import com.google.gson.JsonObject;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.api.predicate.entity.EntityFishingPredicate;
 import de.dafuqs.spectrum.helpers.NbtHelper;
-import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -25,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class EntityFishingDataLoader extends SimpleJsonResourceReloadListener implements IdentifiableResourceReloadListener {
+public class EntityFishingDataLoader extends SimpleJsonResourceReloadListener {
 	
 	public static final String ID = "entity_fishing";
 	public static final EntityFishingDataLoader INSTANCE = new EntityFishingDataLoader();
@@ -81,12 +80,7 @@ public class EntityFishingDataLoader extends SimpleJsonResourceReloadListener im
 			));
 		});
 	}
-	
-	@Override
-	public ResourceLocation getFabricId() {
-		return SpectrumCommon.locate(ID);
-	}
-	
+
 	public static Optional<EntityFishingEntity> tryCatchEntity(ServerLevel world, BlockPos pos, int bigCatchLevel) {
 		for (EntityFishingEntry entry : ENTITY_FISHING_ENTRIES) {
 			if (entry.predicate.test(world, pos)) {

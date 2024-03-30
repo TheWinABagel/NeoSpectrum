@@ -4,9 +4,6 @@ import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.api.energy.color.InkColor;
 import de.dafuqs.spectrum.helpers.Support;
-import dev.emi.trinkets.api.SlotReference;
-import dev.emi.trinkets.api.TrinketComponent;
-import dev.emi.trinkets.api.TrinketsApi;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.ChatFormatting;
@@ -17,7 +14,11 @@ import net.minecraft.util.Tuple;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.common.util.LazyOptional;
 import org.jetbrains.annotations.NotNull;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotResult;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 
 import java.util.List;
 import java.util.Optional;
@@ -144,12 +145,12 @@ public interface InkPowered {
 			}
 		}
 		
-		// trinket slots
-		Optional<TrinketComponent> optionalTrinketComponent = TrinketsApi.getTrinketComponent(player);
-		if (optionalTrinketComponent.isPresent()) {
-			List<Tuple<SlotReference, ItemStack>> trinketInkStorages = optionalTrinketComponent.get().getEquipped(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
-			for (Tuple<SlotReference, ItemStack> trinketEnergyStorageStack : trinketInkStorages) {
-				amount -= tryDrainEnergy(trinketEnergyStorageStack.getB(), color, amount, true);
+		// curios slots
+		Optional<ICuriosItemHandler> optionalCuriosComponent = CuriosApi.getCuriosInventory(player).resolve();
+		if (optionalCuriosComponent.isPresent()) {
+			List<SlotResult> curiosInkStorages = optionalCuriosComponent.get().findCurios(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
+			for (SlotResult curiosEnergyStorageStack : curiosInkStorages) {
+				amount -= tryDrainEnergy(curiosEnergyStorageStack.stack(), color, amount, true);
 				if (amount <= 0) {
 					return true;
 				}
@@ -182,11 +183,11 @@ public interface InkPowered {
 		}
 		
 		// trinket slot
-		Optional<TrinketComponent> optionalTrinketComponent = TrinketsApi.getTrinketComponent(player);
+		Optional<ICuriosItemHandler> optionalTrinketComponent = CuriosApi.getCuriosInventory(player).resolve();
 		if (optionalTrinketComponent.isPresent()) {
-			List<Tuple<SlotReference, ItemStack>> trinketInkStorages = optionalTrinketComponent.get().getEquipped(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
-			for (Tuple<SlotReference, ItemStack> trinketEnergyStorageStack : trinketInkStorages) {
-				available += tryGetEnergy(trinketEnergyStorageStack.getB(), color);
+			List<SlotResult> trinketInkStorages = optionalTrinketComponent.get().findCurios(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
+			for (SlotResult curiosEnergyStorageStack : trinketInkStorages) {
+				available += tryGetEnergy(curiosEnergyStorageStack.stack(), color);
 			}
 		}
 		
@@ -213,13 +214,12 @@ public interface InkPowered {
 				return true;
 			}
 		}
-		
 		// trinket slot
-		Optional<TrinketComponent> optionalTrinketComponent = TrinketsApi.getTrinketComponent(player);
+		Optional<ICuriosItemHandler> optionalTrinketComponent = CuriosApi.getCuriosInventory(player).resolve();
 		if (optionalTrinketComponent.isPresent()) {
-			List<Tuple<SlotReference, ItemStack>> trinketInkStorages = optionalTrinketComponent.get().getEquipped(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
-			for (Tuple<SlotReference, ItemStack> trinketEnergyStorageStack : trinketInkStorages) {
-				amount -= tryGetEnergy(trinketEnergyStorageStack.getB(), color);
+			List<SlotResult> trinketInkStorages = optionalTrinketComponent.get().findCurios(itemStack -> itemStack.getItem() instanceof InkStorageItem<?>);
+			for (SlotResult curiosEnergyStorageStack : trinketInkStorages) {
+				amount -= tryGetEnergy(curiosEnergyStorageStack.stack(), color);
 				if (amount <= 0) {
 					return true;
 				}

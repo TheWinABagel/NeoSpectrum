@@ -3,7 +3,7 @@ package de.dafuqs.spectrum.items.trinkets;
 import com.google.common.collect.Multimap;
 import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
 import de.dafuqs.spectrum.SpectrumCommon;
-import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
+import de.dafuqs.spectrum.cca.on_primordial_fire.OnPrimordialFireComponent;
 import dev.emi.trinkets.api.SlotReference;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;

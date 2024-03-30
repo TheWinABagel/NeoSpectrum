@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.mixin;
 
-import de.dafuqs.spectrum.cca.LastKillComponent;
+import de.dafuqs.spectrum.cca.last_kill.LastKillComponent;
 import de.dafuqs.spectrum.enchantments.InexorableEnchantment;
 import de.dafuqs.spectrum.registries.SpectrumEnchantments;
 import de.dafuqs.spectrum.registries.SpectrumStatusEffects;

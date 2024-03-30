@@ -79,6 +79,7 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.ItemAttributeModifierEvent;
 import net.minecraftforge.event.TagsUpdatedEvent;
@@ -143,6 +144,7 @@ public class SpectrumCommon{
 	public SpectrumCommon() {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 		bus.addListener(this::init);
+		MinecraftForge.EVENT_BUS.register(this);
 	}
 
 	@SubscribeEvent

@@ -1,7 +1,7 @@
 package de.dafuqs.spectrum.explosion.modifier;
 
 import de.dafuqs.spectrum.blocks.PrimordialFireBlock;
-import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
+import de.dafuqs.spectrum.cca.on_primordial_fire.OnPrimordialFireComponent;
 import de.dafuqs.spectrum.explosion.ExplosionModifierType;
 import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
 import net.minecraft.core.BlockPos;

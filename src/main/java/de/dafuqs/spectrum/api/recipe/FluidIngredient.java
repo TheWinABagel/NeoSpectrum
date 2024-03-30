@@ -13,6 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,14 +115,14 @@ public class FluidIngredient {
     }
 
     @SuppressWarnings("UnstableApiUsage")
-    public boolean test(@NotNull FluidVariant variant) {
+    public boolean test(@NotNull FluidStack variant) {
         Objects.requireNonNull(variant);
         return test(variant.getFluid());
     }
 
     public static @NotNull FluidIngredient fromIdentifier(@Nullable ResourceLocation id, boolean isTag) {
         if (isTag) {
-            Optional<TagKey<Fluid>> tag = RegistryHelper.tryGetTagKey(BuiltInRegistries.FLUID, id);
+            Optional<TagKey<Fluid>> tag = RegistryHelper.tryGetTagKey(ForgeRegistries.FLUIDS, id);
             if (tag.isEmpty()) return FluidIngredient.EMPTY;
             else return FluidIngredient.of(tag.get());
         } else {

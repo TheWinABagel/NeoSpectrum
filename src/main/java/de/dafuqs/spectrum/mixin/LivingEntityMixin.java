@@ -9,7 +9,7 @@ import de.dafuqs.spectrum.api.item.ArmorWithHitEffect;
 import de.dafuqs.spectrum.api.item.SplitDamageItem;
 import de.dafuqs.spectrum.api.status_effect.StackableStatusEffect;
 import de.dafuqs.spectrum.blocks.memory.MemoryItem;
-import de.dafuqs.spectrum.cca.EverpromiseRibbonComponent;
+import de.dafuqs.spectrum.cca.everpromise_ribbon.DefaultEverpromiseRibbonCapability;
 import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
 import de.dafuqs.spectrum.enchantments.DisarmingEnchantment;
 import de.dafuqs.spectrum.enchantments.InexorableEnchantment;
@@ -360,7 +360,7 @@ public abstract class LivingEntityMixin {
 	protected void drop(DamageSource source, CallbackInfo ci) {
 		LivingEntity thisEntity = (LivingEntity) (Object) this;
 
-		if (EverpromiseRibbonComponent.hasRibbon(thisEntity)) {
+		if (DefaultEverpromiseRibbonCapability.hasRibbon(thisEntity)) {
 			ItemStack memoryStack = MemoryItem.getMemoryForEntity(thisEntity);
 			MemoryItem.setTicksToManifest(memoryStack, 20);
 			MemoryItem.setSpawnAsAdult(memoryStack, true);

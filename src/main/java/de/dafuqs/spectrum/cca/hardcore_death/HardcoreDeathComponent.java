@@ -1,4 +1,4 @@
-package de.dafuqs.spectrum.cca;
+package de.dafuqs.spectrum.cca.hardcore_death;
 
 import com.mojang.authlib.GameProfile;
 import de.dafuqs.spectrum.SpectrumCommon;

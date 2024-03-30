@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.mixin.client;
 
-import de.dafuqs.spectrum.cca.HardcoreDeathComponent;
+import de.dafuqs.spectrum.cca.hardcore_death.HardcoreDeathComponent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.Minecraft;

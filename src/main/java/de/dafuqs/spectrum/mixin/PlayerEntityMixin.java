@@ -8,7 +8,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
 import de.dafuqs.spectrum.api.entity.PlayerEntityAccessor;
 import de.dafuqs.spectrum.api.item.ExperienceStorageItem;
-import de.dafuqs.spectrum.cca.LastKillComponent;
+import de.dafuqs.spectrum.cca.last_kill.LastKillComponent;
 import de.dafuqs.spectrum.enchantments.ImprovedCriticalEnchantment;
 import de.dafuqs.spectrum.entity.entity.SpectrumFishingBobberEntity;
 import de.dafuqs.spectrum.helpers.SpectrumEnchantmentHelper;

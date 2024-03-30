@@ -35,17 +35,9 @@ import de.dafuqs.spectrum.render.HudRenderers;
 import de.dafuqs.spectrum.render.SkyLerper;
 import de.dafuqs.spectrum.render.capes.WorthinessChecker;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.fabricmc.api.ClientModInitializer;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
-import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -68,18 +60,28 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.client.event.*;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.jetbrains.annotations.NotNull;
 import oshi.util.tuples.Triplet;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
 import static de.dafuqs.spectrum.SpectrumCommon.*;
 
-public class SpectrumClient implements ClientModInitializer, RevealingCallback, ClientAdvancementPacketCallback {
+@Mod.EventBusSubscriber(value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD, modid = MOD_ID)
+public class SpectrumClient implements RevealingCallback, ClientAdvancementPacketCallback {
 
 	@OnlyIn(Dist.CLIENT)
 	public static final SkyLerper skyLerper = new SkyLerper();
@@ -88,12 +90,15 @@ public class SpectrumClient implements ClientModInitializer, RevealingCallback, 
 	// initial impl
 	public static final ObjectOpenHashSet<ModelResourceLocation> CUSTOM_ITEM_MODELS = new ObjectOpenHashSet<>();
 
-	@Override
-	public void onInitializeClient() {
+	@SubscribeEvent
+	public void setup(FMLClientSetupEvent e) {
+		IEventBus forgeBus = MinecraftForge.EVENT_BUS;
+		IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 		logInfo("Starting Client Startup");
 
 		logInfo("Registering Model Layers...");
-		SpectrumModelLayers.register();
+
+		modBus.addListener(SpectrumModelLayers::register);
 
 		logInfo("Setting up Block Rendering...");
 		SpectrumBlocks.registerClient();
@@ -115,16 +120,6 @@ public class SpectrumClient implements ClientModInitializer, RevealingCallback, 
 		logInfo("Setting up Entity Renderers...");
 		SpectrumEntityRenderers.registerClient();
 
-		logInfo("Setting up Item Renderers...");
-		ModelLoadingPlugin.register((ctx) -> {
-			ctx.modifyModelAfterBake().register((orig, c) -> {
-				ResourceLocation id = c.id();
-				if(id instanceof ModelResourceLocation mid && CUSTOM_ITEM_MODELS.contains(mid)) {
-					return new DynamicRenderModel(orig);
-				}
-				return orig;
-			});
-		});
 		registerCustomItemRenderer("bottomless_bundle", SpectrumItems.BOTTOMLESS_BUNDLE, BottomlessBundleItem.Renderer::new);
 		registerCustomItemRenderer("omni_accelerator", SpectrumItems.OMNI_ACCELERATOR, OmniAcceleratorItem.Renderer::new);
 
@@ -134,7 +129,7 @@ public class SpectrumClient implements ClientModInitializer, RevealingCallback, 
 		SpectrumParticleFactories.register();
 
 		logInfo("Registering Overlays...");
-		HudRenderers.register();
+		forgeBus.addListener(HudRenderers::register);
 
 		logInfo("Registering Item Tooltips...");
 		SpectrumTooltipComponents.registerTooltipComponents();
@@ -146,29 +141,9 @@ public class SpectrumClient implements ClientModInitializer, RevealingCallback, 
 		logInfo("Registering Dimension Effects...");
 		SpectrumDimensions.registerClient();
 
-		logInfo("Registering Event Listeners...");
-		ClientLifecycleEvents.CLIENT_STARTED.register(minecraftClient -> SpectrumColorProviders.registerClient());
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> Pastel.clearClientInstance());
-
-		ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
-			if (!foodEffectsTooltipsModLoaded && stack.isEdible()) {
-				if (BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals(SpectrumCommon.MOD_ID)) {
-					TooltipHelper.addFoodComponentEffectTooltip(stack, lines);
-				}
-			}
-			if (stack.is(SpectrumItemTags.COMING_SOON_TOOLTIP)) {
-				lines.add(Component.translatable("spectrum.tooltip.coming_soon").withStyle(ChatFormatting.RED));
-			}
-		});
-
 		if (CONFIG.AddItemTooltips) {
 			SpectrumTooltips.register();
 		}
-
-		WorldRenderEvents.START.register(context -> HudRenderers.clearItemStackOverlay());
-		WorldRenderEvents.AFTER_ENTITIES.register(context -> ((ExtendedParticleManager) Minecraft.getInstance().particleEngine).render(context.matrixStack(), context.consumers(), context.camera(), context.tickDelta()));
-		WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> Pastel.getClientInstance().renderLines(context));
-		WorldRenderEvents.BLOCK_OUTLINE.register(this::renderExtendedBlockOutline);
 
 		if (ModList.get().isLoaded("ears")) {
 			logInfo("Registering Ears Compat...");
@@ -180,8 +155,6 @@ public class SpectrumClient implements ClientModInitializer, RevealingCallback, 
 			IdwtialsimmoedmCompat.register();
 		}
 
-		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(ParticleSpawnerParticlesDataLoader.INSTANCE);
-
 		logInfo("Registering Armor Renderers...");
 		SpectrumArmorRenderers.register();
 		WorthinessChecker.init();
@@ -189,7 +162,61 @@ public class SpectrumClient implements ClientModInitializer, RevealingCallback, 
 		RevealingCallback.register(this);
 		ClientAdvancementPacketCallback.registerCallback(this);
 
+		SpectrumColorProviders.registerClient();
+
 		logInfo("Client startup completed!");
+	}
+
+	@SubscribeEvent
+	public void clientReloaders(RegisterClientReloadListenersEvent e) {
+		e.registerReloadListener(ParticleSpawnerParticlesDataLoader.INSTANCE);
+	}
+
+	@SubscribeEvent
+	public void addCustomModels(ModelEvent.ModifyBakingResult e) {
+		logInfo("Setting up Item Renderers...");
+		var models = e.getModels();
+		for (ModelResourceLocation id : CUSTOM_ITEM_MODELS) {
+			var old = models.get(id);
+			models.replace(id, new DynamicRenderModel(old));
+		}
+	}
+
+	@SubscribeEvent
+	public void clearClient(ClientPlayerNetworkEvent.LoggingOut e) {
+		Pastel.clearClientInstance();
+	}
+
+	@SubscribeEvent
+	public void modifyTooltips(ItemTooltipEvent e) {
+		ItemStack stack = e.getItemStack();
+		if (!foodEffectsTooltipsModLoaded && stack.isEdible()) {
+			if (BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals(SpectrumCommon.MOD_ID)) {
+				TooltipHelper.addFoodComponentEffectTooltip(stack, e.getToolTip());
+			}
+		}
+		if (stack.is(SpectrumItemTags.COMING_SOON_TOOLTIP)) {
+			e.getToolTip().add(Component.translatable("spectrum.tooltip.coming_soon").withStyle(ChatFormatting.RED));
+		}
+	}
+
+	@SubscribeEvent
+	public void render(RenderLevelStageEvent e) { //todoforge no idea if this needs to be multiple listeners, am still rendering noob
+		if (e.getStage().equals(RenderLevelStageEvent.Stage.AFTER_SKY)) {
+			HudRenderers.clearItemStackOverlay();
+		}
+		if (e.getStage().equals(RenderLevelStageEvent.Stage.AFTER_ENTITIES)) {
+			((ExtendedParticleManager) Minecraft.getInstance().particleEngine).render(e.getPoseStack(), Minecraft.getInstance().renderBuffers().bufferSource(), e.getCamera(), e.getRenderTick());
+		}
+		if (e.getStage().equals(RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS)) {
+			Pastel.getClientInstance().renderLines(e.getPoseStack(), e.getCamera().getPosition(), Minecraft.getInstance().renderBuffers().bufferSource());
+		}
+	}
+
+	@SubscribeEvent
+	public void renderBlockOutline(RenderHighlightEvent.Block e) {
+		this.renderExtendedBlockOutline(e.getPoseStack(), e.getCamera(), e.getTarget());
+
 	}
 
 	private void registerCustomItemRenderer(String id, Item item, Supplier<DynamicItemRenderer> renderer) {
@@ -197,20 +224,21 @@ public class SpectrumClient implements ClientModInitializer, RevealingCallback, 
 		DynamicItemRenderer.RENDERERS.put(item, renderer.get());
 	}
 
-	private boolean renderExtendedBlockOutline(WorldRenderContext context, WorldRenderContext.BlockOutlineContext hitResult) {
+	private boolean renderExtendedBlockOutline(PoseStack pose, Camera camera, BlockHitResult blockHitResult) {
 		boolean shouldCancel = false;
 		Minecraft client = Minecraft.getInstance();
-		if (client.player != null && context.blockOutlines()) {
+		if (client.player != null) {
 			for (ItemStack handStack : client.player.getHandSlots()) {
 				Item handItem = handStack.getItem();
+				Vec3 cameraPos = camera.getPosition();
 				if (handItem instanceof ConstructorsStaffItem) {
-					if (hitResult != null && client.hitResult instanceof BlockHitResult blockHitResult) {
-						shouldCancel = renderPlacementStaffOutline(context.matrixStack(), context.camera(), hitResult.cameraX(), hitResult.cameraY(), hitResult.cameraZ(), context.consumers(), blockHitResult);
+					if (blockHitResult != null) {
+						shouldCancel = renderPlacementStaffOutline(pose, camera, cameraPos.x, cameraPos.y, cameraPos.z, Minecraft.getInstance().renderBuffers().bufferSource(), blockHitResult);
 					}
 					break;
 				} else if (handItem instanceof ExchangeStaffItem) {
-					if (hitResult != null) {
-						shouldCancel = renderExchangeStaffOutline(context.matrixStack(), context.camera(), hitResult.cameraX(), hitResult.cameraY(), hitResult.cameraZ(), context.consumers(), handStack, hitResult);
+					if (blockHitResult != null) {
+						shouldCancel = renderExchangeStaffOutline(pose, camera, cameraPos.x, cameraPos.y, cameraPos.z, Minecraft.getInstance().renderBuffers().bufferSource(), handStack, blockHitResult);
 					}
 					break;
 				}
@@ -291,15 +319,15 @@ public class SpectrumClient implements ClientModInitializer, RevealingCallback, 
 		return false;
 	}
 
-	private boolean renderExchangeStaffOutline(PoseStack matrices, Camera camera, double d, double e, double f, MultiBufferSource consumers, ItemStack exchangeStaffItemStack, WorldRenderContext.BlockOutlineContext hitResult) {
+	private boolean renderExchangeStaffOutline(PoseStack matrices, Camera camera, double d, double e, double f, MultiBufferSource consumers, ItemStack exchangeStaffItemStack, BlockHitResult hitResult) {
 		Minecraft client = Minecraft.getInstance();
 		ClientLevel world = client.level;
-		BlockPos lookingAtPos = hitResult.blockPos();
-		BlockState lookingAtState = hitResult.blockState();
-
 		LocalPlayer player = client.player;
 
 		if (player == null || world == null) return false;
+
+		BlockPos lookingAtPos = hitResult.getBlockPos();
+		BlockState lookingAtState = world.getBlockState(lookingAtPos);
 
 		if (player.getMainHandItem().getItem() instanceof BuildingStaffItem staff && (player.isCreative() || staff.canInteractWith(lookingAtState, world, lookingAtPos, player))) {
 			Block lookingAtBlock = lookingAtState.getBlock();

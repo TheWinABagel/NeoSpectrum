@@ -2,16 +2,17 @@ package de.dafuqs.spectrum.render;
 
 import com.mojang.blaze3d.platform.Window;
 import de.dafuqs.spectrum.SpectrumCommon;
-import de.dafuqs.spectrum.cca.azure_dike.AzureDikeComponent;
+import de.dafuqs.spectrum.cca.azure_dike.AzureDikeCapability;
 import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.client.event.RenderGuiEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 @OnlyIn(Dist.CLIENT)
 public class HudRenderers {
@@ -22,21 +23,21 @@ public class HudRenderers {
 	private static ItemStack itemStackToRender;
 	private static int amount;
 	private static boolean missingInk;
-	
-	public static void register() {
-		// That one is on Patchouli. ty <3
-		HudRenderCallback.EVENT.register((drawContext, tickDelta) -> renderSelectedStaffStack(drawContext));
+
+	@SubscribeEvent
+	public static void register(RenderGuiEvent.Post e) {
+		renderSelectedStaffStack(e.getGuiGraphics());
 	}
-	
+
 	private static final int SPECTRUM$_DIKE_HEARTS_PER_ROW = 10;
 	private static final int SPECTRUM$_DIKE_PER_ROW = 20;
 	
 	// this is run in InGameHudMixin instead to render behind the chat and other gui elements
 	public static void renderAzureDike(GuiGraphics drawContext, Player cameraPlayer, int x, int y) {
-		AzureDikeComponent azureDikeComponent = AzureDikeProvider.getAzureDikeComponent(cameraPlayer);
-		int maxCharges = azureDikeComponent.getMaxProtection();
+		AzureDikeCapability azureDikeCapability = AzureDikeProvider.getAzureDikeComponent(cameraPlayer);
+		int maxCharges = azureDikeCapability.getMaxProtection();
 		if (maxCharges > 0) {
-			int charges = azureDikeComponent.getProtection();
+			int charges = azureDikeCapability.getProtection();
 
 			boolean blink = false;
 			if (cameraPlayer.getLastDamageSource() != null && cameraPlayer.level() != null) {
@@ -51,7 +52,7 @@ public class HudRenderers {
 			boolean renderBackRow = filledDikeCanisters > 0;
 			boolean hasArmor = cameraPlayer.getArmorValue() > 0;
 
-			var texture = AzureDikeComponent.AZURE_DIKE_BAR_TEXTURE;
+			var texture = AzureDikeCapability.AZURE_DIKE_BAR_TEXTURE;
 			
 			x += SpectrumCommon.CONFIG.AzureDikeHudOffsetX;
 			y += hasArmor ? SpectrumCommon.CONFIG.AzureDikeHudOffsetYWithArmor : SpectrumCommon.CONFIG.AzureDikeHudOffsetY;

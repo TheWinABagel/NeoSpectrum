@@ -2,7 +2,6 @@ package de.dafuqs.spectrum.blocks.bottomless_bundle;
 
 import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
 import de.dafuqs.spectrum.registries.SpectrumItems;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -77,13 +76,13 @@ public class BottomlessBundleBlock extends BaseEntityBlock {
 				});
 			} else {
 				world.getBlockEntity(pos, SpectrumBlockEntities.BOTTOMLESS_BUNDLE).ifPresent((bottomlessBundleBlockEntity) -> {
-					long amount = bottomlessBundleBlockEntity.storage.amount;
+					ItemStack stack = bottomlessBundleBlockEntity.storage.getStackInSlot(0);
+					long amount = stack.getCount();
 					if (amount == 0) {
 						player.displayClientMessage(Component.translatable("item.spectrum.bottomless_bundle.tooltip.empty"), true);
 					} else {
-						ItemVariant variant = bottomlessBundleBlockEntity.storage.variant;
 						long maxStoredAmount = BottomlessBundleItem.getMaxStoredAmount(bottomlessBundleBlockEntity.bottomlessBundleStack);
-						player.displayClientMessage(Component.translatable("item.spectrum.bottomless_bundle.tooltip.count_of", amount, maxStoredAmount).append(variant.getItem().getDescription()), true);
+						player.displayClientMessage(Component.translatable("item.spectrum.bottomless_bundle.tooltip.count_of", amount, maxStoredAmount).append(stack.getItem().getDescription()), true);
 					}
 				});
 			}
@@ -117,8 +116,8 @@ public class BottomlessBundleBlock extends BaseEntityBlock {
     public int getAnalogOutputSignal(BlockState state, Level world, BlockPos pos) {
 		BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity instanceof BottomlessBundleBlockEntity bottomlessBundleBlockEntity) {
-			float curr = bottomlessBundleBlockEntity.storage.amount;
-			float max = bottomlessBundleBlockEntity.storage.getCapacity();
+			float curr = bottomlessBundleBlockEntity.storage.getStackInSlot(0).getCount();
+			float max = bottomlessBundleBlockEntity.storage.getSlotLimit(0);
 			return Mth.floor(curr / max * 14.0f) + curr > 0 ? 1 : 0;
 		}
 		

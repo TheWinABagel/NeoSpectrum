@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.mixin;
 
-import de.dafuqs.spectrum.cca.HardcoreDeathComponent;
+import de.dafuqs.spectrum.cca.hardcore_death.HardcoreDeathComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerPlayerGameMode;
 import net.minecraft.world.level.GameType;
