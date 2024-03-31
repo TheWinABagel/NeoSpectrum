@@ -1,17 +1,17 @@
 package de.dafuqs.spectrum.cca.azure_dike;
 
 import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.cca.BaseSpectrumCapability;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraftforge.common.util.INBTSerializable;
 
-public interface AzureDikeCapability extends INBTSerializable<CompoundTag> { //todoforge should tick on server
+public interface AzureDikeCapability extends BaseSpectrumCapability { //todoforge should tick on server
 	
 	ResourceLocation AZURE_DIKE_BAR_TEXTURE = SpectrumCommon.locate("textures/gui/azure_dike_overlay.png");
-	ResourceLocation AZURE_DIKE_ID = SpectrumCommon.locate("azure_dike");
+	ResourceLocation ID = SpectrumCommon.locate("azure_dike");
 
-	void setEntity(LivingEntity entity);
 
 	int getProtection();
 	

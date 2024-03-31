@@ -2,7 +2,7 @@ package de.dafuqs.spectrum.commands;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import de.dafuqs.spectrum.cca.on_primordial_fire.OnPrimordialFireComponent;
+import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.EntityArgument;

@@ -4,7 +4,6 @@ import de.dafuqs.spectrum.api.item.ExtendedEnchantable;
 import de.dafuqs.spectrum.enchantments.SpectrumEnchantment;
 import de.dafuqs.spectrum.registries.SpectrumItemTags;
 import de.dafuqs.spectrum.registries.SpectrumItems;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -15,6 +14,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.EnchantmentInstance;
+import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -76,7 +76,7 @@ public class SpectrumEnchantmentHelper {
 			nbtCompound.put(nbtString, new ListTag());
 		}
 		
-		ResourceLocation enchantmentIdentifier = BuiltInRegistries.ENCHANTMENT.getKey(enchantment);
+		ResourceLocation enchantmentIdentifier = ForgeRegistries.ENCHANTMENTS.getKey(enchantment);
 		ListTag nbtList = nbtCompound.getList(nbtString, Tag.TAG_COMPOUND);
 		for (int i = 0; i < nbtList.size(); i++) {
 			CompoundTag enchantmentCompound = nbtList.getCompound(i);
@@ -208,7 +208,7 @@ public class SpectrumEnchantmentHelper {
 
 		List<ResourceLocation> enchantIDs = new ArrayList<>();
 		for(Enchantment enchantment : enchantments) {
-			enchantIDs.add(BuiltInRegistries.ENCHANTMENT.getKey(enchantment));
+			enchantIDs.add(ForgeRegistries.ENCHANTMENTS.getKey(enchantment));
 		}
 
 		int removals = 0;
@@ -241,7 +241,7 @@ public class SpectrumEnchantmentHelper {
 	
 	public static <T extends Item & ExtendedEnchantable> ItemStack getMaxEnchantedStack(@NotNull T item) {
 		ItemStack itemStack = item.getDefaultInstance();
-		for (Enchantment enchantment : BuiltInRegistries.ENCHANTMENT.stream().toList()) {
+		for (Enchantment enchantment : ForgeRegistries.ENCHANTMENTS.getValues()) {
 			if (item.acceptsEnchantment(enchantment)) {
 				int maxLevel = enchantment.getMaxLevel();
 				itemStack = addOrUpgradeEnchantment(itemStack, enchantment, maxLevel, true, true).getB();
@@ -251,7 +251,7 @@ public class SpectrumEnchantmentHelper {
 	}
 	
 	public static int getUsableLevel(SpectrumEnchantment enchantment, ItemStack itemStack, Entity entity) {
-		int level = EnchantmentHelper.getItemEnchantmentLevel(enchantment, itemStack);
+		int level = itemStack.getEnchantmentLevel(enchantment);
 		if (level > 0 && !enchantment.canEntityUse(entity)) {
 			level = 0;
 		}

@@ -14,6 +14,7 @@ import de.dafuqs.spectrum.blocks.gemstone.SpectrumBuddingBlock;
 import de.dafuqs.spectrum.enchantments.SpectrumEnchantment;
 import de.dafuqs.spectrum.items.PigmentItem;
 import de.dafuqs.spectrum.items.trinkets.SpectrumTrinketItem;
+import de.dafuqs.spectrum.mixin.accessors.LootTableAccessor;
 import de.dafuqs.spectrum.recipe.GatedSpectrumRecipe;
 import de.dafuqs.spectrum.recipe.anvil_crushing.AnvilCrushingRecipe;
 import de.dafuqs.spectrum.recipe.enchanter.EnchanterRecipe;
@@ -22,7 +23,6 @@ import de.dafuqs.spectrum.recipe.pedestal.BuiltinGemstoneColor;
 import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipe;
 import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipeTier;
 import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.mininglevel.v1.FabricMineableTags;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.Criterion;
 import net.minecraft.advancements.CriterionTriggerInstance;
@@ -126,8 +126,8 @@ public class SanityCommand {
 						SpectrumCommon.logWarning("[SANITY: Loot Tables] Block " + registryKey.location() + " has a non-existent loot table");
 					} else {
 						LootTable lootTable = source.getLevel().getServer().getLootData().getLootTable(lootTableID);
-						LootPool[] lootPools = lootTable.pools;
-						if (lootPools.length == 0) {
+						List<LootPool> lootPools = ((LootTableAccessor) lootTable).getPools();
+						if (lootPools.isEmpty()) {
 							SpectrumCommon.logWarning("[SANITY: Loot Tables] Block " + registryKey.location() + " has an empty loot table");
 						}
 					}

@@ -22,12 +22,6 @@
   "icon": "assets/spectrum/icon.png",
   "environment": "*",
   "entrypoints": {
-    "main": [
-      "de.dafuqs.spectrum.SpectrumCommon"
-    ],
-    "client": [
-      "de.dafuqs.spectrum.SpectrumClient"
-    ],
     "preLaunch": [],
     "modmenu": [
       "de.dafuqs.spectrum.config.ModMenuConfig"
@@ -40,9 +34,6 @@
     ],
     "emi": [
       "de.dafuqs.spectrum.compat.emi.SpectrumEmiPlugin"
-    ],
-    "cardinal-components": [
-      "de.dafuqs.spectrum.cca.SpectrumCapabilities"
     ]
   },
   "accessWidener": "spectrum.accesswidener",

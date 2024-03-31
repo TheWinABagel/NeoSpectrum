@@ -9,7 +9,7 @@ import de.dafuqs.spectrum.api.item.ArmorWithHitEffect;
 import de.dafuqs.spectrum.api.item.SplitDamageItem;
 import de.dafuqs.spectrum.api.status_effect.StackableStatusEffect;
 import de.dafuqs.spectrum.blocks.memory.MemoryItem;
-import de.dafuqs.spectrum.cca.everpromise_ribbon.DefaultEverpromiseRibbonCapability;
+import de.dafuqs.spectrum.cca.EverpromiseRibbonCapability;
 import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
 import de.dafuqs.spectrum.enchantments.DisarmingEnchantment;
 import de.dafuqs.spectrum.enchantments.InexorableEnchantment;
@@ -22,9 +22,6 @@ import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.particle.VectorPattern;
 import de.dafuqs.spectrum.registries.*;
 import de.dafuqs.spectrum.status_effects.EffectProlongingStatusEffect;
-import dev.emi.trinkets.api.SlotReference;
-import dev.emi.trinkets.api.TrinketComponent;
-import dev.emi.trinkets.api.TrinketsApi;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -360,7 +357,7 @@ public abstract class LivingEntityMixin {
 	protected void drop(DamageSource source, CallbackInfo ci) {
 		LivingEntity thisEntity = (LivingEntity) (Object) this;
 
-		if (DefaultEverpromiseRibbonCapability.hasRibbon(thisEntity)) {
+		if (EverpromiseRibbonCapability.hasRibbon(thisEntity)) {
 			ItemStack memoryStack = MemoryItem.getMemoryForEntity(thisEntity);
 			MemoryItem.setTicksToManifest(memoryStack, 20);
 			MemoryItem.setSpawnAsAdult(memoryStack, true);

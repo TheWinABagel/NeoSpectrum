@@ -6,10 +6,12 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 
 
 public class DumpRegistriesCommand {
@@ -19,7 +21,7 @@ public class DumpRegistriesCommand {
 	}
 
 	private static int execute(CommandSourceStack source) {
-		File directory = FabricLoader.getInstance().getGameDir().resolve("registry_dump").toFile();
+		File directory = FMLPaths.getOrCreateGameRelativePath(Path.of("registry_dump")).toFile();
 
 		source.registryAccess().registries().forEach(entry -> {
 			File file = new File(directory, entry.key().location().toString().replace(":", "-") + ".txt");

@@ -2,8 +2,10 @@ package de.dafuqs.spectrum.render;
 
 import com.mojang.blaze3d.platform.Window;
 import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.cca.CapabilityHelper;
 import de.dafuqs.spectrum.cca.azure_dike.AzureDikeCapability;
 import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
+import de.dafuqs.spectrum.cca.azure_dike.DefaultAzureDikeCapability;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.Minecraft;
@@ -34,7 +36,9 @@ public class HudRenderers {
 	
 	// this is run in InGameHudMixin instead to render behind the chat and other gui elements
 	public static void renderAzureDike(GuiGraphics drawContext, Player cameraPlayer, int x, int y) {
-		AzureDikeCapability azureDikeCapability = AzureDikeProvider.getAzureDikeComponent(cameraPlayer);
+
+		AzureDikeCapability azureDikeCapability = CapabilityHelper.getComponent(cameraPlayer, DefaultAzureDikeCapability.AZURE_DIKE_CAPABILITY);
+		if (azureDikeCapability == null) return;
 		int maxCharges = azureDikeCapability.getMaxProtection();
 		if (maxCharges > 0) {
 			int charges = azureDikeCapability.getProtection();

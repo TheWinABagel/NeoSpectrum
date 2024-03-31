@@ -13,11 +13,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotResult;
+import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class SpectrumTrinketItem extends TrinketItem {
+public abstract class SpectrumTrinketItem extends Item implements ICurioItem {
 	
 	private final ResourceLocation unlockIdentifier;
 	
@@ -33,9 +37,12 @@ public abstract class SpectrumTrinketItem extends TrinketItem {
 		return false;
 	}
 	
-	public static boolean hasEquipped(LivingEntity entity, Item item) {
-		Optional<TrinketComponent> trinketComponent = TrinketsApi.getTrinketComponent(entity);
-		return trinketComponent.map(component -> component.isEquipped(item)).orElse(false);
+	public static boolean hasEquipped(LivingEntity entity, Item item) { //todoforge does this math right idk its 3 am
+		var curiosInv = CuriosApi.getCuriosInventory(entity).resolve();
+		List<SlotResult> testt = curiosInv.map(iCuriosItemHandler -> iCuriosItemHandler.findCurios(item)).orElseGet(ArrayList::new);
+		return !testt.isEmpty();
+//		Optional<TrinketComponent> trinketComponent = TrinketsApi.getTrinketComponent(entity);
+//		return trinketComponent.map(component -> component.isEquipped(item)).orElse(false);
 	}
 	
 	public static Optional<ItemStack> getFirstEquipped(LivingEntity entity, Item item) {

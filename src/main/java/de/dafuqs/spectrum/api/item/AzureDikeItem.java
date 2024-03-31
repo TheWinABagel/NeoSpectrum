@@ -1,6 +1,7 @@
 package de.dafuqs.spectrum.api.item;
 
 import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.cca.CapabilityHelper;
 import de.dafuqs.spectrum.cca.azure_dike.AzureDikeCapability;
 import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
 import de.dafuqs.spectrum.cca.azure_dike.DefaultAzureDikeCapability;
@@ -27,8 +28,7 @@ public interface AzureDikeItem {
 	default void recalculate(LivingEntity livingEntity) {
 		Level world = livingEntity.level();
 		if (!world.isClientSide) {
-			AzureDikeCapability azureDikeCapability = AzureDikeProvider.AZURE_DIKE_COMPONENT.get(livingEntity);
-			
+			AzureDikeCapability azureDikeCapability = CapabilityHelper.getComponent(livingEntity, DefaultAzureDikeCapability.AZURE_DIKE_CAPABILITY);
 			Optional<ICuriosItemHandler> trinketComponent = CuriosApi.getCuriosInventory(livingEntity).resolve();
 			if (trinketComponent.isPresent()) {
 				int maxProtection = 0;

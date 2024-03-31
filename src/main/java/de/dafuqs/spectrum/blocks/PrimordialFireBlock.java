@@ -1,7 +1,7 @@
 package de.dafuqs.spectrum.blocks;
 
 import com.google.common.collect.ImmutableMap;
-import de.dafuqs.spectrum.cca.on_primordial_fire.OnPrimordialFireComponent;
+import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
 import de.dafuqs.spectrum.compat.claims.GenericClaimModsCompat;
 import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.recipe.primordial_fire_burning.PrimordialFireBurningRecipe;

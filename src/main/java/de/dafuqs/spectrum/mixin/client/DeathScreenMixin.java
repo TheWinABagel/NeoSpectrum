@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.mixin.client;
 
-import de.dafuqs.spectrum.cca.hardcore_death.HardcoreDeathComponent;
+import de.dafuqs.spectrum.cca.HardcoreDeathCapability;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.Minecraft;
@@ -15,7 +15,7 @@ public abstract class DeathScreenMixin {
 	
 	@ModifyVariable(method = "<init>", at = @At("HEAD"), ordinal = 0, argsOnly = true)
 	private static boolean spectrum$isHardcore(boolean isHardcore) {
-		if (!isHardcore && (HardcoreDeathComponent.isInHardcore(Minecraft.getInstance().player) || HardcoreDeathComponent.hasHardcoreDeath(Minecraft.getInstance().player.getGameProfile()))) {
+		if (!isHardcore && (HardcoreDeathCapability.isInHardcore(Minecraft.getInstance().player) || HardcoreDeathCapability.hasHardcoreDeath(Minecraft.getInstance().player.getGameProfile()))) {
 			return true;
 		}
 		return isHardcore;

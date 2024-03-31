@@ -116,6 +116,10 @@ dependencies {
 //	modImplementation include("com.github.emilyploszaj:step-height-entity-attribute:${project.step_height_attribute_version}")
 //	modImplementation include("com.jamieswhiteshirt:reach-entity-attributes:${project.reach_entity_attributes_version}")
 //
+	compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:${project.mixin_extras_version}"))
+	implementation(jarJar("io.github.llamalad7:mixinextras-forge:${project.mixin_extras_version}")) {
+		jarJar.ranged(it, "[${project.mixin_extras_version},)")
+	}
 //	implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:${project.mixin_extras_version}"))
 	// shipped with FAPI
 

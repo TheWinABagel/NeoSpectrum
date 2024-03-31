@@ -1,7 +1,7 @@
 package de.dafuqs.spectrum.entity.entity;
 
 import de.dafuqs.spectrum.blocks.idols.FirestarterIdolBlock;
-import de.dafuqs.spectrum.cca.on_primordial_fire.OnPrimordialFireComponent;
+import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
 import de.dafuqs.spectrum.entity.SpectrumEntityTypes;
 import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
 import net.minecraft.core.particles.ParticleTypes;

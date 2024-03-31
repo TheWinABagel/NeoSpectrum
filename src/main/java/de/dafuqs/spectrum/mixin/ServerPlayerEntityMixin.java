@@ -1,7 +1,7 @@
 package de.dafuqs.spectrum.mixin;
 
 import de.dafuqs.spectrum.SpectrumCommon;
-import de.dafuqs.spectrum.cca.hardcore_death.HardcoreDeathComponent;
+import de.dafuqs.spectrum.cca.HardcoreDeathCapability;
 import de.dafuqs.spectrum.enchantments.DisarmingEnchantment;
 import de.dafuqs.spectrum.enchantments.TreasureHunterEnchantment;
 import de.dafuqs.spectrum.helpers.SpectrumEnchantmentHelper;
@@ -46,8 +46,8 @@ public abstract class ServerPlayerEntityMixin {
 	@Inject(at = @At("TAIL"), method = "die")
 	protected void spectrum$onDeath(DamageSource source, CallbackInfo ci) {
 		ServerPlayer player = (ServerPlayer) (Object) this;
-		if (player.level().getLevelData().isHardcore() || HardcoreDeathComponent.isInHardcore(player)) {
-			HardcoreDeathComponent.addHardcoreDeath(player.getGameProfile());
+		if (player.level().getLevelData().isHardcore() || HardcoreDeathCapability.isInHardcore(player)) {
+			HardcoreDeathCapability.addHardcoreDeath(player.getGameProfile());
 		}
 	}
 	

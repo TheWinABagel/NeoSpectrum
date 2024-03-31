@@ -9,6 +9,7 @@ import de.dafuqs.spectrum.api.item_group.ItemGroupIDs;
 import de.dafuqs.spectrum.blocks.chests.CompactingChestBlockEntity;
 import de.dafuqs.spectrum.blocks.idols.FirestarterIdolBlock;
 import de.dafuqs.spectrum.blocks.pastel_network.Pastel;
+import de.dafuqs.spectrum.cca.SpectrumCapabilities;
 import de.dafuqs.spectrum.compat.SpectrumIntegrationPacks;
 import de.dafuqs.spectrum.compat.reverb.DimensionReverb;
 import de.dafuqs.spectrum.config.SpectrumConfig;
@@ -271,6 +272,9 @@ public class SpectrumCommon{
 		SpectrumResourceConditions.register();
 		logInfo("Registering Structure Pool Element Types...");
 		SpectrumStructurePoolElementTypes.register();
+
+		logInfo("Registering Capabilities...");
+		SpectrumCapabilities.initCapEvents();
 
 		//todoforge port arrowhead
 //		CrossbowShootingCallback.register((world, shooter, hand, crossbow, projectile, projectileEntity) -> {

@@ -41,6 +41,11 @@ public class DefaultAzureDikeCapability implements AzureDikeCapability {
 	}
 
 	@Override
+	public LivingEntity getEntity() {
+		return this.provider;
+	}
+
+	@Override
 	public int getProtection() {
 		return this.protection;
 	}
@@ -73,7 +78,8 @@ public class DefaultAzureDikeCapability implements AzureDikeCapability {
 			this.protection -= usedProtection;
 			
 			if (usedProtection > 0) {
-				AzureDikeProvider.AZURE_DIKE_COMPONENT.sync(provider);
+				this.sync();
+//				AzureDikeProvider.AZURE_DIKE_COMPONENT.sync(provider);
 				if (provider instanceof ServerPlayer serverPlayerEntity) {
 					SpectrumAdvancementCriteria.AZURE_DIKE_CHARGE.trigger(serverPlayerEntity, this.protection, this.rechargeDelayDefault, -usedProtection);
 				}
@@ -96,8 +102,9 @@ public class DefaultAzureDikeCapability implements AzureDikeCapability {
 		} else {
 			this.protection = Math.min(this.protection, this.maxProtection);
 		}
-		
-		AzureDikeProvider.AZURE_DIKE_COMPONENT.sync(provider);
+
+		this.sync();
+//		AzureDikeProvider.AZURE_DIKE_COMPONENT.sync(provider);
 	}
 	
 //	@Override
@@ -122,7 +129,8 @@ public class DefaultAzureDikeCapability implements AzureDikeCapability {
 			} else if (this.protection < this.maxProtection) {
 				this.protection++;
 				this.currentRechargeDelay = this.rechargeDelayDefault;
-				AzureDikeProvider.AZURE_DIKE_COMPONENT.sync(provider);
+//				AzureDikeProvider.AZURE_DIKE_COMPONENT.sync(provider);
+				this.sync();
 				if (provider instanceof ServerPlayer serverPlayerEntity) {
 					SpectrumAdvancementCriteria.AZURE_DIKE_CHARGE.trigger(serverPlayerEntity, this.protection, this.rechargeDelayDefault, 1);
 				}

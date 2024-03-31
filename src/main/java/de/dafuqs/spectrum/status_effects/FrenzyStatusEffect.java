@@ -1,7 +1,7 @@
 package de.dafuqs.spectrum.status_effects;
 
 import de.dafuqs.spectrum.api.status_effect.StackableStatusEffect;
-import de.dafuqs.spectrum.cca.last_kill.LastKillComponent;
+import de.dafuqs.spectrum.cca.LastKillComponent;
 import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.LivingEntity;

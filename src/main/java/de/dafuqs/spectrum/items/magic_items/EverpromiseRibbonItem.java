@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.items.magic_items;
 
-import de.dafuqs.spectrum.cca.everpromise_ribbon.DefaultEverpromiseRibbonCapability;
+import de.dafuqs.spectrum.cca.EverpromiseRibbonCapability;
 import de.dafuqs.spectrum.compat.claims.GenericClaimModsCompat;
 import de.dafuqs.spectrum.helpers.EntityHelper;
 import net.minecraft.ChatFormatting;
@@ -43,7 +43,7 @@ public class EverpromiseRibbonItem extends Item {
 								random.nextGaussian() * 0.02, random.nextGaussian() * 0.02, random.nextGaussian() * 0.02);
 					}
 				} else {
-					DefaultEverpromiseRibbonCapability.attachRibbon(entity);
+					EverpromiseRibbonCapability.attachRibbon(entity);
 					
 					Component newName = stack.getHoverName();
 					if (newName instanceof MutableComponent mutableText) {

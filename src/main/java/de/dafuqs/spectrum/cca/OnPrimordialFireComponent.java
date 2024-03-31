@@ -1,17 +1,15 @@
-package de.dafuqs.spectrum.cca.on_primordial_fire;
+package de.dafuqs.spectrum.cca;
 
 import de.dafuqs.spectrum.SpectrumCommon;
+import de.dafuqs.spectrum.cca.azure_dike.AzureDikeCapability;
 import de.dafuqs.spectrum.cca.azure_dike.AzureDikeProvider;
+import de.dafuqs.spectrum.cca.azure_dike.DefaultAzureDikeCapability;
 import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
 import de.dafuqs.spectrum.registries.SpectrumEntityTypeTags;
-import dev.onyxstudios.cca.api.v3.component.ComponentKey;
-import dev.onyxstudios.cca.api.v3.component.ComponentRegistry;
-import dev.onyxstudios.cca.api.v3.component.sync.AutoSyncedComponent;
-import dev.onyxstudios.cca.api.v3.component.tick.ClientTickingComponent;
-import dev.onyxstudios.cca.api.v3.component.tick.ServerTickingComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalEntityTypeTags;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -26,11 +24,18 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.item.enchantment.ProtectionEnchantment;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
+import net.minecraftforge.common.ForgeMod;
+import net.minecraftforge.common.Tags;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.CapabilityManager;
+import net.minecraftforge.common.capabilities.CapabilityToken;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-public class OnPrimordialFireComponent { //todoforge should sync, should tick on both client and server
+public class OnPrimordialFireComponent implements BaseSpectrumCapability { //todoforge should auto sync, should tick on both client and server
 
 	// 1% of max health as damage every tick as a base.
 	public static final float BASE_PERCENT_DAMAGE = 0.01F;
@@ -40,8 +45,11 @@ public class OnPrimordialFireComponent { //todoforge should sync, should tick on
 	// Per-level damage reduction added by fire prot. Caps at 50%
 	public static final float FIRE_PROT_DAMAGE_RESISTANCE = 0.05F;
 
-	public static final ComponentKey<OnPrimordialFireComponent> ON_PRIMORDIAL_FIRE_COMPONENT = ComponentRegistry.getOrCreate(SpectrumCommon.locate("on_primordial_fire"), OnPrimordialFireComponent.class);
-	
+//	public static final ComponentKey<OnPrimordialFireComponent> ON_PRIMORDIAL_FIRE_COMPONENT = ComponentRegistry.getOrCreate(SpectrumCommon.locate("on_primordial_fire"), OnPrimordialFireComponent.class);
+
+	public static final ResourceLocation ID = SpectrumCommon.locate("on_primordial_fire");
+	public static final Capability<OnPrimordialFireComponent> PRIMORDIAL_FIRE_CAPABILITY = CapabilityManager.get(new CapabilityToken<>() {});
+
 	private LivingEntity provider;
 	private long primordialFireTicks = 0;
 	
@@ -55,15 +63,26 @@ public class OnPrimordialFireComponent { //todoforge should sync, should tick on
 		this.provider = entity;
 	}
 
+	public void setEntity(LivingEntity provider) {
+		this.provider = provider;
+	}
+
 	@Override
-	public void writeToNbt(@NotNull CompoundTag tag) {
+	public LivingEntity getEntity() {
+		return this.provider;
+	}
+
+	@Override
+	public CompoundTag serializeNBT() {
+		CompoundTag tag = new CompoundTag();
 		if (this.primordialFireTicks > 0) {
 			tag.putLong("ticks", this.primordialFireTicks);
 		}
+		return tag;
 	}
-	
+
 	@Override
-	public void readFromNbt(CompoundTag tag) {
+	public void deserializeNBT(CompoundTag tag) {
 		if (tag.contains("ticks", Tag.TAG_LONG)) {
 			this.primordialFireTicks = tag.getLong("ticks");
 		} else {
@@ -72,42 +91,49 @@ public class OnPrimordialFireComponent { //todoforge should sync, should tick on
 	}
 
 	public static void setPrimordialFireTicks(LivingEntity livingEntity, int ticks) {
-		OnPrimordialFireComponent component = ON_PRIMORDIAL_FIRE_COMPONENT.get(livingEntity);
+		OnPrimordialFireComponent component = CapabilityHelper.getComponent(livingEntity, PRIMORDIAL_FIRE_CAPABILITY);
+		if (component == null) return;
 		component.primordialFireTicks = ticks;
-		ON_PRIMORDIAL_FIRE_COMPONENT.sync(component.provider);
+		component.sync();
+//		ON_PRIMORDIAL_FIRE_COMPONENT.sync(component.provider);
 	}
 
 	public static void addPrimordialFireTicks(LivingEntity livingEntity, int ticks) {
-		OnPrimordialFireComponent component = ON_PRIMORDIAL_FIRE_COMPONENT.get(livingEntity);
+		OnPrimordialFireComponent component = CapabilityHelper.getComponent(livingEntity, PRIMORDIAL_FIRE_CAPABILITY);
+		if (component == null) return;
 		ticks = ProtectionEnchantment.getFireAfterDampener(livingEntity, ticks);
 		component.primordialFireTicks += ticks;
 
-
-		ON_PRIMORDIAL_FIRE_COMPONENT.sync(component.provider);
+		component.sync();
+//		ON_PRIMORDIAL_FIRE_COMPONENT.sync(component.provider);
 	}
 	
 	public static boolean isOnPrimordialFire(LivingEntity livingEntity) {
-		OnPrimordialFireComponent component = ON_PRIMORDIAL_FIRE_COMPONENT.get(livingEntity);
+		OnPrimordialFireComponent component = CapabilityHelper.getComponent(livingEntity, PRIMORDIAL_FIRE_CAPABILITY);
+		if (component == null) return false;
 		return component.primordialFireTicks > 0;
 	}
 	
 	public static boolean putOut(LivingEntity livingEntity) {
-		OnPrimordialFireComponent component = ON_PRIMORDIAL_FIRE_COMPONENT.get(livingEntity);
+		OnPrimordialFireComponent component = CapabilityHelper.getComponent(livingEntity, PRIMORDIAL_FIRE_CAPABILITY);
+		if (component == null) return false;
 		if (component.primordialFireTicks > 0) {
 			component.primordialFireTicks = 0;
-			ON_PRIMORDIAL_FIRE_COMPONENT.sync(component.provider);
+			component.sync();
+//			ON_PRIMORDIAL_FIRE_COMPONENT.sync(component.provider);
 			return true;
 		}
 		return false;
 	}
 
-	@Override
-	public void serverTick() {
 
+	@SubscribeEvent
+	public void serverTick(TickEvent.ServerTickEvent e) {
 		//Immune creatures get spared. If we ever add any.
 		if (provider.getType().is(SpectrumEntityTypeTags.PRIMORDIAL_FIRE_IMMUNE)) {
 			primordialFireTicks = 0;
-			ON_PRIMORDIAL_FIRE_COMPONENT.sync(this.provider);
+			this.sync();
+//			ON_PRIMORDIAL_FIRE_COMPONENT.sync(this.provider);
 			return;
 		}
 
@@ -122,10 +148,11 @@ public class OnPrimordialFireComponent { //todoforge should sync, should tick on
 				provider.hurt(SpectrumDamageTypes.primordialFire(this.provider.level()), 1);
 			}
 
-			this.primordialFireTicks -= this.provider.getFluidHeight(FluidTags.WATER) > 0 ? 3 : 1;
+			this.primordialFireTicks -= this.provider.getFluidTypeHeight(ForgeMod.WATER_TYPE.get()) > 0 ? 3 : 1;
 			// was on fire, but is not any longer
 			if (this.primordialFireTicks <= 0) {
-				ON_PRIMORDIAL_FIRE_COMPONENT.sync(this.provider);
+				this.sync();
+//				ON_PRIMORDIAL_FIRE_COMPONENT.sync(this.provider);
 			}
 		}
 	}
@@ -142,7 +169,7 @@ public class OnPrimordialFireComponent { //todoforge should sync, should tick on
 
 		//Bosses have great and exceptional souls that can resist a lot more.
 		//95% less damage to them before reductions and caps
-		if (entity.getType().is(ConventionalEntityTypeTags.BOSSES))
+		if (entity.getType().is(Tags.EntityTypes.BOSSES))
 			baseDamage /= 20F;
 
         return baseDamage * getDamagePenalties(entity) * getDamageBonuses(entity);
@@ -179,7 +206,6 @@ public class OnPrimordialFireComponent { //todoforge should sync, should tick on
 		return 1F;
 	}
 
-	@Override
 	@OnlyIn(Dist.CLIENT)
 	public void clientTick() {
 		if (this.primordialFireTicks > 0) {
@@ -200,5 +226,4 @@ public class OnPrimordialFireComponent { //todoforge should sync, should tick on
 			}
 		}
 	}
-
 }
