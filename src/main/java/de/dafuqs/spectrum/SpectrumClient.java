@@ -126,7 +126,7 @@ public class SpectrumClient implements RevealingCallback, ClientAdvancementPacke
 		logInfo("Registering Server to Client Package Receivers...");
 		SpectrumS2CPacketReceiver.registerS2CReceivers();
 		logInfo("Registering Particle Factories...");
-		SpectrumParticleFactories.register();
+		modBus.addListener(SpectrumParticleFactories::register);
 
 		logInfo("Registering Overlays...");
 		forgeBus.addListener(HudRenderers::register);

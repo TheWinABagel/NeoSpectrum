@@ -3,13 +3,13 @@ package de.dafuqs.spectrum.api.recipe;
 import de.dafuqs.spectrum.progression.UnlockToastManager;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraftforge.fml.DistExecutor;
 
 public interface GatedRecipe extends Recipe<Container> {
 	
@@ -26,9 +26,7 @@ public interface GatedRecipe extends Recipe<Container> {
 	Component getMultipleUnlockToastString();
 	
 	default void registerInToastManager(RecipeType<?> recipeType, GatedRecipe gatedRecipe) {
-		if (FabricLoader.getInstance().getEnvironmentType() != EnvType.SERVER) {
-			registerInToastManagerClient(recipeType, gatedRecipe);
-		}
+		DistExecutor.safeRunWhenOn(Dist.CLIENT, () -> () -> registerInToastManagerClient(recipeType, gatedRecipe));
 	}
 	
 	@OnlyIn(Dist.CLIENT)

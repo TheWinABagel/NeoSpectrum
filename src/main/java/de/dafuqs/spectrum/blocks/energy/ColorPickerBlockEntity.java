@@ -15,7 +15,6 @@ import de.dafuqs.spectrum.recipe.ink_converting.InkConvertingRecipe;
 import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
 import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -43,7 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 import java.util.UUID;
 
-public class ColorPickerBlockEntity extends RandomizableContainerBlockEntity implements ExtendedScreenHandlerFactory, PlayerOwned, InkStorageBlockEntity<TotalCappedInkStorage> {
+public class ColorPickerBlockEntity extends RandomizableContainerBlockEntity implements PlayerOwned, InkStorageBlockEntity<TotalCappedInkStorage> {
 	
 	public static final int INVENTORY_SIZE = 2; // input & output slots
 	public static final int INPUT_SLOT_ID = 0;

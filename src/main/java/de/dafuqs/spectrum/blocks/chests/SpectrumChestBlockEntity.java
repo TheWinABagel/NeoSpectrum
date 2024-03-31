@@ -5,8 +5,6 @@ import de.dafuqs.spectrum.inventories.CompactingChestScreenHandler;
 import de.dafuqs.spectrum.inventories.RestockingChestScreenHandler;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.api.EnvironmentInterface;
-import net.fabricmc.api.EnvironmentInterfaces;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -24,10 +22,12 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.*;
 import net.minecraft.world.level.block.state.BlockState;
 
-@EnvironmentInterfaces({@EnvironmentInterface(
-		value = EnvType.CLIENT,
-		itf = LidBlockEntity.class
-)})
+//todoforge does forge have an equivalent of this?
+//@EnvironmentInterfaces({@EnvironmentInterface(
+//		value = EnvType.CLIENT,
+//		itf = LidBlockEntity.class
+//)})
+@OnlyIn(value = Dist.CLIENT, _interface = LidBlockEntity.class)
 public abstract class SpectrumChestBlockEntity extends RandomizableContainerBlockEntity implements LidBlockEntity {
 	
 	public final ContainerOpenersCounter stateManager;

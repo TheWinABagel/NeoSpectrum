@@ -3,7 +3,6 @@ package de.dafuqs.spectrum.blocks.particle_spawner;
 import de.dafuqs.spectrum.inventories.ParticleSpawnerScreenHandler;
 import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -26,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 import org.joml.Vector3i;
 
-public class ParticleSpawnerBlockEntity extends BlockEntity implements ExtendedScreenHandlerFactory {
+public class ParticleSpawnerBlockEntity extends BlockEntity {
 	
 	protected ParticleSpawnerConfiguration configuration;
 	protected boolean initialized = false;
@@ -97,14 +96,14 @@ public class ParticleSpawnerBlockEntity extends BlockEntity implements ExtendedS
 			this.initialized = true;
 		}
 	}
-	
+	//todoforge more extended screen handler stuff
 	@Nullable
-	@Override
+//	@Override
 	public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
 		return new ParticleSpawnerScreenHandler(syncId, inv, this);
 	}
 	
-	@Override
+//	@Override
 	public Component getDisplayName() {
 		return Component.translatable("block.spectrum.particle_spawner");
 	}
@@ -116,8 +115,8 @@ public class ParticleSpawnerBlockEntity extends BlockEntity implements ExtendedS
 		this.updateInClientWorld();
 		this.setChanged();
 	}
-	
-	@Override
+
+//	@Override
 	public void writeScreenOpeningData(ServerPlayer player, @NotNull FriendlyByteBuf buf) {
 		buf.writeBlockPos(this.worldPosition);
 	}

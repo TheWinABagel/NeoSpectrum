@@ -144,7 +144,7 @@ public class SpectrumCommon{
 
 	public SpectrumCommon() {
 		IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-		bus.addListener(this::init);
+//		MinecraftForge.EVENT_BUS.addListener(this::init);
 		MinecraftForge.EVENT_BUS.register(this);
 	}
 

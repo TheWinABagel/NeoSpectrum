@@ -1,6 +1,5 @@
 package de.dafuqs.spectrum.inventories;
 
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerType;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.core.Registry;
@@ -9,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraftforge.network.IContainerFactory;
 
 public class SpectrumScreenHandlerTypes {
 	
@@ -45,8 +45,8 @@ public class SpectrumScreenHandlerTypes {
 		return Registry.register(BuiltInRegistries.MENU, id, type);
 	}
 	
-	public static <T extends AbstractContainerMenu> MenuType<T> registerExtended(ResourceLocation id, ExtendedScreenHandlerType.ExtendedFactory<T> factory) {
-		MenuType<T> type = new ExtendedScreenHandlerType<>(factory);
+	public static <T extends AbstractContainerMenu> MenuType<T> registerExtended(ResourceLocation id, IContainerFactory<T> factory) {
+		MenuType<T> type = new MenuType<>(factory, FeatureFlags.DEFAULT_FLAGS);
 		return Registry.register(BuiltInRegistries.MENU, id, type);
 	}
 	

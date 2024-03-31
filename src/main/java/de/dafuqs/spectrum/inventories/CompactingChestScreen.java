@@ -4,8 +4,6 @@ import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.blocks.chests.CompactingChestBlockEntity;
 import de.dafuqs.spectrum.helpers.RenderHelper;
 import de.dafuqs.spectrum.networking.SpectrumC2SPackets;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -86,10 +84,10 @@ public class CompactingChestScreen extends AbstractContainerScreen<CompactingChe
 		}
 	}
 	
-	private void onValuesChanged() {
-		FriendlyByteBuf packetByteBuf = PacketByteBufs.create();
-		packetByteBuf.writeInt(autoCraftingMode.ordinal());
-		ClientPlayNetworking.send(SpectrumC2SPackets.CHANGE_COMPACTING_CHEST_SETTINGS_PACKET_ID, packetByteBuf);
+	private void onValuesChanged() { //todoforge packets
+//		FriendlyByteBuf packetByteBuf = PacketByteBufs.create();
+//		packetByteBuf.writeInt(autoCraftingMode.ordinal());
+//		ClientPlayNetworking.send(SpectrumC2SPackets.CHANGE_COMPACTING_CHEST_SETTINGS_PACKET_ID, packetByteBuf);
 	}
 	
 }

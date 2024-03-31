@@ -5,8 +5,6 @@ import de.dafuqs.spectrum.inventories.AutoCompactingInventory;
 import de.dafuqs.spectrum.inventories.CompactingChestScreenHandler;
 import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -26,13 +24,13 @@ import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.*;
 
-public class CompactingChestBlockEntity extends SpectrumChestBlockEntity implements ExtendedScreenHandlerFactory {
+public class CompactingChestBlockEntity extends SpectrumChestBlockEntity {
 	
-	private static final Map<AutoCompactingInventory.AutoCraftingMode, Map<ItemVariant, Optional<CraftingRecipe>>> cache = new EnumMap<>(AutoCompactingInventory.AutoCraftingMode.class);
+	private static final Map<AutoCompactingInventory.AutoCraftingMode, Map<ItemStack, Optional<CraftingRecipe>>> cache = new EnumMap<>(AutoCompactingInventory.AutoCraftingMode.class);
 	private final AutoCompactingInventory autoCompactingInventory = new AutoCompactingInventory();
 	private AutoCompactingInventory.AutoCraftingMode autoCraftingMode;
 	private CraftingRecipe lastCraftingRecipe; // cache
-	private ItemVariant lastItemVariant; // cache
+	private ItemStack lastItemVariant; // cache
 	private boolean hasToCraft;
 	
 	public CompactingChestBlockEntity(BlockPos blockPos, BlockState blockState) {
@@ -197,8 +195,8 @@ public class CompactingChestBlockEntity extends SpectrumChestBlockEntity impleme
 			int requiredItemCount = this.autoCraftingMode.getItemCount();
 			Tuple<Integer, List<ItemStack>> stackPair = InventoryHelper.getStackCountInInventory(itemStack, inventory, requiredItemCount);
 			if (stackPair.getA() >= requiredItemCount) {
-				Map<ItemVariant, Optional<CraftingRecipe>> currentCache = cache.computeIfAbsent(autoCraftingMode, mode -> new HashMap<>());
-				ItemVariant itemKey = ItemVariant.of(itemStack);
+				Map<ItemStack, Optional<CraftingRecipe>> currentCache = cache.computeIfAbsent(autoCraftingMode, mode -> new HashMap<>());
+				ItemStack itemKey = itemStack.copy();
 				
 				Optional<CraftingRecipe> recipe = currentCache.get(itemKey);
 				if (recipe != null) {
@@ -209,7 +207,7 @@ public class CompactingChestBlockEntity extends SpectrumChestBlockEntity impleme
 					return recipe;
 				}
 				
-				autoCompactingInventory.setCompacting(autoCraftingMode, itemKey.toStack());
+				autoCompactingInventory.setCompacting(autoCraftingMode, itemKey);
 				Optional<CraftingRecipe> optionalCraftingRecipe = level.getRecipeManager().getRecipeFor(RecipeType.CRAFTING, autoCompactingInventory, level);
 				if (optionalCraftingRecipe.isEmpty() || optionalCraftingRecipe.get().getResultItem(level.registryAccess()).isEmpty()) {
 					optionalCraftingRecipe = Optional.empty();
@@ -226,8 +224,8 @@ public class CompactingChestBlockEntity extends SpectrumChestBlockEntity impleme
 		return Optional.empty();
 	}
 	
-	public boolean tryCraftInInventory(NonNullList<ItemStack> inventory, CraftingRecipe craftingRecipe, ItemVariant itemVariant) {
-		ItemStack inputStack = itemVariant.toStack(this.autoCraftingMode.getItemCount());
+	public boolean tryCraftInInventory(NonNullList<ItemStack> inventory, CraftingRecipe craftingRecipe, ItemStack itemVariant) {
+		ItemStack inputStack = itemVariant.copyWithCount(this.autoCraftingMode.getItemCount());
 		List<ItemStack> remainders = InventoryHelper.removeFromInventoryWithRemainders(inputStack, this);
 		
 		boolean spaceInInventory;
@@ -275,7 +273,7 @@ public class CompactingChestBlockEntity extends SpectrumChestBlockEntity impleme
 		return new CompactingChestScreenHandler(syncId, playerInventory, this);
 	}
 	
-	@Override
+	//todoforge screen open data
 	public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buf) {
 		buf.writeBlockPos(this.worldPosition);
 		buf.writeInt(this.autoCraftingMode.ordinal());

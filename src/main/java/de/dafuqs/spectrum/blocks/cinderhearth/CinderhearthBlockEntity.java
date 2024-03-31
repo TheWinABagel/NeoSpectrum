@@ -22,7 +22,6 @@ import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
 import de.dafuqs.spectrum.registries.SpectrumItemTags;
 import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -58,7 +57,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class CinderhearthBlockEntity extends BaseContainerBlockEntity implements MultiblockCrafter, WorldlyContainer, ExtendedScreenHandlerFactory, InkStorageBlockEntity<IndividualCappedInkStorage> {
+public class CinderhearthBlockEntity extends BaseContainerBlockEntity implements MultiblockCrafter, WorldlyContainer, InkStorageBlockEntity<IndividualCappedInkStorage> {
 
 	public static final int INVENTORY_SIZE = 11;
 	public static final int INPUT_SLOT_ID = 0;
@@ -209,11 +208,13 @@ public class CinderhearthBlockEntity extends BaseContainerBlockEntity implements
 		return new CinderhearthScreenHandler(syncId, playerInventory, this.worldPosition, this.propertyDelegate);
 	}
 	
-	@Override
-	public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buf) {
-		buf.writeBlockPos(worldPosition);
-	}
-	
+//	@Override
+//	public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buf) { //todoforge hopefully not an issue
+//		buf.writeBlockPos(worldPosition);
+//	}
+
+
+
 	@Override
 	public void load(CompoundTag nbt) {
 		super.load(nbt);
@@ -461,7 +462,7 @@ public class CinderhearthBlockEntity extends BaseContainerBlockEntity implements
 		
 		boolean couldAdd = InventoryHelper.addToInventory(cinderhearth, outputs, FIRST_OUTPUT_SLOT_ID, LAST_OUTPUT_SLOT_ID + 1);
 		if (couldAdd) {
-			ItemStack remainder = inputStack.getRecipeRemainder();
+			ItemStack remainder = inputStack.getCraftingRemainingItem();
 			
 			// use up input ingredient
 			ItemStack inputStackCopy = inputStack.copy();

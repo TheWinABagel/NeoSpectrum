@@ -1,6 +1,5 @@
 package de.dafuqs.spectrum.helpers;
 
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Tuple;
@@ -79,10 +78,10 @@ public class InventoryHelper {
 		}
 	}
 	
-	public static boolean isItemCountInInventory(List<ItemStack> inventory, ItemVariant itemVariant, int maxSearchAmount) {
+	public static boolean isItemCountInInventory(List<ItemStack> inventory, ItemStack itemVariant, int maxSearchAmount) {
 		int count = 0;
 		for (ItemStack inventoryStack : inventory) {
-			if (itemVariant.matches(inventoryStack)) {
+			if (ItemStack.matches(inventoryStack, itemVariant)) {
 				count += inventoryStack.getCount();
 				if (count >= maxSearchAmount) {
 					return true;
@@ -319,7 +318,7 @@ public class InventoryHelper {
 					int currentStackCount = currentStack.getCount();
 					if (requiredIngredients.get(j).test(currentStack)) {
 						int ingredientCount = requiredIngredientAmounts.get(j);
-						ItemStack remainder = currentStack.getRecipeRemainder();
+						ItemStack remainder = currentStack.getCraftingRemainingItem();
 						if (currentStackCount >= ingredientCount) {
 							if (!remainder.isEmpty()) {
 								remainder.setCount(requiredIngredientAmounts.get(j));
@@ -354,7 +353,7 @@ public class InventoryHelper {
 		for (int i = 0; i < inventory.getContainerSize(); i++) {
 			ItemStack currentStack = inventory.getItem(i);
 			if (ItemStack.isSameItemSameTags(currentStack, removeItemStack)) {
-				ItemStack remainder = currentStack.getRecipeRemainder();
+				ItemStack remainder = currentStack.getCraftingRemainingItem();
 				
 				int amountAbleToDecrement = Math.min(currentStack.getCount(), removeItemStackCount);
 				currentStack.shrink(amountAbleToDecrement);

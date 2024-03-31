@@ -42,9 +42,17 @@ public class CraftingParticle extends TextureSheetParticle {
 	public static class Factory implements ParticleProvider<SimpleParticleType> {
 
 		private final SpriteSet spriteProvider;
+		private float red, green, blue;
 
 		public Factory(SpriteSet spriteProvider) {
 			this.spriteProvider = spriteProvider;
+		}
+
+		public Factory setColor(float red, float green, float blue) {
+			this.red = red;
+			this.green = green;
+			this.blue = blue;
+			return this;
 		}
 		
 		@Override
@@ -52,6 +60,9 @@ public class CraftingParticle extends TextureSheetParticle {
 			CraftingParticle craftingParticle = new CraftingParticle(clientWorld, x, y, z, velocityX, velocityY, velocityZ);
 			craftingParticle.setLifetime((int) (8.0D / (clientWorld.random.nextDouble() * 0.8D + 0.2D)));
 			craftingParticle.pickSprite(this.spriteProvider);
+			if (this.red != 0 || this.green != 0 || this.blue != 0) {
+				craftingParticle.setColor(this.red, this.green, this.blue);
+			}
 			return craftingParticle;
 		}
 	}

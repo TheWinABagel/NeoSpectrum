@@ -51,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.stream.IntStream;
 
-public class BlackHoleChestBlockEntity extends SpectrumChestBlockEntity implements ExtendedScreenHandlerFactory, WorldlyContainer, EventQueue.Callback<Object> {
+public class BlackHoleChestBlockEntity extends SpectrumChestBlockEntity implements WorldlyContainer, EventQueue.Callback<Object> {
 	
 	public static final int INVENTORY_SIZE = 28;
 	public static final int ITEM_FILTER_SLOT_COUNT = 5;

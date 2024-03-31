@@ -3,7 +3,6 @@ package de.dafuqs.spectrum.particle;
 import com.mojang.serialization.Codec;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.particle.effect.*;
-import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.minecraft.core.Registry;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleType;
@@ -193,7 +192,7 @@ public class SpectrumParticleTypes {
 	
 	// Simple particles
 	private static SimpleParticleType register(String name, boolean alwaysShow) {
-		return Registry.register(BuiltInRegistries.PARTICLE_TYPE, SpectrumCommon.locate(name), FabricParticleTypes.simple(alwaysShow));
+		return Registry.register(BuiltInRegistries.PARTICLE_TYPE, SpectrumCommon.locate(name), new SimpleParticleType(alwaysShow));
 	}
 	
 	// complex particles
