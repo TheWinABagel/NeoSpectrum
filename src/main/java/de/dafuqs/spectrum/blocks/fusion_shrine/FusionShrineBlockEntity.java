@@ -13,10 +13,8 @@ import de.dafuqs.spectrum.recipe.fusion_shrine.FusionShrineRecipe;
 import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
 import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.base.SingleVariantStorage;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -36,6 +34,13 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidType;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,31 +60,50 @@ public class FusionShrineBlockEntity extends InWorldInteractionBlockEntity imple
 
     private boolean inventoryChanged = true;
 
-    public final SingleVariantStorage<FluidVariant> fluidStorage = new SingleVariantStorage<>() {
+	protected FluidTank fluidStorage = new FluidTank(FluidType.BUCKET_VOLUME) {
 		@Override
-		protected FluidVariant getBlankVariant() {
-			return FluidVariant.blank();
+		protected void onContentsChanged() {
+			super.onContentsChanged();
+			setLightForFluid(level, worldPosition, this.fluid.getFluid());
+			inventoryChanged();
+			setChanged();
 		}
-	
-		@Override
-		protected long getCapacity(FluidVariant variant) {
-			return FluidConstants.BUCKET;
-		}
+	};
 
-        @Override
-        protected void onFinalCommit() {
-            super.onFinalCommit();
-            setLightForFluid(level, worldPosition, this.variant.getFluid());
-            inventoryChanged();
-            setChanged();
-        }
-    };
+	private final LazyOptional<IFluidHandler> fluidStorageHolder = LazyOptional.of(() -> fluidStorage);
+
+//    public final SingleVariantStorage<FluidVariant> fluidStorage = new SingleVariantStorage<>() {
+//		@Override
+//		protected FluidVariant getBlankVariant() {
+//			return FluidVariant.blank();
+//		}
+//
+//		@Override
+//		protected long getCapacity(FluidVariant variant) {
+//			return FluidConstants.BUCKET;
+//		}
+//
+//        @Override
+//        protected void onFinalCommit() {
+//            super.onFinalCommit();
+//            setLightForFluid(level, worldPosition, this.variant.getFluid());
+//            inventoryChanged();
+//            setChanged();
+//        }
+//    };
 
     public FusionShrineBlockEntity(BlockPos pos, BlockState state) {
         super(SpectrumBlockEntities.FUSION_SHRINE, pos, state, INVENTORY_SIZE);
     }
 
-    public static void clientTick(@NotNull Level world, BlockPos blockPos, BlockState blockState, FusionShrineBlockEntity fusionShrineBlockEntity) {
+	@Override
+	public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+		if (cap == ForgeCapabilities.FLUID_HANDLER)
+			return fluidStorageHolder.cast();
+		return super.getCapability(cap, side);
+	}
+
+	public static void clientTick(@NotNull Level world, BlockPos blockPos, BlockState blockState, FusionShrineBlockEntity fusionShrineBlockEntity) {
         if (!fusionShrineBlockEntity.isEmpty()) {
             int randomSlot = world.getRandom().nextInt(fusionShrineBlockEntity.getContainerSize());
             ItemStack randomStack = fusionShrineBlockEntity.getItem(randomSlot);
@@ -147,7 +171,7 @@ public class FusionShrineBlockEntity extends InWorldInteractionBlockEntity imple
 		}
 		
 		FusionShrineRecipe recipe = fusionShrineBlockEntity.currentRecipe;
-		if (recipe == null || !recipe.getFluidInput().equals(fusionShrineBlockEntity.fluidStorage.variant.getFluid())) {
+		if (recipe == null || !recipe.getFluidInput().equals(fusionShrineBlockEntity.fluidStorage.getFluid().getFluid())) {
 			return;
 		}
 		
@@ -217,8 +241,7 @@ public class FusionShrineBlockEntity extends InWorldInteractionBlockEntity imple
 		
 		scatterContents(world, blockPos.above(), fusionShrineBlockEntity); // drop remaining items
 		
-		fusionShrineBlockEntity.fluidStorage.variant = FluidVariant.blank();
-		fusionShrineBlockEntity.fluidStorage.amount = 0;
+		fusionShrineBlockEntity.fluidStorage.setFluid(FluidStack.EMPTY);
 		world.setBlock(blockPos, world.getBlockState(blockPos).setValue(FusionShrineBlock.LIGHT_LEVEL, 0), 3);
 		
 	}
@@ -236,8 +259,9 @@ public class FusionShrineBlockEntity extends InWorldInteractionBlockEntity imple
 	@Override
 	public void load(CompoundTag nbt) {
         super.load(nbt);
-        this.fluidStorage.variant = FluidVariant.fromNbt(nbt.getCompound("FluidVariant"));
-        this.fluidStorage.amount = nbt.getLong("FluidAmount");
+		fluidStorage.readFromNBT(nbt);
+//        this.fluidStorage.variant = FluidVariant.fromNbt(nbt.getCompound("FluidVariant"));
+//        this.fluidStorage.amount = nbt.getLong("FluidAmount");
 
         this.craftingTime = nbt.getShort("CraftingTime");
         this.craftingTimeTotal = nbt.getShort("CraftingTimeTotal");
@@ -264,8 +288,9 @@ public class FusionShrineBlockEntity extends InWorldInteractionBlockEntity imple
 	@Override
 	public void saveAdditional(CompoundTag nbt) {
         super.saveAdditional(nbt);
-        nbt.put("FluidVariant", this.fluidStorage.variant.toNbt());
-        nbt.putLong("FluidAmount", this.fluidStorage.amount);
+		fluidStorage.writeToNBT(nbt);
+//        nbt.put("FluidVariant", this.fluidStorage.variant.toNbt());
+//        nbt.putLong("FluidAmount", this.fluidStorage.amount);
         nbt.putShort("CraftingTime", (short) this.craftingTime);
         nbt.putShort("CraftingTimeTotal", (short) this.craftingTimeTotal);
         if (this.upgrades != null) {
@@ -291,11 +316,11 @@ public class FusionShrineBlockEntity extends InWorldInteractionBlockEntity imple
         }
     }
 
-    public @NotNull FluidVariant getFluidVariant() {
-        if (this.fluidStorage.amount > 0) {
-            return this.fluidStorage.variant;
+    public @NotNull FluidStack getFluidVariant() {
+        if (this.fluidStorage.getFluidAmount() > 0) {
+            return this.fluidStorage.getFluid();
         } else {
-            return FluidVariant.blank();
+            return FluidStack.EMPTY;
         }
     }
 

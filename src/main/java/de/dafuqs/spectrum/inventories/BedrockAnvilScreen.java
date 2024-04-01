@@ -5,10 +5,9 @@ import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.helpers.LoreHelper;
 import de.dafuqs.spectrum.helpers.RenderHelper;
 import de.dafuqs.spectrum.networking.SpectrumC2SPackets;
+import io.netty.buffer.Unpooled;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
@@ -141,10 +140,10 @@ public class BedrockAnvilScreen extends AbstractContainerScreen<BedrockAnvilScre
 				string = "";
 			}
 			
-			if (menu.setNewItemName(string)) {
-				FriendlyByteBuf packetByteBuf = PacketByteBufs.create();
+			if (menu.setNewItemName(string)) { //todoforge packets
+				FriendlyByteBuf packetByteBuf = new FriendlyByteBuf(Unpooled.buffer());
 				packetByteBuf.writeUtf(name);
-				ClientPlayNetworking.send(SpectrumC2SPackets.RENAME_ITEM_IN_BEDROCK_ANVIL_PACKET_ID, packetByteBuf);
+//				ClientPlayNetworking.send(SpectrumC2SPackets.RENAME_ITEM_IN_BEDROCK_ANVIL_PACKET_ID, packetByteBuf);
 			}
 		}
 	}
@@ -152,9 +151,9 @@ public class BedrockAnvilScreen extends AbstractContainerScreen<BedrockAnvilScre
 	private void onLoreChanged(String lore) {
 		menu.setNewItemLore(lore);
 		
-		FriendlyByteBuf packetByteBuf = PacketByteBufs.create();
+		FriendlyByteBuf packetByteBuf = new FriendlyByteBuf(Unpooled.buffer());
 		packetByteBuf.writeUtf(lore);
-		ClientPlayNetworking.send(SpectrumC2SPackets.ADD_LORE_IN_BEDROCK_ANVIL_PACKET_ID, packetByteBuf);
+//		ClientPlayNetworking.send(SpectrumC2SPackets.ADD_LORE_IN_BEDROCK_ANVIL_PACKET_ID, packetByteBuf);
 	}
 	
 	@Override

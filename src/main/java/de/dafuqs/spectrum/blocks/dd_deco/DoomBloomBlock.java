@@ -5,7 +5,6 @@ import de.dafuqs.spectrum.registries.SpectrumBlockTags;
 import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
 import de.dafuqs.spectrum.registries.SpectrumItems;
 import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -34,6 +33,7 @@ import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.common.ToolActions;
 import org.jetbrains.annotations.Nullable;
 
 public class DoomBloomBlock extends FlowerBlock implements BonemealableBlock, ExplosionAware {
@@ -156,7 +156,7 @@ public class DoomBloomBlock extends FlowerBlock implements BonemealableBlock, Ex
 	@Override
 	public void playerDestroy(Level world, Player player, BlockPos pos, BlockState state, @Nullable BlockEntity blockEntity, ItemStack stack) {
 		super.playerDestroy(world, player, pos, state, blockEntity, stack);
-		if (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SILK_TOUCH, stack) == 0 && !stack.is(ConventionalItemTags.SHEARS)) {
+		if (stack.getEnchantmentLevel(Enchantments.SILK_TOUCH) == 0 && !stack.canPerformAction(ToolActions.SHEARS_DIG)) {
 			explode(world, pos, state);
 		}
 	}

@@ -1,18 +1,24 @@
 package de.dafuqs.spectrum.inventories.storage;
 
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.item.base.SingleItemStorage;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
 
-public class DroppedItemStorage extends SingleItemStorage {
+public class DroppedItemStorage extends ItemStackHandler {
     public DroppedItemStorage(Item item, CompoundTag nbt) {
-        this.variant = ItemVariant.of(item, nbt);
-        this.amount = 1;
+        super(1);
+        this.stacks.set(0, new ItemStack(item, 1, nbt));
     }
 
     @Override
-    protected long getCapacity(ItemVariant variant) {
+    public int getSlotLimit(int slot) {
+        return 1;
+    }
+
+    @Override
+    protected int getStackLimit(int slot, @NotNull ItemStack stack) {
         return 1;
     }
 }

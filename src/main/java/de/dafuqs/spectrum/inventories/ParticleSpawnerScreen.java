@@ -5,12 +5,11 @@ import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.blocks.particle_spawner.ParticleSpawnerBlockEntity;
 import de.dafuqs.spectrum.blocks.particle_spawner.ParticleSpawnerConfiguration;
 import de.dafuqs.spectrum.data_loaders.ParticleSpawnerParticlesDataLoader;
+import de.dafuqs.spectrum.mixin.client.accessors.ParticleManagerAccessor;
 import de.dafuqs.spectrum.networking.SpectrumC2SPackets;
+import io.netty.buffer.Unpooled;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.mixin.client.particle.ParticleManagerAccessor;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -90,7 +89,7 @@ public class ParticleSpawnerScreen extends AbstractContainerScreen<ParticleSpawn
 	protected void init() {
 		super.init();
 
-		this.spriteAtlasTexture = ((ParticleManagerAccessor) minecraft.particleEngine).getParticleAtlasTexture();
+		this.spriteAtlasTexture = ((ParticleManagerAccessor) minecraft.particleEngine).getTextureAtlas();
 		this.displayedParticleEntries = ParticleSpawnerParticlesDataLoader.getAllUnlocked(minecraft.player);
 		
 		this.selectableWidgets.clear();
@@ -484,11 +483,11 @@ public class ParticleSpawnerScreen extends AbstractContainerScreen<ParticleSpawn
 					Float.parseFloat(gravity.getValue()),
 					collisionsEnabled
 			);
-			
-			FriendlyByteBuf packetByteBuf = PacketByteBufs.create();
+			//todoforge packets
+			FriendlyByteBuf packetByteBuf = new FriendlyByteBuf(Unpooled.buffer());
 			configuration.write(packetByteBuf);
-			
-			ClientPlayNetworking.send(SpectrumC2SPackets.CHANGE_PARTICLE_SPAWNER_SETTINGS_PACKET_ID, packetByteBuf);
+//
+//			ClientPlayNetworking.send(SpectrumC2SPackets.CHANGE_PARTICLE_SPAWNER_SETTINGS_PACKET_ID, packetByteBuf);
 		} catch (Exception e) {
 			// the text boxes currently are not able to be parsed yet.
 			// wait until everything is set up

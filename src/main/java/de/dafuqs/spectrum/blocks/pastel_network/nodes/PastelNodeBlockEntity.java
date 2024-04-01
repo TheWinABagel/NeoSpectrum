@@ -6,11 +6,6 @@ import de.dafuqs.spectrum.blocks.pastel_network.network.NodeRemovalReason;
 import de.dafuqs.spectrum.blocks.pastel_network.network.PastelNetwork;
 import de.dafuqs.spectrum.inventories.FilteringScreenHandler;
 import de.dafuqs.spectrum.registries.SpectrumBlockEntities;
-import net.fabricmc.fabric.api.lookup.v1.block.BlockApiCache;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -27,17 +22,27 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.common.capabilities.ICapabilityProvider;
+import net.minecraftforge.common.util.LazyOptional;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class PastelNodeBlockEntity extends BlockEntity implements FilterConfigurable, ExtendedScreenHandlerFactory {
+public class PastelNodeBlockEntity extends BlockEntity implements FilterConfigurable, ICapabilityProvider {
 	
 	public static final int ITEM_FILTER_COUNT = 5;
 	public static final int RANGE = 12;
@@ -48,8 +53,8 @@ public class PastelNodeBlockEntity extends BlockEntity implements FilterConfigur
 	protected boolean cachedNoRedstonePower = true;
 	
 	protected long itemCountUnderway = 0;
-	
-	protected BlockApiCache<Storage<ItemVariant>, Direction> connectedStorageCache = null;
+    protected LazyOptional<IItemHandler> connectedStorageCache = LazyOptional.empty();
+//	protected BlockApiCache<Storage<ItemVariant>, Direction> connectedStorageCache = null;
 	protected Direction cachedDirection = null;
 
     private final List<Item> filterItems;
@@ -59,16 +64,19 @@ public class PastelNodeBlockEntity extends BlockEntity implements FilterConfigur
         this.filterItems = NonNullList.withSize(ITEM_FILTER_COUNT, Items.AIR);
     }
 
-    public @Nullable Storage<ItemVariant> getConnectedStorage() {
-        if (connectedStorageCache == null) {
+    public Optional<IItemHandler> getConnectedStorage() {
+        if (!connectedStorageCache.isPresent()) {
+
             BlockState state = this.getBlockState();
             if (!(state.getBlock() instanceof PastelNodeBlock)) {
-                return null;
+                return Optional.empty();
             }
             cachedDirection = state.getValue(PastelNodeBlock.FACING);
-            connectedStorageCache = BlockApiCache.create(ItemStorage.SIDED, (ServerLevel) level, this.getBlockPos().relative(cachedDirection.getOpposite()));
+            //Unlikely to work with modded inventories, needs testing
+            connectedStorageCache = level.getBlockEntity(this.getBlockPos().relative(cachedDirection.getOpposite())).getCapability(ForgeCapabilities.ITEM_HANDLER, cachedDirection);
+//            connectedStorageCache = BlockApiCache.create(ItemStorage.SIDED, (ServerLevel) level, this.getBlockPos().relative(cachedDirection.getOpposite()));
         }
-        return connectedStorageCache.find(cachedDirection);
+        return connectedStorageCache.resolve();
     }
 
     @Override
@@ -204,7 +212,7 @@ public class PastelNodeBlockEntity extends BlockEntity implements FilterConfigur
         this.filterItems.set(slot, item);
     }
 
-    public Predicate<ItemVariant> getTransferFilterTo(PastelNodeBlockEntity other) {
+    public Predicate<ItemStack> getTransferFilterTo(PastelNodeBlockEntity other) {
         if (this.getNodeType().usesFilters() && !this.hasEmptyFilter()) {
             if (other.getNodeType().usesFilters() && !other.hasEmptyFilter()) {
                 // unionize both filters
@@ -219,18 +227,33 @@ public class PastelNodeBlockEntity extends BlockEntity implements FilterConfigur
         }
     }
 
-    @Override
+//    public Predicate<ItemVariant> getTransferFilterTo(PastelNodeBlockEntity other) {
+//        if (this.getNodeType().usesFilters() && !this.hasEmptyFilter()) {
+//            if (other.getNodeType().usesFilters() && !other.hasEmptyFilter()) {
+//                // unionize both filters
+//                return itemVariant -> filterItems.contains(itemVariant.getItem()) && other.filterItems.contains(itemVariant.getItem());
+//            } else {
+//                return itemVariant -> filterItems.contains(itemVariant.getItem());
+//            }
+//        } else if (other.getNodeType().usesFilters() && !other.hasEmptyFilter()) {
+//            return itemVariant -> other.filterItems.contains(itemVariant.getItem());
+//        } else {
+//            return itemVariant -> true;
+//        }
+//    }
+
+//todoforge extended screen handler things
     public Component getDisplayName() {
         return Component.translatable("block.spectrum.pastel_node");
     }
 
     @Nullable
-    @Override
+//    @Override
     public AbstractContainerMenu createMenu(int syncId, Inventory inv, Player player) {
         return new FilteringScreenHandler(syncId, inv, this);
     }
 
-    @Override
+//    @Override
     public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buf) {
         FilterConfigurable.writeScreenOpeningData(buf, filterItems);
     }

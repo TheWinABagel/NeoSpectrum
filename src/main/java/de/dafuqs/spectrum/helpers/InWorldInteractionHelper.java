@@ -1,6 +1,5 @@
 package de.dafuqs.spectrum.helpers;
 
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.Containers;
@@ -93,7 +92,7 @@ public class InWorldInteractionHelper {
 	
 	public static void decrementAndSpawnRemainder(ItemEntity itemEntity, int amount) {
 		ItemStack stack = itemEntity.getItem();
-		ItemStack remainder = stack.getItem() instanceof MobBucketItem ? Items.BUCKET.getDefaultInstance() : stack.getRecipeRemainder(); // looking at you, Mojang
+		ItemStack remainder = stack.getItem() instanceof MobBucketItem ? Items.BUCKET.getDefaultInstance() : stack.getCraftingRemainingItem(); // looking at you, Mojang
 		if (!remainder.isEmpty()) {
 			remainder.setCount(amount);
 			ItemEntity remainderEntity = new ItemEntity(itemEntity.level(), itemEntity.position().x(), itemEntity.position().y(), itemEntity.position().z(), remainder);
@@ -102,12 +101,12 @@ public class InWorldInteractionHelper {
 		stack.shrink(amount);
 	}
 	
-	public static void scatter(Level world, double x, double y, double z, ItemVariant variant, long amount) {
-		int maxStackSize = variant.getItem().getMaxStackSize();
+	public static void scatter(Level world, double x, double y, double z, ItemStack variant, long amount) {
+		int maxStackSize = variant.getMaxStackSize();
 
 		while (amount > 0) {
 			int stackSize = (int) Math.min(maxStackSize, amount);
-			ItemStack stack = variant.toStack(stackSize);
+			ItemStack stack = variant.copyWithCount(stackSize);
 			Containers.dropItemStack(world, x, y, z, stack);
 			amount -= stackSize;
 		}

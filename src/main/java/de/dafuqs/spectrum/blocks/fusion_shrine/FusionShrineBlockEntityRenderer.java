@@ -3,10 +3,9 @@ package de.dafuqs.spectrum.blocks.fusion_shrine;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.transfer.v1.client.fluid.FluidVariantRendering;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -15,6 +14,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider.Con
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.minecraftforge.fluids.FluidStack;
 import org.joml.Matrix4f;
 
 import java.util.ArrayList;
@@ -56,13 +57,14 @@ public class FusionShrineBlockEntityRenderer<T extends FusionShrineBlockEntity> 
 	@Override
 	public void render(FusionShrineBlockEntity fusionShrineBlockEntity, float tickDelta, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, int light, int overlay) {
 		// the fluid in the shrine
-		FluidVariant fluidVariant = fusionShrineBlockEntity.getFluidVariant();
-		if (!fluidVariant.isBlank()) {
+		FluidStack fluidVariant = fusionShrineBlockEntity.getFluidVariant();
+		if (!fluidVariant.isEmpty()) {
 			matrixStack.pushPose();
-			TextureAtlasSprite sprite = FluidVariantRendering.getSprite(fluidVariant);
-			int color = FluidVariantRendering.getColor(fluidVariant, fusionShrineBlockEntity.getLevel(), fusionShrineBlockEntity.getBlockPos());
+			//todoforge this works right
+			TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(IClientFluidTypeExtensions.of(fluidVariant.getFluid()).getStillTexture());
+			int color = IClientFluidTypeExtensions.of(fluidVariant.getFluid()).getTintColor(fluidVariant.getFluid().defaultFluidState(), fusionShrineBlockEntity.getLevel(), fusionShrineBlockEntity.getBlockPos());
 			int[] colors = unpackColor(color);
-			
+
 			renderFluid(vertexConsumerProvider.getBuffer(RenderType.translucent()), matrixStack.last().pose(), sprite, light, overlay, 0.125F, 0.875F, 0.9F, 0.125F, 0.875F, colors);
 			matrixStack.popPose();
 		}
