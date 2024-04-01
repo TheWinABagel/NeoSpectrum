@@ -19,7 +19,6 @@ import de.dafuqs.spectrum.recipe.pedestal.PedestalRecipeTier;
 import de.dafuqs.spectrum.recipe.pedestal.ShapedPedestalRecipe;
 import de.dafuqs.spectrum.recipe.pedestal.ShapelessPedestalRecipe;
 import de.dafuqs.spectrum.registries.*;
-import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
@@ -68,7 +67,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
-public class PedestalBlockEntity extends BaseContainerBlockEntity implements MultiblockCrafter, StackedContentsCompatible, WorldlyContainer, ExtendedScreenHandlerFactory {
+public class PedestalBlockEntity extends BaseContainerBlockEntity implements MultiblockCrafter, StackedContentsCompatible, WorldlyContainer {
 
 	public static final int INVENTORY_SIZE = 16; // 9 crafting, 5 gems, 1 craftingTablet, 1 output
 	public static final int FIRST_POWDER_SLOT_ID = 9;
@@ -664,7 +663,7 @@ public class PedestalBlockEntity extends BaseContainerBlockEntity implements Mul
 		for (int i = 0; i < 9; i++) {
 			ItemStack itemStack = inventory.getItem(i);
 			if (!itemStack.isEmpty()) {
-				ItemStack remainder = itemStack.getRecipeRemainder();
+				ItemStack remainder = itemStack.getCraftingRemainingItem();
 				if (remainder.isEmpty()) {
 					itemStack.shrink(1);
 				} else {
@@ -798,8 +797,9 @@ public class PedestalBlockEntity extends BaseContainerBlockEntity implements Mul
 		
 		return ItemStack.EMPTY;
 	}
-	
-	@Override
+
+//	todoforge extended screen handler stuff
+//	@Override
 	public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buf) {
 		buf.writeInt(this.pedestalVariant.getRecipeTier().ordinal());
 		buf.writeInt(this.getHighestAvailableRecipeTier().ordinal());

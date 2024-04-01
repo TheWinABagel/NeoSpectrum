@@ -32,16 +32,19 @@ import de.dafuqs.spectrum.items.tools.*;
 import de.dafuqs.spectrum.items.trinkets.*;
 import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.recipe.pedestal.BuiltinGemstoneColor;
-import net.fabricmc.fabric.api.registry.FuelRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.food.Foods;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.event.furnace.FurnaceFuelBurnTimeEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -491,7 +494,12 @@ public class SpectrumItems {
 	// Pure Clusters
 	public static final Item PURE_EMERALD = new Item(IS.of());
 	public static final Item PURE_PRISMARINE = new Item(IS.of());
-	public static final Item PURE_COAL = new Item(IS.of());
+	public static final Item PURE_COAL = new Item(IS.of()) {
+		@Override
+		public int getBurnTime(ItemStack itemStack, @Nullable RecipeType<?> recipeType) {
+			return 3200;
+		}
+	};
 	public static final Item PURE_REDSTONE = new Item(IS.of());
 	public static final Item PURE_GLOWSTONE = new Item(IS.of());
 	public static final Item PURE_LAPIS = new Item(IS.of());
@@ -924,21 +932,4 @@ public class SpectrumItems {
 		register("midnight_solution_bucket", MIDNIGHT_SOLUTION_BUCKET, DyeColor.GRAY);
 		register("dragonrot_bucket", DRAGONROT_BUCKET, DyeColor.LIGHT_GRAY);
 	}
-	
-	public static void registerFuelRegistry() {
-		FuelRegistry.INSTANCE.add(SpectrumBlocks.WET_LAVA_SPONGE.asItem(), 12800);
-
-		FuelRegistry.INSTANCE.add(SpectrumBlocks.LIGHT_LEVEL_DETECTOR.asItem(), 300);
-		FuelRegistry.INSTANCE.add(SpectrumBlocks.WEATHER_DETECTOR.asItem(), 300);
-		FuelRegistry.INSTANCE.add(SpectrumBlocks.ITEM_DETECTOR.asItem(), 300);
-		FuelRegistry.INSTANCE.add(SpectrumBlocks.PLAYER_DETECTOR.asItem(), 300);
-		FuelRegistry.INSTANCE.add(SpectrumBlocks.ENTITY_DETECTOR.asItem(), 300);
-
-		FuelRegistry.INSTANCE.add(SpectrumItems.PURE_COAL, 3200);
-		FuelRegistry.INSTANCE.add(SpectrumBlocks.PURE_COAL_BLOCK, 32000);
-
-		FuelRegistry.INSTANCE.add(SpectrumItemTags.COLORED_FENCES, 300);
-		FuelRegistry.INSTANCE.add(SpectrumItemTags.COLORED_FENCE_GATES, 300);
-	}
-	
 }

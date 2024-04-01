@@ -1,10 +1,10 @@
 package de.dafuqs.spectrum.compat.gofish;
 
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraftforge.fml.ModList;
 
 import java.util.Map;
 

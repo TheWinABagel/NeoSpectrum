@@ -4,7 +4,6 @@ import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.blocks.jade_vines.JadeVinePlantBlock;
 import de.dafuqs.spectrum.registries.SpectrumBlockTags;
 import de.dafuqs.spectrum.registries.SpectrumItems;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -29,6 +28,7 @@ import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraftforge.common.ToolActions;
 
 public class SawbladeHollyBushBlock extends BushBlock implements BonemealableBlock {
     
@@ -93,7 +93,7 @@ public class SawbladeHollyBushBlock extends BushBlock implements BonemealableBlo
         int age = state.getValue(AGE);
         
         ItemStack handStack = player.getItemInHand(hand);
-        if (canBeSheared(age) && handStack.is(ConventionalItemTags.SHEARS)) {
+        if (canBeSheared(age) && handStack.canPerformAction(ToolActions.SHEARS_HARVEST)) {
             if (!world.isClientSide) {
                 for (ItemStack stack : JadeVinePlantBlock.getHarvestedStacks(state, (ServerLevel) world, pos, world.getBlockEntity(pos), player, player.getMainHandItem(), SHEARING_LOOT_TABLE_ID)) {
                     popResource(world, pos, stack);

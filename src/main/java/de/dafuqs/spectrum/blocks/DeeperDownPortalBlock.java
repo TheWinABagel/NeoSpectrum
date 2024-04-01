@@ -5,9 +5,9 @@ import de.dafuqs.spectrum.helpers.Support;
 import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
 import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.registries.*;
+import net.minecraft.world.entity.RelativeMovement;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceKey;
@@ -147,7 +147,7 @@ public class DeeperDownPortalBlock extends Block {
 						if (entity instanceof Player) {
 							makeRoomAround(targetWorld, targetPos, 2);
 						}
-						FabricDimensions.teleport(entity, targetWorld, new PortalInfo(Vec3.atCenterOf(targetPos), Vec3.ZERO, entity.getYRot(), entity.getXRot()));
+						entity.teleportTo(targetWorld, targetPos.getX(), targetPos.getY(), targetPos.getZ(), RelativeMovement.ALL, entity.getYRot(), entity.getXRot());
 						teleportToSafePosition(targetWorld, entity, targetPos.below(), 5);
 					}
 				}
@@ -165,7 +165,8 @@ public class DeeperDownPortalBlock extends Block {
 
 						BlockPos targetPos = portalPos.above(2);
 						makeRoomAround(targetWorld, targetPos, 2);
-						FabricDimensions.teleport(entity, targetWorld, new PortalInfo(Vec3.atCenterOf(targetPos), Vec3.ZERO, entity.getYRot(), entity.getXRot()));
+
+						entity.teleportTo(targetWorld, targetPos.getX(), targetPos.getY(), targetPos.getZ(), RelativeMovement.ALL, entity.getYRot(), entity.getXRot());
 						teleportToSafePosition(targetWorld, entity, targetPos, 3);
 					}
 				}

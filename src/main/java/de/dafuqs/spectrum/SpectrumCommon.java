@@ -231,9 +231,6 @@ public class SpectrumCommon{
 		SpectrumOmniAcceleratorProjectiles.register();
 		SpectrumItemProjectileBehaviors.register();
 		
-		logInfo("Registering Items to Fuel Registry...");
-		SpectrumItems.registerFuelRegistry();
-		
 		logInfo("Registering Entities...");
 		SpectrumTrackedDataHandlerRegistry.register();
 		SpectrumEntityTypes.register();

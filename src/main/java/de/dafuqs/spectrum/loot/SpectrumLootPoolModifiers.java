@@ -6,7 +6,6 @@ import de.dafuqs.spectrum.compat.gofish.GoFishCompat;
 import de.dafuqs.spectrum.entity.type_specific_predicates.ShulkerPredicate;
 import de.dafuqs.spectrum.loot.conditions.RandomChanceWithTreasureHunterLootCondition;
 import de.dafuqs.spectrum.registries.SpectrumBlocks;
-import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
 import net.minecraft.advancements.critereon.EntityPredicate;
 import net.minecraft.advancements.critereon.EntitySubPredicate;
 import net.minecraft.advancements.critereon.FishingHookPredicate;
@@ -25,6 +24,8 @@ import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.entries.LootTableReference;
 import net.minecraft.world.level.storage.loot.predicates.LootItemEntityPropertyCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
+import net.minecraftforge.event.LootTableLoadEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -126,7 +127,7 @@ public class SpectrumLootPoolModifiers {
 		put(new ResourceLocation("spectrum:entities/lizard"), new TreasureHunterDropDefinition(SpectrumBlocks.getMobHead(SpectrumSkullBlockType.LIZARD).asItem(), 0.1F));
 		put(new ResourceLocation("spectrum:entities/eraser"), new TreasureHunterDropDefinition(SpectrumBlocks.getMobHead(SpectrumSkullBlockType.ERASER).asItem(), 0.1F));
 	}};
-	
+
 	public static void setup() {
 		LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
 			
@@ -203,26 +204,26 @@ public class SpectrumLootPoolModifiers {
 		
 		return new LootPool.Builder()
 				.setRolls(ConstantValue.exactly(1))
-				.conditionally(RandomChanceWithTreasureHunterLootCondition.builder(chance, dropItem).build())
-				.with(LootItem.lootTableItem(dropItem).build())
+				.when(RandomChanceWithTreasureHunterLootCondition.builder(chance, dropItem))
+				.add(LootItem.lootTableItem(dropItem))
 				.build();
 	}
 	
 	private static LootPool getFoxLootPool(Fox.Type foxType, Item item, float chance) {
 		return new LootPool.Builder()
 				.setRolls(ConstantValue.exactly(1))
-				.conditionally(RandomChanceWithTreasureHunterLootCondition.builder(chance, item).build())
-				.conditionally(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.Types.FOX.createPredicate(foxType)).build()).build())
-				.with(LootItem.lootTableItem(item).build())
+				.when(RandomChanceWithTreasureHunterLootCondition.builder(chance, item))
+				.when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.Types.FOX.createPredicate(foxType)).build()))
+				.add(LootItem.lootTableItem(item))
 				.build();
 	}
 	
 	private static LootPool getMooshroomLootPool(MushroomCow.MushroomType mooshroomType, Item item, float chance) {
 		return new LootPool.Builder()
 				.setRolls(ConstantValue.exactly(1))
-				.conditionally(RandomChanceWithTreasureHunterLootCondition.builder(chance, item).build())
-				.conditionally(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.Types.MOOSHROOM.createPredicate(mooshroomType)).build()).build())
-				.with(LootItem.lootTableItem(item).build())
+				.when(RandomChanceWithTreasureHunterLootCondition.builder(chance, item))
+				.when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.Types.MOOSHROOM.createPredicate(mooshroomType)).build()))
+				.add(LootItem.lootTableItem(item))
 				.build();
 	}
 	
@@ -231,36 +232,36 @@ public class SpectrumLootPoolModifiers {
 
 		return new LootPool.Builder()
 				.setRolls(ConstantValue.exactly(1))
-				.conditionally(RandomChanceWithTreasureHunterLootCondition.builder(chance, item).build())
-				.conditionally(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(ShulkerPredicate.of(c.orElse(null))).build()).build())
-				.with(LootItem.lootTableItem(item).build())
+				.when(RandomChanceWithTreasureHunterLootCondition.builder(chance, item))
+				.when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(ShulkerPredicate.of(c.orElse(null))).build()))
+				.add(LootItem.lootTableItem(item))
 				.build();
 	}
 
 	private static LootPool getAxolotlLootPool(Axolotl.Variant variant, Item item, float chance) {
 		return new LootPool.Builder()
 				.setRolls(ConstantValue.exactly(1))
-				.conditionally(RandomChanceWithTreasureHunterLootCondition.builder(chance, item).build())
-				.conditionally(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.Types.AXOLOTL.createPredicate(variant)).build()).build())
-				.with(LootItem.lootTableItem(item).build())
+				.when(RandomChanceWithTreasureHunterLootCondition.builder(chance, item))
+				.when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.Types.AXOLOTL.createPredicate(variant))))
+				.add(LootItem.lootTableItem(item))
 				.build();
 	}
 
 	private static LootPool getFrogLootPool(FrogVariant variant, Item item, float chance) {
 		return new LootPool.Builder()
 				.setRolls(ConstantValue.exactly(1))
-				.conditionally(RandomChanceWithTreasureHunterLootCondition.builder(chance, item).build())
-				.conditionally(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.variant(variant)).build()).build())
-				.with(LootItem.lootTableItem(item).build())
+				.when(RandomChanceWithTreasureHunterLootCondition.builder(chance, item))
+				.when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.variant(variant)).build()))
+				.add(LootItem.lootTableItem(item))
 				.build();
 	}
 
 	private static LootPool getParrotLootPool(Parrot.Variant variant, Item item, float chance) {
 		return new LootPool.Builder()
 				.setRolls(ConstantValue.exactly(1))
-				.conditionally(RandomChanceWithTreasureHunterLootCondition.builder(chance, item).build())
-				.conditionally(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.Types.PARROT.createPredicate(variant)).build()).build())
-				.with(LootItem.lootTableItem(item).build())
+				.when(RandomChanceWithTreasureHunterLootCondition.builder(chance, item))
+				.when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, EntityPredicate.Builder.entity().subPredicate(EntitySubPredicate.Types.PARROT.createPredicate(variant)).build()))
+				.add(LootItem.lootTableItem(item))
 				.build();
 	}
 

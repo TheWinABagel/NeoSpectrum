@@ -73,7 +73,10 @@ public class PastelNodeBlockEntity extends BlockEntity implements FilterConfigur
             }
             cachedDirection = state.getValue(PastelNodeBlock.FACING);
             //Unlikely to work with modded inventories, needs testing
-            connectedStorageCache = level.getBlockEntity(this.getBlockPos().relative(cachedDirection.getOpposite())).getCapability(ForgeCapabilities.ITEM_HANDLER, cachedDirection);
+            BlockEntity target = level.getBlockEntity(this.getBlockPos().relative(cachedDirection.getOpposite()));
+            if (target != null) {
+                connectedStorageCache = target.getCapability(ForgeCapabilities.ITEM_HANDLER, cachedDirection);
+            }
 //            connectedStorageCache = BlockApiCache.create(ItemStorage.SIDED, (ServerLevel) level, this.getBlockPos().relative(cachedDirection.getOpposite()));
         }
         return connectedStorageCache.resolve();

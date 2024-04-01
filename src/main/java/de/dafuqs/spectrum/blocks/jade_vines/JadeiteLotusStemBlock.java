@@ -2,7 +2,6 @@ package de.dafuqs.spectrum.blocks.jade_vines;
 
 import de.dafuqs.spectrum.registries.SpectrumBlocks;
 import de.dafuqs.spectrum.registries.SpectrumItems;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -27,6 +26,7 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.common.ToolActions;
 import org.jetbrains.annotations.Nullable;
 
 public class JadeiteLotusStemBlock extends BushBlock {
@@ -53,7 +53,7 @@ public class JadeiteLotusStemBlock extends BushBlock {
 	public InteractionResult use(BlockState state, Level world, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
 		var handStack = player.getItemInHand(hand);
 		
-		if (handStack.is(ConventionalItemTags.SHEARS) && state.getValue(STEM_PART) == StemComponent.BASE) {
+		if (handStack.canPerformAction(ToolActions.SHEARS_HARVEST) && state.getValue(STEM_PART) == StemComponent.BASE) {
 			BlockState newState = state.setValue(STEM_PART, StemComponent.STEM);
 			world.setBlockAndUpdate(pos, newState);
 			player.playNotifySound(SoundEvents.MOOSHROOM_SHEAR, SoundSource.BLOCKS, 1, 0.9F + player.getRandom().nextFloat() * 0.2F);

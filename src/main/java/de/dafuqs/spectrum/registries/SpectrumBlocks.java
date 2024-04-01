@@ -114,6 +114,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.projectile.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
@@ -129,6 +130,7 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Locale;
@@ -1441,6 +1443,18 @@ public class SpectrumBlocks {
 		Registry.register(BuiltInRegistries.ITEM, locate(name), blockItem);
 		ItemColors.ITEM_COLORS.registerColorMapping(blockItem, dyeColor);
 	}
+
+	public static void registerBlockWithItemBurnTime(String name, Block block, Item.Properties itemSettings, DyeColor dyeColor, int burnTime) {
+		Registry.register(BuiltInRegistries.BLOCK, locate(name), block);
+		BlockItem blockItem = new BlockItem(block, itemSettings){
+			@Override
+			public int getBurnTime(ItemStack itemStack, @Nullable RecipeType<?> recipeType) {
+				return burnTime;
+			}
+		};
+		Registry.register(BuiltInRegistries.ITEM, locate(name), blockItem);
+		ItemColors.ITEM_COLORS.registerColorMapping(blockItem, dyeColor);
+	}
 	
 	static void registerBlockWithItem(String name, Block block, BlockItem blockItem, DyeColor dyeColor) {
 		Registry.register(BuiltInRegistries.BLOCK, locate(name), block);
@@ -1744,11 +1758,11 @@ public class SpectrumBlocks {
 	}
 	
 	private static void registerRedstone(Item.Properties settings) {
-		registerBlockWithItem("light_level_detector", LIGHT_LEVEL_DETECTOR, settings, DyeColor.RED);
-		registerBlockWithItem("weather_detector", WEATHER_DETECTOR, settings, DyeColor.RED);
-		registerBlockWithItem("item_detector", ITEM_DETECTOR, settings, DyeColor.RED);
-		registerBlockWithItem("player_detector", PLAYER_DETECTOR, settings, DyeColor.RED);
-		registerBlockWithItem("entity_detector", ENTITY_DETECTOR, settings, DyeColor.RED);
+		registerBlockWithItemBurnTime("light_level_detector", LIGHT_LEVEL_DETECTOR, settings, DyeColor.RED, 300);
+		registerBlockWithItemBurnTime("weather_detector", WEATHER_DETECTOR, settings, DyeColor.RED, 300);
+		registerBlockWithItemBurnTime("item_detector", ITEM_DETECTOR, settings, DyeColor.RED, 300);
+		registerBlockWithItemBurnTime("player_detector", PLAYER_DETECTOR, settings, DyeColor.RED, 300);
+		registerBlockWithItemBurnTime("entity_detector", ENTITY_DETECTOR, settings, DyeColor.RED, 300);
 		
 		registerBlockWithItem("redstone_timer", REDSTONE_TIMER, settings, DyeColor.RED);
 		registerBlockWithItem("redstone_calculator", REDSTONE_CALCULATOR, settings, DyeColor.RED);
@@ -2334,39 +2348,39 @@ public class SpectrumBlocks {
 		registerBlockWithItem("red_pressure_plate", RED_PRESSURE_PLATE, settings, DyeColor.RED);
 		registerBlockWithItem("black_pressure_plate", BLACK_PRESSURE_PLATE, settings, DyeColor.BLACK);
 		
-		registerBlockWithItem("white_fence", WHITE_FENCE, settings, DyeColor.WHITE);
-		registerBlockWithItem("orange_fence", ORANGE_FENCE, settings, DyeColor.ORANGE);
-		registerBlockWithItem("magenta_fence", MAGENTA_FENCE, settings, DyeColor.MAGENTA);
-		registerBlockWithItem("light_blue_fence", LIGHT_BLUE_FENCE, settings, DyeColor.LIGHT_BLUE);
-		registerBlockWithItem("yellow_fence", YELLOW_FENCE, settings, DyeColor.YELLOW);
-		registerBlockWithItem("lime_fence", LIME_FENCE, settings, DyeColor.LIME);
-		registerBlockWithItem("pink_fence", PINK_FENCE, settings, DyeColor.PINK);
-		registerBlockWithItem("gray_fence", GRAY_FENCE, settings, DyeColor.GRAY);
-		registerBlockWithItem("light_gray_fence", LIGHT_GRAY_FENCE, settings, DyeColor.LIGHT_GRAY);
-		registerBlockWithItem("cyan_fence", CYAN_FENCE, settings, DyeColor.CYAN);
-		registerBlockWithItem("purple_fence", PURPLE_FENCE, settings, DyeColor.PURPLE);
-		registerBlockWithItem("blue_fence", BLUE_FENCE, settings, DyeColor.BLUE);
-		registerBlockWithItem("brown_fence", BROWN_FENCE, settings, DyeColor.BROWN);
-		registerBlockWithItem("green_fence", GREEN_FENCE, settings, DyeColor.GREEN);
-		registerBlockWithItem("red_fence", RED_FENCE, settings, DyeColor.RED);
-		registerBlockWithItem("black_fence", BLACK_FENCE, settings, DyeColor.BLACK);
+		registerBlockWithItemBurnTime("white_fence", WHITE_FENCE, settings, DyeColor.WHITE, 300);
+		registerBlockWithItemBurnTime("orange_fence", ORANGE_FENCE, settings, DyeColor.ORANGE, 300);
+		registerBlockWithItemBurnTime("magenta_fence", MAGENTA_FENCE, settings, DyeColor.MAGENTA, 300);
+		registerBlockWithItemBurnTime("light_blue_fence", LIGHT_BLUE_FENCE, settings, DyeColor.LIGHT_BLUE, 300);
+		registerBlockWithItemBurnTime("yellow_fence", YELLOW_FENCE, settings, DyeColor.YELLOW, 300);
+		registerBlockWithItemBurnTime("lime_fence", LIME_FENCE, settings, DyeColor.LIME, 300);
+		registerBlockWithItemBurnTime("pink_fence", PINK_FENCE, settings, DyeColor.PINK, 300);
+		registerBlockWithItemBurnTime("gray_fence", GRAY_FENCE, settings, DyeColor.GRAY, 300);
+		registerBlockWithItemBurnTime("light_gray_fence", LIGHT_GRAY_FENCE, settings, DyeColor.LIGHT_GRAY, 300);
+		registerBlockWithItemBurnTime("cyan_fence", CYAN_FENCE, settings, DyeColor.CYAN, 300);
+		registerBlockWithItemBurnTime("purple_fence", PURPLE_FENCE, settings, DyeColor.PURPLE, 300);
+		registerBlockWithItemBurnTime("blue_fence", BLUE_FENCE, settings, DyeColor.BLUE, 300);
+		registerBlockWithItemBurnTime("brown_fence", BROWN_FENCE, settings, DyeColor.BROWN, 300);
+		registerBlockWithItemBurnTime("green_fence", GREEN_FENCE, settings, DyeColor.GREEN, 300);
+		registerBlockWithItemBurnTime("red_fence", RED_FENCE, settings, DyeColor.RED, 300);
+		registerBlockWithItemBurnTime("black_fence", BLACK_FENCE, settings, DyeColor.BLACK, 300);
 		
-		registerBlockWithItem("white_fence_gate", WHITE_FENCE_GATE, settings, DyeColor.WHITE);
-		registerBlockWithItem("orange_fence_gate", ORANGE_FENCE_GATE, settings, DyeColor.ORANGE);
-		registerBlockWithItem("magenta_fence_gate", MAGENTA_FENCE_GATE, settings, DyeColor.MAGENTA);
-		registerBlockWithItem("light_blue_fence_gate", LIGHT_BLUE_FENCE_GATE, settings, DyeColor.LIGHT_BLUE);
-		registerBlockWithItem("yellow_fence_gate", YELLOW_FENCE_GATE, settings, DyeColor.YELLOW);
-		registerBlockWithItem("lime_fence_gate", LIME_FENCE_GATE, settings, DyeColor.LIME);
-		registerBlockWithItem("pink_fence_gate", PINK_FENCE_GATE, settings, DyeColor.PINK);
-		registerBlockWithItem("gray_fence_gate", GRAY_FENCE_GATE, settings, DyeColor.GRAY);
-		registerBlockWithItem("light_gray_fence_gate", LIGHT_GRAY_FENCE_GATE, settings, DyeColor.LIGHT_GRAY);
-		registerBlockWithItem("cyan_fence_gate", CYAN_FENCE_GATE, settings, DyeColor.CYAN);
-		registerBlockWithItem("purple_fence_gate", PURPLE_FENCE_GATE, settings, DyeColor.PURPLE);
-		registerBlockWithItem("blue_fence_gate", BLUE_FENCE_GATE, settings, DyeColor.BLUE);
-		registerBlockWithItem("brown_fence_gate", BROWN_FENCE_GATE, settings, DyeColor.BROWN);
-		registerBlockWithItem("green_fence_gate", GREEN_FENCE_GATE, settings, DyeColor.GREEN);
-		registerBlockWithItem("red_fence_gate", RED_FENCE_GATE, settings, DyeColor.RED);
-		registerBlockWithItem("black_fence_gate", BLACK_FENCE_GATE, settings, DyeColor.BLACK);
+		registerBlockWithItemBurnTime("white_fence_gate", WHITE_FENCE_GATE, settings, DyeColor.WHITE, 300);
+		registerBlockWithItemBurnTime("orange_fence_gate", ORANGE_FENCE_GATE, settings, DyeColor.ORANGE, 300);
+		registerBlockWithItemBurnTime("magenta_fence_gate", MAGENTA_FENCE_GATE, settings, DyeColor.MAGENTA, 300);
+		registerBlockWithItemBurnTime("light_blue_fence_gate", LIGHT_BLUE_FENCE_GATE, settings, DyeColor.LIGHT_BLUE, 300);
+		registerBlockWithItemBurnTime("yellow_fence_gate", YELLOW_FENCE_GATE, settings, DyeColor.YELLOW, 300);
+		registerBlockWithItemBurnTime("lime_fence_gate", LIME_FENCE_GATE, settings, DyeColor.LIME, 300);
+		registerBlockWithItemBurnTime("pink_fence_gate", PINK_FENCE_GATE, settings, DyeColor.PINK, 300);
+		registerBlockWithItemBurnTime("gray_fence_gate", GRAY_FENCE_GATE, settings, DyeColor.GRAY, 300);
+		registerBlockWithItemBurnTime("light_gray_fence_gate", LIGHT_GRAY_FENCE_GATE, settings, DyeColor.LIGHT_GRAY, 300);
+		registerBlockWithItemBurnTime("cyan_fence_gate", CYAN_FENCE_GATE, settings, DyeColor.CYAN, 300);
+		registerBlockWithItemBurnTime("purple_fence_gate", PURPLE_FENCE_GATE, settings, DyeColor.PURPLE, 300);
+		registerBlockWithItemBurnTime("blue_fence_gate", BLUE_FENCE_GATE, settings, DyeColor.BLUE, 300);
+		registerBlockWithItemBurnTime("brown_fence_gate", BROWN_FENCE_GATE, settings, DyeColor.BROWN, 300);
+		registerBlockWithItemBurnTime("green_fence_gate", GREEN_FENCE_GATE, settings, DyeColor.GREEN, 300);
+		registerBlockWithItemBurnTime("red_fence_gate", RED_FENCE_GATE, settings, DyeColor.RED, 300);
+		registerBlockWithItemBurnTime("black_fence_gate", BLACK_FENCE_GATE, settings, DyeColor.BLACK, 300);
 		
 		registerBlockWithItem("white_button", WHITE_BUTTON, settings, DyeColor.WHITE);
 		registerBlockWithItem("orange_button", ORANGE_BUTTON, settings, DyeColor.ORANGE);
@@ -2591,7 +2605,7 @@ public class SpectrumBlocks {
 	}
 	
 	private static void registerPureOreBlocks(Item.Properties settings) {
-		registerBlockWithItem("pure_coal_block", PURE_COAL_BLOCK, settings, DyeColor.BROWN);
+		registerBlockWithItemBurnTime("pure_coal_block", PURE_COAL_BLOCK, settings, DyeColor.BROWN, 32000);
 		registerBlockWithItem("pure_iron_block", PURE_IRON_BLOCK, settings, DyeColor.BROWN);
 		registerBlockWithItem("pure_gold_block", PURE_GOLD_BLOCK, settings, DyeColor.BROWN);
 		registerBlockWithItem("pure_diamond_block", PURE_DIAMOND_BLOCK, settings, DyeColor.CYAN);

@@ -2,7 +2,6 @@ package de.dafuqs.spectrum.api.recipe;
 
 import com.google.gson.JsonObject;
 import de.dafuqs.matchbooks.recipe.RegistryHelper;
-import net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -122,7 +121,7 @@ public class FluidIngredient {
 
     public static @NotNull FluidIngredient fromIdentifier(@Nullable ResourceLocation id, boolean isTag) {
         if (isTag) {
-            Optional<TagKey<Fluid>> tag = RegistryHelper.tryGetTagKey(ForgeRegistries.FLUIDS, id);
+            Optional<TagKey<Fluid>> tag = RegistryHelper.tryGetTagKeyForge(ForgeRegistries.FLUIDS, id);
             if (tag.isEmpty()) return FluidIngredient.EMPTY;
             else return FluidIngredient.of(tag.get());
         } else {

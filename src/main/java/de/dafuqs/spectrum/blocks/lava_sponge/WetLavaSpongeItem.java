@@ -10,10 +10,12 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -52,7 +54,12 @@ public class WetLavaSpongeItem extends BlockItem {
 			}
 		}
 	}
-	
+
+	@Override
+	public int getBurnTime(ItemStack itemStack, @Nullable RecipeType<?> recipeType) {
+		return 12800;
+	}
+
 	@Override
 	public void appendHoverText(ItemStack itemStack, Level world, List<Component> tooltip, TooltipFlag tooltipContext) {
 		super.appendHoverText(itemStack, world, tooltip, tooltipContext);

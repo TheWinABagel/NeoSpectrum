@@ -2,11 +2,6 @@ package de.dafuqs.spectrum.blocks.ender;
 
 import de.dafuqs.spectrum.inventories.GenericSpectrumContainerScreenHandler;
 import de.dafuqs.spectrum.inventories.ScreenBackgroundVariant;
-import net.fabricmc.fabric.api.transfer.v1.item.InventoryStorage;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemStorage;
-import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
-import net.fabricmc.fabric.api.transfer.v1.storage.Storage;
-import net.fabricmc.fabric.api.transfer.v1.storage.StorageUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.BlockSourceImpl;
 import net.minecraft.core.Direction;
@@ -30,7 +25,14 @@ import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.items.IItemHandler;
+import net.minecraftforge.items.IItemHandlerModifiable;
+import net.minecraftforge.items.ItemHandlerHelper;
+import net.minecraftforge.items.wrapper.InvWrapper;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 public class EnderDropperBlock extends DispenserBlock {
 	
@@ -104,19 +106,23 @@ public class EnderDropperBlock extends DispenserBlock {
 					ItemStack itemStack3 = BEHAVIOR.dispense(blockPointerImpl, itemStack);
 					enderDropperBlockEntity.setStack(i, itemStack3);
 				} else {
-					Storage<ItemVariant> target = ItemStorage.SIDED.find(world, pos.relative(direction), direction.getOpposite());
+					BlockEntity target = world.getBlockEntity(pos.relative(direction));
+					Optional<IItemHandler> insertedBlock = Optional.empty();
 					if (target != null) {
+						insertedBlock = target.getCapability(ForgeCapabilities.ITEM_HANDLER, direction.getOpposite()).resolve();
+					}
+//					Storage<ItemVariant> target = ItemStorage.SIDED.find(world, pos.relative(direction), direction.getOpposite());
+					if (insertedBlock.isPresent()) {
 						// getting inv will always work since .chooseNonEmptySlot() and others would fail otherwise
-						Container inv = enderDropperBlockEntity.getOwnerIfOnline().getEnderChestInventory();
-						long moved = StorageUtil.move(
-								InventoryStorage.of(inv, direction).getSlot(i),
-								target,
-								iv -> true,
-								1,
-								null
-						);
+						IItemHandlerModifiable inv = new InvWrapper(enderDropperBlockEntity.getOwnerIfOnline().getEnderChestInventory());
+						ItemStack moved = inv.getStackInSlot(i).copyWithCount(1);
+
+						ItemStack returned = ItemHandlerHelper.insertItem(insertedBlock.get(), moved, false);
 						// return without triggering fail event if successfully moved
-						if (moved == 1) return;
+						if (returned.isEmpty()) {
+							inv.getStackInSlot(i).shrink(1);
+							return;
+						}
 					}
 					world.levelEvent(LevelEvent.SOUND_DISPENSER_FAIL, pos, 0); // no room to dispense to
 				}

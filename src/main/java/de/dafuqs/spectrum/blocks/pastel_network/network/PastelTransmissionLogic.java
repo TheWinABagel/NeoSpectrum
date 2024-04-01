@@ -151,74 +151,12 @@ public class PastelTransmissionLogic {
 					}
 
 					destinationNode.addItemCountUnderway(transferrableAmount);
-//					transaction.commit();
 					return true;
 				}
 			}
-//			transaction.abort();
 
 		return false;
 	}
-
-//	private boolean transferBetween(PastelNodeBlockEntity sourceNode, IItemHandler sourceStorage, PastelNodeBlockEntity destinationNode, IItemHandler destinationStorage, TransferMode transferMode) {
-//		Predicate<ItemStack> filter = sourceNode.getTransferFilterTo(destinationNode);
-//
-//		try (Transaction transaction = Transaction.openOuter()) {
-//			for (StorageView<ItemVariant> view : sourceStorage) {
-//				if (view.isResourceBlank()) {
-//					continue;
-//				}
-//
-//				ItemVariant storedResource = view.getResource(); // Current resource
-//				if (storedResource.isBlank() || !filter.test(storedResource)) {
-//					continue;
-//				}
-//
-//				long storedAmount = view.getAmount();
-//				if (storedAmount <= 0) {
-//					continue;
-//				}
-//
-//				long transferrableAmount = MAX_TRANSFER_AMOUNT;
-//				long itemCountUnderway = destinationNode.getItemCountUnderway();
-//				transferrableAmount = (int) StorageUtil.simulateInsert(destinationStorage, storedResource, transferrableAmount + itemCountUnderway, transaction);
-//				transferrableAmount = transferrableAmount - itemCountUnderway; // prevention to not overfill the container (send more transfers when the existing ones would fill it already)
-//
-//				if (transferrableAmount <= 0) {
-//					continue;
-//				}
-//
-//				transferrableAmount = sourceStorage.extract(storedResource, transferrableAmount, transaction);
-//				if (transferrableAmount <= 0) {
-//					continue;
-//				}
-//
-//				Optional<PastelTransmission> optionalTransmission = createTransmissionOnValidPath(sourceNode, destinationNode, storedResource, transferrableAmount);
-//				if (optionalTransmission.isPresent()) {
-//					PastelTransmission transmission = optionalTransmission.get();
-//					int verticesCount = transmission.getNodePositions().size() - 1;
-//					int travelTime = TRANSFER_TICKS_PER_NODE * verticesCount;
-//					this.network.addTransmission(transmission, travelTime);
-//					SpectrumS2CPacketSender.sendPastelTransmissionParticle(this.network, travelTime, transmission);
-//
-//					if (transferMode == TransferMode.PULL) {
-//						destinationNode.markTransferred();
-//					} else if (transferMode == TransferMode.PUSH) {
-//						sourceNode.markTransferred();
-//					} else {
-//						destinationNode.markTransferred();
-//						sourceNode.markTransferred();
-//					}
-//
-//					destinationNode.addItemCountUnderway(transferrableAmount);
-//					transaction.commit();
-//					return true;
-//				}
-//			}
-//			transaction.abort();
-//		}
-//		return false;
-//	}
 	
 	public Optional<PastelTransmission> createTransmissionOnValidPath(PastelNodeBlockEntity source, PastelNodeBlockEntity destination, ItemStack variant, long amount) {
 		GraphPath<PastelNodeBlockEntity, DefaultEdge> graphPath = getPath(this.network.getGraph(), source, destination);

@@ -7,7 +7,6 @@ import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.recipe.primordial_fire_burning.PrimordialFireBurningRecipe;
 import de.dafuqs.spectrum.registries.SpectrumBlockTags;
 import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
-import net.fabricmc.fabric.api.registry.FlammableBlockRegistry;
 import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -102,12 +101,12 @@ public class PrimordialFireBlock extends BaseFireBlock {
     public BlockState getStateForPosition(BlockGetter world, BlockPos pos) {
         BlockPos blockPos = pos.below();
         BlockState blockState = world.getBlockState(blockPos);
-        if (!this.canBurn(blockState) && !blockState.isFaceSturdy(world, blockPos, Direction.UP)) {
+        if (!this.canBurm(blockState, world, pos) && !blockState.isFaceSturdy(world, blockPos, Direction.UP)) {
             BlockState blockState2 = this.defaultBlockState();
             for (Direction direction : Direction.values()) {
                 BooleanProperty booleanProperty = DIRECTION_PROPERTIES.get(direction);
                 if (booleanProperty != null) {
-                    blockState2 = blockState2.setValue(booleanProperty, this.canBurn(world.getBlockState(pos.relative(direction))));
+                    blockState2 = blockState2.setValue(booleanProperty, this.canBurm(world.getBlockState(pos.relative(direction)), world, pos, direction));
                 }
             }
     
@@ -154,7 +153,7 @@ public class PrimordialFireBlock extends BaseFireBlock {
                         if (!world.getBlockState(blockPos).isFaceSturdy(world, blockPos, Direction.UP)) {
                             world.removeBlock(pos, false);
                         }
-                        if (random.nextInt(10) == 0 && !this.canBurn(world.getBlockState(pos.below()))) {
+                        if (random.nextInt(10) == 0 && !this.canBurm(world.getBlockState(pos.below()), world, pos)) {
                             world.removeBlock(pos, false);
                             return;
                         }
@@ -196,12 +195,22 @@ public class PrimordialFireBlock extends BaseFireBlock {
         }
     }
 
-    private int getSpreadChance(BlockState state) {
-        return state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED) ? 0 : FlammableBlockRegistry.getDefaultInstance().get(state.getBlock()).getSpreadChance();
+    private int getSpreadChance(BlockState state, BlockGetter level, BlockPos pos) {
+        return state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED) ? 0 : state.getFireSpreadSpeed(level, pos, Direction.NORTH);
     }
 
-    private int getBurnChance(BlockState state) {
-        return state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED) ? 0 : FlammableBlockRegistry.getDefaultInstance().get(state.getBlock()).getBurnChance();
+    private int getBurnChance(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return state.hasProperty(BlockStateProperties.WATERLOGGED) && state.getValue(BlockStateProperties.WATERLOGGED) ? 0 : state.getFireSpreadSpeed(level, pos, direction);
+    }
+
+    private int getBurnChance(BlockState state, BlockGetter level, BlockPos pos) {
+        if (!state.hasProperty(BlockStateProperties.WATERLOGGED) || !state.getValue(BlockStateProperties.WATERLOGGED)) {
+            for (Direction direction : Direction.values()) {
+                int speed = state.getFireSpreadSpeed(level, pos, direction);
+                if (speed != 0) return speed;
+            }
+        }
+        return 0;
     }
 
     private void trySpreadingFire(Level world, BlockPos pos, int spreadFactor, RandomSource random) {
@@ -209,7 +218,7 @@ public class PrimordialFireBlock extends BaseFireBlock {
             return;
         }
     
-        int spreadChance = this.getSpreadChance(world.getBlockState(pos));
+        int spreadChance = this.getSpreadChance(world.getBlockState(pos), world, pos);
         if (random.nextInt(spreadFactor) < spreadChance) {
             BlockState currentState = world.getBlockState(pos);
             if (random.nextBoolean() ) {
@@ -229,29 +238,40 @@ public class PrimordialFireBlock extends BaseFireBlock {
     
     private boolean areBlocksAroundFlammable(BlockGetter world, BlockPos pos) {
         for (Direction direction : Direction.values()) {
-            if (this.canBurn(world.getBlockState(pos.relative(direction)))) {
+            if (this.canBurm(world.getBlockState(pos.relative(direction)), world, pos, direction)) {
                 return true;
             }
         }
         return false;
     }
 
-    private int getBurnChance(LevelReader world, BlockPos pos) {
+    private int getBurnChance(ServerLevel world, BlockPos pos) {
         if (!world.isEmptyBlock(pos)) {
             return 0;
         } else {
             int i = 0;
             for (Direction direction : Direction.values()) {
                 BlockState blockState = world.getBlockState(pos.relative(direction));
-                i = Math.max(this.getBurnChance(blockState), i);
+                i = Math.max(this.getBurnChance(blockState, world, pos), i);
             }
             return i;
         }
     }
 
+    protected boolean canBurm(BlockState state, BlockGetter level, BlockPos pos) {
+        return this.getBurnChance(state, level, pos) > 0;
+    }
+
+    protected boolean canBurm(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return this.getBurnChance(state, level, pos, direction) > 0;
+    }
+
+    @Deprecated
     @Override
     protected boolean canBurn(BlockState state) {
-        return this.getBurnChance(state) > 0;
+        //should never be called, use getBurnChance
+        //todoforge move to NeoForgeDataMaps.FLAMMABLES once 1.20.4?
+        return false;
     }
 
     @Override
@@ -277,7 +297,7 @@ public class PrimordialFireBlock extends BaseFireBlock {
         double f;
 
         if (blockState.isFaceSturdy(world, blockPos, Direction.UP)) {
-            var particle = this.canBurn(blockState) ? SpectrumParticleTypes.PRIMORDIAL_SIGNAL_SMOKE : SpectrumParticleTypes.PRIMORDIAL_COSY_SMOKE;
+            var particle = this.canBurm(blockState, world, pos, Direction.UP) ? SpectrumParticleTypes.PRIMORDIAL_SIGNAL_SMOKE : SpectrumParticleTypes.PRIMORDIAL_COSY_SMOKE;
             for(i = 0; i < 2; ++i) {
                 d = (double)pos.getX() + 0.5 + random.nextDouble() / 4.0 * (double)(random.nextBoolean() ? 1 : -1);
                 e = (double)pos.getY() + 0.15;
@@ -286,8 +306,8 @@ public class PrimordialFireBlock extends BaseFireBlock {
             }
         }
 
-        if (!this.canBurn(blockState) && !blockState.isFaceSturdy(world, blockPos, Direction.UP)) {
-            if (this.canBurn(world.getBlockState(pos.west()))) {
+        if (!this.canBurm(blockState, world, pos) && !blockState.isFaceSturdy(world, blockPos, Direction.UP)) {
+            if (this.canBurm(world.getBlockState(pos.west()), world, pos, Direction.UP)) {
                 for(i = 0; i < 2; ++i) {
                     d = (double)pos.getX() + random.nextDouble() * 0.10000000149011612;
                     e = (double)pos.getY() + random.nextDouble();
@@ -296,7 +316,7 @@ public class PrimordialFireBlock extends BaseFireBlock {
                 }
             }
 
-            if (this.canBurn(world.getBlockState(pos.east()))) {
+            if (this.canBurm(world.getBlockState(pos.east()), world, pos, Direction.EAST)) {
                 for(i = 0; i < 2; ++i) {
                     d = (double)(pos.getX() + 1) - random.nextDouble() * 0.10000000149011612;
                     e = (double)pos.getY() + random.nextDouble();
@@ -305,7 +325,7 @@ public class PrimordialFireBlock extends BaseFireBlock {
                 }
             }
 
-            if (this.canBurn(world.getBlockState(pos.north()))) {
+            if (this.canBurm(world.getBlockState(pos.north()), world, pos, Direction.NORTH)) {
                 for(i = 0; i < 2; ++i) {
                     d = (double)pos.getX() + random.nextDouble();
                     e = (double)pos.getY() + random.nextDouble();
@@ -314,7 +334,7 @@ public class PrimordialFireBlock extends BaseFireBlock {
                 }
             }
 
-            if (this.canBurn(world.getBlockState(pos.south()))) {
+            if (this.canBurm(world.getBlockState(pos.south()), world, pos, Direction.SOUTH)) {
                 for(i = 0; i < 2; ++i) {
                     d = (double)pos.getX() + random.nextDouble();
                     e = (double)pos.getY() + random.nextDouble();
@@ -323,7 +343,7 @@ public class PrimordialFireBlock extends BaseFireBlock {
                 }
             }
 
-            if (this.canBurn(world.getBlockState(pos.above()))) {
+            if (this.canBurm(world.getBlockState(pos.above()), world, pos, Direction.DOWN)) {
                 for(i = 0; i < 2; ++i) {
                     d = (double)pos.getX() + random.nextDouble();
                     e = (double)(pos.getY() + 1) - random.nextDouble() * 0.10000000149011612;
