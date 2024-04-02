@@ -6,7 +6,6 @@ import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
 import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.particle.VectorPattern;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
-import dev.emi.trinkets.api.SlotReference;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.ChatFormatting;
@@ -26,6 +25,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.HashMap;
 import java.util.List;
@@ -58,13 +58,14 @@ public class TakeOffBeltItem extends SpectrumTrinketItem implements ExtendedEnch
 		super.appendHoverText(stack, world, tooltip, context);
 		tooltip.add(Component.translatable("item.spectrum.take_off_belt.tooltip").withStyle(ChatFormatting.GRAY));
 	}
-	
+
 	@Override
-    public void tick(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		Level world = entity.level();
-		super.tick(stack, slot, entity);
-		
-		if (!world.isClientSide) {
+	public void curioTick(SlotContext slotContext, ItemStack stack) {
+		LivingEntity entity = slotContext.entity();
+		Level level = entity.level();
+		super.curioTick(slotContext, stack);
+
+		if (!level.isClientSide) {
 			if (entity.isShiftKeyDown() && entity.onGround()) {
 				if (sneakingTimes.containsKey(entity)) {
 					long sneakTicks = entity.level().getGameTime() - sneakingTimes.get(entity);
@@ -75,12 +76,12 @@ public class TakeOffBeltItem extends SpectrumTrinketItem implements ExtendedEnch
 							entity.removeEffect(MobEffects.JUMP);
 						} else {
 							int sneakTimeMod = (int) sneakTicks / CHARGE_TIME_TICKS;
-							
+
 							entity.level().playSound(null, entity.getX(), entity.getY(), entity.getZ(), SpectrumSoundEvents.BLOCK_TOPAZ_BLOCK_HIT, SoundSource.NEUTRAL, 1.0F, 1.0F);
 							for (Vec3 vec : VectorPattern.SIXTEEN.getVectors()) {
 								SpectrumS2CPacketSender.playParticleWithExactVelocity((ServerLevel) entity.level(), entity.position(), SpectrumParticleTypes.LIQUID_CRYSTAL_SPARKLE, 1, vec.scale(0.5));
 							}
-							
+
 							int powerEnchantmentLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.POWER_ARROWS, stack);
 							int featherFallingEnchantmentLevel = EnchantmentHelper.getItemEnchantmentLevel(Enchantments.FALL_PROTECTION, stack);
 							entity.addEffect(new MobEffectInstance(MobEffects.JUMP, CHARGE_TIME_TICKS, getJumpBoostAmplifier(sneakTimeMod, powerEnchantmentLevel), true, false, true));

@@ -2,8 +2,6 @@ package de.dafuqs.spectrum.entity;
 
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.entity.entity.*;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
-import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
@@ -12,6 +10,8 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.projectile.ThrowableItemProjectile;
+import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 public class SpectrumEntityTypes {
 	
@@ -46,30 +46,26 @@ public class SpectrumEntityTypes {
 	public static final EntityType<DragonTalonEntity> DRAGON_TALON = register("dragon_needle", 4, 10, true, EntityDimensions.scalable(0.5F, 0.5F), true, DragonTalonEntity::new);
 	public static final EntityType<DraconicTwinswordEntity> DRAGON_TWINSWORD = register("dragon_twinsword", 6, 2, true, EntityDimensions.scalable(0.5F, 0.5F), true, DraconicTwinswordEntity::new);
 
-	public static void register() {
-	
-	}
-	
 	public static <X extends Entity> EntityType<X> register(String name, int trackingDistance, int updateIntervalTicks, boolean alwaysUpdateVelocity, EntityDimensions size, boolean fireImmune, EntityType.EntityFactory<X> factory) {
-		FabricEntityTypeBuilder<X> builder = FabricEntityTypeBuilder.create(MobCategory.MISC, factory).trackRangeChunks(trackingDistance).trackedUpdateRate(updateIntervalTicks).forceTrackedVelocityUpdates(alwaysUpdateVelocity).dimensions(size);
+		EntityType.Builder<X> builder = EntityType.Builder.of(factory, MobCategory.MISC).clientTrackingRange(trackingDistance).updateInterval(updateIntervalTicks).setShouldReceiveVelocityUpdates(alwaysUpdateVelocity).dimensions(size);
 		if (fireImmune) {
 			builder.fireImmune();
 		}
-		return Registry.register(BuiltInRegistries.ENTITY_TYPE, SpectrumCommon.locate(name), builder.build());
+		return Registry.register(BuiltInRegistries.ENTITY_TYPE, SpectrumCommon.locate(name), builder.build(name));
 	}
 	
 	private static <T extends Entity> EntityType<T> register(String id, EntityType.Builder<T> type) {
 		return Registry.register(BuiltInRegistries.ENTITY_TYPE, SpectrumCommon.locate(id), type.build(id));
 	}
-	
-	static {
-		FabricDefaultAttributeRegistry.register(EGG_LAYING_WOOLY_PIG, EggLayingWoolyPigEntity.createEggLayingWoolyPigAttributes());
-		FabricDefaultAttributeRegistry.register(MONSTROSITY, MonstrosityEntity.createMonstrosityAttributes());
-		FabricDefaultAttributeRegistry.register(PRESERVATION_TURRET, PreservationTurretEntity.createGuardianTurretAttributes());
-		FabricDefaultAttributeRegistry.register(LIZARD, LizardEntity.createLizardAttributes());
-		FabricDefaultAttributeRegistry.register(KINDLING, KindlingEntity.createKindlingAttributes());
-		FabricDefaultAttributeRegistry.register(ERASER, EraserEntity.createEraserAttributes());
-		
+
+	@SubscribeEvent
+	public static void registerAttributes(EntityAttributeCreationEvent e) {
+		e.put(EGG_LAYING_WOOLY_PIG, EggLayingWoolyPigEntity.createEggLayingWoolyPigAttributes().build());
+		e.put(MONSTROSITY, MonstrosityEntity.createMonstrosityAttributes());
+		e.put(PRESERVATION_TURRET, PreservationTurretEntity.createGuardianTurretAttributes().build());
+		e.put(LIZARD, LizardEntity.createLizardAttributes().build());
+		e.put(KINDLING, KindlingEntity.createKindlingAttributes().build());
+		e.put(ERASER, EraserEntity.createEraserAttributes().build());
 	}
 	
 }

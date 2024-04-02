@@ -1,13 +1,12 @@
 package de.dafuqs.spectrum.entity.entity;
 
-import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.entity.SpectrumEntityTypes;
 import de.dafuqs.spectrum.mixin.accessors.ProjectileAttackGoalAccessor;
 import de.dafuqs.spectrum.registries.SpectrumItemTags;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.minecraft.advancements.CriteriaTriggers;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -51,12 +50,15 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.IForgeShearable;
+import net.minecraftforge.common.ToolActions;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.UUID;
 
-public class KindlingEntity extends Horse implements RangedAttackMob, NeutralMob {
+public class KindlingEntity extends Horse implements RangedAttackMob, NeutralMob, IForgeShearable {
 	
 	protected static final ResourceLocation CLIPPING_LOOT_TABLE = SpectrumCommon.locate("gameplay/kindling_clipping");
 	protected static final Ingredient FOOD = Ingredient.of(SpectrumItemTags.KINDLING_FOOD);
@@ -88,8 +90,8 @@ public class KindlingEntity extends Horse implements RangedAttackMob, NeutralMob
 		return Mob.createMobAttributes()
 				.add(Attributes.MAX_HEALTH, 100.0D)
 				.add(Attributes.ARMOR, 25.0D)
-				.add(Attributes.ARMOR_TOUGHNESS, 12.0D)
-				.add(AdditionalEntityAttributes.MAGIC_PROTECTION, 6.0D)
+				.add(Attributes.ARMOR_TOUGHNESS, 12.0D) //todoforge AEA
+//				.add(AdditionalEntityAttributes.MAGIC_PROTECTION, 6.0D)
 				.add(Attributes.MOVEMENT_SPEED, 0.6D)
 				.add(Attributes.ATTACK_DAMAGE, 25F)
 				.add(Attributes.ATTACK_KNOCKBACK, 1.5F)
@@ -318,19 +320,7 @@ public class KindlingEntity extends Horse implements RangedAttackMob, NeutralMob
 		
 		ItemStack handStack = player.getMainHandItem();
 		if(!this.isBaby()) {
-			if (!this.isClipped() && handStack.is(ConventionalItemTags.SHEARS)) {
-				handStack.hurtAndBreak(1, player, (p) -> p.broadcastBreakEvent(hand));
-				
-				if (!this.level().isClientSide()) {
-					setTarget(player);
-					takeRevenge(player.getUUID());
-					this.makeMad();
-					clipAndDrop();
-				}
-				
-				return InteractionResult.sidedSuccess(this.level().isClientSide());
-				
-			} else if (handStack.is(SpectrumItemTags.PEACHES) || handStack.is(SpectrumItemTags.EGGPLANTS)) {
+			if (handStack.is(SpectrumItemTags.PEACHES) || handStack.is(SpectrumItemTags.EGGPLANTS)) {
 				// 🍆 / 🍑 = 💘
 				
 				if (!this.level().isClientSide()) {
@@ -408,7 +398,18 @@ public class KindlingEntity extends Horse implements RangedAttackMob, NeutralMob
 			
 		}
 	}
-	
+
+	@Override
+	public @NotNull List<ItemStack> onSheared(@Nullable Player player, @NotNull ItemStack item, Level level, BlockPos pos, int fortune) {
+		if (!this.level().isClientSide()) {
+			setTarget(player);
+			takeRevenge(player.getUUID());
+			this.makeMad();
+		}
+
+		return getClippedStacks((ServerLevel) this.level());
+	}
+
 	private void clipAndDrop() {
 		setClipped(4800); // 4 minutes
 		for (ItemStack clippedStack : getClippedStacks((ServerLevel) this.level())) {
@@ -439,7 +440,12 @@ public class KindlingEntity extends Horse implements RangedAttackMob, NeutralMob
 		
 		this.level().addFreshEntity(kindlingCoughEntity);
 	}
-	
+
+	@Override
+	public boolean isShearable(@NotNull ItemStack item, Level level, BlockPos pos) {
+		return !this.isClipped();
+	}
+
 	public boolean isClipped() {
 		return this.entityData.get(CLIPPED) > 0;
 	}

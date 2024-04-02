@@ -1,11 +1,9 @@
 package de.dafuqs.spectrum.items.trinkets;
 
 import com.google.common.collect.Multimap;
-import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.api.energy.color.InkColors;
 import de.dafuqs.spectrum.api.energy.storage.FixedSingleInkStorage;
-import dev.emi.trinkets.api.SlotReference;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,6 +13,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,20 +29,21 @@ public class ExtraMiningSpeedRingItem extends InkDrainTrinketItem {
 		tooltip.add(Component.translatable("item.spectrum.ring_of_pursuit.tooltip").withStyle(ChatFormatting.GRAY));
 		super.appendHoverText(stack, world, tooltip, context);
 	}
-	
+
 	@Override
-	public Multimap<Attribute, AttributeModifier> getModifiers(ItemStack stack, SlotReference slot, LivingEntity entity, UUID uuid) {
-		Multimap<Attribute, AttributeModifier> modifiers = super.getModifiers(stack, slot, entity, uuid);
-		
+	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(SlotContext slotContext, UUID uuid, ItemStack stack) {
+		Multimap<Attribute, AttributeModifier> modifiers = super.getAttributeModifiers(slotContext, uuid, stack);
+
 		FixedSingleInkStorage inkStorage = getEnergyStorage(stack);
 		long storedInk = inkStorage.getEnergy(inkStorage.getStoredColor());
 		double miningSpeedMod = getExtraMiningSpeed(storedInk);
-		if (miningSpeedMod != 0) {
-			modifiers.put(AdditionalEntityAttributes.DIG_SPEED, new AttributeModifier(uuid, "spectrum:ring_of_pursuit", miningSpeedMod, AttributeModifier.Operation.ADDITION));
+		if (miningSpeedMod != 0) { //todoforge AEA
+//			modifiers.put(AdditionalEntityAttributes.DIG_SPEED, new AttributeModifier(uuid, "spectrum:ring_of_pursuit", miningSpeedMod, AttributeModifier.Operation.ADDITION));
 		}
-		
+
 		return modifiers;
 	}
+
 	
 	public double getExtraMiningSpeed(long storedInk) {
 		if (storedInk < 100) {

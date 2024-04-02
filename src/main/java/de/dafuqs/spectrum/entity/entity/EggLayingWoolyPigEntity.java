@@ -3,7 +3,6 @@ package de.dafuqs.spectrum.entity.entity;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.entity.SpectrumEntityTypes;
 import de.dafuqs.spectrum.registries.SpectrumBlocks;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalItemTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -37,13 +36,16 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraftforge.common.IForgeShearable;
+import net.minecraftforge.common.ToolActions;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class EggLayingWoolyPigEntity extends Animal implements Shearable {
+public class EggLayingWoolyPigEntity extends Animal implements IForgeShearable {
 	
 	private static final Ingredient FOOD = Ingredient.of(SpectrumBlocks.AMARANTH_BUSHEL);
 	
@@ -79,15 +81,6 @@ public class EggLayingWoolyPigEntity extends Animal implements Shearable {
 			ItemStack itemStack2 = ItemUtils.createFilledResult(handStack, player, Items.MILK_BUCKET.getDefaultInstance());
 			player.setItemInHand(hand, itemStack2);
 			return InteractionResult.sidedSuccess(world.isClientSide());
-		} else if (handStack.is(ConventionalItemTags.SHEARS)) {
-			if (!world.isClientSide() && this.readyForShearing()) {
-				this.shear(SoundSource.PLAYERS);
-				this.gameEvent(GameEvent.SHEAR, player);
-				handStack.hurtAndBreak(1, player, (p) -> p.broadcastBreakEvent(hand));
-				return InteractionResult.SUCCESS;
-			} else {
-				return InteractionResult.CONSUME;
-			}
 		} else {
 			return super.mobInteract(player, hand);
 		}
@@ -240,19 +233,15 @@ public class EggLayingWoolyPigEntity extends Animal implements Shearable {
 			return this.eatGrassTimer > 0 ? 0.62831855F : this.getXRot() * 0.017453292F;
 		}
 	}
-	
+
 	@Override
-	public void shear(SoundSource shearedSoundCategory) {
-		var world = this.level();
-		world.playSound(null, this, SoundEvents.SHEEP_SHEAR, shearedSoundCategory, 1.0F, 1.0F);
-		this.setSheared(true);
-		
-		for (ItemStack droppedStack : getShearedStacks((ServerLevel) world)) {
-			ItemEntity itemEntity = this.spawnAtLocation(droppedStack, 1);
-			if (itemEntity != null) {
-				itemEntity.setDeltaMovement(itemEntity.getDeltaMovement().add((this.random.nextFloat() - this.random.nextFloat()) * 0.1F, this.random.nextFloat() * 0.05F, (this.random.nextFloat() - this.random.nextFloat()) * 0.1F));
-			}
+	public @NotNull List<ItemStack> onSheared(@Nullable Player player, @NotNull ItemStack item, Level level, BlockPos pos, int fortune) {
+		if (!this.level().isClientSide()){
+			this.level().playSound(null, this, SoundEvents.SHEEP_SHEAR, player == null ? SoundSource.BLOCKS : SoundSource.PLAYERS, 1.0F, 1.0F);
+			this.setSheared(true);
+			return getShearedStacks((ServerLevel) this.level());
 		}
+		return Collections.emptyList();
 	}
 	
 	public List<ItemStack> getShearedStacks(ServerLevel world) {
@@ -263,9 +252,9 @@ public class EggLayingWoolyPigEntity extends Animal implements Shearable {
 		LootTable lootTable = world.getServer().getLootData().getLootTable(SHEARING_LOOT_TABLE_ID);
 		return lootTable.getRandomItems(builder.create(LootContextParamSets.GIFT));
 	}
-	
+
 	@Override
-	public boolean readyForShearing() {
+	public boolean isShearable(@NotNull ItemStack item, Level level, BlockPos pos) {
 		return this.isAlive() && !this.isSheared() && !this.isBaby();
 	}
 	

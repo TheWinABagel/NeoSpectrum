@@ -118,7 +118,7 @@ public class SpectrumClient implements RevealingCallback, ClientAdvancementPacke
 		logInfo("Setting up Block Entity Renderers...");
 		SpectrumBlockEntities.registerClient();
 		logInfo("Setting up Entity Renderers...");
-		SpectrumEntityRenderers.registerClient();
+		modBus.addListener(SpectrumEntityRenderers::registerClient);
 
 		registerCustomItemRenderer("bottomless_bundle", SpectrumItems.BOTTOMLESS_BUNDLE, BottomlessBundleItem.Renderer::new);
 		registerCustomItemRenderer("omni_accelerator", SpectrumItems.OMNI_ACCELERATOR, OmniAcceleratorItem.Renderer::new);
@@ -155,14 +155,16 @@ public class SpectrumClient implements RevealingCallback, ClientAdvancementPacke
 			IdwtialsimmoedmCompat.register();
 		}
 
-		logInfo("Registering Armor Renderers...");
+		logInfo("Registering Armor Renderers..."); //todoforge armor renderers
 		SpectrumArmorRenderers.register();
 		WorthinessChecker.init();
 
 		RevealingCallback.register(this);
 		ClientAdvancementPacketCallback.registerCallback(this);
 
-		SpectrumColorProviders.registerClient();
+		SpectrumCommon.logInfo("Registering Block and Item Color Providers...");
+		modBus.register(SpectrumColorProviders.class);
+//		SpectrumColorProviders.registerClient();
 
 		logInfo("Client startup completed!");
 	}

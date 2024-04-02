@@ -7,9 +7,9 @@ import de.dafuqs.spectrum.networking.SpectrumC2SPacketSender;
 import de.dafuqs.spectrum.registries.SpectrumEnchantments;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
 import de.dafuqs.spectrum.sound.EnderSpliceChargingSoundInstance;
+import net.minecraft.world.entity.RelativeMovement;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.Registries;
@@ -209,7 +209,7 @@ public class EnderSpliceItem extends Item implements ExtendedEnchantable {
 			world.playSound(playerEntity, currentPos.x(), currentPos.y(), currentPos.z(), SpectrumSoundEvents.PLAYER_TELEPORTS, SoundSource.PLAYERS, 1.0F, 1.0F);
 			
 			if (!isSameWorld) {
-				FabricDimensions.teleport(user, (ServerLevel) targetWorld, new PortalInfo(targetPos.add(0, 0.25, 0), new Vec3(0, 0, 0), user.getYRot(), user.getXRot()));
+				user.teleportTo((ServerLevel) targetWorld, targetPos.x(), targetPos.y(), targetPos.z(), RelativeMovement.ALL, user.getYRot(), user.getXRot());
 			} else {
 				user.teleportTo(targetPos.x(), targetPos.y + 0.25, targetPos.z); // +0.25 makes it look way more lively
 			}

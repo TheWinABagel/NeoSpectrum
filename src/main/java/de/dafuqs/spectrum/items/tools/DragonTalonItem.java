@@ -2,7 +2,6 @@ package de.dafuqs.spectrum.items.tools;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes;
 import de.dafuqs.spectrum.api.item.*;
 import de.dafuqs.spectrum.entity.entity.DragonTalonEntity;
 import de.dafuqs.spectrum.registries.SpectrumDamageTypes;
@@ -31,6 +30,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentCategory;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.ForgeMod;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -48,7 +48,7 @@ public class DragonTalonItem extends MalachiteBidentItem implements MergeableIte
         ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
         builder.put(Attributes.ATTACK_DAMAGE, new AttributeModifier(BASE_ATTACK_DAMAGE_UUID, "Tool modifier", damage + toolMaterial.getAttackDamageBonus(), AttributeModifier.Operation.ADDITION));
         builder.put(Attributes.ATTACK_SPEED, new AttributeModifier(BASE_ATTACK_SPEED_UUID, "Tool modifier", -0.8, AttributeModifier.Operation.ADDITION));
-        builder.put(ReachEntityAttributes.ATTACK_RANGE, new AttributeModifier(REACH_MODIFIER_ID, "Tool modifier", extraReach, AttributeModifier.Operation.ADDITION));
+        builder.put(ForgeMod.ENTITY_REACH.get(), new AttributeModifier(REACH_MODIFIER_ID, "Tool modifier", extraReach, AttributeModifier.Operation.ADDITION));
         this.attributeModifiers = builder.build();
 
         ImmutableMultimap.Builder<Attribute, AttributeModifier> phantom = ImmutableMultimap.builder();
@@ -61,7 +61,7 @@ public class DragonTalonItem extends MalachiteBidentItem implements MergeableIte
     }
 
     @Override
-    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(ItemStack stack, EquipmentSlot slot) {
+    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
         var nbt = stack.getOrCreateTag();
         if (slot != EquipmentSlot.MAINHAND)
             return super.getDefaultAttributeModifiers(slot);

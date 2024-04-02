@@ -2,10 +2,6 @@ package de.dafuqs.spectrum.items.trinkets;
 
 import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
 import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
-import dev.emi.trinkets.api.SlotReference;
-import dev.emi.trinkets.api.TrinketComponent;
-import dev.emi.trinkets.api.TrinketItem;
-import dev.emi.trinkets.api.TrinketsApi;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Tuple;
@@ -14,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.SlotResult;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
@@ -46,11 +43,11 @@ public abstract class SpectrumTrinketItem extends Item implements ICurioItem {
 	}
 	
 	public static Optional<ItemStack> getFirstEquipped(LivingEntity entity, Item item) {
-		Optional<TrinketComponent> trinketComponent = TrinketsApi.getTrinketComponent(entity);
-		if (trinketComponent.isPresent()) {
-			List<Tuple<SlotReference, ItemStack>> stacks = trinketComponent.get().getEquipped(item);
+		var curios = CuriosApi.getCuriosInventory(entity).resolve();
+		if (curios.isPresent()) {
+			var stacks = curios.get().findCurios(item);;
 			if (!stacks.isEmpty()) {
-				return Optional.of(stacks.get(0).getB());
+				return Optional.of(curios.get().findCurios(item).get(0).stack());
 			}
 		}
 		return Optional.empty();
@@ -59,17 +56,17 @@ public abstract class SpectrumTrinketItem extends Item implements ICurioItem {
 	public ResourceLocation getUnlockIdentifier() {
 		return this.unlockIdentifier;
 	}
-	
+
 	@Override
-	public boolean canEquip(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		if (entity instanceof Player playerEntity) {
+	public boolean canEquip(SlotContext slotContext, ItemStack stack) {
+		if (slotContext.entity() instanceof Player playerEntity) {
 			// does the player have the matching advancement?
 			if (AdvancementHelper.hasAdvancement(playerEntity, getUnlockIdentifier())) {
 				// Can only a single trinket of that type be equipped at once?
-				if (!canEquipMoreThanOne() && hasEquipped(entity, this)) {
+				if (!canEquipMoreThanOne() && hasEquipped(slotContext.entity(), this)) {
 					return false;
 				}
-				return super.canEquip(stack, slot, entity);
+				return ICurioItem.super.canEquip(slotContext, stack);
 			}
 		}
 		return false;
@@ -78,27 +75,27 @@ public abstract class SpectrumTrinketItem extends Item implements ICurioItem {
 	public boolean canEquipMoreThanOne() {
 		return false;
 	}
-	
+
 	@Override
-	public void onEquip(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.onEquip(stack, slot, entity);
-		if (entity instanceof ServerPlayer serverPlayerEntity) {
+	public void onEquip(SlotContext slotContext, ItemStack prevStack, ItemStack stack) {
+		ICurioItem.super.onEquip(slotContext, prevStack, stack);
+		if (slotContext.entity() instanceof ServerPlayer serverPlayerEntity) {
 			SpectrumAdvancementCriteria.TRINKET_CHANGE.trigger(serverPlayerEntity);
 		}
 	}
-	
+
 	@Override
-	public void onUnequip(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.onUnequip(stack, slot, entity);
-		if (entity instanceof ServerPlayer serverPlayerEntity) {
+	public void onUnequip(SlotContext slotContext, ItemStack newStack, ItemStack stack) {
+		ICurioItem.super.onUnequip(slotContext, newStack, stack);
+		if (slotContext.entity() instanceof ServerPlayer serverPlayerEntity) {
 			SpectrumAdvancementCriteria.TRINKET_CHANGE.trigger(serverPlayerEntity);
 		}
 	}
-	
+
 	@Override
-	public void onBreak(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.onBreak(stack, slot, entity);
-		if (entity instanceof ServerPlayer serverPlayerEntity) {
+	public void curioBreak(SlotContext slotContext, ItemStack stack) {
+		ICurioItem.super.curioBreak(slotContext, stack);
+		if (slotContext.entity() instanceof ServerPlayer serverPlayerEntity) {
 			SpectrumAdvancementCriteria.TRINKET_CHANGE.trigger(serverPlayerEntity);
 		}
 	}

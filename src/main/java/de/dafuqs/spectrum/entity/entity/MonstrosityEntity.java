@@ -3,7 +3,6 @@ package de.dafuqs.spectrum.entity.entity;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
-import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
 import de.dafuqs.revelationary.api.advancements.AdvancementHelper;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.entity.ai.EmptyBodyControl;
@@ -48,6 +47,8 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.event.entity.player.CriticalHitEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -252,10 +253,14 @@ public class MonstrosityEntity extends SpectrumBossEntity implements RangedAttac
 				.add(Attributes.ARMOR, 18.0)
 				.add(Attributes.ARMOR_TOUGHNESS, 4.0)
 				.add(Attributes.ATTACK_KNOCKBACK, 2.0)
-				.add(AdditionalEntityAttributes.MAGIC_PROTECTION, 4.0)
+//				.add(AdditionalEntityAttributes.MAGIC_PROTECTION, 4.0) //todoforge AEA
 				.build();
 	}
-	
+
+	@SubscribeEvent
+	public void onCriticalHit(CriticalHitEvent event) {
+	}
+
 	@Override
 	public boolean hurt(DamageSource source, float amount) {
 		if (!this.level().isClientSide() && isNonVanillaKillCommandDamage(source, amount)) {

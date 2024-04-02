@@ -9,7 +9,6 @@ import de.dafuqs.spectrum.registries.SpectrumEnchantments;
 import de.dafuqs.spectrum.registries.SpectrumItems;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import net.fabricmc.fabric.api.tag.convention.v1.ConventionalEntityTypeTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.level.ServerLevel;
@@ -29,6 +28,7 @@ import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.Tags;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +86,7 @@ public class ModularExplosion {
 				// damage entity
 				double distance = Math.max(entity.position().distanceTo(center) - entity.getBbWidth() / 2, 0);
 				if (distance <= killZoneRadius) {
-					entity.hurt(damageSource, entity.getType().is(ConventionalEntityTypeTags.BOSSES) ? killZoneDamage / 25F : killZoneDamage);
+					entity.hurt(damageSource, entity.getType().is(Tags.EntityTypes.BOSSES) ? killZoneDamage / 25F : killZoneDamage);
 				} else {
 					double finalDamage = Mth.lerp(distance / blastRadius, blastDamage, blastDamage / 2);
 					entity.hurt(damageSource, (float) finalDamage);

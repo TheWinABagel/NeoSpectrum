@@ -23,9 +23,6 @@
   "environment": "*",
   "entrypoints": {
     "preLaunch": [],
-    "modmenu": [
-      "de.dafuqs.spectrum.config.ModMenuConfig"
-    ],
     "rei_common": [
       "de.dafuqs.spectrum.compat.REI.REICommonIntegration"
     ],

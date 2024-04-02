@@ -27,7 +27,6 @@ import de.dafuqs.spectrum.recipe.titration_barrel.ITitrationBarrelRecipe;
 import de.dafuqs.spectrum.registries.SpectrumBlocks;
 import de.dafuqs.spectrum.registries.SpectrumItems;
 import de.dafuqs.spectrum.registries.SpectrumRecipeTypes;
-import dev.architectury.event.EventResult;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
@@ -141,20 +140,20 @@ public class REIClientIntegration implements REIClientPlugin {
 		FreezingIdolBlock.FREEZING_MAP.forEach((key, value) -> registry.add(new FreezingDisplay(BlockToBlockWithChanceDisplay.blockToEntryStack(key), BlockToBlockWithChanceDisplay.blockToEntryStack(value.getA().getBlock()), value.getB())));
 		FirestarterIdolBlock.BURNING_MAP.forEach((key, value) -> registry.add(new HeatingDisplay(BlockToBlockWithChanceDisplay.blockToEntryStack(key), BlockToBlockWithChanceDisplay.blockToEntryStack(value.getA().getBlock()), value.getB())));
 		
-		
-		registry.registerVisibilityPredicate((category, display) -> {
-			// do not list recipes in REI at all, until they are unlocked
-			// secret recipes are never shown
-			if (display instanceof GatedRecipeDisplay gatedRecipeDisplay) {
-				if (gatedRecipeDisplay.isSecret()) {
-					return EventResult.interruptFalse();
-				}
-				if (!SpectrumCommon.CONFIG.REIListsRecipesAsNotUnlocked && !gatedRecipeDisplay.isUnlocked()) {
-					return EventResult.interruptFalse();
-				}
-			}
-			return EventResult.pass();
-		});
+		//todoforge something with gradle broke this idk
+//		registry.registerVisibilityPredicate((category, display) -> {
+//			// do not list recipes in REI at all, until they are unlocked
+//			// secret recipes are never shown
+//			if (display instanceof GatedRecipeDisplay gatedRecipeDisplay) {
+//				if (gatedRecipeDisplay.isSecret()) {
+//					return EventResult.interruptFalse();
+//				}
+//				if (!SpectrumCommon.CONFIG.REIListsRecipesAsNotUnlocked && !gatedRecipeDisplay.isUnlocked()) {
+//					return EventResult.interruptFalse();
+//				}
+//			}
+//			return EventResult.pass();
+//		});
 		
 	}
 	

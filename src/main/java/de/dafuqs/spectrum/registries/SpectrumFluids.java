@@ -7,11 +7,9 @@ import de.dafuqs.spectrum.blocks.fluid.LiquidCrystalFluid;
 import de.dafuqs.spectrum.blocks.fluid.MidnightSolutionFluid;
 import de.dafuqs.spectrum.blocks.fluid.MudFluid;
 import de.dafuqs.spectrum.helpers.ColorHelper;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
-import net.fabricmc.fabric.api.client.render.fluid.v1.FluidRenderHandlerRegistry;
-import net.fabricmc.fabric.api.client.render.fluid.v1.SimpleFluidRenderHandler;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -79,13 +77,16 @@ public class SpectrumFluids {
 
 	@OnlyIn(Dist.CLIENT)
 	private static void setupFluidRendering(final Fluid stillFluid, final Fluid flowingFluid, final String name, int tint) {
-		FluidRenderHandlerRegistry.INSTANCE.register(stillFluid, flowingFluid, new SimpleFluidRenderHandler(
-				SpectrumCommon.locate("block/" + name + "_still"),
-				SpectrumCommon.locate("block/" + name + "_flow"),
-				tint
-		));
+//		FluidRenderHandlerRegistry.INSTANCE.register(stillFluid, flowingFluid, new SimpleFluidRenderHandler(
+//				SpectrumCommon.locate("block/" + name + "_still"),
+//				SpectrumCommon.locate("block/" + name + "_flow"),
+//				tint
+//		));
+		//todoforge fluid rendering
 
-		BlockRenderLayerMap.INSTANCE.putFluids(RenderType.translucent(), stillFluid, flowingFluid);
+//		BlockRenderLayerMap.INSTANCE.putFluids(RenderType.translucent(), stillFluid, flowingFluid);
+		ItemBlockRenderTypes.setRenderLayer(stillFluid, RenderType.translucent());
+		ItemBlockRenderTypes.setRenderLayer(flowingFluid, RenderType.translucent());
 	}
 	
 }

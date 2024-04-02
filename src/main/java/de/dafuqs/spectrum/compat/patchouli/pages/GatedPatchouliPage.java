@@ -2,8 +2,8 @@ package de.dafuqs.spectrum.compat.patchouli.pages;
 
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.api.recipe.GatedRecipe;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 
 import java.util.Map;
 
@@ -22,7 +22,7 @@ public interface GatedPatchouliPage {
 	);
 	
 	static void runSanityCheck(ResourceLocation entryId, int pageNr, String pageAdvancement, GatedRecipe... recipes) {
-		if (FabricLoader.getInstance().isDevelopmentEnvironment()) {
+		if (!FMLEnvironment.production) {
 			if (pageAdvancement != null && !pageAdvancement.isEmpty()) {
 				for (GatedRecipe recipe : recipes) {
 					if (recipe == null) {

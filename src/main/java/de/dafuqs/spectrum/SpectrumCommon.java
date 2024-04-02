@@ -150,6 +150,8 @@ public class SpectrumCommon{
 
 	@SubscribeEvent
 	public void init(FMLCommonSetupEvent e) {
+		IEventBus forgeBus = MinecraftForge.EVENT_BUS;
+		IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 		logInfo("Starting Common Startup");
 		
 		// Register internals
@@ -233,7 +235,8 @@ public class SpectrumCommon{
 		
 		logInfo("Registering Entities...");
 		SpectrumTrackedDataHandlerRegistry.register();
-		SpectrumEntityTypes.register();
+
+		modBus.addListener(SpectrumEntityTypes::registerAttributes);
 		
 		logInfo("Registering Commands...");
 		SpectrumCommands.register();

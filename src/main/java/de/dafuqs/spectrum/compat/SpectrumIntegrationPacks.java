@@ -4,7 +4,7 @@ import de.dafuqs.spectrum.*;
 import de.dafuqs.spectrum.compat.ae2.*;
 import de.dafuqs.spectrum.compat.alloy_forgery.*;
 import de.dafuqs.spectrum.compat.gobber.*;
-import net.fabricmc.loader.api.*;
+import net.minecraftforge.fml.ModList;
 
 import java.util.*;
 
@@ -37,6 +37,7 @@ public class SpectrumIntegrationPacks {
 	public static void register() {
 		registerIntegrationPack(AE2_ID, new AE2Compat());
 		registerIntegrationPack(GOBBER_ID, new GobberCompat());
+		//both of these are not implemented on fabric either
 		//registerIntegrationPack(CREATE_ID, new CreateCompat());
 		//registerIntegrationPack(MYTHIC_METALS_ID, new MythicMetalsCompat());
 		registerIntegrationPack(ALLOY_FORGERY_ID, new AlloyForgeryCompat());

@@ -7,7 +7,6 @@ import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.blocks.spirit_instiller.SpiritInstillerBlockEntity;
 import de.dafuqs.spectrum.cca.HardcoreDeathCapability;
 import de.dafuqs.spectrum.recipe.EmptyRecipeSerializer;
-import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -18,6 +17,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -58,8 +58,8 @@ public class HardcorePlayerRevivalRecipe extends SpiritInstillerRecipe {
 						case CLOCKWISE_180 -> yaw = 900.0F;
 						case COUNTERCLOCKWISE_90 -> yaw = 180.0F;
 					}
-					
-					FabricDimensions.teleport(revivedPlayer, (ServerLevel) spiritInstillerBlockEntity.getLevel(), new PortalInfo(Vec3.atCenterOf(spiritInstillerBlockEntity.getBlockPos().above()), new Vec3(0, 0, 0), yaw, revivedPlayer.getXRot()));
+					var targetPos = Vec3.atCenterOf(spiritInstillerBlockEntity.getBlockPos().above());
+					revivedPlayer.teleportTo((ServerLevel) spiritInstillerBlockEntity.getLevel(), targetPos.x(), targetPos.y(), targetPos.z(), RelativeMovement.ALL, revivedPlayer.getYRot(), revivedPlayer.getXRot());
 				}
 			}
 		}

@@ -88,35 +88,27 @@ dependencies {
 
 	// external and compat
   	implementation fg.deobf("me.shedaniel.cloth:cloth-config-forge:11.1.118")
+	compileOnly fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}:api")
+	runtimeOnly compileOnly(fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}"))
 //	modApi("dev.architectury:architectury-fabric:${project.architectury_version}") { exclude(group: "net.fabricmc.fabric-api") }
 //	modApi("com.terraformersmc:modmenu:${project.modmenu_version}")
 //	modImplementation("eu.pb4:common-protection-api:${project.cpa_version}")
-	compileOnly fg.deobf("vazkii.patchouli:Patchouli:${project.patchouli_version}:api")
-	runtimeOnly fg.deobf("vazkii.patchouli:Patchouli:${project.patchouli_version}")
 	// https://maven.blamejared.com/vazkii/patchouli/Patchouli/
 	compileOnly(fg.deobf("top.theillusivec4.curios:curios-forge:${project.curios_version}:api"))
 	// Use the full Curios API jar at runtime
 	runtimeOnly(fg.deobf("top.theillusivec4.curios:curios-forge:${project.curios_version}"))
-//	modCompileOnly("me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}")
+	compileOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-api-forge:$rei_version")
+	compileOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-default-plugin-forge:$rei_version")
 	// https://github.com/shedaniel/RoughlyEnoughItems
-//	modCompileOnly("dev.emi:emi-fabric:${emi_version}") // https://github.com/emilyploszaj/emi
+	compileOnly fg.deobf("dev.emi:emi-forge:${emi_version}") // https://github.com/emilyploszaj/emi
 
-//	switch (recipe_viewer.toLowerCase(Locale.ROOT)) {
-//		case "rei": modLocalRuntime("me.shedaniel:RoughlyEnoughItems-fabric:$rei_version"); break
-//		case "emi": modLocalRuntime("dev.emi:emi-fabric:${emi_version}"); break
-//		case "disabled": break
-//		default: println("Unknown recipe viewer specified: $recipe_viewer. Must be EMI, REI or disabled.")
-//	}
+	switch (recipe_viewer.toLowerCase(Locale.ROOT)) {
+		case "rei": runtimeOnly fg.deobf("me.shedaniel:RoughlyEnoughItems-forge:$rei_version"); break
+		case "emi": runtimeOnly fg.deobf("dev.emi:emi-forge:${emi_version}"); break
+		case "disabled": break
+		default: println("Unknown recipe viewer specified: $recipe_viewer. Must be EMI, REI or disabled.")
+	}
 
-	// https://github.com/OnyxStudios/Cardinal-Components-API/wiki/
-//	modImplementation include("dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cca_version}")
-//	modImplementation include("dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cca_version}")
-//	modImplementation include("dev.onyxstudios.cardinal-components-api:cardinal-components-item:${project.cca_version}")
-//	modImplementation include("dev.onyxstudios.cardinal-components-api:cardinal-components-level:${project.cca_version}")
-//
-//	modImplementation include("com.github.emilyploszaj:step-height-entity-attribute:${project.step_height_attribute_version}")
-//	modImplementation include("com.jamieswhiteshirt:reach-entity-attributes:${project.reach_entity_attributes_version}")
-//
 	compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:${project.mixin_extras_version}"))
 	implementation(jarJar("io.github.llamalad7:mixinextras-forge:${project.mixin_extras_version}")) {
 		jarJar.ranged(it, "[${project.mixin_extras_version},)")
@@ -132,7 +124,7 @@ dependencies {
 //	modLocalRuntime("curse.maven:authme-356643:4629826")
 
 	// Ears compat by Maya!
-//	modCompileOnly("com.unascribed:ears-api:${project.ears_version}")
+	compileOnly fg.deobf("com.unascribed:ears-api:${project.ears_version}")
 
 	// Enchantment Descriptions compat
 //	modCompileOnly("maven.modrinth:enchantment-descriptions:${project.enchantment_descriptions_version}")
