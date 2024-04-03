@@ -175,6 +175,38 @@ tasks.withType(JavaCompile).configureEach {
     it.options.release = 17 // Minecraft 1.18 (1.18-pre2) upwards uses Java 17.
 }
 
+tasks.named('processResources', ProcessResources).configure {
+	var replaceProperties = [
+			minecraft_version: minecraft_version, minecraft_version_range: minecraft_version_range,
+			forge_version: forge_version, forge_version_range: forge_version_range,
+			loader_version_range: loader_version_range,
+			mod_id: mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
+			mod_authors: mod_authors, mod_description: mod_description,
+	]
+	inputs.properties replaceProperties
+
+	filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+		expand replaceProperties + [project: project]
+	}
+}
+
+tasks.named('jar', Jar).configure {
+	manifest {
+		attributes([
+				'Specification-Title'     : mod_id,
+				'Specification-Vendor'    : mod_authors,
+				'Specification-Version'   : '1', // We are version 1 of ourselves
+				'Implementation-Title'    : project.name,
+				'Implementation-Version'  : project.jar.archiveVersion,
+				'Implementation-Vendor'   : mod_authors,
+				'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+		])
+	}
+
+	// This is the preferred method to reobfuscate your jar file
+	finalizedBy 'reobfJar'
+}
+
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
 	// if it is present.
