@@ -2,7 +2,6 @@ package de.dafuqs.spectrum.items.trinkets;
 
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.registries.SpectrumStatusEffectTags;
-import dev.emi.trinkets.api.SlotReference;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,6 +15,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.*;
 
@@ -105,13 +105,14 @@ public class WhispyCircletItem extends SpectrumTrinketItem {
 		tooltip.add(Component.translatable("item.spectrum.whispy_circlet.tooltip2").withStyle(ChatFormatting.GRAY));
 		tooltip.add(Component.translatable("item.spectrum.whispy_circlet.tooltip3").withStyle(ChatFormatting.GRAY));
 	}
-	
+
 	@Override
-	public void tick(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.tick(stack, slot, entity);
-		
-		Level world = entity.level();
-		if (!world.isClientSide) {
+	public void curioTick(SlotContext slotContext, ItemStack stack) {
+		super.curioTick(slotContext, stack);
+
+		LivingEntity entity = slotContext.entity();
+		Level level = entity.level();
+		if (!level.isClientSide) {
 			long time = entity.level().getGameTime();
 			if (time % TRIGGER_EVERY_X_TICKS == 0) {
 				shortenNegativeStatusEffects(entity, NEGATIVE_EFFECT_SHORTENING_TICKS);

@@ -205,8 +205,8 @@ public class BlackHoleChestBlockEntity extends SpectrumChestBlockEntity implemen
 	public SoundEvent getCloseSound() {
 		return SpectrumSoundEvents.BLACK_HOLE_CHEST_CLOSE;
 	}
-
-	@Override
+	//todoforge write screen opening data thing
+//	@Override
 	public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buf) {
 		buf.writeBlockPos(this.worldPosition);
 		FilterConfigurable.writeScreenOpeningData(buf, filterItems);

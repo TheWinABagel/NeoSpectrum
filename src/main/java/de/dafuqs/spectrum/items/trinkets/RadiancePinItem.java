@@ -6,7 +6,6 @@ import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
 import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.registries.SpectrumBlocks;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
-import dev.emi.trinkets.api.SlotReference;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -22,6 +21,7 @@ import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.List;
 
@@ -41,44 +41,45 @@ public class RadiancePinItem extends SpectrumTrinketItem {
 		super.appendHoverText(stack, world, tooltip, context);
 		tooltip.add(Component.translatable("item.spectrum.radiance_pin.tooltip").withStyle(ChatFormatting.GRAY));
 	}
-	
+
 	@Override
-	public void tick(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.tick(stack, slot, entity);
-		Level world = entity.level();
-		if (!world.isClientSide && world.getGameTime() % CHECK_EVERY_X_TICKS == 0) {
+	public void curioTick(SlotContext slotContext, ItemStack stack) {
+		super.curioTick(slotContext, stack);
+		LivingEntity entity = slotContext.entity();
+		Level level = entity.level();
+		if (!level.isClientSide && level.getGameTime() % CHECK_EVERY_X_TICKS == 0) {
 			if (entity instanceof Player playerEntity && playerEntity.isSpectator()) {
 				return;
 			}
 			BlockPos pos = entity.blockPosition();
-			if (!GenericClaimModsCompat.canPlaceBlock(world, pos, entity)) {
+			if (!GenericClaimModsCompat.canPlaceBlock(level, pos, entity)) {
 				return;
 			}
-			
-			if (!world.isOutsideBuildHeight(pos) && world.getMaxLocalRawBrightness(pos) <= MAX_LIGHT_LEVEL) {
-				BlockState currentState = world.getBlockState(pos);
+
+			if (!level.isOutsideBuildHeight(pos) && level.getMaxLocalRawBrightness(pos) <= MAX_LIGHT_LEVEL) {
+				BlockState currentState = level.getBlockState(pos);
 				boolean placed = false;
 				if (currentState.isAir()) {
-					world.setBlock(pos, LIGHT_BLOCK_STATE, 3);
+					level.setBlock(pos, LIGHT_BLOCK_STATE, 3);
 					placed = true;
 				} else if (currentState.equals(Blocks.WATER.defaultBlockState())) {
-					world.setBlock(pos, LIGHT_BLOCK_STATE_WATER, 3);
+					level.setBlock(pos, LIGHT_BLOCK_STATE_WATER, 3);
 					placed = true;
 				} else if (currentState.is(SpectrumBlocks.DECAYING_LIGHT_BLOCK)) {
 					if (currentState.getValue(LightBlock.WATERLOGGED)) {
-						world.setBlock(pos, LIGHT_BLOCK_STATE_WATER, 3);
+						level.setBlock(pos, LIGHT_BLOCK_STATE_WATER, 3);
 					} else {
-						world.setBlock(pos, LIGHT_BLOCK_STATE, 3);
-                    }
-                    placed = true;
-                }
-                if (placed) {
-					sendSmallLightCreatedParticle((ServerLevel) world, pos);
-					world.playSound(null, entity.getX() + 0.5, entity.getY() + 0.5, entity.getZ() + 0.5, SpectrumSoundEvents.RADIANCE_STAFF_PLACE, SoundSource.PLAYERS, 0.08F, 0.9F + world.random.nextFloat() * 0.2F);
-                }
-            }
-        }
-    }
+						level.setBlock(pos, LIGHT_BLOCK_STATE, 3);
+					}
+					placed = true;
+				}
+				if (placed) {
+					sendSmallLightCreatedParticle((ServerLevel) level, pos);
+					level.playSound(null, entity.getX() + 0.5, entity.getY() + 0.5, entity.getZ() + 0.5, SpectrumSoundEvents.RADIANCE_STAFF_PLACE, SoundSource.PLAYERS, 0.08F, 0.9F + level.random.nextFloat() * 0.2F);
+				}
+			}
+		}
+	}
 
     public static void sendSmallLightCreatedParticle(ServerLevel world, BlockPos blockPos) {
         SpectrumS2CPacketSender.playParticleWithRandomOffsetAndVelocity(world, Vec3.atCenterOf(blockPos),

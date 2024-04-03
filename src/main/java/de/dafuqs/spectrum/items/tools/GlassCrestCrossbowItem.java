@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 // right click ability: able to overload an already loaded arrow
-public class GlassCrestCrossbowItem extends MalachiteCrossbowItem implements ExtendedItemBars {
+public class GlassCrestCrossbowItem extends MalachiteCrossbowItem implements ExtendedItemBars { //todoforge arrowhead
     
     private static final InkCost OVERCHARGE_COST = new InkCost(InkColors.WHITE, 1000);
     private static final int OVERCHARGE_DURATION_MAX_TICKS = 20 * 6; // 6 seconds
@@ -126,19 +126,19 @@ public class GlassCrestCrossbowItem extends MalachiteCrossbowItem implements Ext
         }
     }
     
-    @Override
-    public float getProjectileVelocityModifier(ItemStack stack) {
-        float parent = super.getProjectileVelocityModifier(stack);
-        float overcharge = getOvercharge(stack);
-        return overcharge == 0 ? parent : parent * (1 + overcharge * 0.5F);
-    }
-    
-    @Override
-    public float getDivergenceMod(ItemStack stack) {
-        float parent = super.getDivergenceMod(stack);
-        float overcharge = getOvercharge(stack);
-        return overcharge == 0 ? parent : parent * (1 - overcharge * 0.5F);
-    }
+//    @Override
+//    public float getProjectileVelocityModifier(ItemStack stack) {
+//        float parent = super.getProjectileVelocityModifier(stack);
+//        float overcharge = getOvercharge(stack);
+//        return overcharge == 0 ? parent : parent * (1 + overcharge * 0.5F);
+//    }
+//
+//    @Override
+//    public float getDivergenceMod(ItemStack stack) {
+//        float parent = super.getDivergenceMod(stack);
+//        float overcharge = getOvercharge(stack);
+//        return overcharge == 0 ? parent : parent * (1 - overcharge * 0.5F);
+//    }
 
     @Override
     public int barCount(ItemStack stack) {

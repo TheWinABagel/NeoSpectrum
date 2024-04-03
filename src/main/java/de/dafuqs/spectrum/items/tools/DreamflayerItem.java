@@ -127,9 +127,9 @@ public class DreamflayerItem extends SwordItem implements InkPowered, Activatabl
 			tooltip.add(Component.translatable("item.spectrum.dreamflayer.tooltip.deactivated").withStyle(ChatFormatting.GRAY));
 		}
 	}
-	
+
 	@Override
-	public boolean allowNbtUpdateAnimation(Player player, InteractionHand hand, ItemStack oldStack, ItemStack newStack) {
+	public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
 		return reequipAnimation(oldStack, newStack);
 	}
 	
@@ -138,7 +138,7 @@ public class DreamflayerItem extends SwordItem implements InkPowered, Activatabl
 	}
 	
 	@Override
-	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(ItemStack stack, EquipmentSlot slot) {
+	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
 		ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
 		if (slot == EquipmentSlot.MAINHAND) {
 			if (ActivatableItem.isActivated(stack)) {

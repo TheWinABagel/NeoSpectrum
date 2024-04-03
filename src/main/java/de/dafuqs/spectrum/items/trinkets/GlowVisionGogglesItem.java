@@ -7,7 +7,6 @@ import de.dafuqs.spectrum.api.energy.color.InkColor;
 import de.dafuqs.spectrum.api.energy.color.InkColors;
 import de.dafuqs.spectrum.helpers.InventoryHelper;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
-import dev.emi.trinkets.api.SlotReference;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.network.chat.Component;
@@ -20,6 +19,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.List;
 
@@ -31,11 +31,12 @@ public class GlowVisionGogglesItem extends SpectrumTrinketItem implements InkPow
 	public GlowVisionGogglesItem(Properties settings) {
 		super(settings, SpectrumCommon.locate("unlocks/trinkets/glow_vision_goggles"));
 	}
-	
+
 	@Override
-	public void tick(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.tick(stack, slot, entity);
-		
+	public void curioTick(SlotContext slotContext, ItemStack stack) {
+		super.curioTick(slotContext, stack);
+
+		LivingEntity entity = slotContext.entity();
 		Level world = entity.level();
 		if (world != null && !world.isClientSide && world.getGameTime() % 20 == 0) {
 			if (entity instanceof ServerPlayer serverPlayerEntity) {
@@ -43,10 +44,11 @@ public class GlowVisionGogglesItem extends SpectrumTrinketItem implements InkPow
 			}
 		}
 	}
-	
+
 	@Override
-	public void onEquip(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.onEquip(stack, slot, entity);
+	public void onEquip(SlotContext slotContext, ItemStack prevStack, ItemStack stack) {
+		super.onEquip(slotContext, prevStack, stack);
+		LivingEntity entity = slotContext.entity();
 		Level world = entity.level();
 		if (world != null && !world.isClientSide && entity instanceof ServerPlayer serverPlayerEntity) {
 			giveEffect(world, serverPlayerEntity);

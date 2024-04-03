@@ -73,6 +73,7 @@
     "accessors.FluidBlockAccessor",
     "accessors.FoxEntityAccessor",
     "accessors.GoatHornItemAccessor",
+    "accessors.LivingEntityAccessor",
     "accessors.LootTableAccessor",
     "accessors.MapStateAccessor",
     "accessors.MooshroomEntityAccessor",

@@ -48,7 +48,7 @@ public class DraconicTwinswordItem extends SwordItem implements SplittableItem, 
     }
 
     @Override
-    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(ItemStack stack, EquipmentSlot slot) {
+    public Multimap<Attribute, AttributeModifier> getAttributeModifiers(EquipmentSlot slot, ItemStack stack) {
         if (slot != EquipmentSlot.MAINHAND)
             return super.getDefaultAttributeModifiers(slot);
 

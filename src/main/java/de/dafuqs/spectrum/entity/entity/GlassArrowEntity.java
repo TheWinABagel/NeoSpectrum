@@ -3,6 +3,7 @@ package de.dafuqs.spectrum.entity.entity;
 import de.dafuqs.spectrum.entity.SpectrumEntityTypes;
 import de.dafuqs.spectrum.entity.SpectrumTrackedDataHandlerRegistry;
 import de.dafuqs.spectrum.items.tools.GlassArrowVariant;
+import de.dafuqs.spectrum.mixin.accessors.LivingEntityAccessor;
 import de.dafuqs.spectrum.registries.SpectrumRegistries;
 import de.dafuqs.spectrum.spells.MoonstoneStrike;
 import net.minecraft.core.BlockPos;
@@ -101,8 +102,8 @@ public class GlassArrowEntity extends AbstractArrow {
 				// and also resetting after that again so the target is damageable again after this
 				livingEntity.hurtTime = 0;
 				livingEntityToResetHurtTime = livingEntity;
-				livingEntity.hurtCurrentlyUsedShield(20);
-				livingEntity.hurtArmor(world.damageSources().magic(), 20);
+				((LivingEntityAccessor) livingEntity).callHurtCurrentlyUsedShield(20);
+				((LivingEntityAccessor) livingEntity).callHurtArmor(world.damageSources().magic(), 20);
 			}
 		} else if (variant == GlassArrowVariant.MOONSTONE) {
 			MoonstoneStrike.create(world, this, null, this.getX(), this.getY(), this.getZ(), 4);

@@ -193,8 +193,8 @@ public class ColorPickerBlockEntity extends RandomizableContainerBlockEntity imp
 	public int getContainerSize() {
 		return INVENTORY_SIZE;
 	}
-	
-	@Override
+	//todoforge write screen opening data thing
+//	@Override
 	public void writeScreenOpeningData(ServerPlayer player, FriendlyByteBuf buf) {
 		buf.writeBlockPos(worldPosition);
 		if (this.selectedColor == null) {

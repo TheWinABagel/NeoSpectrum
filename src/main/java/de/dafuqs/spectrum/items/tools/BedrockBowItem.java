@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.items.tools;
 
-import de.dafuqs.arrowhead.api.ArrowheadBow;
+//import de.dafuqs.arrowhead.api.ArrowheadBow;
 import de.dafuqs.spectrum.api.item.Preenchanted;
 import net.minecraft.world.item.BowItem;
 import net.minecraft.world.item.ItemStack;
@@ -9,7 +9,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 
 import java.util.Map;
 
-public class BedrockBowItem extends BowItem implements Preenchanted, ArrowheadBow {
+public class BedrockBowItem extends BowItem implements Preenchanted/*, ArrowheadBow*/ { //todoforge arrowhead
 	
 	public BedrockBowItem(Properties settings) {
 		super(settings);
@@ -35,7 +35,7 @@ public class BedrockBowItem extends BowItem implements Preenchanted, ArrowheadBo
 		return true;
 	}
 
-	@Override
+/*	@Override
 	public float getZoom(ItemStack stack) {
 		return 30F;
 	}
@@ -48,6 +48,6 @@ public class BedrockBowItem extends BowItem implements Preenchanted, ArrowheadBo
 	@Override
 	public float getDivergenceMod(ItemStack stack) {
 		return 0.8F;
-	}
+	}*/
 	
 }

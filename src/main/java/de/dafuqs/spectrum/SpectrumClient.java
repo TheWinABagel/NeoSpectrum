@@ -132,7 +132,7 @@ public class SpectrumClient implements RevealingCallback, ClientAdvancementPacke
 		forgeBus.addListener(HudRenderers::register);
 
 		logInfo("Registering Item Tooltips...");
-		SpectrumTooltipComponents.registerTooltipComponents();
+		modBus.addListener(SpectrumTooltipComponents::registerTooltipComponents);
 
 		logInfo("Registering custom Patchouli Pages & Flags...");
 		PatchouliPages.register();
@@ -142,7 +142,7 @@ public class SpectrumClient implements RevealingCallback, ClientAdvancementPacke
 		SpectrumDimensions.registerClient();
 
 		if (CONFIG.AddItemTooltips) {
-			SpectrumTooltips.register();
+			forgeBus.addListener(SpectrumTooltips::register);
 		}
 
 		if (ModList.get().isLoaded("ears")) {

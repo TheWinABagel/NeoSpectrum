@@ -4,15 +4,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.items.trinkets.SpectrumTrinketItem;
-import dev.emi.trinkets.api.SlotReference;
-import dev.emi.trinkets.api.TrinketComponent;
-import dev.emi.trinkets.api.TrinketsApi;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.item.ItemStack;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,13 +37,14 @@ public class TrinketChangeCriterion extends SimpleCriterionTrigger<TrinketChange
 
 	public void trigger(ServerPlayer player) {
 		this.trigger(player, (conditions) -> {
-			Optional<TrinketComponent> trinketComponent = TrinketsApi.getTrinketComponent(player);
-			if (trinketComponent.isPresent()) {
+			Optional<ICuriosItemHandler> curiosComponent = CuriosApi.getCuriosInventory(player).resolve();
+			if (curiosComponent.isPresent()) {
 				List<ItemStack> equippedStacks = new ArrayList<>();
 				int spectrumStacks = 0;
-				for (Tuple<SlotReference, ItemStack> t : trinketComponent.get().getAllEquipped()) {
-					equippedStacks.add(t.getB());
-					if (t.getB().getItem() instanceof SpectrumTrinketItem) {
+				var equipped = curiosComponent.get().getEquippedCurios();
+				for (int i = 0; i < equipped.getSlots(); i++) {
+					equippedStacks.add(equipped.getStackInSlot(i));
+					if (equipped.getStackInSlot(i).getItem() instanceof SpectrumTrinketItem) {
 						spectrumStacks++;
 					}
 				}

@@ -23,6 +23,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,9 +50,9 @@ public abstract class ProjectileEntityMixin {
 				if (reboundInstance != null && entity.level().getRandom().nextFloat() < SpectrumStatusEffects.PROJECTILE_REBOUND_CHANCE_PER_LEVEL * reboundInstance.getAmplifier()) {
 					protect = true;
 				} else {
-					Optional<TrinketComponent> component = TrinketsApi.getTrinketComponent(livingEntity);
+					Optional<ICuriosItemHandler> component = CuriosApi.getCuriosInventory(livingEntity).resolve();
 					if (component.isPresent()) {
-						List<Tuple<SlotReference, ItemStack>> equipped = component.get().getEquipped(SpectrumItems.PUFF_CIRCLET);
+						var equipped = component.get().findCurios(SpectrumItems.PUFF_CIRCLET);
 						if (!equipped.isEmpty()) {
 							int charges = AzureDikeProvider.getAzureDikeCharges(livingEntity);
 							if (charges > 0) {

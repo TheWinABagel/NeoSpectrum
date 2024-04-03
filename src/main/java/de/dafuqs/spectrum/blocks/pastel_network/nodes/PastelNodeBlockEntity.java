@@ -18,6 +18,7 @@ import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -42,7 +43,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-public class PastelNodeBlockEntity extends BlockEntity implements FilterConfigurable, ICapabilityProvider {
+public class PastelNodeBlockEntity extends BlockEntity implements FilterConfigurable, ICapabilityProvider, MenuProvider {
 	
 	public static final int ITEM_FILTER_COUNT = 5;
 	public static final int RANGE = 12;

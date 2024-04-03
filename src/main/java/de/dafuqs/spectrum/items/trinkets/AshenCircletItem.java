@@ -1,10 +1,8 @@
 package de.dafuqs.spectrum.items.trinkets;
 
 import com.google.common.collect.Multimap;
-import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.cca.OnPrimordialFireComponent;
-import dev.emi.trinkets.api.SlotReference;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -21,6 +19,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.List;
 import java.util.UUID;
@@ -60,10 +59,11 @@ public class AshenCircletItem extends SpectrumTrinketItem {
 			setCooldown(ashenCircletStack, livingEntity.level());
 		}
 	}
-	
+
 	@Override
-	public void tick(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.tick(stack, slot, entity);
+	public void curioTick(SlotContext slotContext, ItemStack stack) {
+		super.curioTick(slotContext, stack);
+		LivingEntity entity = slotContext.entity();
 		if (entity.isOnFire()) {
 			entity.setRemainingFireTicks(0);
 		}
@@ -72,7 +72,7 @@ public class AshenCircletItem extends SpectrumTrinketItem {
 			setCooldown(stack, entity.level());
 		}
 	}
-	
+
 	@Override
 	public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag context) {
 		super.appendHoverText(stack, world, tooltip, context);
@@ -88,14 +88,14 @@ public class AshenCircletItem extends SpectrumTrinketItem {
 			}
 		}
 	}
-	
+	//todoforge AEA
 	@Override
-	public Multimap<Attribute, AttributeModifier> getModifiers(ItemStack stack, SlotReference slot, LivingEntity entity, UUID uuid) {
-		Multimap<Attribute, AttributeModifier> modifiers = super.getModifiers(stack, slot, entity, uuid);
-		
-		modifiers.put(AdditionalEntityAttributes.LAVA_SPEED, new AttributeModifier(uuid, "spectrum:ashen_circlet", LAVA_MOVEMENT_SPEED_MOD, AttributeModifier.Operation.ADDITION));
-		modifiers.put(AdditionalEntityAttributes.LAVA_VISIBILITY, new AttributeModifier(uuid, "spectrum:ashen_circlet", LAVA_VIEW_DISTANCE_MOD, AttributeModifier.Operation.ADDITION));
-		
+	public Multimap<Attribute, AttributeModifier> getAttributeModifiers(SlotContext slotContext, UUID uuid, ItemStack stack) {
+		Multimap<Attribute, AttributeModifier> modifiers = super.getAttributeModifiers(slotContext, uuid, stack);
+
+//		modifiers.put(AdditionalEntityAttributes.LAVA_SPEED, new AttributeModifier(uuid, "spectrum:ashen_circlet", LAVA_MOVEMENT_SPEED_MOD, AttributeModifier.Operation.ADDITION));
+//		modifiers.put(AdditionalEntityAttributes.LAVA_VISIBILITY, new AttributeModifier(uuid, "spectrum:ashen_circlet", LAVA_VIEW_DISTANCE_MOD, AttributeModifier.Operation.ADDITION));
+
 		return modifiers;
 	}
 	

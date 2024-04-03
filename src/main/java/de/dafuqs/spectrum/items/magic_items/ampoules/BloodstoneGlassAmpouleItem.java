@@ -2,7 +2,6 @@ package de.dafuqs.spectrum.items.magic_items.ampoules;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes;
 import de.dafuqs.spectrum.entity.entity.LightSpearEntity;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -13,6 +12,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.ForgeMod;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class BloodstoneGlassAmpouleItem extends BaseGlassAmpouleItem {
 		super(settings);
 		
 		ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-		builder.put(ReachEntityAttributes.ATTACK_RANGE, new AttributeModifier(REACH_MODIFIER_ID, "Weapon modifier", EXTRA_REACH, AttributeModifier.Operation.ADDITION));
+		builder.put(ForgeMod.ENTITY_REACH.get(), new AttributeModifier(REACH_MODIFIER_ID, "Weapon modifier", EXTRA_REACH, AttributeModifier.Operation.ADDITION));
 		this.attributeModifiers = builder.build();
 	}
 

@@ -14,35 +14,50 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.RandomSource;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.registries.IForgeRegistry;
+import net.minecraftforge.registries.NewRegistryEvent;
+import net.minecraftforge.registries.RegistryBuilder;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
-public class SpectrumRegistries {
-	
+public class SpectrumRegistries { //todoforge custom registries
+	@SubscribeEvent
+	public void customRegistries(NewRegistryEvent e) {
+		Supplier<IForgeRegistry<InkColor>> thing = e.create(new RegistryBuilder<InkColor>().setName(INK_COLORS_ID));
+
+
+	}
+
 	private static final ResourceLocation INK_COLORS_ID = SpectrumCommon.locate("ink_color");
 	public static final ResourceKey<Registry<InkColor>> INK_COLORS_KEY = ResourceKey.createRegistryKey(INK_COLORS_ID);
-	public static final Registry<InkColor> INK_COLORS = FabricRegistryBuilder.createSimple(INK_COLORS_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
-
+//	public static final Registry<InkColor> INK_COLORS = FabricRegistryBuilder.createSimple(INK_COLORS_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+public static final Registry<InkColor> INK_COLORS = null; //temp
 	private static final ResourceLocation LIZARD_FRILL_VARIANT_ID = SpectrumCommon.locate("lizard_frill_variant");
 	public static final ResourceKey<Registry<LizardFrillVariant>> LIZARD_FRILL_VARIANT_KEY = ResourceKey.createRegistryKey(LIZARD_FRILL_VARIANT_ID);
-	public static final Registry<LizardFrillVariant> LIZARD_FRILL_VARIANT = FabricRegistryBuilder.createSimple(LIZARD_FRILL_VARIANT_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+//	public static final Registry<LizardFrillVariant> LIZARD_FRILL_VARIANT = FabricRegistryBuilder.createSimple(LIZARD_FRILL_VARIANT_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+	public static final Registry<LizardFrillVariant> LIZARD_FRILL_VARIANT = null;
 
 	private static final ResourceLocation LIZARD_HORN_VARIANT_ID = SpectrumCommon.locate("lizard_horn_variant");
 	public static final ResourceKey<Registry<LizardHornVariant>> LIZARD_HORN_VARIANT_KEY = ResourceKey.createRegistryKey(LIZARD_HORN_VARIANT_ID);
-	public static final Registry<LizardHornVariant> LIZARD_HORN_VARIANT = FabricRegistryBuilder.createSimple(LIZARD_HORN_VARIANT_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+//	public static final Registry<LizardHornVariant> LIZARD_HORN_VARIANT = FabricRegistryBuilder.createSimple(LIZARD_HORN_VARIANT_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+	public static final Registry<LizardHornVariant> LIZARD_HORN_VARIANT = null;
 
 	private static final ResourceLocation GLASS_ARROW_VARIANT_ID = SpectrumCommon.locate("glass_arrow_variant");
 	public static final ResourceKey<Registry<GlassArrowVariant>> GLASS_ARROW_VARIANT_KEY = ResourceKey.createRegistryKey(GLASS_ARROW_VARIANT_ID);
-	public static final Registry<GlassArrowVariant> GLASS_ARROW_VARIANT = FabricRegistryBuilder.createSimple(GLASS_ARROW_VARIANT_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+//	public static final Registry<GlassArrowVariant> GLASS_ARROW_VARIANT = FabricRegistryBuilder.createSimple(GLASS_ARROW_VARIANT_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+public static final Registry<GlassArrowVariant> GLASS_ARROW_VARIANT = null;
 
 	private static final ResourceLocation EXPLOSION_MODIFIER_TYPES_ID = SpectrumCommon.locate("explosion_effect_family");
 	public static final ResourceKey<Registry<ExplosionModifierType>> EXPLOSION_MODIFIER_TYPES_KEY = ResourceKey.createRegistryKey(EXPLOSION_MODIFIER_TYPES_ID);
-	public static final Registry<ExplosionModifierType> EXPLOSION_MODIFIER_TYPES = FabricRegistryBuilder.createSimple(EXPLOSION_MODIFIER_TYPES_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
-
+//	public static final Registry<ExplosionModifierType> EXPLOSION_MODIFIER_TYPES = FabricRegistryBuilder.createSimple(EXPLOSION_MODIFIER_TYPES_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+	public static final Registry<ExplosionModifierType> EXPLOSION_MODIFIER_TYPES = null;
 	private static final ResourceLocation EXPLOSION_MODIFIERS_ID = SpectrumCommon.locate("explosion_effect_modifier");
 	public static final ResourceKey<Registry<ExplosionModifier>> EXPLOSION_MODIFIERS_KEY = ResourceKey.createRegistryKey(EXPLOSION_MODIFIERS_ID);
-	public static final Registry<ExplosionModifier> EXPLOSION_MODIFIERS = FabricRegistryBuilder.createSimple(EXPLOSION_MODIFIERS_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+//	public static final Registry<ExplosionModifier> EXPLOSION_MODIFIERS = FabricRegistryBuilder.createSimple(EXPLOSION_MODIFIERS_KEY).attribute(RegistryAttribute.SYNCED).buildAndRegister();
+	public static final Registry<ExplosionModifier> EXPLOSION_MODIFIERS = null;
 
 	public static <T> T getRandomTagEntry(Registry<T> registry, TagKey<T> tag, RandomSource random, T fallback) {
 		Optional<HolderSet.Named<T>> tagEntries = registry.getTag(tag);

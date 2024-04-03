@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.registries;
 
-import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
+//import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.status_effects.*;
 import net.minecraft.core.Registry;
@@ -10,7 +10,7 @@ import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 
-public class SpectrumStatusEffects {
+public class SpectrumStatusEffects { //todoforge AEA
 	
 	public static boolean effectsAreGettingStacked = false;
 	
@@ -69,8 +69,8 @@ public class SpectrumStatusEffects {
 	/**
 	 * Reduces incoming magic damage by 1 point / level
 	 */
-	public static final MobEffect MAGIC_ANNULATION = registerStatusEffect("magic_annulation", new SpectrumStatusEffect(MobEffectCategory.BENEFICIAL, 0x7a1082))
-			.addAttributeModifier(AdditionalEntityAttributes.MAGIC_PROTECTION, "2d307e1f-fcc5-4c53-9821-3a7da4a6ef19", 1, AttributeModifier.Operation.ADDITION);
+	public static final MobEffect MAGIC_ANNULATION = registerStatusEffect("magic_annulation", new SpectrumStatusEffect(MobEffectCategory.BENEFICIAL, 0x7a1082));
+//			.addAttributeModifier(AdditionalEntityAttributes.MAGIC_PROTECTION, "2d307e1f-fcc5-4c53-9821-3a7da4a6ef19", 1, AttributeModifier.Operation.ADDITION);
 	
 	/**
 	 * Like poison, but is able to kill
@@ -121,9 +121,9 @@ public class SpectrumStatusEffects {
 	/**
 	 * Increases speed and visibility in lava
 	 */
-	public static final MobEffect LAVA_GLIDING = registerStatusEffect("lava_gliding", new SpectrumStatusEffect(MobEffectCategory.BENEFICIAL, 0xc42e0e)
-			.addAttributeModifier(AdditionalEntityAttributes.LAVA_SPEED, "9812c88f-dc8e-47d1-a092-38339da9891e", 0.1D, AttributeModifier.Operation.ADDITION)
-			.addAttributeModifier(AdditionalEntityAttributes.LAVA_VISIBILITY, "9812c88f-dc8e-47d1-a092-38339da9891e", 8.0D, AttributeModifier.Operation.ADDITION));
+	public static final MobEffect LAVA_GLIDING = registerStatusEffect("lava_gliding", new SpectrumStatusEffect(MobEffectCategory.BENEFICIAL, 0xc42e0e));
+//			.addAttributeModifier(AdditionalEntityAttributes.LAVA_SPEED, "9812c88f-dc8e-47d1-a092-38339da9891e", 0.1D, AttributeModifier.Operation.ADDITION)
+//			.addAttributeModifier(AdditionalEntityAttributes.LAVA_VISIBILITY, "9812c88f-dc8e-47d1-a092-38339da9891e", 8.0D, AttributeModifier.Operation.ADDITION));
 	
 	/**
 	 * % Chance to protect from projectiles per level

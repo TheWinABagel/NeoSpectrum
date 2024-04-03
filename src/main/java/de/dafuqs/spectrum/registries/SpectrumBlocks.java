@@ -114,6 +114,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.projectile.*;
 import net.minecraft.world.item.*;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Explosion;
@@ -128,6 +129,8 @@ import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.common.ToolAction;
+import net.minecraftforge.common.ToolActions;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -263,7 +266,15 @@ public class SpectrumBlocks {
 	public static final Block POLISHED_BLACKSLAG_BUTTON = new ButtonBlock(Properties.of().noCollission().strength(0.5F), SpectrumBlockSetTypes.POLISHED_BLACKSLAG, 5, false);
 	public static final Block POLISHED_BLACKSLAG_PRESSURE_PLATE = new PressurePlateBlock(PressurePlateBlock.Sensitivity.MOBS, Properties.of().mapColor(MapColor.COLOR_BLACK).requiresCorrectToolForDrops().noCollission().strength(0.5F), SpectrumBlockSetTypes.POLISHED_BLACKSLAG);
 
-	public static final Block SHALE_CLAY = new WeatheringBlock(Weathering.WeatheringLevel.UNAFFECTED, blackslag(SoundType.MUD_BRICKS));
+	public static final Block SHALE_CLAY = new WeatheringBlock(Weathering.WeatheringLevel.UNAFFECTED, blackslag(SoundType.MUD_BRICKS)) {
+		@Override
+		public @Nullable BlockState getToolModifiedState(BlockState state, UseOnContext context, ToolAction toolAction, boolean simulate) {
+			if (ToolActions.HOE_TILL == toolAction && HoeItem.onlyIfAirAbove(context)) {
+				return SpectrumBlocks.TILLED_SHALE_CLAY.defaultBlockState();
+			}
+			return super.getToolModifiedState(state, context, toolAction, simulate);
+		}
+	};
 	public static final Block TILLED_SHALE_CLAY = new TilledShaleClayBlock(Properties.copy(SHALE_CLAY), SHALE_CLAY.defaultBlockState());
 	public static final Block POLISHED_SHALE_CLAY = new WeatheringBlock(Weathering.WeatheringLevel.UNAFFECTED, Properties.copy(SHALE_CLAY));
 	public static final Block EXPOSED_POLISHED_SHALE_CLAY = new WeatheringBlock(Weathering.WeatheringLevel.EXPOSED, Properties.copy(SHALE_CLAY));
@@ -325,7 +336,15 @@ public class SpectrumBlocks {
 	public static final Block BONE_ASH_TILE_SLAB = new SlabBlock(Properties.copy(BONE_ASH_TILES));
 	public static final Block BONE_ASH_TILE_WALL = new WallBlock(Properties.copy(BONE_ASH_TILES));
 
-	public static final Block SLUSH = new RotatedPillarBlock(blackslag(SoundType.MUDDY_MANGROVE_ROOTS));
+	public static final Block SLUSH = new RotatedPillarBlock(blackslag(SoundType.MUDDY_MANGROVE_ROOTS)) {
+		@Override
+		public @Nullable BlockState getToolModifiedState(BlockState state, UseOnContext context, ToolAction toolAction, boolean simulate) {
+			if (ToolActions.HOE_TILL == toolAction && HoeItem.onlyIfAirAbove(context)) {
+				return SpectrumBlocks.TILLED_SLUSH.defaultBlockState();
+			}
+			return super.getToolModifiedState(state, context, toolAction, simulate);
+		}
+	};
 	public static final Block TILLED_SLUSH = new TilledSlushBlock(Properties.copy(SLUSH), SLUSH.defaultBlockState());
 
 	public static final Block BLACK_MATERIA = new BlackMateriaBlock(settings(MapColor.TERRACOTTA_BLACK, SoundType.SAND, 0.0F).instrument(NoteBlockInstrument.SNARE).randomTicks());
@@ -667,88 +686,524 @@ public class SpectrumBlocks {
 	}
 	private static final int NOXCAP_BUTTON_BLOCK_PRESS_TIME_TICKS = 30;
 	
-	public static final RotatedPillarBlock STRIPPED_SLATE_NOXCAP_STEM = new RotatedPillarBlock(noxcap(MapColor.COLOR_GRAY));
-	public static final RotatedPillarBlock SLATE_NOXCAP_STEM = new StrippingLootPillarBlock(noxcap(MapColor.COLOR_GRAY), STRIPPED_SLATE_NOXCAP_STEM, SpectrumCommon.locate("gameplay/stripping/slate_noxcap_stripping"));
+	public static final RotatedPillarBlock STRIPPED_SLATE_NOXCAP_STEM = new RotatedPillarBlock(noxcap(MapColor.COLOR_GRAY)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final RotatedPillarBlock SLATE_NOXCAP_STEM = new StrippingLootPillarBlock(noxcap(MapColor.COLOR_GRAY), STRIPPED_SLATE_NOXCAP_STEM, SpectrumCommon.locate("gameplay/stripping/slate_noxcap_stripping")){
+		@Override
+		public @Nullable BlockState getToolModifiedState(BlockState state, UseOnContext context, ToolAction toolAction, boolean simulate) {
+			if (ToolActions.AXE_STRIP == toolAction) {
+				return SpectrumBlocks.STRIPPED_SLATE_NOXCAP_HYPHAE.defaultBlockState();
+			}
+			return super.getToolModifiedState(state, context, toolAction, simulate);
+		}
+
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+
+	};
 	public static final Block STRIPPED_SLATE_NOXCAP_HYPHAE = new RotatedPillarBlock(noxcap(MapColor.COLOR_GRAY));
 	public static final Block SLATE_NOXCAP_HYPHAE = new StrippingLootPillarBlock(noxcap(MapColor.COLOR_GRAY), STRIPPED_SLATE_NOXCAP_HYPHAE, SpectrumCommon.locate("gameplay/stripping/slate_noxcap_stripping"));
-	public static final Block SLATE_NOXCAP_BLOCK = new Block(noxcap(MapColor.COLOR_GRAY));
-	public static final RotatedPillarBlock SLATE_NOXCAP_GILLS = new RotatedPillarBlock(noxcap(MapColor.DIAMOND).lightLevel(state -> 12).emissiveRendering(SpectrumBlocks::always).hasPostProcess(SpectrumBlocks::always));
-	public static final Block SLATE_NOXWOOD_PLANKS = new Block(noxcap(MapColor.COLOR_GRAY));
-	public static final StairBlock SLATE_NOXWOOD_STAIRS = new StairBlock(SLATE_NOXWOOD_PLANKS.defaultBlockState(), noxcap(MapColor.COLOR_GRAY));
-	public static final SlabBlock SLATE_NOXWOOD_SLAB = new SlabBlock(noxcap(MapColor.COLOR_GRAY));
-	public static final FenceBlock SLATE_NOXWOOD_FENCE = new FenceBlock(noxcap(MapColor.COLOR_GRAY));
-	public static final FenceGateBlock SLATE_NOXWOOD_FENCE_GATE = new FenceGateBlock(noxcap(MapColor.COLOR_GRAY), SpectrumWoodTypes.SLATE_NOXWOOD);
+	public static final Block SLATE_NOXCAP_BLOCK = new Block(noxcap(MapColor.COLOR_GRAY)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final RotatedPillarBlock SLATE_NOXCAP_GILLS = new RotatedPillarBlock(noxcap(MapColor.DIAMOND).lightLevel(state -> 12).emissiveRendering(SpectrumBlocks::always).hasPostProcess(SpectrumBlocks::always)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final Block SLATE_NOXWOOD_PLANKS = new Block(noxcap(MapColor.COLOR_GRAY)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final StairBlock SLATE_NOXWOOD_STAIRS = new StairBlock(SLATE_NOXWOOD_PLANKS.defaultBlockState(), noxcap(MapColor.COLOR_GRAY)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final SlabBlock SLATE_NOXWOOD_SLAB = new SlabBlock(noxcap(MapColor.COLOR_GRAY)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final FenceBlock SLATE_NOXWOOD_FENCE = new FenceBlock(noxcap(MapColor.COLOR_GRAY)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final FenceGateBlock SLATE_NOXWOOD_FENCE_GATE = new FenceGateBlock(noxcap(MapColor.COLOR_GRAY), SpectrumWoodTypes.SLATE_NOXWOOD){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block SLATE_NOXWOOD_DOOR = new DoorBlock(noxcap(MapColor.COLOR_GRAY), SpectrumBlockSetTypes.NOXWOOD);
 	public static final Block SLATE_NOXWOOD_TRAPDOOR = new TrapDoorBlock(noxcap(MapColor.COLOR_GRAY), SpectrumBlockSetTypes.NOXWOOD);
 	public static final Block SLATE_NOXWOOD_BUTTON = new ButtonBlock(noxcap(MapColor.COLOR_GRAY), SpectrumBlockSetTypes.NOXWOOD, NOXCAP_BUTTON_BLOCK_PRESS_TIME_TICKS, true);
 	public static final Block SLATE_NOXWOOD_PRESSURE_PLATE = new PressurePlateBlock(PressurePlateBlock.Sensitivity.EVERYTHING, noxcap(MapColor.COLOR_GRAY), SpectrumBlockSetTypes.NOXWOOD);
-	public static final Block SLATE_NOXWOOD_BEAM = new RotatedPillarBlock(noxcap(MapColor.COLOR_GRAY));
+	public static final Block SLATE_NOXWOOD_BEAM = new RotatedPillarBlock(noxcap(MapColor.COLOR_GRAY)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block SLATE_NOXWOOD_AMPHORA = new AmphoraBlock(noxcap(MapColor.COLOR_GRAY));
 	public static final Block SLATE_NOXWOOD_LANTERN = new RedstoneLampBlock(noxcap(MapColor.COLOR_GRAY).lightLevel(LANTERN_LIGHT_PROVIDER));
-	public static final Block SLATE_NOXWOOD_LIGHT = new RotatedPillarBlock(noxcap(MapColor.COLOR_GRAY).lightLevel(state -> 15));
+	public static final Block SLATE_NOXWOOD_LIGHT = new RotatedPillarBlock(noxcap(MapColor.COLOR_GRAY).lightLevel(state -> 15)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block SLATE_NOXWOOD_LAMP = new FlexLanternBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN).lightLevel(l -> 13).pushReaction(PushReaction.DESTROY));
 	
-	public static final RotatedPillarBlock STRIPPED_EBONY_NOXCAP_STEM = new RotatedPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK));
-	public static final RotatedPillarBlock EBONY_NOXCAP_STEM = new StrippingLootPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK), STRIPPED_EBONY_NOXCAP_STEM, SpectrumCommon.locate("gameplay/stripping/ebony_noxcap_stripping"));
+	public static final RotatedPillarBlock STRIPPED_EBONY_NOXCAP_STEM = new RotatedPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final RotatedPillarBlock EBONY_NOXCAP_STEM = new StrippingLootPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK), STRIPPED_EBONY_NOXCAP_STEM, SpectrumCommon.locate("gameplay/stripping/ebony_noxcap_stripping")){
+		@Override
+		public @Nullable BlockState getToolModifiedState(BlockState state, UseOnContext context, ToolAction toolAction, boolean simulate) {
+			if (ToolActions.AXE_STRIP == toolAction) {
+				return SpectrumBlocks.STRIPPED_EBONY_NOXCAP_STEM.defaultBlockState();
+			}
+			return super.getToolModifiedState(state, context, toolAction, simulate);
+		}
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
 	public static final Block STRIPPED_EBONY_NOXCAP_HYPHAE = new RotatedPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK));
-	public static final Block EBONY_NOXCAP_HYPHAE = new StrippingLootPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK), STRIPPED_EBONY_NOXCAP_HYPHAE, SpectrumCommon.locate("gameplay/stripping/ebony_noxcap_stripping"));
-	public static final Block EBONY_NOXCAP_BLOCK = new Block(noxcap(MapColor.TERRACOTTA_BLACK));
-	public static final RotatedPillarBlock EBONY_NOXCAP_GILLS = new RotatedPillarBlock(noxcap(MapColor.DIAMOND).lightLevel(state -> 12).emissiveRendering(SpectrumBlocks::always).hasPostProcess(SpectrumBlocks::always));
-	public static final Block EBONY_NOXWOOD_PLANKS = new Block(noxcap(MapColor.TERRACOTTA_BLACK));
-	public static final StairBlock EBONY_NOXWOOD_STAIRS = new StairBlock(EBONY_NOXWOOD_PLANKS.defaultBlockState(), noxcap(MapColor.TERRACOTTA_BLACK));
-	public static final SlabBlock EBONY_NOXWOOD_SLAB = new SlabBlock(noxcap(MapColor.TERRACOTTA_BLACK));
-	public static final FenceBlock EBONY_NOXWOOD_FENCE = new FenceBlock(noxcap(MapColor.TERRACOTTA_BLACK));
-	public static final FenceGateBlock EBONY_NOXWOOD_FENCE_GATE = new FenceGateBlock(noxcap(MapColor.TERRACOTTA_BLACK), SpectrumWoodTypes.EBONY_NOXWOOD);
+	public static final Block EBONY_NOXCAP_HYPHAE = new StrippingLootPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK), STRIPPED_EBONY_NOXCAP_HYPHAE, SpectrumCommon.locate("gameplay/stripping/ebony_noxcap_stripping")){
+		@Override
+		public @Nullable BlockState getToolModifiedState(BlockState state, UseOnContext context, ToolAction toolAction, boolean simulate) {
+			if (ToolActions.AXE_STRIP == toolAction) {
+				return SpectrumBlocks.STRIPPED_EBONY_NOXCAP_HYPHAE.defaultBlockState();
+			}
+			return super.getToolModifiedState(state, context, toolAction, simulate);
+		}
+	};
+	public static final Block EBONY_NOXCAP_BLOCK = new Block(noxcap(MapColor.TERRACOTTA_BLACK)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final RotatedPillarBlock EBONY_NOXCAP_GILLS = new RotatedPillarBlock(noxcap(MapColor.DIAMOND).lightLevel(state -> 12).emissiveRendering(SpectrumBlocks::always).hasPostProcess(SpectrumBlocks::always)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final Block EBONY_NOXWOOD_PLANKS = new Block(noxcap(MapColor.TERRACOTTA_BLACK)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final StairBlock EBONY_NOXWOOD_STAIRS = new StairBlock(EBONY_NOXWOOD_PLANKS.defaultBlockState(), noxcap(MapColor.TERRACOTTA_BLACK)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final SlabBlock EBONY_NOXWOOD_SLAB = new SlabBlock(noxcap(MapColor.TERRACOTTA_BLACK)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final FenceBlock EBONY_NOXWOOD_FENCE = new FenceBlock(noxcap(MapColor.TERRACOTTA_BLACK)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final FenceGateBlock EBONY_NOXWOOD_FENCE_GATE = new FenceGateBlock(noxcap(MapColor.TERRACOTTA_BLACK), SpectrumWoodTypes.EBONY_NOXWOOD){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block EBONY_NOXWOOD_DOOR = new DoorBlock(noxcap(MapColor.TERRACOTTA_BLACK), SpectrumBlockSetTypes.NOXWOOD);
 	public static final Block EBONY_NOXWOOD_TRAPDOOR = new TrapDoorBlock(noxcap(MapColor.TERRACOTTA_BLACK), SpectrumBlockSetTypes.NOXWOOD);
 	public static final Block EBONY_NOXWOOD_BUTTON = new ButtonBlock(noxcap(MapColor.TERRACOTTA_BLACK), SpectrumBlockSetTypes.NOXWOOD, NOXCAP_BUTTON_BLOCK_PRESS_TIME_TICKS, true);
 	public static final Block EBONY_NOXWOOD_PRESSURE_PLATE = new PressurePlateBlock(PressurePlateBlock.Sensitivity.EVERYTHING, noxcap(MapColor.TERRACOTTA_BLACK), SpectrumBlockSetTypes.NOXWOOD);
-	public static final Block EBONY_NOXWOOD_BEAM = new RotatedPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK));
+	public static final Block EBONY_NOXWOOD_BEAM = new RotatedPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block EBONY_NOXWOOD_AMPHORA = new AmphoraBlock(noxcap(MapColor.TERRACOTTA_BLACK));
 	public static final Block EBONY_NOXWOOD_LANTERN = new RedstoneLampBlock(noxcap(MapColor.TERRACOTTA_BLACK).lightLevel(LANTERN_LIGHT_PROVIDER));
-	public static final Block EBONY_NOXWOOD_LIGHT = new RotatedPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK).lightLevel(state -> 15));
+	public static final Block EBONY_NOXWOOD_LIGHT = new RotatedPillarBlock(noxcap(MapColor.TERRACOTTA_BLACK).lightLevel(state -> 15)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block EBONY_NOXWOOD_LAMP = new FlexLanternBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN).lightLevel(l -> 13).pushReaction(PushReaction.DESTROY));
 	
-	public static final RotatedPillarBlock STRIPPED_IVORY_NOXCAP_STEM = new RotatedPillarBlock(noxcap(MapColor.QUARTZ));
-	public static final RotatedPillarBlock IVORY_NOXCAP_STEM = new StrippingLootPillarBlock(noxcap(MapColor.QUARTZ), STRIPPED_IVORY_NOXCAP_STEM, SpectrumCommon.locate("gameplay/stripping/ivory_noxcap_stripping"));
+	public static final RotatedPillarBlock STRIPPED_IVORY_NOXCAP_STEM = new RotatedPillarBlock(noxcap(MapColor.QUARTZ)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final RotatedPillarBlock IVORY_NOXCAP_STEM = new StrippingLootPillarBlock(noxcap(MapColor.QUARTZ), STRIPPED_IVORY_NOXCAP_STEM, SpectrumCommon.locate("gameplay/stripping/ivory_noxcap_stripping")){
+		@Override
+		public @Nullable BlockState getToolModifiedState(BlockState state, UseOnContext context, ToolAction toolAction, boolean simulate) {
+			if (ToolActions.AXE_STRIP == toolAction) {
+				return SpectrumBlocks.STRIPPED_IVORY_NOXCAP_STEM.defaultBlockState();
+			}
+			return super.getToolModifiedState(state, context, toolAction, simulate);
+		}
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
 	public static final Block STRIPPED_IVORY_NOXCAP_HYPHAE = new RotatedPillarBlock(noxcap(MapColor.QUARTZ));
 	public static final Block IVORY_NOXCAP_HYPHAE = new StrippingLootPillarBlock(noxcap(MapColor.QUARTZ), STRIPPED_IVORY_NOXCAP_HYPHAE, SpectrumCommon.locate("gameplay/stripping/ivory_noxcap_stripping"));
-	public static final Block IVORY_NOXCAP_BLOCK = new Block(noxcap(MapColor.QUARTZ));
-	public static final RotatedPillarBlock IVORY_NOXCAP_GILLS = new RotatedPillarBlock(noxcap(MapColor.DIAMOND).lightLevel(state -> 12).emissiveRendering(SpectrumBlocks::always).hasPostProcess(SpectrumBlocks::always));
-	public static final Block IVORY_NOXWOOD_PLANKS = new Block(noxcap(MapColor.QUARTZ));
-	public static final StairBlock IVORY_NOXWOOD_STAIRS = new StairBlock(IVORY_NOXWOOD_PLANKS.defaultBlockState(), noxcap(MapColor.QUARTZ));
-	public static final SlabBlock IVORY_NOXWOOD_SLAB = new SlabBlock(noxcap(MapColor.QUARTZ));
-	public static final FenceBlock IVORY_NOXWOOD_FENCE = new FenceBlock(noxcap(MapColor.QUARTZ));
-	public static final FenceGateBlock IVORY_NOXWOOD_FENCE_GATE = new FenceGateBlock(noxcap(MapColor.QUARTZ), SpectrumWoodTypes.CHESTNUT_NOXWOOD);
+	public static final Block IVORY_NOXCAP_BLOCK = new Block(noxcap(MapColor.QUARTZ)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final RotatedPillarBlock IVORY_NOXCAP_GILLS = new RotatedPillarBlock(noxcap(MapColor.DIAMOND).lightLevel(state -> 12).emissiveRendering(SpectrumBlocks::always).hasPostProcess(SpectrumBlocks::always)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final Block IVORY_NOXWOOD_PLANKS = new Block(noxcap(MapColor.QUARTZ)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final StairBlock IVORY_NOXWOOD_STAIRS = new StairBlock(IVORY_NOXWOOD_PLANKS.defaultBlockState(), noxcap(MapColor.QUARTZ)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final SlabBlock IVORY_NOXWOOD_SLAB = new SlabBlock(noxcap(MapColor.QUARTZ)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final FenceBlock IVORY_NOXWOOD_FENCE = new FenceBlock(noxcap(MapColor.QUARTZ)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final FenceGateBlock IVORY_NOXWOOD_FENCE_GATE = new FenceGateBlock(noxcap(MapColor.QUARTZ), SpectrumWoodTypes.CHESTNUT_NOXWOOD){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block IVORY_NOXWOOD_DOOR = new DoorBlock(noxcap(MapColor.QUARTZ), SpectrumBlockSetTypes.NOXWOOD);
 	public static final Block IVORY_NOXWOOD_TRAPDOOR = new TrapDoorBlock(noxcap(MapColor.QUARTZ), SpectrumBlockSetTypes.NOXWOOD);
 	public static final Block IVORY_NOXWOOD_BUTTON = new ButtonBlock(noxcap(MapColor.QUARTZ), SpectrumBlockSetTypes.NOXWOOD, NOXCAP_BUTTON_BLOCK_PRESS_TIME_TICKS, true);
 	public static final Block IVORY_NOXWOOD_PRESSURE_PLATE = new PressurePlateBlock(PressurePlateBlock.Sensitivity.EVERYTHING, noxcap(MapColor.QUARTZ), SpectrumBlockSetTypes.NOXWOOD);
-	public static final Block IVORY_NOXWOOD_BEAM = new RotatedPillarBlock(noxcap(MapColor.QUARTZ));
+	public static final Block IVORY_NOXWOOD_BEAM = new RotatedPillarBlock(noxcap(MapColor.QUARTZ)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block IVORY_NOXWOOD_AMPHORA = new AmphoraBlock(noxcap(MapColor.QUARTZ));
 	public static final Block IVORY_NOXWOOD_LANTERN = new RedstoneLampBlock(noxcap(MapColor.QUARTZ).lightLevel(LANTERN_LIGHT_PROVIDER));
-	public static final Block IVORY_NOXWOOD_LIGHT = new RotatedPillarBlock(noxcap(MapColor.QUARTZ).lightLevel(state -> 15));
+	public static final Block IVORY_NOXWOOD_LIGHT = new RotatedPillarBlock(noxcap(MapColor.QUARTZ).lightLevel(state -> 15)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block IVORY_NOXWOOD_LAMP = new FlexLanternBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN).lightLevel(l -> 13).pushReaction(PushReaction.DESTROY));
 	
-	public static final RotatedPillarBlock STRIPPED_CHESTNUT_NOXCAP_STEM = new RotatedPillarBlock(noxcap(MapColor.CRIMSON_NYLIUM));
-	public static final RotatedPillarBlock CHESTNUT_NOXCAP_STEM = new StrippingLootPillarBlock(noxcap(MapColor.CRIMSON_NYLIUM), STRIPPED_CHESTNUT_NOXCAP_STEM, SpectrumCommon.locate("gameplay/stripping/chestnut_noxcap_stripping"));
+	public static final RotatedPillarBlock STRIPPED_CHESTNUT_NOXCAP_STEM = new RotatedPillarBlock(noxcap(MapColor.CRIMSON_NYLIUM)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final RotatedPillarBlock CHESTNUT_NOXCAP_STEM = new StrippingLootPillarBlock(noxcap(MapColor.CRIMSON_NYLIUM), STRIPPED_CHESTNUT_NOXCAP_STEM, SpectrumCommon.locate("gameplay/stripping/chestnut_noxcap_stripping")){
+		@Override
+		public @Nullable BlockState getToolModifiedState(BlockState state, UseOnContext context, ToolAction toolAction, boolean simulate) {
+			if (ToolActions.AXE_STRIP == toolAction) {
+				return SpectrumBlocks.STRIPPED_CHESTNUT_NOXCAP_STEM.defaultBlockState();
+			}
+			return super.getToolModifiedState(state, context, toolAction, simulate);
+		}
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
 	public static final Block STRIPPED_CHESTNUT_NOXCAP_HYPHAE = new RotatedPillarBlock(noxcap(MapColor.QUARTZ));
 	public static final Block CHESTNUT_NOXCAP_HYPHAE = new StrippingLootPillarBlock(noxcap(MapColor.QUARTZ), STRIPPED_CHESTNUT_NOXCAP_HYPHAE, SpectrumCommon.locate("gameplay/stripping/chestnut_noxcap_stripping"));
-	public static final Block CHESTNUT_NOXCAP_BLOCK = new Block(noxcap(MapColor.CRIMSON_NYLIUM));
-	public static final RotatedPillarBlock CHESTNUT_NOXCAP_GILLS = new RotatedPillarBlock(noxcap(MapColor.DIAMOND).lightLevel(state -> 12).emissiveRendering(SpectrumBlocks::always).hasPostProcess(SpectrumBlocks::always));
-	public static final Block CHESTNUT_NOXWOOD_PLANKS = new Block(noxcap(MapColor.CRIMSON_NYLIUM));
-	public static final StairBlock CHESTNUT_NOXWOOD_STAIRS = new StairBlock(CHESTNUT_NOXWOOD_PLANKS.defaultBlockState(), noxcap(MapColor.CRIMSON_NYLIUM));
-	public static final SlabBlock CHESTNUT_NOXWOOD_SLAB = new SlabBlock(noxcap(MapColor.CRIMSON_NYLIUM));
-	public static final FenceBlock CHESTNUT_NOXWOOD_FENCE = new FenceBlock(noxcap(MapColor.CRIMSON_NYLIUM));
-	public static final FenceGateBlock CHESTNUT_NOXWOOD_FENCE_GATE = new FenceGateBlock(noxcap(MapColor.CRIMSON_NYLIUM), SpectrumWoodTypes.IVORY_NOXWOOD);
+	public static final Block CHESTNUT_NOXCAP_BLOCK = new Block(noxcap(MapColor.CRIMSON_NYLIUM)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final RotatedPillarBlock CHESTNUT_NOXCAP_GILLS = new RotatedPillarBlock(noxcap(MapColor.DIAMOND).lightLevel(state -> 12).emissiveRendering(SpectrumBlocks::always).hasPostProcess(SpectrumBlocks::always)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+	};
+	public static final Block CHESTNUT_NOXWOOD_PLANKS = new Block(noxcap(MapColor.CRIMSON_NYLIUM)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final StairBlock CHESTNUT_NOXWOOD_STAIRS = new StairBlock(CHESTNUT_NOXWOOD_PLANKS.defaultBlockState(), noxcap(MapColor.CRIMSON_NYLIUM)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final SlabBlock CHESTNUT_NOXWOOD_SLAB = new SlabBlock(noxcap(MapColor.CRIMSON_NYLIUM)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final FenceBlock CHESTNUT_NOXWOOD_FENCE = new FenceBlock(noxcap(MapColor.CRIMSON_NYLIUM)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
+	public static final FenceGateBlock CHESTNUT_NOXWOOD_FENCE_GATE = new FenceGateBlock(noxcap(MapColor.CRIMSON_NYLIUM), SpectrumWoodTypes.IVORY_NOXWOOD){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block CHESTNUT_NOXWOOD_DOOR = new DoorBlock(noxcap(MapColor.CRIMSON_NYLIUM), SpectrumBlockSetTypes.NOXWOOD);
 	public static final Block CHESTNUT_NOXWOOD_TRAPDOOR = new TrapDoorBlock(noxcap(MapColor.CRIMSON_NYLIUM), SpectrumBlockSetTypes.NOXWOOD);
 	public static final Block CHESTNUT_NOXWOOD_BUTTON = new ButtonBlock(noxcap(MapColor.CRIMSON_NYLIUM), SpectrumBlockSetTypes.NOXWOOD, NOXCAP_BUTTON_BLOCK_PRESS_TIME_TICKS, true);
 	public static final Block CHESTNUT_NOXWOOD_PRESSURE_PLATE = new PressurePlateBlock(PressurePlateBlock.Sensitivity.EVERYTHING, noxcap(MapColor.CRIMSON_NYLIUM), SpectrumBlockSetTypes.NOXWOOD);
-	public static final Block CHESTNUT_NOXWOOD_BEAM = new RotatedPillarBlock(noxcap(MapColor.CRIMSON_NYLIUM));
+	public static final Block CHESTNUT_NOXWOOD_BEAM = new RotatedPillarBlock(noxcap(MapColor.CRIMSON_NYLIUM)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block CHESTNUT_NOXWOOD_AMPHORA = new AmphoraBlock(noxcap(MapColor.CRIMSON_NYLIUM));
 	public static final Block CHESTNUT_NOXWOOD_LANTERN = new RedstoneLampBlock(noxcap(MapColor.CRIMSON_NYLIUM).lightLevel(LANTERN_LIGHT_PROVIDER));
-	public static final Block CHESTNUT_NOXWOOD_LIGHT = new RotatedPillarBlock(noxcap(MapColor.CRIMSON_NYLIUM).lightLevel(state -> 15));
+	public static final Block CHESTNUT_NOXWOOD_LIGHT = new RotatedPillarBlock(noxcap(MapColor.CRIMSON_NYLIUM).lightLevel(state -> 15)){
+		@Override
+		public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 5;
+		}
+		@Override
+		public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+			return 20;
+		}
+	};
 	public static final Block CHESTNUT_NOXWOOD_LAMP = new FlexLanternBlock(BlockBehaviour.Properties.copy(Blocks.LANTERN).lightLevel(l -> 13).pushReaction(PushReaction.DESTROY));
 	
 	public static Properties dragonjag(MapColor color) {

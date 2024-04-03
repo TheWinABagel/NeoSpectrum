@@ -4,7 +4,6 @@ import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.networking.SpectrumS2CPacketSender;
 import de.dafuqs.spectrum.registries.SpectrumFluidTags;
 import de.dafuqs.spectrum.registries.SpectrumSoundEvents;
-import dev.emi.trinkets.api.SlotReference;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -23,6 +22,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.List;
 
@@ -48,15 +48,15 @@ public class WeepingCircletItem extends SpectrumTrinketItem {
 	}
 
 	@Override
-	public void onEquip(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.onEquip(stack, slot, entity);
-		doEffects(entity, true);
+	public void onEquip(SlotContext slotContext, ItemStack prevStack, ItemStack stack) {
+		super.onEquip(slotContext, prevStack, stack);
+		doEffects(slotContext.entity(), true);
 	}
-	
+
 	@Override
-	public void tick(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.tick(stack, slot, entity);
-		doEffects(entity, false);
+	public void curioTick(SlotContext slotContext, ItemStack stack) {
+		super.curioTick(slotContext, stack);
+		doEffects(slotContext.entity(), false);
 	}
 	
 	private void doEffects(LivingEntity entity, boolean always) {

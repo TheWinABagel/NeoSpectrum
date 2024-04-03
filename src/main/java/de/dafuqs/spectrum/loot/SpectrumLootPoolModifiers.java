@@ -128,74 +128,74 @@ public class SpectrumLootPoolModifiers {
 		put(new ResourceLocation("spectrum:entities/eraser"), new TreasureHunterDropDefinition(SpectrumBlocks.getMobHead(SpectrumSkullBlockType.ERASER).asItem(), 0.1F));
 	}};
 
-	public static void setup() {
-		LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
-			
-			// Treasure hunter pools
-			if (trophyHunterLootPools.containsKey(id)) {
-				TreasureHunterDropDefinition treasureHunterDropDefinition = trophyHunterLootPools.get(id);
-				tableBuilder.pool(getLootPool(treasureHunterDropDefinition));
-				// Some treasure hunter pools use custom loot conditions
-				// because vanillas are too generic (fox/snow fox both use "fox" loot table)
-			} else if (id.equals(new ResourceLocation("entities/fox"))) {
-				tableBuilder.pool(getFoxLootPool(Fox.Type.RED, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FOX).asItem(), 0.02F));
-				tableBuilder.pool(getFoxLootPool(Fox.Type.SNOW, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FOX_ARCTIC).asItem(), 0.02F));
-			} else if (id.equals(new ResourceLocation("entities/mooshroom"))) {
-				tableBuilder.pool(getMooshroomLootPool(MushroomCow.MushroomType.BROWN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.MOOSHROOM_BROWN).asItem(), 0.02F));
-				tableBuilder.pool(getMooshroomLootPool(MushroomCow.MushroomType.RED, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.MOOSHROOM_RED).asItem(), 0.02F));
-			} else if (id.equals(new ResourceLocation("entities/shulker"))) {
-				tableBuilder.pool(getShulkerLootPool(null, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.BLACK, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_BLACK).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_BLUE).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.BROWN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_BROWN).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.CYAN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_CYAN).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.GRAY, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_GRAY).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.GREEN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_GREEN).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.LIGHT_BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_LIGHT_BLUE).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.LIGHT_GRAY, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_LIGHT_GRAY).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.LIME, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_LIME).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.MAGENTA, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_MAGENTA).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.ORANGE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_ORANGE).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.PINK, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_PINK).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.PURPLE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_PURPLE).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.RED, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_RED).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.WHITE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_WHITE).asItem(), 0.05F));
-				tableBuilder.pool(getShulkerLootPool(DyeColor.YELLOW, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_YELLOW).asItem(), 0.05F));
-			} else if (id.equals(new ResourceLocation("entities/axolotl"))) {
-				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_BLUE).asItem(), 0.02F));
-				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.CYAN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_CYAN).asItem(), 0.02F));
-				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.GOLD, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_GOLD).asItem(), 0.02F));
-				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.LUCY, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_LEUCISTIC).asItem(), 0.02F));
-				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.WILD, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_BROWN).asItem(), 0.02F));
-			} else if (id.equals(new ResourceLocation("entities/parrot"))) {
-				tableBuilder.pool(getParrotLootPool(Parrot.Variant.RED_BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_RED).asItem(), 0.02F));
-				tableBuilder.pool(getParrotLootPool(Parrot.Variant.BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_BLUE).asItem(), 0.02F));
-				tableBuilder.pool(getParrotLootPool(Parrot.Variant.GREEN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_GREEN).asItem(), 0.02F));
-				tableBuilder.pool(getParrotLootPool(Parrot.Variant.YELLOW_BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_CYAN).asItem(), 0.02F));
-				tableBuilder.pool(getParrotLootPool(Parrot.Variant.GRAY, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_GRAY).asItem(), 0.02F));
-			} else if (id.equals(new ResourceLocation("entities/frog"))) {
-				tableBuilder.pool(getFrogLootPool(FrogVariant.TEMPERATE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FROG_TEMPERATE).asItem(), 0.02F));
-				tableBuilder.pool(getFrogLootPool(FrogVariant.COLD, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FROG_COLD).asItem(), 0.02F));
-				tableBuilder.pool(getFrogLootPool(FrogVariant.WARM, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FROG_WARM).asItem(), 0.02F));
-			} else if (GoFishCompat.isLoaded()) {
-				//Go-Fish compat: fishing of crates & go-fish fishies
-				if (id.equals(SpectrumCommon.locate("gameplay/fishing/lava/fishing"))) {
-					tableBuilder.modifyPools(builder -> builder.with(LootTableReference.lootTableReference(GoFishCompat.NETHER_FISH_LOOT_TABLE_ID).setWeight(80).setQuality(-1).build()));
-					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.NETHER_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
-				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/end/fishing"))) {
-					tableBuilder.modifyPools(builder -> builder.with(LootTableReference.lootTableReference(GoFishCompat.END_FISH_LOOT_TABLE_ID).setWeight(90).setQuality(-1).build()));
-					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.END_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
-				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/deeper_down/fishing"))) {
-					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.DEFAULT_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
-				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/mud/fishing"))) {
-					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.DEFAULT_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
-				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/liquid_crystal/fishing"))) {
-					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.DEFAULT_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
-				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/midnight_solution/fishing"))) {
-					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.DEFAULT_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
-				}
-			}
-		});
+	public static void setup() { //todoforge loot pool modifiers, move to GLM
+//		LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
+//
+//			// Treasure hunter pools
+//			if (trophyHunterLootPools.containsKey(id)) {
+//				TreasureHunterDropDefinition treasureHunterDropDefinition = trophyHunterLootPools.get(id);
+//				tableBuilder.pool(getLootPool(treasureHunterDropDefinition));
+//				// Some treasure hunter pools use custom loot conditions
+//				// because vanillas are too generic (fox/snow fox both use "fox" loot table)
+//			} else if (id.equals(new ResourceLocation("entities/fox"))) {
+//				tableBuilder.pool(getFoxLootPool(Fox.Type.RED, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FOX).asItem(), 0.02F));
+//				tableBuilder.pool(getFoxLootPool(Fox.Type.SNOW, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FOX_ARCTIC).asItem(), 0.02F));
+//			} else if (id.equals(new ResourceLocation("entities/mooshroom"))) {
+//				tableBuilder.pool(getMooshroomLootPool(MushroomCow.MushroomType.BROWN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.MOOSHROOM_BROWN).asItem(), 0.02F));
+//				tableBuilder.pool(getMooshroomLootPool(MushroomCow.MushroomType.RED, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.MOOSHROOM_RED).asItem(), 0.02F));
+//			} else if (id.equals(new ResourceLocation("entities/shulker"))) {
+//				tableBuilder.pool(getShulkerLootPool(null, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.BLACK, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_BLACK).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_BLUE).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.BROWN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_BROWN).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.CYAN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_CYAN).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.GRAY, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_GRAY).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.GREEN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_GREEN).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.LIGHT_BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_LIGHT_BLUE).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.LIGHT_GRAY, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_LIGHT_GRAY).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.LIME, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_LIME).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.MAGENTA, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_MAGENTA).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.ORANGE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_ORANGE).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.PINK, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_PINK).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.PURPLE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_PURPLE).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.RED, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_RED).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.WHITE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_WHITE).asItem(), 0.05F));
+//				tableBuilder.pool(getShulkerLootPool(DyeColor.YELLOW, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.SHULKER_YELLOW).asItem(), 0.05F));
+//			} else if (id.equals(new ResourceLocation("entities/axolotl"))) {
+//				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_BLUE).asItem(), 0.02F));
+//				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.CYAN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_CYAN).asItem(), 0.02F));
+//				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.GOLD, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_GOLD).asItem(), 0.02F));
+//				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.LUCY, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_LEUCISTIC).asItem(), 0.02F));
+//				tableBuilder.pool(getAxolotlLootPool(Axolotl.Variant.WILD, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.AXOLOTL_BROWN).asItem(), 0.02F));
+//			} else if (id.equals(new ResourceLocation("entities/parrot"))) {
+//				tableBuilder.pool(getParrotLootPool(Parrot.Variant.RED_BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_RED).asItem(), 0.02F));
+//				tableBuilder.pool(getParrotLootPool(Parrot.Variant.BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_BLUE).asItem(), 0.02F));
+//				tableBuilder.pool(getParrotLootPool(Parrot.Variant.GREEN, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_GREEN).asItem(), 0.02F));
+//				tableBuilder.pool(getParrotLootPool(Parrot.Variant.YELLOW_BLUE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_CYAN).asItem(), 0.02F));
+//				tableBuilder.pool(getParrotLootPool(Parrot.Variant.GRAY, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.PARROT_GRAY).asItem(), 0.02F));
+//			} else if (id.equals(new ResourceLocation("entities/frog"))) {
+//				tableBuilder.pool(getFrogLootPool(FrogVariant.TEMPERATE, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FROG_TEMPERATE).asItem(), 0.02F));
+//				tableBuilder.pool(getFrogLootPool(FrogVariant.COLD, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FROG_COLD).asItem(), 0.02F));
+//				tableBuilder.pool(getFrogLootPool(FrogVariant.WARM, SpectrumBlocks.getMobHead(SpectrumSkullBlockType.FROG_WARM).asItem(), 0.02F));
+//			} else if (GoFishCompat.isLoaded()) {
+//				//Go-Fish compat: fishing of crates & go-fish fishies
+//				if (id.equals(SpectrumCommon.locate("gameplay/fishing/lava/fishing"))) {
+//					tableBuilder.modifyPools(builder -> builder.with(LootTableReference.lootTableReference(GoFishCompat.NETHER_FISH_LOOT_TABLE_ID).setWeight(80).setQuality(-1).build()));
+//					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.NETHER_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
+//				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/end/fishing"))) {
+//					tableBuilder.modifyPools(builder -> builder.with(LootTableReference.lootTableReference(GoFishCompat.END_FISH_LOOT_TABLE_ID).setWeight(90).setQuality(-1).build()));
+//					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.END_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
+//				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/deeper_down/fishing"))) {
+//					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.DEFAULT_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
+//				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/mud/fishing"))) {
+//					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.DEFAULT_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
+//				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/liquid_crystal/fishing"))) {
+//					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.DEFAULT_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
+//				} else if (id.equals(SpectrumCommon.locate("gameplay/fishing/midnight_solution/fishing"))) {
+//					tableBuilder.modifyPools(builder -> builder.add(LootTableReference.lootTableReference(GoFishCompat.DEFAULT_CRATES_LOOT_TABLE_ID).setWeight(5).setQuality(2).when(LootItemEntityPropertyCondition.hasProperties(LootContext.EntityTarget.THIS, new EntityPredicate.Builder().subPredicate(FishingHookPredicate.inOpenWater(true)).build()))));
+//				}
+//			}
+//		});
 	}
 	
 	private static LootPool getLootPool(TreasureHunterDropDefinition treasureHunterDropDefinition) {

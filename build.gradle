@@ -90,7 +90,7 @@ dependencies {
   	implementation fg.deobf("me.shedaniel.cloth:cloth-config-forge:11.1.118")
 	compileOnly fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}:api")
 	runtimeOnly compileOnly(fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}"))
-//	modApi("dev.architectury:architectury-fabric:${project.architectury_version}") { exclude(group: "net.fabricmc.fabric-api") }
+	implementation fg.deobf("dev.architectury:architectury-forge:${project.architectury_version}")
 //	modApi("com.terraformersmc:modmenu:${project.modmenu_version}")
 //	modImplementation("eu.pb4:common-protection-api:${project.cpa_version}")
 	// https://maven.blamejared.com/vazkii/patchouli/Patchouli/
@@ -127,7 +127,7 @@ dependencies {
 	compileOnly fg.deobf("com.unascribed:ears-api:${project.ears_version}")
 
 	// Enchantment Descriptions compat
-//	modCompileOnly("maven.modrinth:enchantment-descriptions:${project.enchantment_descriptions_version}")
+	compileOnly fg.deobf("maven.modrinth:enchantment-descriptions:${project.enchantment_descriptions_version}")
 
 	// idwtialsimmoedm compat
 //	modImplementation("maven.modrinth:idwtialsimmoedm:${project.idwtialsimmoedm_version}")

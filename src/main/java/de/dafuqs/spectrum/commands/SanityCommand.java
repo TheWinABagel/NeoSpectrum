@@ -91,9 +91,9 @@ public class SanityCommand {
 				if (!blockState.is(BlockTags.MINEABLE_WITH_PICKAXE)
 						&& !blockState.is(BlockTags.MINEABLE_WITH_AXE)
 						&& !blockState.is(BlockTags.MINEABLE_WITH_SHOVEL)
-						&& !blockState.is(BlockTags.MINEABLE_WITH_HOE)
-						&& !blockState.is(FabricMineableTags.SHEARS_MINEABLE)
-						&& !blockState.is(FabricMineableTags.SWORD_MINEABLE)
+						&& !blockState.is(BlockTags.MINEABLE_WITH_HOE)//todoforge shears and sword minable from blockstate?
+//						&& !blockState.is(FabricMineableTags.SHEARS_MINEABLE)
+//						&& !blockState.is(FabricMineableTags.SWORD_MINEABLE)
 						&& !blockState.is(SpectrumBlockTags.EXEMPT_FROM_MINEABLE_DEBUG_CHECK)) {
 					SpectrumCommon.logWarning("[SANITY: Mineable Tags] Block " + registryKey.location() + " is not contained in a any vanilla mineable tag.");
 				}
@@ -385,9 +385,11 @@ public class SanityCommand {
 				}
 			}
 		}
-		
+		//todoforge fractal port
+
 		// items / blocks missing in the creative tab (will also omit them from most recipe viewers)
-		Collection<ItemStack> itemGroupStacks = SpectrumItemGroups.MAIN.getSearchTabDisplayItems();
+//		Collection<ItemStack> itemGroupStacks = SpectrumItemGroups.MAIN.getSearchTabDisplayItems();
+		Collection<ItemStack> itemGroupStacks = Collections.emptyList();
 		for (Map.Entry<ResourceKey<Item>, Item> item : BuiltInRegistries.ITEM.entrySet()) {
 			
 			if (item.getKey().location().getNamespace().equals(SpectrumCommon.MOD_ID) && !item.getValue().builtInRegistryHolder().is(SpectrumItemTags.COMING_SOON_TOOLTIP)) {

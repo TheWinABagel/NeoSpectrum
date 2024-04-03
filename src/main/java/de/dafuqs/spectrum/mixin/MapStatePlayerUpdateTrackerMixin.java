@@ -2,8 +2,7 @@ package de.dafuqs.spectrum.mixin;
 
 import de.dafuqs.spectrum.items.map.ArtisansAtlasState;
 import de.dafuqs.spectrum.networking.SpectrumS2CPackets;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientboundMapItemDataPacket;
@@ -32,7 +31,7 @@ public class MapStatePlayerUpdateTrackerMixin {
 
     @Inject(
             method = "nextUpdatePacket",
-            at = @At(value = "NEW", target = "net/minecraft/network/protocol/game/ClientboundMapItemDataPacket"), //todoforge Probably breaks
+            at = @At(value = "NEW", target = "net/minecraft/network/protocol/game/ClientboundMapItemDataPacket"), //todoforge Probably breaks, packets stuff
             locals = LocalCapture.CAPTURE_FAILHARD,
             cancellable = true
     )
@@ -43,7 +42,7 @@ public class MapStatePlayerUpdateTrackerMixin {
             MapItemSavedData state = world.getMapData(mapStr);
             if (state instanceof ArtisansAtlasState artisansAtlasState) {
                 ClientboundMapItemDataPacket mapUpdateS2CPacket = new ClientboundMapItemDataPacket(mapId, state.scale, state.locked, icons, updateData);
-                FriendlyByteBuf buf = PacketByteBufs.create();
+                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
 
                 ResourceLocation targetId = artisansAtlasState.getTargetId();
                 if (targetId == null) {
@@ -54,8 +53,8 @@ public class MapStatePlayerUpdateTrackerMixin {
 
                 mapUpdateS2CPacket.write(buf);
 
-                Packet<?> packet = ServerPlayNetworking.createS2CPacket(SpectrumS2CPackets.SYNC_ARTISANS_ATLAS, buf);
-                cir.setReturnValue(packet);
+//                Packet<?> packet = ServerPlayNetworking.createS2CPacket(SpectrumS2CPackets.SYNC_ARTISANS_ATLAS, buf);
+//                cir.setReturnValue(packet);
             }
         }
     }

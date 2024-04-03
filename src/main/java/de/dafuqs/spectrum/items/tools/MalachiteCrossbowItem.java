@@ -1,6 +1,6 @@
 package de.dafuqs.spectrum.items.tools;
 
-import de.dafuqs.arrowhead.api.ArrowheadCrossbow;
+//import de.dafuqs.arrowhead.api.ArrowheadCrossbow;
 import de.dafuqs.spectrum.api.item.Preenchanted;
 import de.dafuqs.spectrum.registries.SpectrumItemTags;
 import net.minecraft.nbt.CompoundTag;
@@ -14,7 +14,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import java.util.Map;
 import java.util.function.Predicate;
 
-public class MalachiteCrossbowItem extends CrossbowItem implements Preenchanted, ArrowheadCrossbow {
+public class MalachiteCrossbowItem extends CrossbowItem implements Preenchanted/*, ArrowheadCrossbow*/ { //todoforge arrowhead
 	
 	public static final Predicate<ItemStack> PROJECTILES = (stack) -> stack.is(ItemTags.ARROWS) || stack.is(SpectrumItemTags.GLASS_ARROWS);
 	
@@ -49,19 +49,19 @@ public class MalachiteCrossbowItem extends CrossbowItem implements Preenchanted,
 		return PROJECTILES;
 	}
 
-	@Override
-	public float getProjectileVelocityModifier(ItemStack stack) {
-		return 1.25F;
-	}
-
-	@Override
-	public float getPullTimeModifier(ItemStack stack) {
-		return 1.0F;
-	}
-
-	@Override
-	public float getDivergenceMod(ItemStack stack) {
-		return 0.75F;
-	}
+//	@Override
+//	public float getProjectileVelocityModifier(ItemStack stack) {
+//		return 1.25F;
+//	}
+//
+//	@Override
+//	public float getPullTimeModifier(ItemStack stack) {
+//		return 1.0F;
+//	}
+//
+//	@Override
+//	public float getDivergenceMod(ItemStack stack) {
+//		return 0.75F;
+//	}
 	
 }

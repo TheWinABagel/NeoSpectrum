@@ -18,7 +18,11 @@ import java.util.List;
 import java.util.function.Function;
 
 @OnlyIn(Dist.CLIENT)
-public class DynamicRenderModel extends BakedModelWrapper<DynamicRenderModel> /*ForwardingBakedModel*/ implements UnbakedModel {
+public class DynamicRenderModel extends BakedModelWrapper<BakedModel> /*ForwardingBakedModel*/ implements UnbakedModel {
+    public BakedModel getWrappedModel() { //todoforge replace this
+        return this.originalModel;
+    }
+
     private static class WrappingOverridesList extends ItemOverrides {
         private final ItemOverrides wrapped;
         private WrappingOverridesList(ItemOverrides orig) {
@@ -37,13 +41,15 @@ public class DynamicRenderModel extends BakedModelWrapper<DynamicRenderModel> /*
     private UnbakedModel baseUnbaked;
 
     // could be used again if pre-bake model problems get figured out
-    public DynamicRenderModel(UnbakedModel base) {
-        this.baseUnbaked = base;
-    }
+//    public DynamicRenderModel(UnbakedModel base) {
+//        super(base);
+//        this.baseUnbaked = base;
+//    }
 
     // post-bake post-override constructor
     public DynamicRenderModel(BakedModel base) {
-        this.wrapped = base instanceof DynamicRenderModel fm ? fm.getWrappedModel() : base;
+        super(base);
+//        this.originalModel = base instanceof DynamicRenderModel fm ? fm.originalModel : base; //todoforge what is happening here
     }
 
     // avoid FAPI builtin model lookup
@@ -52,8 +58,8 @@ public class DynamicRenderModel extends BakedModelWrapper<DynamicRenderModel> /*
         return false;
     }
 
-    private DynamicRenderModel wrap(BakedModel model) {
-        this.wrapped = model instanceof DynamicRenderModel fm ? fm.getWrappedModel() : model;
+    private DynamicRenderModel wrap(BakedModel model) { //also what is happening here
+//        this.originalModel = model instanceof DynamicRenderModel fm ? fm.originalModel : model;
         return this;
     }
 

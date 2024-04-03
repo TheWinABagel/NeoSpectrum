@@ -2,7 +2,6 @@ package de.dafuqs.spectrum.registries;
 
 import com.mojang.serialization.DataResult;
 import de.dafuqs.spectrum.compat.biome_makeover.BiomeMakeoverCompat;
-import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -11,33 +10,37 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.SignText;
+import net.minecraftforge.event.entity.player.ItemTooltipEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.List;
 import java.util.Optional;
 
 public class SpectrumTooltips {
-	
-	public static void register() {
-		ItemTooltipCallback.EVENT.register((stack, context, lines) -> {
-			CompoundTag nbt = stack.getTag();
-			if (nbt != null) {
-				
-				if (stack.is(Blocks.SCULK_SHRIEKER.asItem())) {
-					addSculkShriekerTooltips(lines, nbt);
-				} else if (stack.is(ItemTags.SIGNS)) {
-					addSignTooltips(lines, nbt);
-				} else if (stack.is(Items.SPAWNER)) {
-					addSpawnerTooltips(lines, nbt);
-				}
-				
-				if (nbt.getBoolean(BiomeMakeoverCompat.CURSED_TAG)) {
-					lines.add(Component.translatable("spectrum.tooltip.biomemakeover_cursed").withStyle(ChatFormatting.GRAY));
-				}
+
+	@SubscribeEvent
+	public static void register(ItemTooltipEvent e) {
+		ItemStack stack = e.getItemStack();
+		CompoundTag nbt = stack.getTag();
+		List<Component> lines = e.getToolTip();
+		if (nbt != null) {
+
+			if (stack.is(Blocks.SCULK_SHRIEKER.asItem())) {
+				addSculkShriekerTooltips(lines, nbt);
+			} else if (stack.is(ItemTags.SIGNS)) {
+				addSignTooltips(lines, nbt);
+			} else if (stack.is(Items.SPAWNER)) {
+				addSpawnerTooltips(lines, nbt);
 			}
-		});
+
+			if (nbt.getBoolean(BiomeMakeoverCompat.CURSED_TAG)) {
+				lines.add(Component.translatable("spectrum.tooltip.biomemakeover_cursed").withStyle(ChatFormatting.GRAY));
+			}
+		}
 	}
 	
 	private static void addSculkShriekerTooltips(List<Component> lines, CompoundTag nbt) {

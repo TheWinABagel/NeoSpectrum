@@ -47,7 +47,8 @@ public class SpectrumEntityTypes {
 	public static final EntityType<DraconicTwinswordEntity> DRAGON_TWINSWORD = register("dragon_twinsword", 6, 2, true, EntityDimensions.scalable(0.5F, 0.5F), true, DraconicTwinswordEntity::new);
 
 	public static <X extends Entity> EntityType<X> register(String name, int trackingDistance, int updateIntervalTicks, boolean alwaysUpdateVelocity, EntityDimensions size, boolean fireImmune, EntityType.EntityFactory<X> factory) {
-		EntityType.Builder<X> builder = EntityType.Builder.of(factory, MobCategory.MISC).clientTrackingRange(trackingDistance).updateInterval(updateIntervalTicks).setShouldReceiveVelocityUpdates(alwaysUpdateVelocity).dimensions(size);
+		EntityType.Builder<X> builder = EntityType.Builder.of(factory, MobCategory.MISC).clientTrackingRange(trackingDistance).updateInterval(updateIntervalTicks).setShouldReceiveVelocityUpdates(alwaysUpdateVelocity);
+		builder.dimensions = size;
 		if (fireImmune) {
 			builder.fireImmune();
 		}

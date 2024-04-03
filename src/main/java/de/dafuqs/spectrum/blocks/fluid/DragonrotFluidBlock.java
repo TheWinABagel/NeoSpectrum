@@ -48,7 +48,7 @@ public class DragonrotFluidBlock extends SpectrumFluidBlock {
 	@Override
 	public void onPlace(BlockState state, Level world, BlockPos pos, BlockState oldState, boolean notify) {
 		if (this.shouldSpreadLiquid(world, pos, state)) {
-			world.scheduleTick(pos, state.getFluidState().getType(), this.fluid.getTickDelay(world));
+			world.scheduleTick(pos, state.getFluidState().getType(), this.getFluid().getTickDelay(world));
 		}
 	}
 	
@@ -89,7 +89,7 @@ public class DragonrotFluidBlock extends SpectrumFluidBlock {
 	@Override
 	public void neighborChanged(BlockState state, Level world, BlockPos pos, Block block, BlockPos fromPos, boolean notify) {
 		if (this.shouldSpreadLiquid(world, pos, state)) {
-			world.scheduleTick(pos, state.getFluidState().getType(), this.fluid.getTickDelay(world));
+			world.scheduleTick(pos, state.getFluidState().getType(), this.getFluid().getTickDelay(world));
 		}
 	}
 	

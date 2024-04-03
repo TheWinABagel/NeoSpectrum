@@ -4,7 +4,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import de.dafuqs.spectrum.SpectrumCommon;
-import dev.emi.trinkets.api.SlotReference;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.Minecraft;
@@ -17,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,10 +39,11 @@ public class AttackRingItem extends SpectrumTrinketItem {
 			return Math.max(0, 1 + Math.log10(mod));
 		}
 	}
-	
+
 	@Override
-	public void onUnequip(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.onUnequip(stack, slot, entity);
+	public void onUnequip(SlotContext slotContext, ItemStack newStack, ItemStack stack) {
+		super.onUnequip(slotContext, newStack, stack);
+		LivingEntity entity = slotContext.entity();
 		if (entity.getAttributes().hasModifier(Attributes.ATTACK_DAMAGE, AttackRingItem.ATTACK_RING_DAMAGE_UUID)) {
 			Multimap<Attribute, AttributeModifier> map = Multimaps.newMultimap(Maps.newLinkedHashMap(), ArrayList::new);
 			AttributeModifier modifier = new AttributeModifier(AttackRingItem.ATTACK_RING_DAMAGE_UUID, ATTACK_RING_DAMAGE_NAME, AttackRingItem.getAttackModifierForEntity(entity), AttributeModifier.Operation.MULTIPLY_TOTAL);

@@ -5,7 +5,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
+//import de.dafuqs.additionalentityattributes.AdditionalEntityAttributes;
 import de.dafuqs.spectrum.api.entity.PlayerEntityAccessor;
 import de.dafuqs.spectrum.api.item.ExperienceStorageItem;
 import de.dafuqs.spectrum.cca.LastKillComponent;
@@ -50,7 +50,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(Player.class)
-public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEntityAccessor {
+public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEntityAccessor { //todoforge AEA
 
 	protected PlayerEntityMixin(EntityType<? extends LivingEntity> entityType, Level world) {
 		super(entityType, world);
@@ -90,7 +90,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		if (SpectrumEnchantments.IMPROVED_CRITICAL.canEntityUse(player)) {
 			int improvedCriticalLevel = SpectrumEnchantmentHelper.getUsableLevel(SpectrumEnchantments.IMPROVED_CRITICAL, player.getMainHandItem(), player);
 			AttributeModifier improvedCriticalModifier = new AttributeModifier(ImprovedCriticalEnchantment.EXTRA_CRIT_DAMAGE_MULTIPLIER_ATTRIBUTE_UUID, ImprovedCriticalEnchantment.EXTRA_CRIT_DAMAGE_MULTIPLIER_ATTRIBUTE_NAME, ImprovedCriticalEnchantment.getAddtionalCritDamageMultiplier(improvedCriticalLevel), AttributeModifier.Operation.ADDITION);
-			map.put(AdditionalEntityAttributes.CRITICAL_BONUS_DAMAGE, improvedCriticalModifier);
+//			map.put(AdditionalEntityAttributes.CRITICAL_BONUS_DAMAGE, improvedCriticalModifier);
 		}
 		
 		player.getAttributes().addTransientAttributeModifiers(map);
@@ -167,7 +167,7 @@ public abstract class PlayerEntityMixin extends LivingEntity implements PlayerEn
 		return experience;
 	}
 	
-	@ModifyVariable(method = "getDestroySpeed",
+	@ModifyVariable(method = "getDigSpeed",
 			slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Player;hasEffect(Lnet/minecraft/world/effect/MobEffect;)Z"),
 					to = @At("TAIL")
 			),

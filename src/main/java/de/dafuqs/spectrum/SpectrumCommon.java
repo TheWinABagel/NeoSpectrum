@@ -187,7 +187,7 @@ public class SpectrumCommon{
 		logInfo("Registering Items...");
 		SpectrumPotions.register();
 		SpectrumItems.register();
-		SpectrumItemGroups.register();
+//		SpectrumItemGroups.register(); //todoforge itemgroups
 		logInfo("Setting up server side Mod Compat...");
 		SpectrumIntegrationPacks.register();
 		logInfo("Registering Block Entities...");
@@ -239,15 +239,12 @@ public class SpectrumCommon{
 		modBus.addListener(SpectrumEntityTypes::registerAttributes);
 		
 		logInfo("Registering Commands...");
-		SpectrumCommands.register();
+		forgeBus.addListener(SpectrumCommands::register);
 		
 		logInfo("Registering Client To ServerPackage Receivers...");
 		SpectrumC2SPacketReceiver.registerC2SReceivers();
 		
-		logInfo("Adding to Fabric's Registries...");
-		SpectrumFlammableBlocks.register();
-		SpectrumStrippableBlocks.register();
-		SpectrumTillableBlocks.register();
+		logInfo("Registering compostables...");
 		SpectrumCompostableBlocks.register();
 		
 		logInfo("Registering Game Events...");
@@ -321,8 +318,7 @@ public class SpectrumCommon{
 //				entries.accept(new ItemStack(Items.APPLE));
 //			}
 //		});
-		
-		//todoforge Port to forge item caps
+
 //		ItemStorage.SIDED.registerForBlockEntity((blockEntity, direction) -> blockEntity.storage, SpectrumBlockEntities.BOTTOMLESS_BUNDLE);
 //		FluidStorage.SIDED.registerForBlockEntity((blockEntity, direction) -> blockEntity.fluidStorage, SpectrumBlockEntities.FUSION_SHRINE);
 //		FluidStorage.SIDED.registerForBlockEntity((blockEntity, direction) -> blockEntity.fluidStorage, SpectrumBlockEntities.TITRATION_BARREL);

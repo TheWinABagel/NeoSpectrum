@@ -4,14 +4,13 @@ import com.google.gson.JsonObject;
 import de.dafuqs.spectrum.SpectrumCommon;
 import de.dafuqs.spectrum.items.trinkets.TakeOffBeltItem;
 import de.dafuqs.spectrum.registries.SpectrumItems;
-import dev.emi.trinkets.api.SlotReference;
-import dev.emi.trinkets.api.TrinketComponent;
-import dev.emi.trinkets.api.TrinketsApi;
 import net.minecraft.advancements.critereon.*;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.item.ItemStack;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 
 import java.util.List;
 import java.util.Optional;
@@ -38,11 +37,11 @@ public class TakeOffBeltJumpCriterion extends SimpleCriterionTrigger<TakeOffBelt
 	
 	public void trigger(ServerPlayer player) {
 		this.trigger(player, (conditions) -> {
-			Optional<TrinketComponent> component = TrinketsApi.getTrinketComponent(player);
-			if (component.isPresent()) {
-				List<Tuple<SlotReference, ItemStack>> equipped = component.get().getEquipped(SpectrumItems.TAKE_OFF_BELT);
+			Optional<ICuriosItemHandler> curiosComponent = CuriosApi.getCuriosInventory(player).resolve();
+			if (curiosComponent.isPresent()) {
+				var equipped = curiosComponent.get().findCurios(SpectrumItems.TAKE_OFF_BELT);
 				if (!equipped.isEmpty()) {
-					ItemStack firstBelt = equipped.get(0).getB();
+					ItemStack firstBelt = equipped.get(0).stack();
 					if (firstBelt != null) {
 						int charge = TakeOffBeltItem.getCurrentCharge(player);
 						if (charge > 0) {

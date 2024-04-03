@@ -9,7 +9,6 @@ import de.dafuqs.spectrum.render.RenderingContext;
 import de.dafuqs.spectrum.render.armor.BedrockArmorCapeModel;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import net.fabricmc.fabric.api.client.rendering.v1.LivingEntityFeatureRenderEvents;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -92,8 +91,8 @@ public abstract class CapeFeatureRendererMixin extends RenderLayer<AbstractClien
             BedrockArmorCapeModel.FRONT_CLOTH.render(ms, vertexConsumer, light, OverlayTexture.NO_OVERLAY);
             ms.popPose();
 			
-			// Respect the players own cape, Elytras and Fabrics Render Event
-			if (player.getCloakTextureLocation() != null || RenderingContext.isElytraRendered || !LivingEntityFeatureRenderEvents.ALLOW_CAPE_RENDER.invoker().allowCapeRender(player)) {
+			// Respect the players own cape and Elytras
+			if (player.getCloakTextureLocation() != null || RenderingContext.isElytraRendered) {
 				return;
 			}
 			

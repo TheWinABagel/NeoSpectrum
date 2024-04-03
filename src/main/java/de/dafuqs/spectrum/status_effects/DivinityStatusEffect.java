@@ -6,7 +6,6 @@ import de.dafuqs.spectrum.particle.SpectrumParticleTypes;
 import de.dafuqs.spectrum.particle.VectorPattern;
 import de.dafuqs.spectrum.progression.SpectrumAdvancementCriteria;
 import de.dafuqs.spectrum.registries.SpectrumStatusEffects;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -62,8 +61,8 @@ public class DivinityStatusEffect extends SpectrumStatusEffect {
 				if (instance != null && !instance.isAmbient()) {
 					SpectrumS2CPacketSender.playDivinityAppliedEffects(player);
 				}
-			} else if (world.isClientSide) {
-				FabricLoader.getInstance().getObjectShare().put("healthoverlay:forceHardcoreHearts", true);
+			} else if (world.isClientSide) { //todoforge IMC possibly?
+//				FabricLoader.getInstance().getObjectShare().put("healthoverlay:forceHardcoreHearts", true);
 			}
 		}
 	}
@@ -73,7 +72,7 @@ public class DivinityStatusEffect extends SpectrumStatusEffect {
 		super.removeAttributeModifiers(entity, attributes, amplifier);
 		Level world = entity.level();
 		if (world.isClientSide) {
-			FabricLoader.getInstance().getObjectShare().put("healthoverlay:forceHardcoreHearts", false);
+//			FabricLoader.getInstance().getObjectShare().put("healthoverlay:forceHardcoreHearts", false);
 		}
 	}
 

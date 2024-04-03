@@ -192,7 +192,7 @@ public abstract class PedestalRecipe extends GatedStackSpectrumRecipe {
 	}
 	
 	protected void decrementGridSlot(PedestalBlockEntity pedestal, int slot, int count, ItemStack invStack) {
-		ItemStack remainder = this.skipRecipeRemainders() ? ItemStack.EMPTY : invStack.getRecipeRemainder();
+		ItemStack remainder = this.skipRecipeRemainders() ? ItemStack.EMPTY : invStack.getCraftingRemainingItem();
 		if (remainder.isEmpty()) {
 			invStack.shrink(count);
 		} else {

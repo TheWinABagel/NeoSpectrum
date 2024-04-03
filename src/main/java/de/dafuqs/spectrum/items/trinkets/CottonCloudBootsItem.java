@@ -1,7 +1,6 @@
 package de.dafuqs.spectrum.items.trinkets;
 
 import de.dafuqs.spectrum.SpectrumCommon;
-import dev.emi.trinkets.api.SlotReference;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -12,6 +11,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import top.theillusivec4.curios.api.SlotContext;
 
 import java.util.List;
 
@@ -20,18 +20,19 @@ public class CottonCloudBootsItem extends SpectrumTrinketItem {
 	public CottonCloudBootsItem(Properties settings) {
 		super(settings, SpectrumCommon.locate("unlocks/trinkets/cotton_cloud_boots"));
 	}
-	
+
 	@Override
-	public void tick(ItemStack stack, SlotReference slot, LivingEntity entity) {
-		super.tick(stack, slot, entity);
-		Level world = entity.level();
+	public void curioTick(SlotContext slotContext, ItemStack stack) {
+		super.curioTick(slotContext, stack);
+		LivingEntity entity = slotContext.entity();
+		Level level = entity.level();
 		if (entity.isSprinting() && !entity.onGround() && !entity.isShiftKeyDown()) {
 			Vec3 velocity = entity.getDeltaMovement();
 			if (velocity.y < 0) {
 				entity.setDeltaMovement(entity.getDeltaMovement().multiply(1, 0.1, 1));
-				if (world.isClientSide) {
-					RandomSource random = world.random;
-					world.addParticle(ParticleTypes.CLOUD, entity.getX(), entity.getY(), entity.getZ(),
+				if (level.isClientSide) {
+					RandomSource random = level.random;
+					level.addParticle(ParticleTypes.CLOUD, entity.getX(), entity.getY(), entity.getZ(),
 							0.125 - random.nextFloat() * 0.25, 0.04 - random.nextFloat() * 0.08, 0.125 - random.nextFloat() * 0.25);
 				}
 			}

@@ -91,7 +91,7 @@ public class ItemBowlBlockEntity extends InWorldInteractionBlockEntity {
 		}
 		
 		int decrementAmount = Math.min(amount, storedStack.getCount());
-		ItemStack remainder = storedStack.getRecipeRemainder();
+		ItemStack remainder = storedStack.getCraftingRemainingItem();
 		if (!remainder.isEmpty()) {
 			if (storedStack.getCount() == 1) {
 				setItem(0, remainder);

@@ -63,7 +63,7 @@ public class SpectrumC2SPacketReceiver { //todoforge packets on 1.20.4
 //					blockEntity.applySettings(configuration);
 //
 //					// ...and distribute it to all clients again
-//					FriendlyByteBuf outgoingBuf = PacketByteBufs.create();
+//					FriendlyByteBuf outgoingBuf = new FriendlyByteBuf(Unpooled.buffer());
 //					outgoingBuf.writeBlockPos(blockEntity.getBlockPos());
 //					configuration.write(outgoingBuf);
 //

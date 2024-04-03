@@ -1,8 +1,6 @@
 package de.dafuqs.spectrum.mixin.client;
 
 import de.dafuqs.spectrum.registries.SpectrumItems;
-import dev.emi.trinkets.api.TrinketComponent;
-import dev.emi.trinkets.api.TrinketsApi;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraft.client.model.HumanoidModel;
@@ -14,6 +12,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 
 import java.util.Optional;
 
@@ -36,8 +36,8 @@ public class BipedEntityModelMixin {
 
 	@Inject(method = {"setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V"}, at = @At("TAIL"), cancellable = true)
 	public void poseArms(LivingEntity livingEntity, float f, float g, float h, float i, float j, CallbackInfo ci) {
-		Optional<TrinketComponent> trinketComponent = TrinketsApi.getTrinketComponent(livingEntity);
-		if (trinketComponent.isPresent() && trinketComponent.get().isEquipped(SpectrumItems.NEAT_RING)) {
+		Optional<ICuriosItemHandler> curiosComponent = CuriosApi.getCuriosInventory(livingEntity).resolve();
+		if (curiosComponent.isPresent() && !curiosComponent.get().findCurios(SpectrumItems.NEAT_RING).isEmpty()) {
 			this.rightLeg.xRot = 0;
 			this.rightLeg.yRot = 0;
 			this.leftLeg.xRot = 0;

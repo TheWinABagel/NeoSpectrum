@@ -58,6 +58,9 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.SlotResult;
+import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
 
 import java.util.List;
 import java.util.Optional;
@@ -158,9 +161,9 @@ public abstract class LivingEntityMixin {
 		if (onGround) {
 			LivingEntity thisEntity = (LivingEntity) (Object) this;
 			if (!thisEntity.isInvulnerableTo(thisEntity.damageSources().fall()) && thisEntity.fallDistance > thisEntity.getMaxFallDistance()) {
-				Optional<TrinketComponent> component = TrinketsApi.getTrinketComponent(thisEntity);
+				Optional<ICuriosItemHandler> component = CuriosApi.getCuriosInventory(thisEntity).resolve();
 				if (component.isPresent()) {
-					if (!component.get().getEquipped(SpectrumItems.PUFF_CIRCLET).isEmpty()) {
+					if (!component.get().findCurios(SpectrumItems.PUFF_CIRCLET).isEmpty()) {
 						int charges = AzureDikeProvider.getAzureDikeCharges(thisEntity);
 						if (charges > 0) {
 							AzureDikeProvider.absorbDamage(thisEntity, PuffCircletItem.FALL_DAMAGE_NEGATING_COST);
@@ -256,13 +259,13 @@ public abstract class LivingEntityMixin {
 		if (!cir.getReturnValue()) {
 			// if no other totem triggered: check for a totem pendant
 			LivingEntity thisEntity = (LivingEntity) (Object) this;
-			Optional<TrinketComponent> optionalTrinketComponent = TrinketsApi.getTrinketComponent(thisEntity);
+			Optional<ICuriosItemHandler> optionalTrinketComponent = CuriosApi.getCuriosInventory(thisEntity).resolve();
 			if (optionalTrinketComponent.isPresent()) {
-				List<Tuple<SlotReference, ItemStack>> totems = optionalTrinketComponent.get().getEquipped(SpectrumItems.TOTEM_PENDANT);
-				for (Tuple<SlotReference, ItemStack> pair : totems) {
-					if (pair.getB().getCount() > 0) {
+				List<SlotResult> totems = optionalTrinketComponent.get().findCurios(SpectrumItems.TOTEM_PENDANT);
+				for (SlotResult pair : totems) {
+					if (pair.stack().getCount() > 0) {
 						// consume pendant
-						pair.getB().shrink(1);
+						pair.stack().shrink(1);
 
 						// Heal and add effects
 						thisEntity.setHealth(1.0F);

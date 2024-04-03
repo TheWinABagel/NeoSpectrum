@@ -2,8 +2,9 @@ package de.dafuqs.spectrum.registries;
 
 import de.dafuqs.spectrum.blocks.conditional.colored_tree.ColoredLeavesBlock;
 import de.dafuqs.spectrum.blocks.conditional.colored_tree.ColoredSaplingBlock;
-import net.fabricmc.fabric.api.registry.CompostingChanceRegistry;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.block.ComposterBlock;
 
 public class SpectrumCompostableBlocks {
 	
@@ -14,53 +15,57 @@ public class SpectrumCompostableBlocks {
 	private static final float ALWAYS = 1.0F;
 	
 	public static void register() {
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.VEGETAL, ALWAYS);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.BONE_ASH, ALWAYS);
+		add(SpectrumItems.VEGETAL, ALWAYS);
+		add(SpectrumItems.BONE_ASH, ALWAYS);
 		
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.ALOE_LEAF, LOW);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.SAWBLADE_HOLLY_BERRY, HIGH);
+		add(SpectrumItems.ALOE_LEAF, LOW);
+		add(SpectrumItems.SAWBLADE_HOLLY_BERRY, HIGH);
 		
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.CLOVER, MEDIUM);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.FOUR_LEAF_CLOVER, MEDIUM);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.BRISTLE_SPROUTS, MEDIUM);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.SNAPPING_IVY, HIGHER);
+		add(SpectrumBlocks.CLOVER, MEDIUM);
+		add(SpectrumBlocks.FOUR_LEAF_CLOVER, MEDIUM);
+		add(SpectrumBlocks.BRISTLE_SPROUTS, MEDIUM);
+		add(SpectrumBlocks.SNAPPING_IVY, HIGHER);
 		
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.HIBERNATING_JADE_VINE_BULB, HIGH);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.GERMINATED_JADE_VINE_BULB, HIGH);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.JADE_VINE_PETALS, HIGH);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.NEPHRITE_BLOSSOM_BULB, HIGH);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.JADEITE_LOTUS_BULB, HIGH);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumItems.JADEITE_PETALS, HIGH);
+		add(SpectrumItems.HIBERNATING_JADE_VINE_BULB, HIGH);
+		add(SpectrumItems.GERMINATED_JADE_VINE_BULB, HIGH);
+		add(SpectrumItems.JADE_VINE_PETALS, HIGH);
+		add(SpectrumItems.NEPHRITE_BLOSSOM_BULB, HIGH);
+		add(SpectrumItems.JADEITE_LOTUS_BULB, HIGH);
+		add(SpectrumItems.JADEITE_PETALS, HIGH);
 		
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.NEPHRITE_BLOSSOM_LEAVES, LOW);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.JADEITE_LOTUS_FLOWER, HIGHER);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.JADE_VINE_PETAL_BLOCK, HIGH);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.JADE_VINE_PETAL_CARPET, HIGH);
+		add(SpectrumBlocks.NEPHRITE_BLOSSOM_LEAVES, LOW);
+		add(SpectrumBlocks.JADEITE_LOTUS_FLOWER, HIGHER);
+		add(SpectrumBlocks.JADE_VINE_PETAL_BLOCK, HIGH);
+		add(SpectrumBlocks.JADE_VINE_PETAL_CARPET, HIGH);
 		
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.SMALL_RED_DRAGONJAG, LOW);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.SMALL_YELLOW_DRAGONJAG, LOW);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.SMALL_PINK_DRAGONJAG, LOW);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.SMALL_PURPLE_DRAGONJAG, LOW);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.SMALL_BLACK_DRAGONJAG, LOW);
+		add(SpectrumBlocks.SMALL_RED_DRAGONJAG, LOW);
+		add(SpectrumBlocks.SMALL_YELLOW_DRAGONJAG, LOW);
+		add(SpectrumBlocks.SMALL_PINK_DRAGONJAG, LOW);
+		add(SpectrumBlocks.SMALL_PURPLE_DRAGONJAG, LOW);
+		add(SpectrumBlocks.SMALL_BLACK_DRAGONJAG, LOW);
 		
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.SLATE_NOXSHROOM, HIGH);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.EBONY_NOXSHROOM, HIGH);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.IVORY_NOXSHROOM, HIGH);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.CHESTNUT_NOXSHROOM, HIGH);
+		add(SpectrumBlocks.SLATE_NOXSHROOM, HIGH);
+		add(SpectrumBlocks.EBONY_NOXSHROOM, HIGH);
+		add(SpectrumBlocks.IVORY_NOXSHROOM, HIGH);
+		add(SpectrumBlocks.CHESTNUT_NOXSHROOM, HIGH);
 		
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.SLATE_NOXCAP_BLOCK, HIGHER);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.SLATE_NOXCAP_GILLS, HIGHER);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.EBONY_NOXCAP_BLOCK, HIGHER);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.EBONY_NOXCAP_GILLS, HIGHER);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.IVORY_NOXCAP_BLOCK, HIGHER);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.IVORY_NOXCAP_GILLS, HIGHER);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.CHESTNUT_NOXCAP_BLOCK, HIGHER);
-		CompostingChanceRegistry.INSTANCE.add(SpectrumBlocks.CHESTNUT_NOXCAP_GILLS, HIGHER);
+		add(SpectrumBlocks.SLATE_NOXCAP_BLOCK, HIGHER);
+		add(SpectrumBlocks.SLATE_NOXCAP_GILLS, HIGHER);
+		add(SpectrumBlocks.EBONY_NOXCAP_BLOCK, HIGHER);
+		add(SpectrumBlocks.EBONY_NOXCAP_GILLS, HIGHER);
+		add(SpectrumBlocks.IVORY_NOXCAP_BLOCK, HIGHER);
+		add(SpectrumBlocks.IVORY_NOXCAP_GILLS, HIGHER);
+		add(SpectrumBlocks.CHESTNUT_NOXCAP_BLOCK, HIGHER);
+		add(SpectrumBlocks.CHESTNUT_NOXCAP_GILLS, HIGHER);
 		
 		for (DyeColor dyeColor : DyeColor.values()) {
-			CompostingChanceRegistry.INSTANCE.add(ColoredSaplingBlock.byColor(dyeColor), LOW);
-			CompostingChanceRegistry.INSTANCE.add(ColoredLeavesBlock.byColor(dyeColor), LOW);
+			add(ColoredSaplingBlock.byColor(dyeColor), LOW);
+			add(ColoredLeavesBlock.byColor(dyeColor), LOW);
 		}
+	}
+	
+	private static void add(ItemLike item, float chance) {
+		ComposterBlock.COMPOSTABLES.put(item.asItem(), chance);
 	}
 	
 }
